@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ -d "/tmp/synOCR" ]; then
+	rm -r /tmp/synOCR
+fi
+
+if [ -d "/usr/syno/synoman/webman/3rdparty/synOCR" ]; then
+	mkdir /tmp/synOCR
+    cp -rf /usr/syno/synoman/webman/3rdparty/synOTR/app/etc/* /tmp/synOTR
+fi
+
+exit 0

@@ -1,0 +1,5 @@
+#!/bin/sh
+LOG="/var/packages/${SYNOPKG_PKGNAME}/log"
+ln -s $SYNOPKG_PKGDEST /usr/syno/synoman/webman/3rdparty/synOCR
+date +'%c installed' >> $LOG
+exit 0

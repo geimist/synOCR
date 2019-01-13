@@ -1,0 +1,15 @@
+#!/bin/sh
+
+#   machinetyp=`uname --machine`
+#   device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `
+
+#    if [ $machinetyp = "x86_64" ] || [ $machinetyp = "i686" ] || [ `echo $machinetyp | grep "armv7" ` ] || [ `echo $machinetyp | grep "armv8" ` ]; then
+#    if [ $machinetyp = "x86_64" ] ; then
+#        exit 0
+#    else
+#    	echo "Dein Gerät (${device}) mit der CPU-Architektur ${machinetyp} wird von synOCR nicht unterstützt (nur x86_64)" > $SYNOPKG_TEMP_LOGFILE
+#    	exit 1
+#    fi
+
+
+    exit 0
