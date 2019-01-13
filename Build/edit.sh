@@ -377,25 +377,25 @@ if [[ "$page" == "edit" ]]; then
 			<span>Ein kurzer Piep, sobald ein Film fertig bearbeitet wurde.</span></a>
 		</p>'
 	# LOGlevel
-#	echo '
-#		<p>
-#		<label>LOGlevel (0,1,2)</label>
-#		<select name="loglevel">'
-#		if [[ "$loglevel" == "0" ]]; then
-#			echo '<option value="0" selected>aus</option>'
-#		else
-#			echo '<option value="0">aus</option>'
-#		fi
-#		if [[ "$loglevel" == "1" ]]; then
-#			echo '<option value="1" selected>1 (standard)</option>'
-#		else
-#			echo '<option value="1">1 (standard)</option>'
-#		fi
-#		if [[ "$loglevel" == "2" ]]; then
-#			echo '<option value="2" selected>2 (erweitert)</option>'
-#		else
-#			echo '<option value="2">2 (erweitert)</option>'
-#		fi
+	echo '
+		<p>
+		<label>LOGlevel (0,1,2)</label>
+		<select name="loglevel">'
+		if [[ "$loglevel" == "0" ]]; then
+			echo '<option value="0" selected>aus</option>'
+		else
+			echo '<option value="0">aus</option>'
+		fi
+		if [[ "$loglevel" == "1" ]]; then
+			echo '<option value="1" selected>1 (standard)</option>'
+		else
+			echo '<option value="1">1 (standard)</option>'
+		fi
+		if [[ "$loglevel" == "2" ]]; then
+			echo '<option value="2" selected>2 (erweitert)</option>'
+		else
+			echo '<option value="2">2 (erweitert)</option>'
+		fi
 		
 	echo '
 		</select>
