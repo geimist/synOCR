@@ -1,0 +1,1003 @@
+/*
+Einzüge ect.:
+    - http://www.uni-ulm.de/~sbauer/programming/html/selfhtml/absatz.html#a7
+    
+Checkboxen:
+    - https://webdesign.tutsplus.com/de/articles/quick-tip-easy-css3-checkboxes-and-radio-buttons--webdesign-8953
+    - https://w3-mediapool.hm.edu/mediapool/media/fk05/fk05_lokal_1/fk05vs/meinstudium/_selfhtml/tche.htm#a2
+    - http://wiki.selfhtml.org/wiki/HTML/Formulare/input/Radio-Buttons_und_Checkboxen
+
+Generator (box-shadow, gradient, …)
+    - https://www.cssmatic.com/ 
+*/
+
+
+
+/* Define Layout Setup */
+div#wrapper {
+    display:flex;
+	margin: 0;
+	width: 960px;
+}
+
+#navleft {
+    flex-direction: column;
+    width: 185px;
+    position:fixed;
+    height: 100%;
+    box-shadow: inset -7px 0 9px -7px lightgrey; /* box-shadow: offsetLinks, offsetOben, (radiusWeichzeichner), (überfüllung), (farbe) */
+}
+    
+#navleftinbox {
+    width: 170px;
+    padding: 4px 0px 0px 0;
+	margin: 0 0 0 8px;
+}
+    
+    .navitem {
+    	color: #505A64;
+        padding: 0 0 0 10px;
+        display: table-cell;
+        line-height: 20px;
+        height: 50px;
+        white-space: normal;
+        vertical-align: middle;
+        font-size: 14px;
+        width: 160px;
+    }
+        
+    .navitemselc {
+    	background-color: #0086E5;
+    	color: #fff;
+        border-radius: 3px;
+        width: 160px;
+        
+        padding: 0 0 0 10px;
+        display: table-cell;
+        line-height: 20px;
+        height: 50px;
+        white-space: normal;
+        vertical-align: middle;
+        font-size: 14px;
+    }
+    
+    .navitem:hover {
+    	/* background-color: #dfe8f6; */
+    	background-color: rgba(245,250,255,1);
+        border-radius: 3px;
+    
+    }
+    
+    div.navitemselc li a:hover:not(.active) {
+    /*	color: #000000;
+    	background: #dfe8f6;
+    /*	background: #24A7FF; /* DSM-Blau aufgehellt */
+    /*	background: #7186A1; */
+    	/* border: 2px solid #FFFFFF; */
+    }
+    
+    
+    div.navitemselc li a.active {
+    /*	color: #000000;
+    	background: #BD0010; 
+    /*	background: #0064A7; /* DSM-Blau abgedunkelt */
+    /*	background: #0086E5; /* DSM-Blau */
+    /*  border-bottom: 2px solid #00B10D; */
+    }
+    
+
+/* Aufzählungen und Listen */
+    li {
+    	list-style-position: inside;
+    }
+    ul.li_blank {
+        list-style-type: none;
+    }
+    
+    ul.li_standard {
+        list-style-type: square;
+	    padding: 10px 0 0 0;
+    }
+    
+
+.tab {
+/*	test Einrückung (main.sh) */
+	padding: 0 0 0 18px;
+}
+
+
+/* Define Standard Typography TAGs */
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing:border-box;
+	text-decoration: none;
+    	color: #505A64;
+}
+body {
+	font-size: 100%;
+	line-height: 1;
+	overflow-x: hidden;
+	vertical-align: baseline;
+}
+
+body {
+    font: normal 0.8em Verdana,Helvetica,Arial,FreeSans,sans-serif;
+}
+
+#system_msg {
+	box-shadow: 0px 2px 15px 1px rgba(0,0,0,0.2);
+    border: 1px solid #BCC7D4;
+    border-radius: 3px;
+
+	padding: 5px;
+    background-color: #fff;
+    vertical-align:middle;
+}
+
+a, a:link, a:visited {
+/*	color: #3179D4; 
+	text-decoration: none;*/
+}
+
+a:hover {
+/*	color: #999999;
+	text-decoration: none; */
+}
+
+.title {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 30px;
+    line-height: 38px;
+    color: #0086E5;
+	padding: 30px 0 30px 0;
+}
+
+h1 {
+	font-size: 1.6em;
+}
+
+h2 {
+	font-size: 1.2em;
+}
+
+h3 {
+	font-size: 1em;
+}
+
+h1,h2,h3 {
+    color: #0086E5;
+	font-weight: normal;
+	margin-bottom: 0.4em;
+}
+
+
+div#Content_1Col {
+    height: auto; 
+    min-height: 100%;
+}
+
+div#Content_1Col > div {
+/*	float: left;
+	min-width: 950px;
+	width: 99.4%;
+	margin: 15px 3px;
+	padding: 5px 8px; */
+}
+ 
+/*div#minheight {
+    height:50px;
+    clear:both;
+}*/
+
+div.Content_1Col_full {
+    margin-left: 185px;
+/*    max-width: 775px;*/
+    width: 740px;
+    padding-bottom:50px; /* Höhe des Footers */
+}
+
+
+footer {
+    /* http://www.intensivstation.ch/assets/templates/fixed/fixed-footer-header/fixed-footer-header.html */
+    margin-left: 200px ;
+    background: #fff;
+    width: 100%;
+    width: 760px;
+    height:auto;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    text-align: right;
+    box-shadow: -5px 0px 0px white,
+                 5px 0px 0px white,
+                 0px -1px 4px lightgrey;
+    }
+
+
+fieldset {
+	border: none;
+	font-weight: normal;
+	padding: 0.9em 10px 0 10px;
+	margin: 0 20px 0 20px;
+}
+
+fieldset p {
+	font-size: 1em;
+}
+
+/* SVG */
+    .svg {
+	padding: 0px 10px 0px 0px;
+    width: 35px;
+    height: 35px;
+    vertical-align: middle;
+    /* fill: #94d31b; */
+    }
+
+
+/* Aufklappmenu (inkl. eigene Symbole)  */
+    
+    /* div#ExpFieldset {
+    font-size: 15px;
+    color: #0086E5;
+    font-weight: normal;
+    height: 28px;
+    border-bottom: 1px dashed #D7E1EB;
+    padding: 30;
+    }*/
+    
+    summary {
+        display: block; /* für Firefox*/
+    }
+    summary::-webkit-details-marker {
+        display: none; /* block , 
+        summary::-moz-details-marker*/
+    }
+    summary:focus {
+        outline: 0;  /* blauen Focus-Rahmen ausblenden */
+    }
+    
+    summary:after {
+        background: url(../images/fieldset_expand1@geimist.svg);
+        float: left; 
+        height: 15px;
+        width: 15px;
+        content: " ";
+        border: 0;
+      /* border-bottom: 1px dashed #D7E1EB; */
+    }
+    
+    details[open] summary:after {
+        background: url(../images/fieldset_expand2@geimist.svg);
+    }
+    
+    .detailsitem {
+        color:#0086E5;
+        font-size: 15px;
+        font-weight: normal;
+        height: 28px;
+        padding: 0 0 0 10px;
+    }
+    
+    
+    /* Aufklappmenu Animation  ease-in-out */
+    
+    details[open] summary ~ * {
+        animation: sweep 1.0s cubic-bezier(0.46, 0.03, 0.52, 0.96); 
+
+    /*    animation: SlideInDown;
+        
+        -webkit-animation-name: slideInDown;
+        animation-name: slideInDown;
+        -webkit-animation-duration: 1s;
+        animation-duration: 1s;*/
+        }
+        
+        @keyframes sweep {
+          0%    {opacity: 0; margin-left: 0px}
+          100%  {opacity: 1; margin-left: 0px}
+        } 
+        
+        /*
+        @-webkit-keyframes slideInDown {
+            0% {
+            -webkit-transform: translateY(-100%);
+            transform: translateY(-100%);
+            visibility: visible;
+            }
+            100% {
+            -webkit-transform: translateY(0);
+            transform: translateY(0);
+            }
+        }
+        @keyframes slideInDown {
+            0% {
+            -webkit-transform: translateY(-100%);
+            transform: translateY(-100%);
+            visibility: visible;
+            }
+            100% {
+            -webkit-transform: translateY(0);
+            transform: translateY(0);
+            }
+        } 
+        
+ /*       
+        details[close] summary ~ * {
+        
+            animation: SlideOutUp;
+            
+            -webkit-animation-name: slideOutUp;
+            animation-name: slideOutUp;
+            -webkit-animation-duration: 1s;
+            animation-duration: 1s;
+            -webkit-animation-fill-mode: both;
+            animation-fill-mode: both;
+        }
+
+        @-webkit-keyframes slideOutUp {
+            0% {
+            -webkit-transform: translateY(0);
+            transform: translateY(0);
+            }
+            100% {
+            visibility: hidden;
+            -webkit-transform: translateY(-100%);
+            transform: translateY(-100%);
+            }
+        }
+        @keyframes slideOutUp {
+            0% {
+            -webkit-transform: translateY(0);
+            transform: translateY(0);
+            }
+            100% {
+            visibility: hidden;
+            -webkit-transform: translateY(-100%);
+            transform: translateY(-100%);
+            }
+        } 
+
+        
+    /* Aufklappmenu Animation V2 (feste Höhe stört) 
+        details
+        {
+            transition: height 1s ease;
+            overflow: hidden;
+        }
+        
+        details:not([open])
+        {
+            height: 1.5em;
+        }
+        
+        details[open]
+        {
+            height: 100%;
+        } */
+    
+
+div.info {
+    line-height: 1.6em;
+    border: 1px solid #B6D9F2;
+    background-color: #F2FAFF;
+    color: #505A64;
+	padding: 0.9em 10px 0 10px;
+}
+    
+
+div.warning {
+	padding: 0.9em 10px 0 10px;
+	margin: 20px;
+	text-align: justify;
+    line-height: 1.6em;
+	border: 1px solid #BD0010;
+	color: #BD0010;
+	background: #FBEFEF;
+	padding: 0.9em 10px 0 10px;
+}
+
+
+/* Define Standard List - TAGs */
+ol,ul {
+/*	padding: 0 10px 0 10px;
+	margin: 0 20px 0 20px; */
+}
+
+ul {
+	list-style-type: none; /* Auflistungszeichen */
+}
+
+div.clear {
+	clear: both;
+}
+
+/* Define Tooltip Popup-Box */
+    a.helpbox {
+        /* das help-Icon */
+    	position: relative;
+    	text-decoration: none;
+    	float: right;
+    	color: #BD0010;
+
+    }
+    
+    a.helpbox:hover {
+    	cursor: help;
+    	color: #BD0010;
+    	background: #FFFFFF;
+    }
+    
+    a.helpbox span {
+    	visibility: hidden;
+    	position: absolute;
+    	margin-top: 15px;
+    	padding: 5px;
+    	text-decoration: none;
+    	text-align: left;
+    	font-size: 0.9em;
+    	/* width: 406px; */
+    	width: 500px;
+    	
+    }
+    
+    a.helpbox:hover span, 
+    a.helpbox:focus span, 
+    a.helpbox:active span {
+    	visibility: visible;
+    	right: 32px;
+        border: 1px solid #B6D9F2;
+        background-color: #F2FAFF;
+        color: #505A64;
+    }
+    
+
+/* Define Standard Form - TAGs */
+legend {
+	font-size: 1.2em; 
+	font-weight: normal;
+	color: #2A588C;
+	margin-left: 8px;
+}
+
+label {
+	display: inline-block;
+	width: 310px;
+	float: left;
+}
+
+input:focus, 
+select:focus,
+textarea:focus {
+    outline: 0;  /* blauen Focus-Rahmen ausblenden */
+}
+    
+input, select, textarea {
+	border: none;
+	margin-left: 0.5em;
+	border-radius: 0px;
+	font-size: 1em;
+	/*width: 405px; */
+	width: 300px;
+	margin: .2em 0 0.2em 0.5em; 
+	background-color: #fff;
+}
+
+input, textarea {
+/*	background-color: #FDF4F3; */
+	border: 1px solid #BBBBBB;
+	padding: 0.5em 0.5em 0.25em 0.25em;
+}
+
+textarea {
+	resize:vertical;
+	width: 406px;
+	font: normal 1em Verdana,Helvetica,Arial,FreeSans,sans-serif;
+}
+
+input:hover,
+input:active,
+textarea:hover,
+textarea:active {
+	box-shadow: 0 1px 1px 0 rgba(0,0,0,0.1);
+}
+
+select {
+	border: 1px solid #BBBBBB;
+	padding: 0.5em 0em 0.25em 0em;
+	border-radius: 0px;
+}
+
+select:hover {
+	box-shadow: 0 1px 1px 0 rgba(0,0,0,0.1);
+}
+
+option:disabled {
+	color: #FA5858;
+}
+
+select::-ms-expand {
+	display: none;
+}
+
+/* Checkboxen und Radio-Buttons links */
+p.left {
+	line-height: 1.1em;
+	padding: 0.3em;
+}
+
+label.left {
+	display: inline-block;
+	width: auto;
+	float: left;
+	margin: 0.2em 0 0.2em 0.5em;
+}
+
+/* Button */  
+    button,
+    a.button,
+    a.red_button,
+    a.blue_button {
+        min-width: 100px;
+        border: solid 1px #C8D2DC;
+        background-image: linear-gradient(#f5faff,#f0f5fa);
+        background-color: #F0F5FA;
+        font-weight: normal;
+        white-space: nowrap;
+        visibility: visible;
+        color: #505A64;
+    	padding: 5px 15px;
+    	font-size: 1em;
+    	text-align: center;
+    	text-decoration: none;
+    	display: inline-block;
+    	vertical-align: middle;
+        cursor: pointer;
+    	border-radius: 3px;
+    	-moz-border-radius: 3px;
+    	-webkit-border-radius: 3px;
+    }
+    
+    button.blue_button,
+    a.blue_button {
+    	color: #fff !important;
+        border: solid 1px #1687D9;
+        background-image: linear-gradient(#32AAFF, #1994EB);
+        background-color: #1994EB;
+    }
+    
+    button.red_button,
+    a.red_button{
+    	color: #fff !important;
+        border: solid 1px #D14949;
+        background-image: linear-gradient(#FA7070, #EB5F5F);
+        background-color: #EB5F5F;
+        
+    }
+    
+    button:hover, 
+    a.button:hover {
+    	/*background-color: #F3F3F3;*/
+        border: solid 1px #B4BEC8;
+    	text-decoration: none;
+        background-image: linear-gradient(#f5faff,#ebf0f5);
+        background-color: #EBF0F5;
+    }
+    
+    button.blue_button:hover,
+    a.blue_button:hover {
+    	color: #fff;
+        border: solid 1px #07c;
+        background-image: linear-gradient(#25A4FF, #028AEB);
+        background-color: #028AEB;
+    }
+    
+    button.red_button:hover,
+    a.red_button:hover {
+    	color: #fff;
+        border: solid 1px #C43B38;
+        background-image: linear-gradient(#F96868, #DF4848);
+        background-color: #DF4848;
+    }
+    
+    button:focus {
+        outline: 0;  /* blauen Focus-Rahmen ausblenden */
+    }
+
+
+filter-button, 
+a.filter-button {
+	color: #75758B;
+	background-color: #F3F3F3;
+	/*width: 78px;*/
+	border: 1px solid #C9C9C9;
+	margin: 1px 2px;
+	padding: 1px 2px;
+	font-size: 0.75em;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	vertical-align: middle;
+	cursor: pointer;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+filter-button:hover, 
+a.filter-button:hover {
+	color: #000000;
+	background-color: #F3F3F3;
+	border: 1px solid #75758B;
+	text-decoration: none;
+}
+
+table-button-on, 
+a.table-button-on {
+	float: right;
+	color: #75758B;
+	background-color: #F3F3F3;
+	width: 120px;
+	border: 1px solid #C9C9C9;
+	margin: 1px 2px;
+	padding: 1px 2px;
+	font-size: 0.75em;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	vertical-align: middle;
+	cursor: pointer;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+table-button-on:hover, 
+a.table-button-on:hover {
+	color: #000000;
+	background-color: #F3F3F3;
+	border: 1px solid #75758B;
+	text-decoration: none;
+}
+
+table-button-off, 
+a.table-button-off {
+	float: right;
+	pointer-events: none;
+	cursor: default;
+	color: #75758B;
+	background-color: #F3F3F3;
+	width: 120px;
+	border: 1px solid #C9C9C9;
+	margin: 1px 2px;
+	padding: 1px 2px;
+	font-size: 0.75em;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	vertical-align: middle;
+	cursor: pointer;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+table-button-off:hover, 
+a.table-button-off:hover {
+	color: #000000;
+	background-color: #F3F3F3;
+	border: 1px solid #75758B;
+	text-decoration: none;
+}
+
+    /* Checkboxen und Radio-Buttons rechts */
+
+input {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	border-radius: 0;
+	font-size: 1em;
+}
+
+
+input[type="checkbox"],
+input[type="radio"] {
+	width:auto;
+	margin-right: .75em;
+	background:transparent;
+	border:none;
+/*    background:url(../images/checkbox_unchecked@geimist.svg) */
+}
+
+input[type="checkbox"]:checked,
+input[type="checkbox"]:not(:checked),
+input[type="radio"]:checked,
+input[type="radio"]:not(:checked) {
+	background: transparent;
+	position: relative;
+	visibility: hidden;
+	margin:0;
+	padding:0;
+}
+
+input[type="checkbox"] + label,
+input[type="radio"] + label {
+	cursor: pointer;
+}
+
+input[type="checkbox"]:checked + label::before,
+input[type="checkbox"]:not(:checked) + label::before,
+input[type="radio"]:checked + label::before,
+input[type="radio"]:not(:checked) + label::before {
+	content:" ";
+	display:inline-block;
+	width: 17px;
+	height:17px;
+	position: relative;
+	top:4px;
+	border: 1px solid #bbb;
+	background: white;
+	float: right;
+	margin-right: -25px;
+	box-shadow: inset 0 1px 1px 0 rgba(0,0,0,.1);
+}
+
+input[type="radio"]:checked + label::before,
+input[type="radio"]:not(:checked) + label::before {
+	border-radius: 30px;
+}
+
+input[type="checkbox"]:disabled + label::before,
+input[type="radio"]:disabled + label::before {
+	border: 1px solid #FA5858;
+}
+
+input[type="checkbox"]:hover  + label::before,
+input[type="radio"]:hover  + label::before {
+	background:#ddd;
+	box-shadow: inset 0 0 0 2px white;
+}
+
+input[type="checkbox"]:checked  + label::before,
+input[type="radio"]:checked  + label::before {
+	background:#0086E5;
+	box-shadow: inset 0 0 0 2px white;
+}
+
+input.left[type="checkbox"],
+input.left[type="radio"] {
+	width:auto;
+	float:left;
+	margin-right: .75em;
+	background:transparent;
+	border:none;
+}
+
+input.left[type="checkbox"]:checked,
+input.left[type="checkbox"]:not(:checked),
+input.left[type="radio"]:checked,
+input.left[type="radio"]:not(:checked) {
+	background: transparent;
+	position: relative;
+	visibility: hidden;
+	margin:0;
+	padding:0;
+}
+
+input.left[type="checkbox"] + label.left,
+input.left[type="radio"] + label.left {
+	cursor: pointer;
+}
+
+input.left[type="checkbox"]:checked + label.left::before,
+input.left[type="checkbox"]:not(:checked) + label.left::before,
+input.left[type="radio"]:checked + label.left::before,
+input.left[type="radio"]:not(:checked) + label.left::before {
+	content:" ";
+	display:inline-block;
+	width: 13px;
+	height:13px;
+	position: relative;
+	top:2px;
+	border: 1px solid #bbb;
+	background: white;
+	float: left;
+	margin-right: 1em;
+	box-shadow: inset 0 1px 1px 0 rgba(0,0,0,.1);
+}
+
+input.left[type="radio"]:checked + label.left::before,
+input.left[type="radio"]:not(:checked) + label.left::before {
+	border-radius: 30px;
+}
+
+input.left[type="checkbox"]:disabled + label.left::before,
+input.left[type="radio"]:disabled + label.left::before {
+	border: 1px solid #FA5858;
+}
+
+input.left[type="checkbox"]:hover + label.left::before,
+input.left[type="radio"]:hover + label.left::before {
+	background:#ddd;
+	box-shadow: inset 0 0 0 2px white;
+}
+
+input.left[type="checkbox"]:checked + label.left::before,
+input.left[type="radio"]:checked + label.left::before {
+	background:#0086E5;
+	box-shadow: inset 0 0 0 2px white;
+}
+
+        /* red_button in Verbindung mit einem Link erhält schwarze schrift / wird nicht von .red_button überschrieben 
+        a,
+        a:link,
+        a:visited,
+        a:hover{
+    	color: #ffffff;
+        }*/
+  
+
+hr {
+	border: 0;
+	height: 0;
+	margin-bottom: 8px;
+	border-top: 1px solid #BDBDBD;
+	border-bottom: 1px solid #FFFFFF;
+}
+
+p {
+	/* line-height: 1.3em; */
+	padding: 0.3em 0 0.7em;
+	text-align: justify;
+}
+
+p.center {
+	text-align: center;
+}
+
+p.right {
+	text-align: right;
+}
+
+/*  DIV-Tabelle für 2-Spaltigkeit
+    https://wiki.selfhtml.org/wiki/HTML/Tutorials/Alternativen_zu_Tabellen */
+    div.divtable {
+    	display: table;
+    	border-collapse: collapse;
+    }
+    
+    div.divtr {
+    	display: table-row;
+    }
+    
+    div.divtd_left {
+    	display: table-cell;
+    	border-right: 5px;
+    	border-color: #fff;
+    	width: 400px;
+    }
+    
+    div.divtd_mid {
+    	display: table-cell;
+    	width: 20px;
+    }
+    
+    div.divtd_right {
+    	display: table-cell;
+    	border-left: 5px;
+    	border-color: #fff;
+    	width: 400px;
+    }
+
+
+table {
+/*	width: 95%; */
+	font: Consolas;
+/*	font-size: 0.9em; */
+	padding: 0.9em 10px 0 10px;
+/*	margin: 0 20px 0 20px;  wird in details animiert …?*/
+}
+
+table td {
+	padding: 2px 5px;
+	/* border-bottom: 1px solid #E6E8E8; */
+}
+table td.td_color {
+	padding: 0px 1px;
+	/* border-bottom: 1px solid #E6E8E8; */
+}
+
+table td.left {
+	width: 40%;
+	font-weight: bold;
+	padding: 2px 10px;
+}
+
+table td.left_25 {
+	width: 25%;
+	font-weight: bold;
+	padding: 2px 10px;
+}
+
+table td.middle {
+	width: 40%;
+	padding: 2px 10px;
+}
+
+table td.middle_blue {
+	color: #2A588C;
+}
+
+table td.right {
+	width: 20%;
+	font-style: italic;
+	padding: 2px 10px;
+}
+
+div#HorCrumb {
+	height: 56px;
+}
+
+div#HorCrumb > div {
+	float: left;
+	min-width: 933px;
+	width: 99.8%;
+	font-size: 1em;
+	margin: 3px;
+}
+
+div.HorCrumbs {
+	padding: 4px 20px;
+}
+
+div.dropmenu {
+	border: 1px solid #BDBDBD;
+	background: #FAFAFA;
+	padding: 0.5em 10px 8px 10px;
+	margin: 0 20px 0 20px;
+}
+
+div.drop-header a {
+	font-size: 1.1em;
+	/*color: #2A588C; */
+	color: #BD0010;
+	font-weight: normal;
+}
+
+div.drop-switch {
+	float: right;
+	margin-right: 30px;
+}
+
+div.drop-content {
+	margin-bottom: 8px;
+	font-size: 1.1em;
+	color: #088A08;
+}
+
+div.drop-toolbox {
+	float: right;
+	margin-right: 30px;
+}
+
+div#HorCrumb {
+	height: 56px;
+}
+
+div#HorCrumb > div {
+	float: left;
+	min-width: 933px;
+	width: 99.8%;
+	font-size: 1em;
+	margin: 3px;
+}
+
+div.HorCrumbs {
+	padding: 4px 20px;
+}
+
+
+
