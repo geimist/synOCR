@@ -128,7 +128,7 @@ fi
 # leere Logs löschen:
 for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # Auflistung aller LOG-Dateien
     do
-        if [ $( cat "${LOGDIR}$i" | tail -n7 | head -n4 | wc -c ) -le 15 ]; then
+        if [ $( cat "${LOGDIR}$i" | tail -n7 | head -n4 | wc -c ) -le 15 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
         #    if [ -z "$TRASHDIR" ] ; then 
                 rm "${LOGDIR}$i"
         #    else
