@@ -1,14 +1,14 @@
 Release Notes
 
 0.9.3 (RELEASE)
- 	IMPLEMENTIERUNGEN:
+    IMPLEMENTIERUNGEN:
  -  
- 	BUGFIXES:
+    BUGFIXES:
  -  leere LOGs wurden z.T. nicht korrekt gelöscht
  -  
 
 0.9.2 (RELEASE)
- 	IMPLEMENTIERUNGEN:
+    IMPLEMENTIERUNGEN:
  -  public Initialrelease
 
 
