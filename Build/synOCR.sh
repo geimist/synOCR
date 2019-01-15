@@ -129,7 +129,7 @@ fi
 # leere Logs löschen:
 for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # Auflistung aller LOG-Dateien
     do
-        if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
+        if [ $( cat "${LOGDIR}$i" | sed -n "/Funktionsaufrufe/,/synOCR ENDE/p" | wc -c ) -eq 160 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
         #    if [ -z "$TRASHDIR" ] ; then 
                 rm "${LOGDIR}$i"
         #    else
@@ -298,7 +298,7 @@ return
         fi
         if [ ! -z $PBTOKEN ] ; then
             PB_LOG=`curl $cURLloglevel --header "Access-Token:${PBTOKEN}" https://api.pushbullet.com/v2/pushes -d type=note -d title="synOCR" -d body="PDF [${filename}] ist fertig."`
-            if [ $LOGlevel = "2" ] ; then
+            if [ $loglevel = "2" ] ; then
                 echo "        PushBullet-LOG:"
                 echo "$PB_LOG"
             elif echo "$PB_LOG" | grep -q "error"; then # für Loglevel 1 nur Errorausgabe
