@@ -1,7 +1,6 @@
 #!/bin/bash
 # edit.sh
 
-
 if [[ "$page" == "edit-save" ]]; then
 	"$set_var" "$dir/etc/Konfiguration.txt" "INPUTDIR" "$INPUTDIR"
 	"$set_var" "$dir/etc/Konfiguration.txt" "OUTPUTDIR" "$OUTPUTDIR"
@@ -375,7 +374,7 @@ if [[ "$page" == "edit" ]]; then
 		</select>
 		<a class="helpbox" href="#HELP">
 			<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-			<span>Ein kurzer Piep, sobald ein Film fertig bearbeitet wurde.</span></a>
+			<span>Ein kurzer Piep, sobald ein File fertig bearbeitet wurde.</span></a>
 		</p>'
 	# LOGlevel
 	echo '
