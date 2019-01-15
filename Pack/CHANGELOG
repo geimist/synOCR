@@ -7,10 +7,10 @@ Release Notes
     BUGFIXES:
  -  leere LOGs wurden z.T. nicht korrekt gelöscht
  -  bei einem OCRmyPDF Error wurde das Skript z.T. nicht korrekt abgebrochen
+ -  kleinere Korrekturen
  -  
 
 0.9.2 (RELEASE)
-    IMPLEMENTIERUNGEN:
- -  public Initialrelease
+ -  This is the initial public release of the package
 
 
