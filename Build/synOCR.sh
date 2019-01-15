@@ -160,7 +160,7 @@ cal_scan()
 #########################################################################################
     
 IFS=$'\012'	 # entspricht einem $'\n' Newline
-for input in $(find "${INPUTDIR}" -maxdepth 1 -name "${SearchPraefix}*.pdf" -o -name "${SearchPraefix}*.PDF" -type f) #  -mmin +"$timediff"
+for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -type f) #  -mmin +"$timediff" -o -name "${SearchPraefix}*.PDF" 
 	do	
 		IFS=$OLDIFS
 		echo -e
