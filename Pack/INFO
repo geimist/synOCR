@@ -1,6 +1,6 @@
 package="synOCR"
 displayname="synOCR"
-version="0.9.3"
+version="0.9.2.1"
 thirdparty="yes"
 description="synOCR ist eine einfache GUI für den Dockercontainer OCRmyPDF"
 maintainer="geimist"
