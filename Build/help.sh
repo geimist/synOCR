@@ -6,7 +6,7 @@ echo '
 	<div id="Content_1Col">
 	<div class="Content_1Col_full">
 	<div class="title">
-	    synOTR Schnellstart
+	    synOCR Schnellstart
 	</div>
 	<ol style="list-style:decimal">
     <p>
