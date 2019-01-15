@@ -6,7 +6,7 @@ fi
 
 if [ -d "/usr/syno/synoman/webman/3rdparty/synOCR" ]; then
 	mkdir /tmp/synOCR
-    cp -rf /usr/syno/synoman/webman/3rdparty/synOTR/app/etc/* /tmp/synOTR
+    cp -rf /usr/syno/synoman/webman/3rdparty/synOCR/etc/* /tmp/synOCR
 fi
 
 exit 0
