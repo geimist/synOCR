@@ -54,6 +54,7 @@
 #	echo -n "                          RAM verwendet:      "; RAMused=`free -m | grep 'Mem:' | awk '{print $3}'`;	echo "$RAMused MB"  # genutzter RAM
 #	echo -n "                          RAM verfügbar:      "; RAMfree=$(( $RAMmax - $RAMused )); 	echo "$RAMfree MB"
     echo "verwendetes Image:        $dockercontainer"
+    echo "verwendete Parameter:     $ocropt"
 
 # Konfiguration für LogLevel:
 # ---------------------------------------------------------------------
@@ -128,7 +129,7 @@ fi
 # leere Logs löschen:
 for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # Auflistung aller LOG-Dateien
     do
-        if [ $( cat "${LOGDIR}$i" | tail -n7 | head -n4 | wc -c ) -le 15 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
+        if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
         #    if [ -z "$TRASHDIR" ] ; then 
                 rm "${LOGDIR}$i"
         #    else
@@ -159,7 +160,7 @@ cal_scan()
 #########################################################################################
     
 IFS=$'\012'	 # entspricht einem $'\n' Newline
-for input in $(find "${INPUTDIR}" -maxdepth 1 -name "${SearchPraefix}*.pdf" -type f) #  -mmin +"$timediff"
+for input in $(find "${INPUTDIR}" -maxdepth 1 -name "${SearchPraefix}*.pdf" -o -name "${SearchPraefix}*.PDF" -type f) #  -mmin +"$timediff"
 	do	
 		IFS=$OLDIFS
 		echo -e
@@ -194,7 +195,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -name "${SearchPraefix}*.pdf" -typ
         echo -e
 
     # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter:
-        if [ $(ls -s "$output" | awk '{ print $1 }') -eq 0 ] || [ ! -f "$output" ];then 
+#        if [ $(ls -s "$output" | awk '{ print $1 }') -eq 0 ] || [ ! -f "$output" ];then 
+        if [ $(stat -c %s "$output") -lt 10 ] || [ ! -f "$output" ];then
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
             rm "$output"
             continue
@@ -225,7 +227,50 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -name "${SearchPraefix}*.pdf" -typ
         return # under construction!
         
         # Text exrahieren und Datum suchen
+        if [ -d "/tmp/synOCR" ]; then
+        	rm -r /tmp/synOCR
+        fi
+        searchfile="/tmp/synOCR/synOCR.txt"
+        mkdir /tmp/synOCR
+        /bin/pdftotext -layout -l 1 "$output" "$searchfile"
 
+
+        
+        
+        cp "$searchfile" "${OUTPUTDIR}${RenamePraefix}${title} ($count).txt"
+
+
+return
+
+        # /volume1/homes/admin/Drive/SCANNER/_OUTPUT/test.txt
+        #            if (preg_match("/(0\d|1[012]|\d)[-.\/](31|30|[012]\d|\d)[-.\/](20[0-9][0-9])/", $line, $matches)) { // mm.dd.20yy
+
+
+
+
+        cat "/volume1/homes/admin/Drive/SCANNER/_OUTPUT/test.txt" | egrep -o "[0-9]\{1,2\}[.\-]\?[0-9]\{1,2\}[.\-]\?20[0-9]\{1,2\}" | head -n1
+        
+        
+        
+        
+        #[0-9]\{1,2\}[.\-]\?[0-9]\{1,2\}[.\-]\?20[0-9]\{1,2\}
+        
+        #        SuggestedMovieName=`cat "$tmp/$CUTLIST" | grep "SuggestedMovieName=" | sed "s/SuggestedMovieName\=//g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}[ _][0-9]\{2\}[\-][0-9]\{2\}/Datum_Zeit/g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}/Datum/g;s/_/ /g" | /usr/bin/tr -d "\r" ` #| awk -F. '{print $1}'` # Datum, Zeit im OTR-Format und Unterstriche werden entfernt
+        #        usercomment=`cat "$tmp/$CUTLIST" | grep "usercomment=" | sed "s/usercomment\=//g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}[ _][0-9]\{2\}[\-][0-9]\{2\}/Datum_Zeit/g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}/Datum/g;s/_/ /g" | /usr/bin/tr -d "\r" ` #| awk -F. '{print $1}'`
+        
+        #        if echo "$SuggestedMovieName" | grep -q "[sST]\?[0-9]\{1,2\}[.\-xX]\?[eE]\?[0-9]\{1,2\}" ; then  # [[:space:]]  # S01E01 / S01.E01 / 01-01 / 01x01 / teilweise ohne führende Null
+        #            #CL_serieninfo=$(parseRegex "$SuggestedMovieName" ".[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)    # head -n1: nur der erste Fund im String wird verwendet
+        #            CL_serieninfo=$(echo "$SuggestedMovieName" | egrep -o "[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)
+        #            CL_serieninfo_season=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $1}')
+        #            CL_serieninfo_episode=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $2}')
+        #            CL_serieninfofound=1
+        #        elif echo "$usercomment" | grep -q "[sST]\?[0-9]\{1,2\}[.\-xX]\?[eE]\?[0-9]\{1,2\}" ; then 
+        #            #CL_serieninfo=$(parseRegex "$usercomment" "[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)
+        #            CL_serieninfo=$(echo "$usercomment" | egrep -o "[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)
+        #            CL_serieninfo_season=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $1}')
+        #            CL_serieninfo_episode=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $2}')
+        #            CL_serieninfofound=1
+        #        fi
         }
 
         findDate
@@ -261,7 +306,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -name "${SearchPraefix}*.pdf" -typ
                 echo "$PB_LOG" | jq -r '.error_code'
             fi
         else
-            echo "        (PushBullet-TOKEN nicht gesetzt)"
+            echo "                          (PushBullet-TOKEN nicht gesetzt)"
         fi
     #    wget --timeout=30 --tries=2 -q -O - "http://${synocrdomain}/synOCR/synOCR_FILECOUNT" >/dev/null 2>&1
         echo "                      --> (Laufzeit: $(( $(date +%s) - $date_start )) Sekunden)"
@@ -284,6 +329,3 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -name "${SearchPraefix}*.pdf" -typ
 	echo -e; echo -e
 	
 exit 0
-
-
-
