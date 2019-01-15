@@ -156,7 +156,8 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
     			    <p>&nbsp;</p>
     			    <div class="title">Zeitplan einrichten</div>
         			<div class="info">
-        			<h3>&raquo; 1. Wie oft soll synOCR pro Tag (pro Woche) ausgeführt werden?</h3>
+        			<h3>&raquo; 1. Wie oft soll synOCR pro Tag (pro Woche) ausgeführt werden?<br>
+        			<span style="color: #BD0010;">INFO: Der DSM-Sicherheitsbereater wird den zusätzlichen Croneintrag (da für DSM unbekannt) bemängeln!</span></h3>
             			<div>
                 			<div>
                 			<input class="left" type="radio" id="radio-one" name="timer_times" value="one" '${checked_one:+checked}' '${disable_times:+disabled}'/>
