@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ -d "/tmp/synOCR" ] && [ -d "/usr/syno/synoman/webman/3rdparty/synOCR" ]; then
-    cp -rf /tmp/synOTR/* /usr/syno/synoman/webman/3rdparty/synOTR/etc
+    cp -rf /tmp/synOCR/* /usr/syno/synoman/webman/3rdparty/synOCR/etc
     
     # Konfiguration um neue Variablen ergänzen:
     /usr/syno/synoman/webman/3rdparty/synOCR/upgradeconfig.sh
