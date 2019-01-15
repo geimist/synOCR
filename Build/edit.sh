@@ -232,11 +232,11 @@ if [[ "$page" == "edit" ]]; then
 		<a class="helpbox" href="#HELP">
 			<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
 			<span>Hier können individuelle Parameter für OCRmyPDF angegeben werden<br><br>
-            -s 	PDF-Dateien mit vorhandenem Textlayer nicht erneut OCRen<br>
-            --force-ocr 	erneutes OCRen erzwingen<br>
-            -r	automatisches drehen von Seiten<br>
-            -l	Sprache (deu,enu,...)<br>
-            -d  schiefe Scans entzerren<br></span></a>
+            -s            PDF-Dateien mit vorhandenem Textlayer nicht erneut OCRen<br>
+            --force-ocr   erneutes OCRen erzwingen<br>
+            -r            automatisches drehen von Seiten<br>
+            -l            Sprache (deu,enu,...)<br>
+            -d            schiefe Scans entzerren<br></span></a>
 		</p>'	
 		
 	# SearchPraefix
