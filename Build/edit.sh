@@ -1,6 +1,7 @@
 #!/bin/bash
 # edit.sh
 
+
 if [[ "$page" == "edit-save" ]]; then
 	"$set_var" "$dir/etc/Konfiguration.txt" "INPUTDIR" "$INPUTDIR"
 	"$set_var" "$dir/etc/Konfiguration.txt" "OUTPUTDIR" "$OUTPUTDIR"
@@ -8,6 +9,7 @@ if [[ "$page" == "edit-save" ]]; then
 	"$set_var" "$dir/etc/Konfiguration.txt" "LOGmax" "$LOGmax"
 	"$set_var" "$dir/etc/Konfiguration.txt" "LOGDIR" "$LOGDIR"
 	"$set_var" "$dir/etc/Konfiguration.txt" "SearchPraefix" "$SearchPraefix"
+	"$set_var" "$dir/etc/Konfiguration.txt" "delSearchPraefix" "$delSearchPraefix"
 	"$set_var" "$dir/etc/Konfiguration.txt" "RenamePraefix" "$RenamePraefix"
 	"$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
 	"$set_var" "$dir/etc/Konfiguration.txt" "PBTOKEN" "$PBTOKEN"
@@ -46,6 +48,7 @@ if [[ "$page" == "edit-import-query" ]] || [[ "$page" == "edit-import" ]]; then
             	"$set_var" "$dir/etc/Konfiguration.txt" "LOGmax" "$LOGmax"
             	"$set_var" "$dir/etc/Konfiguration.txt" "LOGDIR" "$LOGDIR"
             	"$set_var" "$dir/etc/Konfiguration.txt" "SearchPraefix" "$SearchPraefix"
+            	"$set_var" "$dir/etc/Konfiguration.txt" "delSearchPraefix" "$delSearchPraefix"
             	"$set_var" "$dir/etc/Konfiguration.txt" "RenamePraefix" "$RenamePraefix"
             	"$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
             	"$set_var" "$dir/etc/Konfiguration.txt" "PBTOKEN" "$PBTOKEN"
@@ -253,7 +256,30 @@ if [[ "$page" == "edit" ]]; then
 			<span>Nur PDFs mit definiertem Präfix bearbeiten (z.B. "SCAN_")<br></span></a>
 		</p>'
 		
-	# SearchPraefix
+	# delSearchPraefix
+	echo '
+		<p>
+		<label><span style="color: #FFFFFF;">.</span></label>
+		<select name="delSearchPraefix">'
+		if [[ "$delSearchPraefix" == "no" ]]; then
+			echo '<option value="no" selected>Suchpräfix erhalten</option>'
+		else
+			echo '<option value="no">Suchpräfix erhalten</option>'
+		fi
+		if [[ "$delSearchPraefix" == "yes" ]]; then
+			echo '<option value="yes" selected>Suchpräfix entfernen</option>'
+		else
+			echo '<option value="yes">Suchpräfix entfernen</option>'
+		fi
+	echo '
+		</select>
+		<a class="helpbox" href="#HELP">
+			<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+			<span>Soll der Suchpräfix im Anschluss entfernt werden?<br>
+			Nur so und in Verbindung mit einem Suchpräfix kann der Quellordner auch gleichzeitig der Zielordner sein!</span></a>
+		</p>'
+		
+	# OCR Rename-Präfix
 	echo '
 		<p>
 		<label>OCR Rename-Präfix</label>'
@@ -374,8 +400,9 @@ if [[ "$page" == "edit" ]]; then
 		</select>
 		<a class="helpbox" href="#HELP">
 			<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-			<span>Ein kurzer Piep, sobald ein File fertig bearbeitet wurde.</span></a>
+			<span>Ein kurzer Piep, sobald ein Film fertig bearbeitet wurde.</span></a>
 		</p>'
+		
 	# LOGlevel
 	echo '
 		<p>
