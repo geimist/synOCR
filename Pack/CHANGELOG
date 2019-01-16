@@ -4,12 +4,10 @@ Release Notes
     IMPLEMENTIERUNGEN:
  -  Dateisuche ist jetzt case insensetive (Suchpräfix / .pdf .PDF)
  -  Suchpräfix kann nur automatisch entfernt werden lassen
- -  
     BUGFIXES:
  -  leere LOGs wurden z.T. nicht korrekt gelöscht
  -  bei einem OCRmyPDF Error wurde das Skript z.T. nicht korrekt abgebrochen
  -  kleinere Korrekturen
- -  
 
 0.9.2 (RELEASE)
  -  This is the initial public release of the package
