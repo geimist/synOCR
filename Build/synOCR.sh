@@ -9,7 +9,7 @@
 	echo -e
 	
     CLIENTVERSION=`get_key_value /var/packages/synOCR/INFO version`
-	DevChannel="BETA"    # Release
+    DevChannel="BETA"    # Release
     
 # ---------------------------------------------------------------------------------
 # 			GRUNDKONFIGRUATIONEN / INDIVIDUELLE ANPASSUNGEN	/ Standardwerte	      |	  
@@ -55,7 +55,8 @@
 #	echo -n "                          RAM verfügbar:      "; RAMfree=$(( $RAMmax - $RAMused )); 	echo "$RAMfree MB"
     echo "verwendetes Image:        $dockercontainer"
     echo "verwendete Parameter:     $ocropt"
-
+    echo "ersetze Suchpräfix:       $delSearchPraefix"
+    
 # Konfiguration für LogLevel:
 # ---------------------------------------------------------------------
 	# LOGlevel:		0 => Logging inaktiv / 1 => normal / 2 => erweitert
@@ -129,6 +130,7 @@ fi
 # leere Logs löschen:
 for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # Auflistung aller LOG-Dateien
     do
+        # if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
         if [ $( cat "${LOGDIR}$i" | sed -n "/Funktionsaufrufe/,/synOCR ENDE/p" | wc -c ) -eq 160 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
         #    if [ -z "$TRASHDIR" ] ; then 
                 rm "${LOGDIR}$i"
@@ -171,13 +173,18 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 		date_start=$(date +%s)
 
 	# Zieldateiname erstellen (berücksichtigt gleichnamige vorhandene Dateien):
+	    if [ $delSearchPraefix = "yes" ] ; then
+	        title=$( echo ${title} | sed s/${SearchPraefix}//I )
+	    fi
+
 		destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${RenamePraefix}${title}.*" | wc -l)
 		if [ $destfilecount -eq 0 ]; then
-		    output="${OUTPUTDIR}${RenamePraefix}${filename}"
+		    output="${OUTPUTDIR}${RenamePraefix}${title}.pdf"
 		else
 		    count=$( expr $destfilecount + 1 )
 		    output="${OUTPUTDIR}${RenamePraefix}${title} ($count).pdf"
 		fi
+        echo "                      --> Zieldatei: ${output}"
 
     # OCRmyPDF:
         OCRmyPDF()
@@ -190,13 +197,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         sleep 1
 
         echo -e
-        echo "OCRmyPDF-LOG:"
+        echo ">>>> OCRmyPDF-LOG >>>>"
         echo "$dockerlog"
+        echo "<<<< OCRmyPDF-LOG-ENDE <<<<"
         echo -e
 
     # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter:
 #        if [ $(ls -s "$output" | awk '{ print $1 }') -eq 0 ] || [ ! -f "$output" ];then 
-        if [ $(stat -c %s "$output") -lt 10 ] || [ ! -f "$output" ];then
+        if [ $(stat -c %s "$output") -eq 0 ] || [ ! -f "$output" ];then
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
             rm "$output"
             continue
@@ -215,7 +223,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     		else
     		    count=$( expr $sourcefilecount + 1 )
     		    mv "$input" "${BACKUPDIR}${title} ($count).pdf"
-    		    echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${title} ($count).pdf"
+    		    echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename%.*} ($count).pdf"
     		fi
     	else
     	    rm "$input"
@@ -234,6 +242,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         mkdir /tmp/synOCR
         /bin/pdftotext -layout -l 1 "$output" "$searchfile"
 
+    #    /bin/pdftotext -layout -l 1 "/volume1/homes/admin/Drive/SCANNER/_INPUT/SCAN_testdatei1.pdf" "/volume1/homes/admin/Drive/SCANNER/_INPUT/SCAN_testdatei1.pdf.txt"
 
         
         
@@ -329,3 +338,6 @@ return
 	echo -e; echo -e
 	
 exit 0
+
+
+
