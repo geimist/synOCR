@@ -18,9 +18,8 @@
     
     # Prüfe die Konfiguration.txt auf fehlende Parameter:
     # ---------------------------------------------------------------------
-    # allgemeine Parameter:
-#    	if ! cat ./$CONFIG | grep -q "dsmtextnotify" ; then
-#    	    echo "dsmtextnotify=\"on\"" >> ./$CONFIG
-#        fi
+    	if ! cat ./$CONFIG | grep -q "delSearchPraefix" ; then
+    	    echo "delSearchPraefix=\"no\"" >> ./$CONFIG
+        fi
 
 exit 0
