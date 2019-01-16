@@ -3,6 +3,7 @@ Release Notes
 0.9.3 (RELEASE)
     IMPLEMENTIERUNGEN:
  -  Dateisuche ist jetzt case insensetive (Suchpräfix / .pdf .PDF)
+ -  Suchpräfix kann nur automatisch entfernt werden lassen
  -  
     BUGFIXES:
  -  leere LOGs wurden z.T. nicht korrekt gelöscht
