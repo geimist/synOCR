@@ -230,60 +230,6 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     		echo "                      --> lösche Quelldatei"
         fi
 
-        findDate()
-        {        
-        return # under construction!
-        
-        # Text exrahieren und Datum suchen
-        if [ -d "/tmp/synOCR" ]; then
-        	rm -r /tmp/synOCR
-        fi
-        searchfile="/tmp/synOCR/synOCR.txt"
-        mkdir /tmp/synOCR
-        /bin/pdftotext -layout -l 1 "$output" "$searchfile"
-
-    #    /bin/pdftotext -layout -l 1 "/volume1/homes/admin/Drive/SCANNER/_INPUT/SCAN_testdatei1.pdf" "/volume1/homes/admin/Drive/SCANNER/_INPUT/SCAN_testdatei1.pdf.txt"
-
-        
-        
-        cp "$searchfile" "${OUTPUTDIR}${RenamePraefix}${title} ($count).txt"
-
-
-return
-
-        # /volume1/homes/admin/Drive/SCANNER/_OUTPUT/test.txt
-        #            if (preg_match("/(0\d|1[012]|\d)[-.\/](31|30|[012]\d|\d)[-.\/](20[0-9][0-9])/", $line, $matches)) { // mm.dd.20yy
-
-
-
-
-        cat "/volume1/homes/admin/Drive/SCANNER/_OUTPUT/test.txt" | egrep -o "[0-9]\{1,2\}[.\-]\?[0-9]\{1,2\}[.\-]\?20[0-9]\{1,2\}" | head -n1
-        
-        
-        
-        
-        #[0-9]\{1,2\}[.\-]\?[0-9]\{1,2\}[.\-]\?20[0-9]\{1,2\}
-        
-        #        SuggestedMovieName=`cat "$tmp/$CUTLIST" | grep "SuggestedMovieName=" | sed "s/SuggestedMovieName\=//g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}[ _][0-9]\{2\}[\-][0-9]\{2\}/Datum_Zeit/g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}/Datum/g;s/_/ /g" | /usr/bin/tr -d "\r" ` #| awk -F. '{print $1}'` # Datum, Zeit im OTR-Format und Unterstriche werden entfernt
-        #        usercomment=`cat "$tmp/$CUTLIST" | grep "usercomment=" | sed "s/usercomment\=//g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}[ _][0-9]\{2\}[\-][0-9]\{2\}/Datum_Zeit/g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}/Datum/g;s/_/ /g" | /usr/bin/tr -d "\r" ` #| awk -F. '{print $1}'`
-        
-        #        if echo "$SuggestedMovieName" | grep -q "[sST]\?[0-9]\{1,2\}[.\-xX]\?[eE]\?[0-9]\{1,2\}" ; then  # [[:space:]]  # S01E01 / S01.E01 / 01-01 / 01x01 / teilweise ohne führende Null
-        #            #CL_serieninfo=$(parseRegex "$SuggestedMovieName" ".[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)    # head -n1: nur der erste Fund im String wird verwendet
-        #            CL_serieninfo=$(echo "$SuggestedMovieName" | egrep -o "[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)
-        #            CL_serieninfo_season=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $1}')
-        #            CL_serieninfo_episode=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $2}')
-        #            CL_serieninfofound=1
-        #        elif echo "$usercomment" | grep -q "[sST]\?[0-9]\{1,2\}[.\-xX]\?[eE]\?[0-9]\{1,2\}" ; then 
-        #            #CL_serieninfo=$(parseRegex "$usercomment" "[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)
-        #            CL_serieninfo=$(echo "$usercomment" | egrep -o "[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)
-        #            CL_serieninfo_season=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $1}')
-        #            CL_serieninfo_episode=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $2}')
-        #            CL_serieninfofound=1
-        #        fi
-        }
-
-        findDate
-
     # Dateizähler:
         if [ ! -f ./etc/counter ] ; then
             touch ./etc/counter
