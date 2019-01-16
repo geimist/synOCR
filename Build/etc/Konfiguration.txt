@@ -19,6 +19,6 @@ ocropt="-srd -l deu"
 #    ocrmypdf options - https://www.heise.de/ct/artikel/Toolbox-Texterkennung-mit-OCRmyPDF-2356670.html
 #    -s           don't OCR pages with text again
 #    --force-ocr  erneutes OCRen erzwingen
-#    -r	          automatically rotate pages based on detected text orientation
-#    -l	          language (deu,enu,...)
+#    -r           automatically rotate pages based on detected text orientation
+#    -l           language (deu,enu,...)
 #    -d           ist ein Scan schief und krumm, kann OCRmyPDF auf das Tool unpaper zurückgreifen, um das Dokument zu entzerren
