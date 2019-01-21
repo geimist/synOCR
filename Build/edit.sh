@@ -10,14 +10,16 @@ if [[ "$page" == "edit-save" ]]; then
 	"$set_var" "$dir/etc/Konfiguration.txt" "LOGDIR" "$LOGDIR"
 	"$set_var" "$dir/etc/Konfiguration.txt" "SearchPraefix" "$SearchPraefix"
 	"$set_var" "$dir/etc/Konfiguration.txt" "delSearchPraefix" "$delSearchPraefix"
-	"$set_var" "$dir/etc/Konfiguration.txt" "RenamePraefix" "$RenamePraefix"
+	"$set_var" "$dir/etc/Konfiguration.txt" "taglist" "$taglist"
+	"$set_var" "$dir/etc/Konfiguration.txt" "moveTaggedFiles" "$moveTaggedFiles"
+	"$set_var" "$dir/etc/Konfiguration.txt" "NameSyntax" "$NameSyntax"
 	"$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
 	"$set_var" "$dir/etc/Konfiguration.txt" "PBTOKEN" "$PBTOKEN"
 	"$set_var" "$dir/etc/Konfiguration.txt" "dsmtextnotify" "$dsmtextnotify"
 	"$set_var" "$dir/etc/Konfiguration.txt" "MessageTo" "$MessageTo"
 	"$set_var" "$dir/etc/Konfiguration.txt" "dsmbeepnotify" "$dsmbeepnotify"
 	"$set_var" "$dir/etc/Konfiguration.txt" "loglevel" "$loglevel"
-
+	
 	echo '<div class="Content_1Col_full">'
 	echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Änderungen wurden gespeichert</p><br /></div>'
 	echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
@@ -49,7 +51,9 @@ if [[ "$page" == "edit-import-query" ]] || [[ "$page" == "edit-import" ]]; then
             	"$set_var" "$dir/etc/Konfiguration.txt" "LOGDIR" "$LOGDIR"
             	"$set_var" "$dir/etc/Konfiguration.txt" "SearchPraefix" "$SearchPraefix"
             	"$set_var" "$dir/etc/Konfiguration.txt" "delSearchPraefix" "$delSearchPraefix"
-            	"$set_var" "$dir/etc/Konfiguration.txt" "RenamePraefix" "$RenamePraefix"
+            	"$set_var" "$dir/etc/Konfiguration.txt" "taglist" "$taglist"
+	            "$set_var" "$dir/etc/Konfiguration.txt" "moveTaggedFiles" "$moveTaggedFiles"
+            	"$set_var" "$dir/etc/Konfiguration.txt" "NameSyntax" "$NameSyntax"
             	"$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
             	"$set_var" "$dir/etc/Konfiguration.txt" "PBTOKEN" "$PBTOKEN"
             	"$set_var" "$dir/etc/Konfiguration.txt" "dsmtextnotify" "$dsmtextnotify"
@@ -217,7 +221,7 @@ if [[ "$page" == "edit" ]]; then
 	<br />
 	<details><p>
     <summary>
-        <span class="detailsitem">OCR Optionen</span>
+        <span class="detailsitem">OCR Optionen und Umbenennung</span>
     </summary></p>
     <p>'
     
@@ -279,26 +283,86 @@ if [[ "$page" == "edit" ]]; then
 			Nur so und in Verbindung mit einem Suchpräfix kann der Quellordner auch gleichzeitig der Zielordner sein!</span></a>
 		</p>'
 		
-	# OCR Rename-Präfix
+	# Taglist
 	echo '
 		<p>
-		<label>OCR Rename-Präfix</label>'
-		if [ -n "$RenamePraefix" ]; then
-			echo '<input type="text" name="RenamePraefix" value="'$RenamePraefix'" />'
+		<label>zu suchende Tags</label>'
+		if [ -n "$taglist" ]; then
+			echo '<input type="text" name="taglist" value="'$taglist'" />'
 		else
-			echo '<input type="text" name="RenamePraefix" value="" />'
+			echo '<input type="text" name="taglist" value="" />'
 		fi
 	echo '
 		<a class="helpbox" href="#HELP">
 			<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-			<span>Fertige PDFs um definiertem Präfix erweitern (z.B. "OCR_")<br></span></a>
+			<span>Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung.
+			Tags sollten aus einzelnen Wörtern bestehen und durch Semikolon getrennt werden.<br><br>
+			z.B.: <b>Rechnung;Arbeit;Versicherung</b><br>
+			<br>
+			Tags können auch durch ein Gleichheitszeichen einer Kategorie (für Unterordner) zugeordnet werden 
+			(greift nur, sofern man auch die Kategorieordner  [nachstehende Option] verwendet).<br><br>
+			z.B.: <b>Rechnung;HUK24=Versicherung;Allianz=Versicherung</b><br>
+			<br>
+			<br></span></a>
+		</p>'
+		
+	# moveTaggedFiles
+	echo '
+		<p>
+		<label><span style="color: #FFFFFF;">Tag-Unterverzeichnisse nutzen</span></label>
+		<select name="moveTaggedFiles">'
+		if [[ "$moveTaggedFiles" == "no" ]]; then
+			echo '<option value="no" selected>im Zielordner behalten</option>'
+		else
+			echo '<option value="no">im Zielordner behalten</option>'
+		fi
+		if [[ "$moveTaggedFiles" == "yes" ]]; then
+			echo '<option value="yes" selected>Ziel-PDF nach Tag-Ordner einsortieren</option>'
+		else
+			echo '<option value="yes">Ziel-PDF nach Tag-Ordner einsortieren</option>'
+		fi
+	echo '
+		</select>
+		<a class="helpbox" href="#HELP">
+			<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+			<span>Sollen Tag-Unterverzeichnisse genutzt werden?<br>
+			Bei mehreren zutreffenden Tags werden Hardlinks gesetzt.</span></a>
+		</p>'
+		
+	# OCR Rename-Syntax
+	echo '
+		<p>
+		<label>OCR Rename-Syntax</label>'
+		if [ -n "$NameSyntax" ]; then
+			echo '<input type="text" name="NameSyntax" value="'$NameSyntax'" />'
+		else
+			echo '<input type="text" name="NameSyntax" value="" />'
+		fi
+	echo '
+		<a class="helpbox" href="#HELP">
+			<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+			<span>Fertige PDFs mit einer Bestimmten Syntax umbenennen.<br><br>
+			Folgende Variablen sind in Kombination mit Fließtext möglich<br>
+			(Sonderzeichen können unvorhersehbare Folgen haben!):<br>
+			<b>§d</b> (Datum / Tag)<br>
+			<b>§m</b> (Datum / Monat)<br>
+			<b>§y</b> (Datum / Jahr)<br>
+			<b>§tag</b> (gefundene, oben angegebene Taggs)<br>
+			<b>§tit</b> (Titel der Originaldatei)<br>
+			<br>
+			>><b>§y-§m-§d_§tag_§tit</b><< erzeugt z.B. >><b>2018-12-09_#Rechnung_00376.pdf</b><<<br>
+			<br>
+			Datumsangaben werden zuerst im Dokument gesucht. Wenn erfolglos, wird das Dateidatum verwendet.<br>
+			<br>
+			<br>
+			<br>
+			<br></span></a>
 		</p>'
 
 	echo '
     </details>
 	    </fieldset>
 	</p>'
-
 
 	# -> Abschnitt DSM-Benachrichtigung und sonstige Einstellungen
 	echo '<fieldset>
