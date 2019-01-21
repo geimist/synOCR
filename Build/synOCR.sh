@@ -3,53 +3,53 @@
 
 ###################################################################################
 
-	echo "    -----------------------------------"
-	echo "    |    ==> Installationsinfo <==    |"
-	echo "    -----------------------------------"
-	echo -e
-	
+    echo "    -----------------------------------"
+    echo "    |    ==> Installationsinfo <==    |"
+    echo "    -----------------------------------"
+    echo -e
+    
     CLIENTVERSION=`get_key_value /var/packages/synOCR/INFO version`
     DevChannel="BETA"    # Release
     
 # ---------------------------------------------------------------------------------
-# 			GRUNDKONFIGRUATIONEN / INDIVIDUELLE ANPASSUNGEN	/ Standardwerte	      |	  
+#           GRUNDKONFIGRUATIONEN / INDIVIDUELLE ANPASSUNGEN	/ Standardwerte	      |
 #           (alle Werte können durch setzen in der Konfiguration.txt              |
 #           überschrieben werden)                                                 |
 # ---------------------------------------------------------------------------------
-	synocrdomain="geimist.eu"   # notwendig für Update, Konsitenzprüfung, DEV-Report und evtl. in Zukunft zum abfragen der API-Keys
-	niceness=15                 # Die Priorität liegt im Bereich von -20 bis +19 (in ganzzahligen Schritten), wobei -20 die höchste Priorität (=meiste Rechenleistung) und 19 die niedrigste Priorität (=geringste Rechenleistung) ist. Die Standardpriorität ist 0. AUF NEGATIVE WERTE SOLLTE UNBEDINGT VERZICHTET WERDEN!
+    synocrdomain="geimist.eu"   # notwendig für Update, Konsitenzprüfung, DEV-Report und evtl. in Zukunft zum abfragen der API-Keys
+    niceness=15                 # Die Priorität liegt im Bereich von -20 bis +19 (in ganzzahligen Schritten), wobei -20 die höchste Priorität (=meiste Rechenleistung) und 19 die niedrigste Priorität (=geringste Rechenleistung) ist. Die Standardpriorität ist 0. AUF NEGATIVE WERTE SOLLTE UNBEDINGT VERZICHTET WERDEN!
 
 # an welchen User/Gruppe soll die DSM-Benachrichtigung gesendet werden :
 # ---------------------------------------------------------------------
-	synOCR_user=`whoami`; echo "synOCR-User:              $synOCR_user"
+    synOCR_user=`whoami`; echo "synOCR-User:              $synOCR_user"
     if cat /etc/group | grep administrators | grep -q "$synOCR_user"; then
         isAdmin=yes
     else
         isAdmin=no
     fi
-	MessageTo="@administrators"	# Administratoren (Standardeinstellung)
-	#MessageTo="$synOTR_user"	# User, welche synOTR aufgerufen hat (funktioniert natürlich nicht bei root, da root kein DSM-GUI-LogIn hat und die Message ins leere läuft)
+    MessageTo="@administrators"	# Administratoren (Standardeinstellung)
+    #MessageTo="$synOTR_user"	# User, welche synOTR aufgerufen hat (funktioniert natürlich nicht bei root, da root kein DSM-GUI-LogIn hat und die Message ins leere läuft)
 
 # Arbeitsverzeichnis auslesen und hineinwechseln:
 # ---------------------------------------------------------------------
-	OLDIFS=$IFS	                # ursprünglichen Fieldseparator sichern
-	APPDIR=$(cd $(dirname $0);pwd)
-	cd ${APPDIR}
-	
+    OLDIFS=$IFS	                # ursprünglichen Fieldseparator sichern
+    APPDIR=$(cd $(dirname $0);pwd)
+    cd ${APPDIR}
+    
 # Konfigurationsdatei einbinden:
 # ---------------------------------------------------------------------
-	CONFIG=etc/Konfiguration.txt
-	. ./$CONFIG
+    CONFIG=etc/Konfiguration.txt
+    . ./$CONFIG
 
 # Systeminformation / LIBRARY_PATH anpassen / PATH anpassen:
 # --------------------------------------------------------------------- 
-	echo "synOCR-Version:           $CLIENTVERSION"
-	machinetyp=`uname --machine`; echo "Architektur:              $machinetyp"
-	dsmbuild=`uname -v | awk '{print $1}' | sed "s/#//g"`; echo "DSM-Build:                $dsmbuild"
-	read MAC </sys/class/net/eth0/address
-	sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
-	device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
-	# für HD-Aufnahmen mit avcut mindestens 500 MB free:
+    echo "synOCR-Version:           $CLIENTVERSION"
+    machinetyp=`uname --machine`; echo "Architektur:              $machinetyp"
+    dsmbuild=`uname -v | awk '{print $1}' | sed "s/#//g"`; echo "DSM-Build:                $dsmbuild"
+    read MAC </sys/class/net/eth0/address
+    sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
+    device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
+    # für HD-Aufnahmen mit avcut mindestens 500 MB free:
 #	echo -n "                          RAM installiert:    "; RAMmax=`free -m | grep 'Mem:' | awk '{print $2}'`; echo "$RAMmax MB"	    # verbauter RAM
 #	echo -n "                          RAM verwendet:      "; RAMused=`free -m | grep 'Mem:' | awk '{print $3}'`;	echo "$RAMused MB"  # genutzter RAM
 #	echo -n "                          RAM verfügbar:      "; RAMfree=$(( $RAMmax - $RAMused )); 	echo "$RAMfree MB"
@@ -59,48 +59,48 @@
     
 # Konfiguration für LogLevel:
 # ---------------------------------------------------------------------
-	# LOGlevel:		0 => Logging inaktiv / 1 => normal / 2 => erweitert
-	if [ $loglevel = "1" ] ; then
-		echo "Loglevel:                 normal"
+    # LOGlevel:		0 => Logging inaktiv / 1 => normal / 2 => erweitert
+    if [ $loglevel = "1" ] ; then
+    	echo "Loglevel:                 normal"
         cURLloglevel="-s"
         wgetloglevel="-q"
-	elif [ $loglevel = "2" ] ; then
-		echo "Loglevel:                 erweitert"
+    elif [ $loglevel = "2" ] ; then
+    	echo "Loglevel:                 erweitert"
         cURLloglevel="-v"
         wgetloglevel="-v"
-	fi
+    fi
 
 
 # Verzeichnisse prüfen bzw. anlegen und anpassen:
 # ---------------------------------------------------------------------
-	echo "Anwendungsverzeichnis:    ${APPDIR}"
-	
-	# Variablenkorrektur für ältere Konfiguration.txt und Slash anpassen:
+    echo "Anwendungsverzeichnis:    ${APPDIR}"
+    
+    # Variablenkorrektur für ältere Konfiguration.txt und Slash anpassen:
     INPUTDIR="${INPUTDIR%/}/"
     if [ -d "$INPUTDIR" ] ; then
-		echo "Quellverzeichnis:         $INPUTDIR"
-	else
+    	echo "Quellverzeichnis:         $INPUTDIR"
+    else
         echo "Quellverzeichnis ungültig oder nicht gesetzt!"
         exit 1
     fi
-	
+    
     OUTPUTDIR="${OUTPUTDIR%/}/"
 
     BACKUPDIR="${BACKUPDIR%/}/"
-	if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
-		echo "BackUp-Verzeichnis:       $BACKUPDIR"
-		backup=true
-	elif echo "$BACKUPDIR" | grep -q "/volume" ; then
-		mkdir -p "$BACKUPDIR"		
-		echo "BackUp-Verzeichnis wurde erstellt [$BACKUPDIR]"
-		backup=true
-	else
-		echo "Dateien werden sofort gelöscht! / Kein gültiges Verzeichnis [$BACKUPDIR]"
-		backup=false
-	fi
-	
+    if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
+    	echo "BackUp-Verzeichnis:       $BACKUPDIR"
+    	backup=true
+    elif echo "$BACKUPDIR" | grep -q "/volume" ; then
+    	mkdir -p "$BACKUPDIR"		
+    	echo "BackUp-Verzeichnis wurde erstellt [$BACKUPDIR]"
+    	backup=true
+    else
+    	echo "Dateien werden sofort gelöscht! / Kein gültiges Verzeichnis [$BACKUPDIR]"
+    	backup=false
+    fi
+    
     LOGDIR="${LOGDIR%/}/"
-	
+    
 #################################################################################################
 #        _______________________________________________________________________________        #
 #       |                                                                               |       #
@@ -137,7 +137,7 @@ if [ -z $LOGmax ]; then
     echo "purge_LOG deaktiviert"
     return
 fi
-	
+    
 # leere Logs löschen:
 for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # Auflistung aller LOG-Dateien
     do
@@ -174,27 +174,27 @@ cal_scan()
     
 IFS=$'\012'	 # entspricht einem $'\n' Newline
 for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -type f) #  -mmin +"$timediff" -o -name "${SearchPraefix}*.PDF" 
-	do	
-		IFS=$OLDIFS
-		echo -e
-		filename=`basename "$input"`
-		title=${filename%.*}
-		echo -n "    VERARBEITE:       --> $filename"
-		echo " ($(date))"
-		date_start=$(date +%s)
+    do	
+    	IFS=$OLDIFS
+    	echo -e
+    	filename=`basename "$input"`
+    	title=${filename%.*}
+    	echo -n "    VERARBEITE:       --> $filename"
+    	echo " ($(date))"
+    	date_start=$(date +%s)
 
-	# Zieldateiname erstellen (berücksichtigt gleichnamige vorhandene Dateien):
-	    if [ $delSearchPraefix = "yes" ] ; then
-	        title=$( echo ${title} | sed s/${SearchPraefix}//I )
-	    fi
+    # Zieldateiname erstellen (berücksichtigt gleichnamige vorhandene Dateien):
+        if [ $delSearchPraefix = "yes" ] ; then
+            title=$( echo ${title} | sed s/${SearchPraefix}//I )
+        fi
 
-		destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${title}.*" | wc -l)
-		if [ $destfilecount -eq 0 ]; then
-		    output="${OUTPUTDIR}${title}.pdf"
-		else
-		    count=$( expr $destfilecount + 1 )
-		    output="${OUTPUTDIR}${title} ($count).pdf"
-		fi
+    	destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${title}.*" | wc -l)
+    	if [ $destfilecount -eq 0 ]; then
+    	    output="${OUTPUTDIR}${title}.pdf"
+    	else
+    	    count=$( expr $destfilecount + 1 )
+    	    output="${OUTPUTDIR}${title} ($count).pdf"
+    	fi
 
 # echo Zieldatei noch anpassen (später mit Tags und Date)
         echo "                          (temp. Zieldatei: ${output})"
@@ -250,6 +250,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 return
             fi
             renameTag=""
+            renameCat=""
             taglist=$( echo $taglist | sed -e "s/;/ /g" )
             tagarray=( $taglist )   # Tags als Array definieren
             i=0
@@ -261,16 +262,30 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             #     echo $i
             #    done
             while (( i < maxID )); do
-                echo -n "                          Suche nach Tag:   \"${tagarray[$i]}\" => "
-                if grep -qi "${tagarray[$i]}" "$searchfile" ;then
-                    echo "OK"
-                    renameTag="#${tagarray[$i]} ${renameTag}"
+                if echo "${tagarray[$i]}" | grep -q "=" ;then
+                    searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}')
+                    categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}')
+                    echo -n "                          Suche nach Tag:   \"${searchtag}\" => "
+                    if grep -qi "${searchtag}" "$searchfile" ;then
+                        echo "OK (Cat: \"${categorietag}\")"
+                        renameTag="#${searchtag} ${renameTag}"
+                        renameCat="${categorietag} ${renameCat}"
+                    else
+                        echo "-"
+                    fi
                 else
-                    echo "-"
+                    echo -n "                          Suche nach Tag:   \"${tagarray[$i]}\" => "
+                    if grep -qi "${tagarray[$i]}" "$searchfile" ;then
+                        echo "OK"
+                        renameTag="#${tagarray[$i]} ${renameTag}"
+                    else
+                        echo "-"
+                    fi
                 fi
                 i=$((i + 1))
             done
             renameTag=${renameTag% }
+            renameCat=${renameCat% }
             echo "                          renameTag lautet: \"$renameTag\""
             }
             tagsearch
@@ -366,7 +381,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         rename() 
         {
         # Zieldatei umbenennen:
-        outputold=${output}
+        outputtmp=${output}
         if [ ! -z "$NameSyntax" ]; then
             NewName="$NameSyntax"
             NewName=`echo $NewName | sed "s/§d/${date_dd}/g"`
@@ -374,9 +389,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             NewName=`echo $NewName | sed "s/§y/${date_yy}/g"`
             NewName=`echo $NewName | sed "s/§tag/${renameTag}/g"`
             NewName=`echo $NewName | sed "s/§tit/${title}/g"`
-            
+
             if [ ! -z "$renameTag" ] && [ $moveTaggedFiles = yes ]; then
                 echo "                      --> verschiebe in Tagverzeichnisse"
+                if [ ! -z "$renameCat" ]; then
+                    renameTag="$renameCat"  # verwende Categorie-Tags für Ordner
+                fi
                 renameTag=$( echo $renameTag | sed -e "s/#//g" )
                 tagarray=( $renameTag )   # Tags als Array definieren
                 i=0
@@ -385,7 +403,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 #     echo $i
                 #    done
             #    echo "                          benenne um und verschiebe Zieldatei"
-            #    echo "                          von:    $(basename "${outputold}")"
+            #    echo "                          von:    $(basename "${outputtmp}")"
                 while (( i < maxID )); do
                     echo -n "                          Tag-Ordner \"${tagarray[$i]}\" vorhanden? => "
                     if [ -d "${OUTPUTDIR}${tagarray[$i]}" ] ;then
@@ -402,11 +420,11 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             		    output="${OUTPUTDIR}${tagarray[$i]}/${NewName} ($count).pdf"
             		fi
                     echo "                          Ziel:   ./${tagarray[$i]}/$(basename "${output}")"
-                    cp -l "${outputold}" "${output}"
+                    cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
                 done
                 echo "                          lösche temp. Zieldatei"
-                rm "${outputold}"
+                rm "${outputtmp}"
             else
         		destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${NewName}.*" | wc -l)
         		if [ $destfilecount -eq 0 ]; then
@@ -416,9 +434,9 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         		    output="${OUTPUTDIR}${NewName} ($count).pdf"
         		fi
                 echo "                          Umbenennung ursprüngliche Zieldatei"
-                echo "                          von:    $(basename "${outputold}")"
+                echo "                          von:    $(basename "${outputtmp}")"
                 echo "                          nach:   $(basename "${output}")"
-                mv "${outputold}" "${output}"
+                mv "${outputtmp}" "${output}"
             fi
         fi
         }
@@ -484,14 +502,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 #       |                           AUFRUF DER FUNKTIONEN                               |
 #       |_______________________________________________________________________________|
 
-	echo -e; echo -e
-	echo "    ----------------------------------"
-	echo "    |    ==> Funktionsaufrufe <==    |"
-	echo "    ----------------------------------"
-	
-	cal_scan
-	purge_LOG
-	
-	echo -e; echo -e
-	
+    echo -e; echo -e
+    echo "    ----------------------------------"
+    echo "    |    ==> Funktionsaufrufe <==    |"
+    echo "    ----------------------------------"
+    
+    cal_scan
+    purge_LOG
+    
+    echo -e; echo -e
+    
 exit 0
