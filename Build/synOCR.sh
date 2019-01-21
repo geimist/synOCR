@@ -85,13 +85,7 @@
     fi
 	
     OUTPUTDIR="${OUTPUTDIR%/}/"
-	if [ -d "$OUTPUTDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
-		echo "Zielverzeichnis:          $OUTPUTDIR"
-	else
-		mkdir -p "$OUTPUTDIR"		
-		echo "Zielverzeichnis wurde erstellt [$OUTPUTDIR]"
-	fi
-	
+
     BACKUPDIR="${BACKUPDIR%/}/"
 	if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
 		echo "BackUp-Verzeichnis:       $BACKUPDIR"
@@ -114,6 +108,23 @@
 #       |_______________________________________________________________________________|       #
 #                                                                                               #
 #################################################################################################
+
+
+parseRegex () 
+{
+# In dieser Funktion wird der mit einem regulären Ausdruck beschriebene Teilstring zurückgegeben
+# Aufruf: parseRegex "string" "regex"
+# https://stackoverflow.com/questions/5536018/how-to-print-matched-regex-pattern-using-awk
+# --------------------------------------------------------------
+echo "$1" | awk '{
+    for(i=1; i<=NF; i++) {
+        tmp=match($i, /'"${2}"'/)
+        if(tmp) {
+                print $i
+            }
+        }
+    }'
+}  
 
 
 purge_LOG() 
@@ -177,14 +188,16 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 	        title=$( echo ${title} | sed s/${SearchPraefix}//I )
 	    fi
 
-		destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${RenamePraefix}${title}.*" | wc -l)
+		destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${title}.*" | wc -l)
 		if [ $destfilecount -eq 0 ]; then
-		    output="${OUTPUTDIR}${RenamePraefix}${title}.pdf"
+		    output="${OUTPUTDIR}${title}.pdf"
 		else
 		    count=$( expr $destfilecount + 1 )
-		    output="${OUTPUTDIR}${RenamePraefix}${title} ($count).pdf"
+		    output="${OUTPUTDIR}${title} ($count).pdf"
 		fi
-        echo "                      --> Zieldatei: ${output}"
+
+# echo Zieldatei noch anpassen (später mit Tags und Date)
+        echo "                          (temp. Zieldatei: ${output})"
 
     # OCRmyPDF:
         OCRmyPDF()
@@ -197,13 +210,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         sleep 1
 
         echo -e
-        echo ">>>> OCRmyPDF-LOG >>>>"
-        echo "$dockerlog"
-        echo "<<<< OCRmyPDF-LOG-ENDE <<<<"
+        echo "                      --> OCRmyPDF-LOG:"
+        echo "$dockerlog" | sed -e "s/^/                       /g"
+        echo "                      <-- OCRmyPDF-LOG-END"
         echo -e
 
     # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter:
-#        if [ $(ls -s "$output" | awk '{ print $1 }') -eq 0 ] || [ ! -f "$output" ];then 
         if [ $(stat -c %s "$output") -eq 0 ] || [ ! -f "$output" ];then
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
             rm "$output"
@@ -213,16 +225,214 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # Datei-Attripute übertragen:
         echo "                      --> übertrage die Dateirechte und -besitzer"
         cp --attributes-only -p "$input" "$output"
+        
+    # suche nach Datum und Tags in Dokument:
+        findDate()
+        {
+#        if [ ! umbenennung aktiv? ]; then
+#            return
+#        fi
+
+        # Text exrahieren
+            if [ -d "/tmp/synOCR" ]; then
+            	rm -r /tmp/synOCR
+            fi
+            searchfile="/tmp/synOCR/synOCR.txt" # evtl. nur in Variable schreiben
+            mkdir /tmp/synOCR
+            /bin/pdftotext -layout -l 1 "$output" "$searchfile"
+            content=$(cat "$searchfile" )
+            # cp "$searchfile" ${OUTPUTDIR} # DEV
+            
+        # suche nach Tags:
+            tagsearch() 
+            {
+            if [ -z "$taglist" ]; then
+                return
+            fi
+            renameTag=""
+            taglist=$( echo $taglist | sed -e "s/;/ /g" )
+            tagarray=( $taglist )   # Tags als Array definieren
+            i=0
+            maxID=${#tagarray[*]}
+            echo "                      --> suche Tags und Datum:"
+            echo "                          Tag-Anzahl:       $maxID"
+
+            #    for i in ${meinarray[@]}; do
+            #     echo $i
+            #    done
+            while (( i < maxID )); do
+                echo -n "                          Suche nach Tag:   \"${tagarray[$i]}\" => "
+                if grep -qi "${tagarray[$i]}" "$searchfile" ;then
+                    echo "OK"
+                    renameTag="#${tagarray[$i]} ${renameTag}"
+                else
+                    echo "-"
+                fi
+                i=$((i + 1))
+            done
+            renameTag=${renameTag% }
+            echo "                          renameTag lautet: \"$renameTag\""
+            }
+            tagsearch
+
+        # suche nach Datum:
+            dateIsFound=no
+            # suche Format: dd[./-]mm[./-]yy(yy)
+            founddate=$( parseRegex "$content" "([1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
+            if [ -n $founddate ]; then
+                echo -n "                          prüfe Datum: $founddate"
+                date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
+                date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
+                date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
+                if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
+                    date_yy="20${date_yy}"
+                fi
+                date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+                if [ $? -eq 0 ]; then
+                    echo " --> gültig"
+                    echo "                          Tag:  ${date_dd}"
+                    echo "                          Monat:${date_mm}"
+                    echo "                          Jahr: ${date_yy}"
+                    dateIsFound=yes
+                else
+                    echo " --> ungültiges Format"
+                fi
+                founddate=""
+            fi
+            
+            # suche Format: yy(yy)[./-]mm[./-]dd
+            if [ $dateIsFound = no ]; then
+                founddate=$( parseRegex "$content" "(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-][0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])" | head -n1 )
+                if [ -n $founddate ]; then
+                    echo -n "                          prüfe Datum: $founddate"
+                    date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
+                    date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
+                    date_yy=$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')    
+                    if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
+                        date_yy="20${date_yy}"
+                    fi
+                    date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+                    if [ $? -eq 0 ]; then
+                        echo " --> gültig"
+                        echo "                          Tag:  ${date_dd}"
+                        echo "                          Monat:${date_mm}"
+                        echo "                          Jahr: ${date_yy}"
+                        dateIsFound=yes
+                    else
+                        echo " --> ungültiges Format"
+                    fi
+                    founddate=""
+                fi
+            fi
+
+            # suche Format: mm[./-]dd[./-]yy(yy) amerikanisch
+            if [ $dateIsFound = no ]; then
+                founddate=$( parseRegex "$content" "[0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
+                if [ -n $founddate ]; then
+                    echo -n "                          prüfe Datum: $founddate"
+                    date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
+                    date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
+                    date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
+                    if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
+                        date_yy="20${date_yy}"
+                    fi
+                    date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+                    if [ $? -eq 0 ]; then
+                        echo " --> gültig"
+                        echo "                          Tag:  ${date_dd}"
+                        echo "                          Monat:${date_mm}"
+                        echo "                          Jahr: ${date_yy}"
+                        dateIsFound=yes
+                    else
+                        echo " --> ungültiges Format"
+                    fi
+                    founddate=""
+                fi
+            fi
+            
+            if [ $dateIsFound = no ]; then
+                echo "                          Datum nicht gefunden - verwende Dateidatum:"
+                date_dd=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $3}')
+                date_mm=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $2}')
+                date_yy=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $1}') 
+                echo "                          Tag:  ${date_dd}"
+                echo "                          Monat:${date_mm}"
+                echo "                          Jahr: ${date_yy}"
+            fi
+        }
+        findDate
+
+    # Dateinamen zusammenstellen und umbenennen:
+        rename() 
+        {
+        # Zieldatei umbenennen:
+        outputold=${output}
+        if [ ! -z "$NameSyntax" ]; then
+            NewName="$NameSyntax"
+            NewName=`echo $NewName | sed "s/§d/${date_dd}/g"`
+            NewName=`echo $NewName | sed "s/§m/${date_mm}/g"`
+            NewName=`echo $NewName | sed "s/§y/${date_yy}/g"`
+            NewName=`echo $NewName | sed "s/§tag/${renameTag}/g"`
+            NewName=`echo $NewName | sed "s/§tit/${title}/g"`
+            
+            if [ ! -z "$renameTag" ] && [ $moveTaggedFiles = yes ]; then
+                echo "                      --> verschiebe in Tagverzeichnisse"
+                renameTag=$( echo $renameTag | sed -e "s/#//g" )
+                tagarray=( $renameTag )   # Tags als Array definieren
+                i=0
+                maxID=${#tagarray[*]}
+                #    for i in ${meinarray[@]}; do
+                #     echo $i
+                #    done
+            #    echo "                          benenne um und verschiebe Zieldatei"
+            #    echo "                          von:    $(basename "${outputold}")"
+                while (( i < maxID )); do
+                    echo -n "                          Tag-Ordner \"${tagarray[$i]}\" vorhanden? => "
+                    if [ -d "${OUTPUTDIR}${tagarray[$i]}" ] ;then
+                        echo "OK"
+                    else
+                        mkdir "${OUTPUTDIR}${tagarray[$i]}"
+                        echo "erstellt"
+                    fi
+            		destfilecount=$(ls -t "${OUTPUTDIR}${tagarray[$i]}" | egrep -o "${NewName}.*" | wc -l)
+            		if [ $destfilecount -eq 0 ]; then
+            		    output="${OUTPUTDIR}${tagarray[$i]}/${NewName}.pdf"
+            		else
+            		    count=$( expr $destfilecount + 1 )
+            		    output="${OUTPUTDIR}${tagarray[$i]}/${NewName} ($count).pdf"
+            		fi
+                    echo "                          Ziel:   ./${tagarray[$i]}/$(basename "${output}")"
+                    cp -l "${outputold}" "${output}"
+                    i=$((i + 1))
+                done
+                echo "                          lösche temp. Zieldatei"
+                rm "${outputold}"
+            else
+        		destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${NewName}.*" | wc -l)
+        		if [ $destfilecount -eq 0 ]; then
+        		    output="${OUTPUTDIR}${NewName}.pdf"
+        		else
+        		    count=$( expr $destfilecount + 1 )
+        		    output="${OUTPUTDIR}${NewName} ($count).pdf"
+        		fi
+                echo "                          Umbenennung ursprüngliche Zieldatei"
+                echo "                          von:    $(basename "${outputold}")"
+                echo "                          nach:   $(basename "${output}")"
+                mv "${outputold}" "${output}"
+            fi
+        fi
+        }
+        rename
     
-    # Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien):
+    # Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien): ${filename%.*}
         if [ $backup = true ]; then
-    		sourcefilecount=$(ls -t "${BACKUPDIR}" | egrep -o "${title}.*" | wc -l)
+    		sourcefilecount=$(ls -t "${BACKUPDIR}" | egrep -o "${filename%.*}.*" | wc -l)
     		if [ $sourcefilecount -eq 0 ]; then
     		    mv "$input" "${BACKUPDIR}${filename}"
     		    echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename}"
     		else
     		    count=$( expr $sourcefilecount + 1 )
-    		    mv "$input" "${BACKUPDIR}${title} ($count).pdf"
+    		    mv "$input" "${BACKUPDIR}${filename%.*} ($count).pdf"
     		    echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename%.*} ($count).pdf"
     		fi
     	else
@@ -230,59 +440,30 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     		echo "                      --> lösche Quelldatei"
         fi
 
-        findDate()
-        {        
-        return # under construction!
-        
-        # Text exrahieren und Datum suchen
-        if [ -d "/tmp/synOCR" ]; then
-        	rm -r /tmp/synOCR
+    # Benachrichtigung:
+        if [ $dsmtextnotify = "on" ] ; then
+            sleep 1
+            synodsmnotify $MessageTo "synOCR" "$(basename "${output}") ist fertig"
+            sleep 1
         fi
-        searchfile="/tmp/synOCR/synOCR.txt"
-        mkdir /tmp/synOCR
-        /bin/pdftotext -layout -l 1 "$output" "$searchfile"
-
-    #    /bin/pdftotext -layout -l 1 "/volume1/homes/admin/Drive/SCANNER/_INPUT/SCAN_testdatei1.pdf" "/volume1/homes/admin/Drive/SCANNER/_INPUT/SCAN_testdatei1.pdf.txt"
-
-        
-        
-        cp "$searchfile" "${OUTPUTDIR}${RenamePraefix}${title} ($count).txt"
-
-
-return
-
-        # /volume1/homes/admin/Drive/SCANNER/_OUTPUT/test.txt
-        #            if (preg_match("/(0\d|1[012]|\d)[-.\/](31|30|[012]\d|\d)[-.\/](20[0-9][0-9])/", $line, $matches)) { // mm.dd.20yy
-
-
-
-
-        cat "/volume1/homes/admin/Drive/SCANNER/_OUTPUT/test.txt" | egrep -o "[0-9]\{1,2\}[.\-]\?[0-9]\{1,2\}[.\-]\?20[0-9]\{1,2\}" | head -n1
-        
-        
-        
-        
-        #[0-9]\{1,2\}[.\-]\?[0-9]\{1,2\}[.\-]\?20[0-9]\{1,2\}
-        
-        #        SuggestedMovieName=`cat "$tmp/$CUTLIST" | grep "SuggestedMovieName=" | sed "s/SuggestedMovieName\=//g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}[ _][0-9]\{2\}[\-][0-9]\{2\}/Datum_Zeit/g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}/Datum/g;s/_/ /g" | /usr/bin/tr -d "\r" ` #| awk -F. '{print $1}'` # Datum, Zeit im OTR-Format und Unterstriche werden entfernt
-        #        usercomment=`cat "$tmp/$CUTLIST" | grep "usercomment=" | sed "s/usercomment\=//g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}[ _][0-9]\{2\}[\-][0-9]\{2\}/Datum_Zeit/g;s/[0-9]\{2,4\}[.][0-9]\{1,2\}[.][0-9]\{1,2\}/Datum/g;s/_/ /g" | /usr/bin/tr -d "\r" ` #| awk -F. '{print $1}'`
-        
-        #        if echo "$SuggestedMovieName" | grep -q "[sST]\?[0-9]\{1,2\}[.\-xX]\?[eE]\?[0-9]\{1,2\}" ; then  # [[:space:]]  # S01E01 / S01.E01 / 01-01 / 01x01 / teilweise ohne führende Null
-        #            #CL_serieninfo=$(parseRegex "$SuggestedMovieName" ".[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)    # head -n1: nur der erste Fund im String wird verwendet
-        #            CL_serieninfo=$(echo "$SuggestedMovieName" | egrep -o "[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)
-        #            CL_serieninfo_season=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $1}')
-        #            CL_serieninfo_episode=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $2}')
-        #            CL_serieninfofound=1
-        #        elif echo "$usercomment" | grep -q "[sST]\?[0-9]\{1,2\}[.\-xX]\?[eE]\?[0-9]\{1,2\}" ; then 
-        #            #CL_serieninfo=$(parseRegex "$usercomment" "[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)
-        #            CL_serieninfo=$(echo "$usercomment" | egrep -o "[sST]?[0-9]{1,2}[.\-xX]?[eE]?[0-9]{1,2}" | head -n1)
-        #            CL_serieninfo_season=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $1}')
-        #            CL_serieninfo_episode=$(echo "$CL_serieninfo" | awk '{print toupper($0) }' | sed "s/S/ /g;s/T/ /g;s/E/ /g;s/X/ /g;s/-/ /g;s/\./ /g;s/  / /g" | awk '{print $2}')
-        #            CL_serieninfofound=1
-        #        fi
-        }
-
-        findDate
+        if [ $dsmbeepnotify = "on" ] ; then
+            sleep 1
+            echo 2 > /dev/ttyS1 #short beep
+            sleep 1
+        fi
+        if [ ! -z $PBTOKEN ] ; then
+            PB_LOG=`curl $cURLloglevel --header "Access-Token:${PBTOKEN}" https://api.pushbullet.com/v2/pushes -d type=note -d title="synOCR" -d body="PDF [$(basename "${output}")] ist fertig."`
+            if [ $loglevel = "2" ] ; then
+                echo "                          PushBullet-LOG:"
+                echo "$PB_LOG" | sed -e "s/^/                       /g"
+            elif echo "$PB_LOG" | grep -q "error"; then # für Loglevel 1 nur Errorausgabe
+                echo -n "                          PushBullet-Error: "
+                echo "$PB_LOG" | jq -r '.error_code'
+            fi
+        else
+            echo "                          (INFO: PushBullet-TOKEN nicht gesetzt)"
+        fi
+    #    wget --timeout=30 --tries=2 -q -O - "http://${synocrdomain}/synOCR/synOCR_FILECOUNT" >/dev/null 2>&1
 
     # Dateizähler:
         if [ ! -f ./etc/counter ] ; then
@@ -292,33 +473,9 @@ return
             echo "                      --> counter-File wurde erstellt"
         fi
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-        echo "                      --> $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet"
-
-    # Benachrichtigung:
-        if [ $dsmtextnotify = "on" ] ; then
-            sleep 1
-            synodsmnotify $MessageTo "synOCR" "${filename} ist fertig"
-            sleep 1
-        fi
-        if [ $dsmbeepnotify = "on" ] ; then
-            sleep 1
-            echo 2 > /dev/ttyS1 #short beep
-            sleep 1
-        fi
-        if [ ! -z $PBTOKEN ] ; then
-            PB_LOG=`curl $cURLloglevel --header "Access-Token:${PBTOKEN}" https://api.pushbullet.com/v2/pushes -d type=note -d title="synOCR" -d body="PDF [${filename}] ist fertig."`
-            if [ $loglevel = "2" ] ; then
-                echo "        PushBullet-LOG:"
-                echo "$PB_LOG"
-            elif echo "$PB_LOG" | grep -q "error"; then # für Loglevel 1 nur Errorausgabe
-                echo -n "        PushBullet-Error: "
-                echo "$PB_LOG" | jq -r '.error_code'
-            fi
-        else
-            echo "                          (PushBullet-TOKEN nicht gesetzt)"
-        fi
-    #    wget --timeout=30 --tries=2 -q -O - "http://${synocrdomain}/synOCR/synOCR_FILECOUNT" >/dev/null 2>&1
-        echo "                      --> (Laufzeit: $(( $(date +%s) - $date_start )) Sekunden)"
+#        echo "                      --> $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet"
+        
+        echo "                          INFO: (Laufzeit letzt Datei: $(( $(date +%s) - $date_start )) Sekunden / $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet)"
     done
 }
 
@@ -338,6 +495,3 @@ return
 	echo -e; echo -e
 	
 exit 0
-
-
-
