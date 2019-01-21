@@ -21,7 +21,7 @@
 # Dateistatus auslesen:
 # ---------------------------------------------------------------------
     # Anzahl unfertiger PDF-Files:    
-    count_inputpdf=$( ls -t "${INPUTDIR}" | egrep -o "${SearchPraefix}.*.pdf$" | wc -l ) # wie viele Dateien 
+    count_inputpdf=$( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) # wie viele Dateien 
 
 
 # Installationsstatus auslesen:
