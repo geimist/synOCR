@@ -15,8 +15,6 @@
     LOGFILE="${LOGDIR}synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log"
     touch $LOGFILE
 
-#./synOCR.sh >> $LOGFILE
-
     synOCR_pid=`pidof synOCR.sh`
 
     if [ ! -z "$synOCR_pid" ] ; then
@@ -33,52 +31,34 @@
         </table></center>'   
     fi
     
-    if [ ! -d "$OUTPUTDIR" ] || ! $(echo "$BACKUPDIR" | grep -q "/volume") ; then
-        echo '
-        <p class="center"><span style="color: #BD0010;"><b>! ! ! Zielverzeichnis in der Konfiguration prüfen ! ! !</b><br>Programmlauf wird beendet.<br></span></p>'
-		exit 1
-	fi
-
-    if [ ! -d "$OUTPUTDIR" ] || ! $(echo "$BACKUPDIR" | grep -q "/volume") ; then
+	if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
+		mkdir -p "$OUTPUTDIR"		
+		echo '
+        <p class="center"><span style="color: #BD0010;"><b>Zielverzeichnis wurde erstellt.</b></span></p>'
+	elif [ ! -d "$OUTPUTDIR" ] || ! $(echo "$BACKUPDIR" | grep -q "/volume") ; then
         echo '
         <p class="center"><span style="color: #BD0010;"><b>! ! ! Zielverzeichnis in der Konfiguration prüfen ! ! !</b><br>Programmlauf wird beendet.<br></span></p>'
 		exit 1
 	fi
 
     if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
-#		echo "LOG-Verzeichnis:          $LOGDIR"
-
-#touch ${LOGDIR%/}/synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log
-
-#    	./synOCR.sh >> ${LOGDIR%/}/synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log #2>&1
     	./synOCR.sh >> $LOGFILE 2>&1
     elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then  
 		mkdir -p "$LOGDIR"		
-#		echo "LOG-Verzeichnis wurde erstellt [$LOGDIR]"
-
-#touch ${LOGDIR%/}/synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log
-
     	./synOCR.sh >> $LOGFILE 2>&1
 	else
-#		echo "LOG deaktiviert, oder kein gültiges Verzeichnis [$LOGDIR]"
 		loglevel=0
     	./synOCR.sh
 	fi
 
     if (( $? == 0 )); then
-#        echo -e "\n" >> $LOGFILE
         echo "    -----------------------------------" >> $LOGFILE
     	echo "    |       ==> synOCR ENDE <==       |" >> $LOGFILE
     	echo "    -----------------------------------" >> $LOGFILE
     else
-#        echo -e "\n" >> $LOGFILE
         echo "    -----------------------------------" >> $LOGFILE
     	echo "    |   synOCR mit Fehlern beendet!   |" >> $LOGFILE
     	echo "    -----------------------------------" >> $LOGFILE
     fi
-
-
-
+    
 exit 0
-
-
