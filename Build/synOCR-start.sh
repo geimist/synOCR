@@ -23,7 +23,7 @@
         exit
     else
         echo '<p class="title">synOCR wurde gestartet ...</p><br><br><br><br>
-	    <center><table id="system_msg" style="width: 40%;table-align: center;">
+        <center><table id="system_msg" style="width: 40%;table-align: center;">
             <tr>   
                 <th style="width: 20%;"><img class="imageStyle" alt="status_loading" src="images/status_loading.gif" style="float:left;"></th>   
                 <th style="width: 80%;"><p class="center"><span style="color: #424242;font-weight:normal;">Bitte warten, bis die Dateien<br>fertig abgearbeitet wurden.</span></p></th>
@@ -31,34 +31,34 @@
         </table></center>'   
     fi
     
-	if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
-		mkdir -p "$OUTPUTDIR"		
-		echo '
+    if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
+        mkdir -p "$OUTPUTDIR"
+        echo '
         <p class="center"><span style="color: #BD0010;"><b>Zielverzeichnis wurde erstellt.</b></span></p>'
-	elif [ ! -d "$OUTPUTDIR" ] || ! $(echo "$BACKUPDIR" | grep -q "/volume") ; then
+    elif [ ! -d "$OUTPUTDIR" ] || ! $(echo "$BACKUPDIR" | grep -q "/volume") ; then
         echo '
         <p class="center"><span style="color: #BD0010;"><b>! ! ! Zielverzeichnis in der Konfiguration prüfen ! ! !</b><br>Programmlauf wird beendet.<br></span></p>'
-		exit 1
-	fi
+        exit 1
+    fi
 
     if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
-    	./synOCR.sh >> $LOGFILE 2>&1
+        ./synOCR.sh >> $LOGFILE 2>&1
     elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then  
-		mkdir -p "$LOGDIR"		
-    	./synOCR.sh >> $LOGFILE 2>&1
-	else
-		loglevel=0
-    	./synOCR.sh
-	fi
+        mkdir -p "$LOGDIR"
+        ./synOCR.sh >> $LOGFILE 2>&1
+    else
+    loglevel=0
+        ./synOCR.sh
+    fi
 
     if (( $? == 0 )); then
         echo "    -----------------------------------" >> $LOGFILE
-    	echo "    |       ==> synOCR ENDE <==       |" >> $LOGFILE
-    	echo "    -----------------------------------" >> $LOGFILE
+        echo "    |       ==> synOCR ENDE <==       |" >> $LOGFILE
+        echo "    -----------------------------------" >> $LOGFILE
     else
         echo "    -----------------------------------" >> $LOGFILE
-    	echo "    |   synOCR mit Fehlern beendet!   |" >> $LOGFILE
-    	echo "    -----------------------------------" >> $LOGFILE
+        echo "    |   synOCR mit Fehlern beendet!   |" >> $LOGFILE
+        echo "    -----------------------------------" >> $LOGFILE
     fi
-    
+
 exit 0
