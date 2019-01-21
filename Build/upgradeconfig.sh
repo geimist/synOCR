@@ -21,5 +21,14 @@
     	if ! cat ./$CONFIG | grep -q "delSearchPraefix" ; then
     	    echo "delSearchPraefix=\"no\"" >> ./$CONFIG
         fi
+    	if ! cat ./$CONFIG | grep -q "NameSyntax" ; then
+    	    echo "NewName=\"\"" >> ./$CONFIG
+        fi
+    	if ! cat ./$CONFIG | grep -q "taglist" ; then
+    	    echo "taglist=\"\"" >> ./$CONFIG
+        fi
+    	if ! cat ./$CONFIG | grep -q "moveTaggedFiles" ; then
+    	    echo "moveTaggedFiles=\"no\"" >> ./$CONFIG
+        fi
 
 exit 0
