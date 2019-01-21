@@ -1,7 +1,6 @@
 #!/bin/bash
 # edit.sh
 
-
 if [[ "$page" == "edit-save" ]]; then
 	"$set_var" "$dir/etc/Konfiguration.txt" "INPUTDIR" "$INPUTDIR"
 	"$set_var" "$dir/etc/Konfiguration.txt" "OUTPUTDIR" "$OUTPUTDIR"
