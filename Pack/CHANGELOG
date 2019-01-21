@@ -1,5 +1,16 @@
 Release Notes
 
+0.10.0 (RELEASE)
+    IMPLEMENTIERUNGEN:
+ -  es kann nach Tags im OCR-Text gesucht werden
+ -  es kann nach Datum im OCR-Text gesucht werden
+ -  es kann eine eigene Umbenennungssyntax angegeben werden
+ -  Tags können einer Kategorie zugeordnet werden (entsprechende Unterordner werden im Zielordner erstellt)
+
+    BUGFIXES:
+ -  ein fehlender Zielordner wurde ggf. nicht erstellt
+ -  der Zähler für offene Jobs war z.T. nicht korrekt
+
 0.9.3 (RELEASE)
     IMPLEMENTIERUNGEN:
  -  Dateisuche ist jetzt case insensetive (Suchpräfix / .pdf .PDF)
