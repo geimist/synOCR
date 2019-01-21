@@ -5,15 +5,15 @@ LOGDIR="/volume1/SCANNER/_LOG"
 LOGmax="10"
 SearchPraefix="SCAN_"
 delSearchPraefix="no"
-RenamePraefix="OCR_"
+taglist=""
+NameSyntax=""
+moveTaggedFiles="no"
 dockercontainer="jbarlow83/ocrmypdf"
 PBTOKEN=""
 dsmtextnotify="on"
 MessageTo="admin"
 dsmbeepnotify="on"
 loglevel="1"
-
-dateseperator="-"   # hardcoded
 
 ocropt="-srd -l deu"
 #    ocrmypdf options - https://www.heise.de/ct/artikel/Toolbox-Texterkennung-mit-OCRmyPDF-2356670.html
