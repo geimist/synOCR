@@ -317,15 +317,15 @@ if [[ "$page" == "edit" ]]; then
 			echo '<option value="no">im Zielordner behalten</option>'
 		fi
 		if [[ "$moveTaggedFiles" == "yes" ]]; then
-			echo '<option value="yes" selected>Ziel-PDF nach Tag-Ordner einsortieren</option>'
+			echo '<option value="yes" selected>Ziel-PDF in Kategorieordner einsortieren</option>'
 		else
-			echo '<option value="yes">Ziel-PDF nach Tag-Ordner einsortieren</option>'
+			echo '<option value="yes">Ziel-PDF in Kategorieordner einsortieren</option>'
 		fi
 	echo '
 		</select>
 		<a class="helpbox" href="#HELP">
 			<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-			<span>Sollen Tag-Unterverzeichnisse genutzt werden?<br>
+			<span>Sollen Tag-Unterverzeichnisse (Kategorieordner) genutzt werden?<br>
 			Bei mehreren zutreffenden Tags werden Hardlinks gesetzt.</span></a>
 		</p>'
 		
@@ -347,10 +347,11 @@ if [[ "$page" == "edit" ]]; then
 			<b>§d</b> (Datum / Tag)<br>
 			<b>§m</b> (Datum / Monat)<br>
 			<b>§y</b> (Datum / Jahr)<br>
-			<b>§tag</b> (gefundene, oben angegebene Taggs)<br>
+			<b>§tag</b> (gefundene, oben angegebene Tags)<br>
 			<b>§tit</b> (Titel der Originaldatei)<br>
 			<br>
-			>><b>§y-§m-§d_§tag_§tit</b><< erzeugt z.B. >><b>2018-12-09_#Rechnung_00376.pdf</b><<<br>
+			>><b>§y-§m-§d_§tag_§tit</b><< erzeugt<br>
+			z.B. >><b>2018-12-09_#Rechnung_00376.pdf</b><<<br>
 			<br>
 			Datumsangaben werden zuerst im Dokument gesucht. Wenn erfolglos, wird das Dateidatum verwendet.<br>
 			<br>
