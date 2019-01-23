@@ -256,7 +256,8 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Nur PDFs mit definiertem Präfix bearbeiten (z.B. "SCAN_")<br></span></a>
+            <span>Nur PDFs mit definiertem Präfix bearbeiten (z.B. "SCAN_")<br>
+            leerlassen, wenn alle Dokumente verarbeitet werden sollen</span></a>
         </p>'
 
     # delSearchPraefix
