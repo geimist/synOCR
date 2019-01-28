@@ -13,7 +13,6 @@
     LOGDIR="${LOGDIR%/}/"
 
     LOGFILE="${LOGDIR}synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log"
-    touch $LOGFILE
 
     synOCR_pid=`pidof synOCR.sh`
 
@@ -53,6 +52,7 @@
         exit 1
     fi
 
+    touch $LOGFILE
 
     if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
         ./synOCR.sh "$LOGFILE" >> $LOGFILE 2>&1
