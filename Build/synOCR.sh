@@ -8,7 +8,7 @@
     echo "    -----------------------------------"
     echo -e
     
-    CLIENTVERSION=`get_key_value /var/packages/synOCR/INFO version`
+    CLIENTVERSION=$(get_key_value /var/packages/synOCR/INFO version)
     DevChannel="BETA"    # Release
     
 # ---------------------------------------------------------------------------------
@@ -18,10 +18,11 @@
 # ---------------------------------------------------------------------------------
     synocrdomain="geimist.eu"   # notwendig für Update, Konsitenzprüfung, DEV-Report und evtl. in Zukunft zum abfragen der API-Keys
     niceness=15                 # Die Priorität liegt im Bereich von -20 bis +19 (in ganzzahligen Schritten), wobei -20 die höchste Priorität (=meiste Rechenleistung) und 19 die niedrigste Priorität (=geringste Rechenleistung) ist. Die Standardpriorität ist 0. AUF NEGATIVE WERTE SOLLTE UNBEDINGT VERZICHTET WERDEN!
+    LOGFILE="$1"                # aktuelles Logfile / wird von Startskript übergeben
 
 # an welchen User/Gruppe soll die DSM-Benachrichtigung gesendet werden :
 # ---------------------------------------------------------------------
-    synOCR_user=`whoami`; echo "synOCR-User:              $synOCR_user"
+    synOCR_user=$(whoami); echo "synOCR-User:              $synOCR_user"
     if cat /etc/group | grep administrators | grep -q "$synOCR_user"; then
         isAdmin=yes
     else
@@ -177,7 +178,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     do	
     	IFS=$OLDIFS
     	echo -e
-    	filename=`basename "$input"`
+    	filename=$(basename "$input")
     	title=${filename%.*}
     	echo -n "    VERARBEITE:       --> $filename"
     	echo " ($(date))"
@@ -196,7 +197,6 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     	    output="${OUTPUTDIR}${title} ($count).pdf"
     	fi
 
-# echo Zieldatei noch anpassen (später mit Tags und Date)
         echo "                          (temp. Zieldatei: ${output})"
 
     # OCRmyPDF:
@@ -208,6 +208,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         sleep 1
         dockerlog=$(OCRmyPDF 2>&1)
         sleep 1
+        
+        # Example:
+        #   WARNING -    2: [tesseract] unsure about page orientation
+        #   WARNING -    2: [tesseract] lots of diacritics - possibly poor OCR
 
         echo -e
         echo "                      --> OCRmyPDF-LOG:"
@@ -215,10 +219,30 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         echo "                      <-- OCRmyPDF-LOG-END"
         echo -e
 
-    # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter:
+    # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERROR verschoben:
         if [ $(stat -c %s "$output") -eq 0 ] || [ ! -f "$output" ];then
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
             rm "$output"
+            if echo "$dockerlog" | grep -q ERROR ;then
+                if [ -d "${INPUTDIR}ERROR" ] ; then
+                	echo "ERROR-Verzeichnis:        $BACKUPDIR"
+                else
+                	echo "ERROR-Verzeichnis [${INPUTDIR}ERROR] wird erstellt!"
+                	mkdir "${INPUTDIR}ERROR"
+                fi
+
+            	destfilecount=$(ls -t "${INPUTDIR}ERROR" | egrep -o "${filename%.*}.*" | wc -l)
+            	if [ $destfilecount -eq 0 ]; then
+            	    output="${INPUTDIR}ERROR/${filename%.*}.pdf"
+            	else
+            	    count=$( expr $destfilecount + 1 )
+            	    output="${INPUTDIR}ERROR/${filename%.*} ($count).pdf"
+            	fi
+                mv "$input" "$output"
+                if [ "$loglevel" != 0 ] ;then
+                    cp "$LOGFILE" "${output}.log"
+                fi
+            fi
             continue
         fi
 
@@ -258,8 +282,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             fi
             renameTag=""
             renameCat=""
-            taglist=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )
-            tagarray=( $taglist )   # Tags als Array definieren
+            taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )
+            tagarray=( $taglist2 )   # Tags als Array definieren
             i=0
             maxID=${#tagarray[*]}
             echo "                      --> suche Tags und Datum:"
@@ -496,7 +520,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # Benachrichtigung:
         if [ $dsmtextnotify = "on" ] ; then
             sleep 1
-            synodsmnotify $MessageTo "synOCR" "$(basename "${output}") ist fertig"
+            synodsmnotify $MessageTo "synOCR" "Datei [$(basename "${output}")] ist fertig"
             sleep 1
         fi
         if [ $dsmbeepnotify = "on" ] ; then
@@ -505,7 +529,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             sleep 1
         fi
         if [ ! -z $PBTOKEN ] ; then
-            PB_LOG=`curl $cURLloglevel --header "Access-Token:${PBTOKEN}" https://api.pushbullet.com/v2/pushes -d type=note -d title="synOCR" -d body="PDF [$(basename "${output}")] ist fertig."`
+            PB_LOG=`curl $cURLloglevel --header "Access-Token:${PBTOKEN}" https://api.pushbullet.com/v2/pushes -d type=note -d title="synOCR" -d body="Datei [$(basename "${output}")] ist fertig."`
             if [ $loglevel = "2" ] ; then
                 echo "                          PushBullet-LOG:"
                 echo "$PB_LOG" | sed -e "s/^/                       /g"
