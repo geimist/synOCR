@@ -3,10 +3,9 @@ Release Notes
 0.11.0 (RELEASE)
     IMPLEMENTIERUNGEN:
  -  Tags und Kategorien können jetzt Leerzeichen enthalten (eine Suche nach Tag "Rechnung " findet so nicht fälschlicherweise "Rechnungsstellung")
- -  Schalter, um Tags als Kategorie zu verwenden (manche wollen vielleicht für jeden Tag einen eigenen Ordner)
- -  Schalter, um im gesamten Dokument zu suchen (nicht nur auf der ersten Seite)
- -  PDFs die einen Error hervorrufen, werden in den Unterordner "ERROR" im Inputverzeichnis verschoben, um deren wiederholte Verarbeitung zu vermeiden
- -  
+ -  Schalter, um Tags als Kategorie zu verwenden (manche wollen vielleicht für jeden Tag einen eigenen Ordner). Eine separate Kategoriezuweisung erübrigt sich in diesem Fall
+ -  Schalter, um im gesamten Dokument zu suchen (nicht nur auf der ersten Seite / Gefahr von false positive Ergebnissen steigt!)
+ -  PDFs die einen Error hervorrufen, werden in den Unterordner "ERRORFILES" im Quellverzeichnis verschoben, um deren wiederholte Verarbeitung zu vermeiden
 
     BUGFIXES:
  -  kleinere Detailverbesserungen
