@@ -224,19 +224,19 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
             rm "$output"
             if echo "$dockerlog" | grep -q ERROR ;then
-                if [ -d "${INPUTDIR}ERROR" ] ; then
+                if [ -d "${INPUTDIR}ERRORFILES" ] ; then
                 	echo "ERROR-Verzeichnis:        $BACKUPDIR"
                 else
-                	echo "ERROR-Verzeichnis [${INPUTDIR}ERROR] wird erstellt!"
-                	mkdir "${INPUTDIR}ERROR"
+                	echo "ERROR-Verzeichnis [${INPUTDIR}ERRORFILES] wird erstellt!"
+                	mkdir "${INPUTDIR}ERRORFILES"
                 fi
 
-            	destfilecount=$(ls -t "${INPUTDIR}ERROR" | egrep -o "${filename%.*}.*" | wc -l)
+            	destfilecount=$(ls -t "${INPUTDIR}ERRORFILES" | egrep -o "${filename%.*}.*" | wc -l)
             	if [ $destfilecount -eq 0 ]; then
-            	    output="${INPUTDIR}ERROR/${filename%.*}.pdf"
+            	    output="${INPUTDIR}ERRORFILES/${filename%.*}.pdf"
             	else
             	    count=$( expr $destfilecount + 1 )
-            	    output="${INPUTDIR}ERROR/${filename%.*} ($count).pdf"
+            	    output="${INPUTDIR}ERRORFILES/${filename%.*} ($count).pdf"
             	fi
                 mv "$input" "$output"
                 if [ "$loglevel" != 0 ] ;then
