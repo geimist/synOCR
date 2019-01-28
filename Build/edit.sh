@@ -10,6 +10,7 @@ if [[ "$page" == "edit-save" ]]; then
     "$set_var" "$dir/etc/Konfiguration.txt" "SearchPraefix" "$SearchPraefix"
     "$set_var" "$dir/etc/Konfiguration.txt" "delSearchPraefix" "$delSearchPraefix"
     "$set_var" "$dir/etc/Konfiguration.txt" "taglist" "$taglist"
+    "$set_var" "$dir/etc/Konfiguration.txt" "searchAll" "$searchAll"
     "$set_var" "$dir/etc/Konfiguration.txt" "moveTaggedFiles" "$moveTaggedFiles"
     "$set_var" "$dir/etc/Konfiguration.txt" "NameSyntax" "$NameSyntax"
     "$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
@@ -51,6 +52,7 @@ if [[ "$page" == "edit-import-query" ]] || [[ "$page" == "edit-import" ]]; then
                 "$set_var" "$dir/etc/Konfiguration.txt" "SearchPraefix" "$SearchPraefix"
                 "$set_var" "$dir/etc/Konfiguration.txt" "delSearchPraefix" "$delSearchPraefix"
                 "$set_var" "$dir/etc/Konfiguration.txt" "taglist" "$taglist"
+                "$set_var" "$dir/etc/Konfiguration.txt" "searchAll" "$searchAll"
                 "$set_var" "$dir/etc/Konfiguration.txt" "moveTaggedFiles" "$moveTaggedFiles"
                 "$set_var" "$dir/etc/Konfiguration.txt" "NameSyntax" "$NameSyntax"
                 "$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
@@ -296,7 +298,8 @@ if [[ "$page" == "edit" ]]; then
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung.
-            Tags sollten aus einzelnen Wörtern bestehen und durch Semikolon getrennt werden.<br><br>
+            Einzelne Tags werdendurch Semikolon getrennt. 
+            Tags und Kategorien können auch Leerzeichen enthalten (eine Suche nach "<code>Rechnung </code>" findet so nicht fälschlicherweise "<code>Rechnungsstellung</code>")<br><br>
             z.B.: <b>Rechnung;Arbeit;Versicherung</b><br>
             <br>
             Tags können auch durch ein Gleichheitszeichen einer Kategorie (für Unterordner) zugeordnet werden 
@@ -304,6 +307,29 @@ if [[ "$page" == "edit" ]]; then
             z.B.: <b>Rechnung;HUK24=Versicherung;Allianz=Versicherung</b><br>
             <br>
             <br></span></a>
+        </p>'
+
+    # searchAll
+    echo '
+        <p>
+        <label>Suchbereich für Tags</label>
+        <select name="searchAll">'
+        if [[ "$searchAll" == "no" ]]; then
+            echo '<option value="no" selected>Bereich: nur erste Seite</option>'
+        else
+            echo '<option value="no">Bereich: nur erste Seite</option>'
+        fi
+        if [[ "$searchAll" == "searchAll" ]]; then
+            echo '<option value="searchAll" selected>Bereich: gesamtes Dokument</option>'
+        else
+            echo '<option value="searchAll">Bereich: gesamtes Dokument</option>'
+        fi
+    echo '
+        </select>
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>In welchem Bereich soll nach Tags gesucht werden?
+            Standard ist nur auf erster Seite. Je größer der Suchbereich, desto mehr false positive gibt es.</span></a>
         </p>'
 
     # moveTaggedFiles
@@ -316,16 +342,21 @@ if [[ "$page" == "edit" ]]; then
         else
             echo '<option value="no">im Zielordner behalten</option>'
         fi
-        if [[ "$moveTaggedFiles" == "yes" ]]; then
-            echo '<option value="yes" selected>Ziel-PDF in Kategorieordner einsortieren</option>'
+        if [[ "$moveTaggedFiles" == "useCatDir" ]]; then
+            echo '<option value="useCatDir" selected>Ziel-PDF in Kategorieordner einsortieren</option>'
         else
-            echo '<option value="yes">Ziel-PDF in Kategorieordner einsortieren</option>'
+            echo '<option value="useCatDir">Ziel-PDF in Kategorieordner einsortieren</option>'
+        fi
+        if [[ "$moveTaggedFiles" == "useTagDir" ]]; then
+            echo '<option value="useTagDir" selected>Ziel-PDF in Tagordner einsortieren</option>'
+        else
+            echo '<option value="useTagDir">Ziel-PDF in Tagordner einsortieren</option>'
         fi
     echo '
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Sollen Tag-Unterverzeichnisse (Kategorieordner) genutzt werden?<br>
+            <span>Sollen Tag-Unterverzeichnisse, bzw. Kategorieordner genutzt werden?<br>
             Bei mehreren zutreffenden Tags werden Hardlinks gesetzt.</span></a>
         </p>'
 
