@@ -12,7 +12,7 @@
     DevChannel="BETA"    # Release
     
 # ---------------------------------------------------------------------------------
-#           GRUNDKONFIGRUATIONEN / INDIVIDUELLE ANPASSUNGEN	/ Standardwerte	      |
+#           GRUNDKONFIGRUATIONEN / INDIVIDUELLE ANPASSUNGEN / Standardwerte       |
 #           (alle Werte können durch setzen in der Konfiguration.txt              |
 #           überschrieben werden)                                                 |
 # ---------------------------------------------------------------------------------
@@ -36,7 +36,7 @@
     OLDIFS=$IFS	                # ursprünglichen Fieldseparator sichern
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
-    
+
 # Konfigurationsdatei einbinden:
 # ---------------------------------------------------------------------
     CONFIG=etc/Konfiguration.txt
@@ -51,22 +51,22 @@
     sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
     device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
     # für HD-Aufnahmen mit avcut mindestens 500 MB free:
-#	echo -n "                          RAM installiert:    "; RAMmax=`free -m | grep 'Mem:' | awk '{print $2}'`; echo "$RAMmax MB"	    # verbauter RAM
-#	echo -n "                          RAM verwendet:      "; RAMused=`free -m | grep 'Mem:' | awk '{print $3}'`;	echo "$RAMused MB"  # genutzter RAM
-#	echo -n "                          RAM verfügbar:      "; RAMfree=$(( $RAMmax - $RAMused )); 	echo "$RAMfree MB"
+#   echo -n "                          RAM installiert:    "; RAMmax=`free -m | grep 'Mem:' | awk '{print $2}'`; echo "$RAMmax MB"	    # verbauter RAM
+#   echo -n "                          RAM verwendet:      "; RAMused=`free -m | grep 'Mem:' | awk '{print $3}'`;	echo "$RAMused MB"  # genutzter RAM
+#   echo -n "                          RAM verfügbar:      "; RAMfree=$(( $RAMmax - $RAMused )); 	echo "$RAMfree MB"
     echo "verwendetes Image:        $dockercontainer"
     echo "verwendete Parameter:     $ocropt"
     echo "ersetze Suchpräfix:       $delSearchPraefix"
     
 # Konfiguration für LogLevel:
 # ---------------------------------------------------------------------
-    # LOGlevel:		0 => Logging inaktiv / 1 => normal / 2 => erweitert
+    # LOGlevel:     0 => Logging inaktiv / 1 => normal / 2 => erweitert
     if [ $loglevel = "1" ] ; then
-    	echo "Loglevel:                 normal"
+        echo "Loglevel:                 normal"
         cURLloglevel="-s"
         wgetloglevel="-q"
     elif [ $loglevel = "2" ] ; then
-    	echo "Loglevel:                 erweitert"
+        echo "Loglevel:                 erweitert"
         cURLloglevel="-v"
         wgetloglevel="-v"
     fi
@@ -79,7 +79,7 @@
     # Variablenkorrektur für ältere Konfiguration.txt und Slash anpassen:
     INPUTDIR="${INPUTDIR%/}/"
     if [ -d "$INPUTDIR" ] ; then
-    	echo "Quellverzeichnis:         $INPUTDIR"
+        echo "Quellverzeichnis:         $INPUTDIR"
     else
         echo "Quellverzeichnis ungültig oder nicht gesetzt!"
         exit 1
@@ -89,19 +89,19 @@
 
     BACKUPDIR="${BACKUPDIR%/}/"
     if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
-    	echo "BackUp-Verzeichnis:       $BACKUPDIR"
-    	backup=true
+        echo "BackUp-Verzeichnis:       $BACKUPDIR"
+        backup=true
     elif echo "$BACKUPDIR" | grep -q "/volume" ; then
-    	mkdir -p "$BACKUPDIR"		
-    	echo "BackUp-Verzeichnis wurde erstellt [$BACKUPDIR]"
-    	backup=true
+        mkdir -p "$BACKUPDIR"
+        echo "BackUp-Verzeichnis wurde erstellt [$BACKUPDIR]"
+        backup=true
     else
-    	echo "Dateien werden sofort gelöscht! / Kein gültiges Verzeichnis [$BACKUPDIR]"
-    	backup=false
+        echo "Dateien werden sofort gelöscht! / Kein gültiges Verzeichnis [$BACKUPDIR]"
+        backup=false
     fi
-    
+
     LOGDIR="${LOGDIR%/}/"
-    
+
 #################################################################################################
 #        _______________________________________________________________________________        #
 #       |                                                                               |       #
@@ -138,8 +138,9 @@ if [ -z $LOGmax ]; then
     echo "purge_LOG deaktiviert"
     return
 fi
-    
+
 # leere Logs löschen:
+# (sollte durch Abfrage in Startskript nicht mehr benötigt werden)
 for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # Auflistung aller LOG-Dateien
     do
         # if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
@@ -175,27 +176,27 @@ mainrun()
     
 IFS=$'\012'	 # entspricht einem $'\n' Newline
 for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -type f) #  -mmin +"$timediff" -o -name "${SearchPraefix}*.PDF" 
-    do	
-    	IFS=$OLDIFS
-    	echo -e
-    	filename=$(basename "$input")
-    	title=${filename%.*}
-    	echo -n "    VERARBEITE:       --> $filename"
-    	echo " ($(date))"
-    	date_start=$(date +%s)
+    do
+        IFS=$OLDIFS
+        echo -e
+        filename=$(basename "$input")
+        title=${filename%.*}
+        echo -n "    VERARBEITE:       --> $filename"
+        echo " ($(date))"
+        date_start=$(date +%s)
 
     # Zieldateiname erstellen (berücksichtigt gleichnamige vorhandene Dateien):
         if [ $delSearchPraefix = "yes" ] ; then
             title=$( echo ${title} | sed s/${SearchPraefix}//I )
         fi
 
-    	destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${title}.*" | wc -l)
-    	if [ $destfilecount -eq 0 ]; then
-    	    output="${OUTPUTDIR}${title}.pdf"
-    	else
-    	    count=$( expr $destfilecount + 1 )
-    	    output="${OUTPUTDIR}${title} ($count).pdf"
-    	fi
+        destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${title}.*" | wc -l)
+        if [ $destfilecount -eq 0 ]; then
+            output="${OUTPUTDIR}${title}.pdf"
+        else
+            count=$( expr $destfilecount + 1 )
+            output="${OUTPUTDIR}${title} ($count).pdf"
+        fi
 
         echo "                          (temp. Zieldatei: ${output})"
 
@@ -225,19 +226,19 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             rm "$output"
             if echo "$dockerlog" | grep -q ERROR ;then
                 if [ -d "${INPUTDIR}ERRORFILES" ] ; then
-                	echo "ERROR-Verzeichnis:        $BACKUPDIR"
+                    echo "ERROR-Verzeichnis:        $BACKUPDIR"
                 else
-                	echo "ERROR-Verzeichnis [${INPUTDIR}ERRORFILES] wird erstellt!"
-                	mkdir "${INPUTDIR}ERRORFILES"
+                    echo "ERROR-Verzeichnis [${INPUTDIR}ERRORFILES] wird erstellt!"
+                    mkdir "${INPUTDIR}ERRORFILES"
                 fi
 
-            	destfilecount=$(ls -t "${INPUTDIR}ERRORFILES" | egrep -o "${filename%.*}.*" | wc -l)
-            	if [ $destfilecount -eq 0 ]; then
-            	    output="${INPUTDIR}ERRORFILES/${filename%.*}.pdf"
-            	else
-            	    count=$( expr $destfilecount + 1 )
-            	    output="${INPUTDIR}ERRORFILES/${filename%.*} ($count).pdf"
-            	fi
+                destfilecount=$(ls -t "${INPUTDIR}ERRORFILES" | egrep -o "${filename%.*}.*" | wc -l)
+                if [ $destfilecount -eq 0 ]; then
+                    output="${INPUTDIR}ERRORFILES/${filename%.*}.pdf"
+                else
+                    count=$( expr $destfilecount + 1 )
+                    output="${INPUTDIR}ERRORFILES/${filename%.*} ($count).pdf"
+                fi
                 mv "$input" "$output"
                 if [ "$loglevel" != 0 ] ;then
                     cp "$LOGFILE" "${output}.log"
@@ -503,18 +504,18 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
     # Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien): ${filename%.*}
         if [ $backup = true ]; then
-    		sourcefilecount=$(ls -t "${BACKUPDIR}" | egrep -o "${filename%.*}.*" | wc -l)
-    		if [ $sourcefilecount -eq 0 ]; then
-    		    mv "$input" "${BACKUPDIR}${filename}"
-    		    echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename}"
-    		else
-    		    count=$( expr $sourcefilecount + 1 )
-    		    mv "$input" "${BACKUPDIR}${filename%.*} ($count).pdf"
-    		    echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename%.*} ($count).pdf"
-    		fi
-    	else
-    	    rm "$input"
-    		echo "                      --> lösche Quelldatei"
+            sourcefilecount=$(ls -t "${BACKUPDIR}" | egrep -o "${filename%.*}.*" | wc -l)
+            if [ $sourcefilecount -eq 0 ]; then
+                mv "$input" "${BACKUPDIR}${filename}"
+                echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename}"
+            else
+                count=$( expr $sourcefilecount + 1 )
+                mv "$input" "${BACKUPDIR}${filename%.*} ($count).pdf"
+                echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename%.*} ($count).pdf"
+            fi
+        else
+            rm "$input"
+            echo "                      --> lösche Quelldatei"
         fi
 
     # Benachrichtigung:
@@ -563,10 +564,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     echo "    ----------------------------------"
     echo "    |    ==> Funktionsaufrufe <==    |"
     echo "    ----------------------------------"
-    
+
     mainrun
     purge_LOG
-    
+
     echo -e; echo -e
-    
+
 exit 0
