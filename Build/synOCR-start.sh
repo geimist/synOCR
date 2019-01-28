@@ -31,6 +31,12 @@
         </table></center>'   
     fi
     
+    if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
+        echo '
+        <p class="center"><span style="color: #BD0010;"><b>! ! ! Quellverzeichnis in der Konfiguration prüfen ! ! !</b><br>Programmlauf wird beendet.<br></span></p>'
+        exit 1
+    fi
+    
     if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
         mkdir -p "$OUTPUTDIR"
         echo '
@@ -41,11 +47,18 @@
         exit 1
     fi
 
+    if [ $( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) = 0 ] ;then
+        echo '
+        <p class="center"><span style="color: #228b22;"><b>es gibt nichts zu tun</b><br>Programmlauf wird beendet.<br></span></p>'
+        exit 1
+    fi
+
+
     if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
-        ./synOCR.sh >> $LOGFILE 2>&1
+        ./synOCR.sh "$LOGFILE" >> $LOGFILE 2>&1
     elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then  
         mkdir -p "$LOGDIR"
-        ./synOCR.sh >> $LOGFILE 2>&1
+        ./synOCR.sh "$LOGFILE" >> $LOGFILE 2>&1
     else
     loglevel=0
         ./synOCR.sh
