@@ -166,7 +166,7 @@ fi
 }
 
 
-cal_scan() 
+mainrun() 
 {
 #########################################################################################
 # Diese Funktion übergibt die Dateien an docker                                         #
@@ -251,25 +251,25 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             fi
             renameTag=""
             renameCat=""
-            taglist=$( echo $taglist | sed -e "s/;/ /g" )
+            taglist=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )
             tagarray=( $taglist )   # Tags als Array definieren
             i=0
             maxID=${#tagarray[*]}
             echo "                      --> suche Tags und Datum:"
             echo "                          Tag-Anzahl:       $maxID"
 
-            #    for i in ${meinarray[@]}; do
-            #     echo $i
-            #    done
+        #    for a in ${tagarray[@]}; do
+        #        echo $a
+        #    done
             while (( i < maxID )); do
                 if echo "${tagarray[$i]}" | grep -q "=" ;then
-                    searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}')
-                    categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}')
+                    searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
+                    categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
                     echo -n "                          Suche nach Tag:   \"${searchtag}\" => "
                     if grep -qi "${searchtag}" "$searchfile" ;then
                         echo "OK (Cat: \"${categorietag}\")"
-                        renameTag="#${searchtag} ${renameTag}"
-                        renameCat="${categorietag} ${renameCat}"
+                        renameTag="#$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}"
+                        renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
                     else
                         echo "-"
                     fi
@@ -277,7 +277,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     echo -n "                          Suche nach Tag:   \"${tagarray[$i]}\" => "
                     if grep -qi "${tagarray[$i]}" "$searchfile" ;then
                         echo "OK"
-                        renameTag="#${tagarray[$i]} ${renameTag}"
+                        renameTag="#$( echo ${tagarray[$i]} | sed -e "s/ /%20/g") ${renameTag}"
                     else
                         echo "-"
                     fi
@@ -286,7 +286,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             done
             renameTag=${renameTag% }
             renameCat=${renameCat% }
-            echo "                          renameTag lautet: \"$renameTag\""
+            echo "                          renameTag lautet: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
             }
             tagsearch
 
@@ -389,6 +389,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             NewName=`echo $NewName | sed "s/§y/${date_yy}/g"`
             NewName=`echo $NewName | sed "s/§tag/${renameTag}/g"`
             NewName=`echo $NewName | sed "s/§tit/${title}/g"`
+            NewName=`echo $NewName | sed "s/%20/ /g"`
 
             if [ ! -z "$renameTag" ] && [ $moveTaggedFiles = yes ]; then
                 echo "                      --> verschiebe in Tagverzeichnisse"
@@ -399,27 +400,28 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 tagarray=( $renameTag )   # Tags als Array definieren
                 i=0
                 maxID=${#tagarray[*]}
-                #    for i in ${meinarray[@]}; do
-                #     echo $i
-                #    done
+            #    for a in ${tagarray[@]}; do
+            #        echo $a
+            #    done
             #    echo "                          benenne um und verschiebe Zieldatei"
             #    echo "                          von:    $(basename "${outputtmp}")"
                 while (( i < maxID )); do
-                    echo -n "                          Tag-Ordner \"${tagarray[$i]}\" vorhanden? => "
-                    if [ -d "${OUTPUTDIR}${tagarray[$i]}" ] ;then
+                    tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+                    echo -n "                          Tag-Ordner \"${tagdir}\" vorhanden? => "
+                    if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
                         echo "OK"
                     else
-                        mkdir "${OUTPUTDIR}${tagarray[$i]}"
+                        mkdir "${OUTPUTDIR}${tagdir}"
                         echo "erstellt"
                     fi
-            		destfilecount=$(ls -t "${OUTPUTDIR}${tagarray[$i]}" | egrep -o "${NewName}.*" | wc -l)
+            		destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
             		if [ $destfilecount -eq 0 ]; then
-            		    output="${OUTPUTDIR}${tagarray[$i]}/${NewName}.pdf"
+            		    output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
             		else
             		    count=$( expr $destfilecount + 1 )
-            		    output="${OUTPUTDIR}${tagarray[$i]}/${NewName} ($count).pdf"
+            		    output="${OUTPUTDIR}${tagdir}/${NewName} ($count).pdf"
             		fi
-                    echo "                          Ziel:   ./${tagarray[$i]}/$(basename "${output}")"
+                    echo "                          Ziel:   ./${tagdir}/$(basename "${output}")"
                     cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
                 done
@@ -441,7 +443,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         fi
         }
         rename
-    
+
     # Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien): ${filename%.*}
         if [ $backup = true ]; then
     		sourcefilecount=$(ls -t "${BACKUPDIR}" | egrep -o "${filename%.*}.*" | wc -l)
@@ -490,9 +492,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo "ocrcount=\"0\"" >> ./etc/counter
             echo "                      --> counter-File wurde erstellt"
         fi
-        synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-#        echo "                      --> $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet"
-        
+        synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)        
         echo "                          INFO: (Laufzeit letzt Datei: $(( $(date +%s) - $date_start )) Sekunden / $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet)"
     done
 }
@@ -507,9 +507,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     echo "    |    ==> Funktionsaufrufe <==    |"
     echo "    ----------------------------------"
     
-    cal_scan
+    mainrun
     purge_LOG
     
     echo -e; echo -e
     
 exit 0
+
