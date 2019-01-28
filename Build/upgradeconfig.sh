@@ -30,5 +30,8 @@
         if ! cat ./$CONFIG | grep -q "moveTaggedFiles" ; then
             echo "moveTaggedFiles=\"no\"" >> ./$CONFIG
         fi
+        if ! cat ./$CONFIG | grep -q "searchAll" ; then
+            echo "searchAll=\"no\"" >> ./$CONFIG
+        fi
 
 exit 0
