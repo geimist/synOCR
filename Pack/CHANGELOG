@@ -3,10 +3,11 @@ Release Notes
 0.11.0 (RELEASE)
     IMPLEMENTIERUNGEN:
  -  Tags und Kategorien können jetzt Leerzeichen enthalten (eine Suche nach Tag "Rechnung " findet so nicht fälschlicherweise "Rechnungsstellung")
- -  
+ -  Schalter, um Tags als Kategorie zu verwenden (manche wollen vielleicht für jeden Tag einen eigenen Ordner)
+ -  Schalter, um im gesamten Dokument zu suchen (nicht nur auf der ersten Seite)
 
     BUGFIXES:
- -  
+ -  kleinere Detailverbesserungen
 
 0.10.0 (RELEASE)
     IMPLEMENTIERUNGEN:
