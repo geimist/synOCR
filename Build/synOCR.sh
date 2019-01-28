@@ -239,7 +239,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             fi
             searchfile="/tmp/synOCR/synOCR.txt" # evtl. nur in Variable schreiben
             mkdir /tmp/synOCR
-            /bin/pdftotext -layout -l 1 "$output" "$searchfile"
+            
+            if [ $searchAll = no ]; then
+                pdftotextOpt="-l 1"
+            else
+                pdftotextOpt=""
+            fi
+
+            /bin/pdftotext -layout $pdftotextOpt "$output" "$searchfile"
             content=$(cat "$searchfile" )
             # cp "$searchfile" ${OUTPUTDIR} # DEV
             
@@ -391,11 +398,39 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             NewName=`echo $NewName | sed "s/§tit/${title}/g"`
             NewName=`echo $NewName | sed "s/%20/ /g"`
 
-            if [ ! -z "$renameTag" ] && [ $moveTaggedFiles = yes ]; then
+            if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
+                echo "                      --> verschiebe in Kategorieverzeichnisse"
+                renameCat=$( echo $renameCat | sed -e "s/#//g" )
+                tagarray=( $renameCat )   # Tags als Array definieren
+                i=0
+                maxID=${#tagarray[*]}
+            #    for a in ${tagarray[@]}; do
+            #        echo $a
+            #    done
+                while (( i < maxID )); do
+                    tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+                    echo -n "                          Tag-Ordner \"${tagdir}\" vorhanden? => "
+                    if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
+                        echo "OK"
+                    else
+                        mkdir "${OUTPUTDIR}${tagdir}"
+                        echo "erstellt"
+                    fi
+            		destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
+            		if [ $destfilecount -eq 0 ]; then
+            		    output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
+            		else
+            		    count=$( expr $destfilecount + 1 )
+            		    output="${OUTPUTDIR}${tagdir}/${NewName} ($count).pdf"
+            		fi
+                    echo "                          Ziel:   ./${tagdir}/$(basename "${output}")"
+                    cp -l "${outputtmp}" "${output}"
+                    i=$((i + 1))
+                done
+                echo "                          lösche temp. Zieldatei"
+                rm "${outputtmp}"
+            elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
                 echo "                      --> verschiebe in Tagverzeichnisse"
-                if [ ! -z "$renameCat" ]; then
-                    renameTag="$renameCat"  # verwende Categorie-Tags für Ordner
-                fi
                 renameTag=$( echo $renameTag | sed -e "s/#//g" )
                 tagarray=( $renameTag )   # Tags als Array definieren
                 i=0
@@ -403,8 +438,6 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             #    for a in ${tagarray[@]}; do
             #        echo $a
             #    done
-            #    echo "                          benenne um und verschiebe Zieldatei"
-            #    echo "                          von:    $(basename "${outputtmp}")"
                 while (( i < maxID )); do
                     tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
                     echo -n "                          Tag-Ordner \"${tagdir}\" vorhanden? => "
@@ -492,7 +525,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo "ocrcount=\"0\"" >> ./etc/counter
             echo "                      --> counter-File wurde erstellt"
         fi
-        synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)        
+        synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
         echo "                          INFO: (Laufzeit letzt Datei: $(( $(date +%s) - $date_start )) Sekunden / $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet)"
     done
 }
@@ -513,4 +546,3 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     echo -e; echo -e
     
 exit 0
-
