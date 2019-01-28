@@ -1,6 +1,6 @@
 package="synOCR"
 displayname="synOCR"
-version="0.10.0"
+version="0.10.1"
 thirdparty="yes"
 description="synOCR is a simple GUI for the Dockercontainer OCRmyPDF"
 description_enu="synOCR is a simple GUI for the Dockercontainer OCRmyPDF"
