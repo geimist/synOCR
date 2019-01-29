@@ -1,8 +1,8 @@
 #!/bin/sh
 
+# prüft die Kompatibilität mit dem Paket Docker
 machinetyp=$(uname --machine)
 device=$( uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" )
-
 
 if [ $machinetyp = "x86_64" ] ; then
 	exit 0
