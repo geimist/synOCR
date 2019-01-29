@@ -8,6 +8,7 @@ Release Notes
  -  PDFs die einen Error hervorrufen, werden in den Unterordner "ERRORFILES" im Quellverzeichnis verschoben, um deren wiederholte Verarbeitung zu vermeiden
 
     BUGFIXES:
+ -  eine Installation auf Geräten, die nur inoffiziell Docker unterstützen, war nicht möglich
  -  kleinere Detailverbesserungen
 
 0.10.0 (RELEASE)
