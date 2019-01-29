@@ -14,6 +14,5 @@ reloadui="yes"
 silent_install="no"
 silent_upgrade="yes"
 silent_uninstall="no"
-install_dep_packages="Docker"
 dsmappname=SYNO.SDS.synOCR.Application
 helpurl="https://www.synology-forum.de/showthread.html?99647-synOCR-GUI-f%C3%BCr-OCRmyPDF"
