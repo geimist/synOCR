@@ -53,6 +53,7 @@
     fi
 
     touch $LOGFILE
+    umask 000   # damit Files auch von anderen Usern bearbeitet werden können / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
     if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
         ./synOCR.sh "$LOGFILE" >> $LOGFILE 2>&1
