@@ -1,9 +1,6 @@
 Release Notes
 
 0.11.1 (RELEASE)
-    IMPLEMENTIERUNGEN:
- -  
-
     BUGFIXES:
  -  Das Sonderzeichen "&" im Dateinamen führte zu einer falschen Umbenennung (dennoch sollte grundsätzlich auf Sonderzeichen im Dateinamen verzichtet werden)
  -  ein falscher Exit-Status bei einer leeren Aufgabenliste führte dazu, dass der Aufgabenplaner fälschlicherweise von einem Error ausging und ggf. eine entsprechende Benachrichtigungsmail versendete
