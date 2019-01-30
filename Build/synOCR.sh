@@ -309,10 +309,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         echo "-"
                     fi
                 else
-                    echo -n "                          Suche nach Tag:   \"${tagarray[$i]}\" => "
-                    if grep -qi "${tagarray[$i]}" "$searchfile" ;then
+                    echo -n "                          Suche nach Tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" => "
+                    if grep -qi "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")" "$searchfile" ;then
                         echo "OK"
-                        renameTag="#$( echo ${tagarray[$i]} | sed -e "s/ /%20/g") ${renameTag}"
+                        renameTag="#${tagarray[$i]} ${renameTag}"
                     else
                         echo "-"
                     fi
