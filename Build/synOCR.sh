@@ -196,9 +196,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         else
             count=$( expr $destfilecount + 1 )
             output="${OUTPUTDIR}${title} ($count).pdf"
+            echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($count)"
         fi
 
-        echo "                          (temp. Zieldatei: ${output})"
+        echo "                          temp. Zieldatei: ${output}"
 
     # OCRmyPDF:
         OCRmyPDF()
@@ -223,6 +224,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERROR verschoben:
         if [ $(stat -c %s "$output") -eq 0 ] || [ ! -f "$output" ];then
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
+            echo "                                              L=> verschiebe nach ERRORFILES"
             rm "$output"
             if echo "$dockerlog" | grep -q ERROR ;then
                 if [ -d "${INPUTDIR}ERRORFILES" ] ; then
@@ -238,6 +240,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 else
                     count=$( expr $destfilecount + 1 )
                     output="${INPUTDIR}ERRORFILES/${filename%.*} ($count).pdf"
+                    echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($count)"
                 fi
                 mv "$input" "$output"
                 if [ "$loglevel" != 0 ] ;then
@@ -260,7 +263,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
         # Text exrahieren
             if [ -d "/tmp/synOCR" ]; then
-            	rm -r /tmp/synOCR
+                rm -r /tmp/synOCR
             fi
             searchfile="/tmp/synOCR/synOCR.txt" # evtl. nur in Variable schreiben
             mkdir /tmp/synOCR
@@ -274,7 +277,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             /bin/pdftotext -layout $pdftotextOpt "$output" "$searchfile"
             content=$(cat "$searchfile" )
             # cp "$searchfile" ${OUTPUTDIR} # DEV
-            
+
         # suche nach Tags:
             tagsearch() 
             {
@@ -346,7 +349,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 fi
                 founddate=""
             fi
-            
+
             # suche Format: yy(yy)[./-]mm[./-]dd
             if [ $dateIsFound = no ]; then
                 founddate=$( parseRegex "$content" "(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-][0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])" | head -n1 )
@@ -415,13 +418,16 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         # Zieldatei umbenennen:
         outputtmp=${output}
         if [ ! -z "$NameSyntax" ]; then
+            echo -n "                          wende Umbenennungssyntax an [$NameSyntax] --> "
+            title=$( echo "${title}" | sed "s/\&/%26/g" )    # "&" im Titel würde sonst durch "§tit" ersetzt
             NewName="$NameSyntax"
-            NewName=`echo $NewName | sed "s/§d/${date_dd}/g"`
-            NewName=`echo $NewName | sed "s/§m/${date_mm}/g"`
-            NewName=`echo $NewName | sed "s/§y/${date_yy}/g"`
-            NewName=`echo $NewName | sed "s/§tag/${renameTag}/g"`
-            NewName=`echo $NewName | sed "s/§tit/${title}/g"`
-            NewName=`echo $NewName | sed "s/%20/ /g"`
+            NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
+            NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
+            NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
+            NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g" )
+            NewName=$( echo "$NewName" | sed "s/§tit/${title}/g" | sed "s/%26/\&/g" )
+            NewName=$( echo "$NewName" | sed "s/%20/ /g" )
+            echo "$NewName"
 
             if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
                 echo "                      --> verschiebe in Kategorieverzeichnisse"
@@ -441,13 +447,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         mkdir "${OUTPUTDIR}${tagdir}"
                         echo "erstellt"
                     fi
-            		destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
-            		if [ $destfilecount -eq 0 ]; then
-            		    output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
-            		else
-            		    count=$( expr $destfilecount + 1 )
-            		    output="${OUTPUTDIR}${tagdir}/${NewName} ($count).pdf"
-            		fi
+                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
+                    if [ $destfilecount -eq 0 ]; then
+                        output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
+                    else
+                        count=$( expr $destfilecount + 1 )
+                        output="${OUTPUTDIR}${tagdir}/${NewName} ($count).pdf"
+                        echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($count)"
+                    fi
                     echo "                          Ziel:   ./${tagdir}/$(basename "${output}")"
                     cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
@@ -472,13 +479,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         mkdir "${OUTPUTDIR}${tagdir}"
                         echo "erstellt"
                     fi
-            		destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
-            		if [ $destfilecount -eq 0 ]; then
-            		    output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
-            		else
-            		    count=$( expr $destfilecount + 1 )
-            		    output="${OUTPUTDIR}${tagdir}/${NewName} ($count).pdf"
-            		fi
+                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
+                    if [ $destfilecount -eq 0 ]; then
+                        output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
+                    else
+                        count=$( expr $destfilecount + 1 )
+                        output="${OUTPUTDIR}${tagdir}/${NewName} ($count).pdf"
+                        echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($count)"
+                    fi
                     echo "                          Ziel:   ./${tagdir}/$(basename "${output}")"
                     cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
@@ -486,13 +494,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 echo "                          lösche temp. Zieldatei"
                 rm "${outputtmp}"
             else
-        		destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${NewName}.*" | wc -l)
-        		if [ $destfilecount -eq 0 ]; then
-        		    output="${OUTPUTDIR}${NewName}.pdf"
-        		else
-        		    count=$( expr $destfilecount + 1 )
-        		    output="${OUTPUTDIR}${NewName} ($count).pdf"
-        		fi
+                destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${NewName}.*" | wc -l)
+                if [ $destfilecount -eq 0 ]; then
+                    output="${OUTPUTDIR}${NewName}.pdf"
+                else
+                    count=$( expr $destfilecount + 1 )
+                    output="${OUTPUTDIR}${NewName} ($count).pdf"
+                fi
                 echo "                          Umbenennung ursprüngliche Zieldatei"
                 echo "                          von:    $(basename "${outputtmp}")"
                 echo "                          nach:   $(basename "${output}")"
