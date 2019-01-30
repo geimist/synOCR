@@ -1,5 +1,12 @@
 Release Notes
 
+0.x.0 (RELEASE)
+    IMPLEMENTIERUNGEN:
+ -  
+
+    BUGFIXES:
+ -  Das Sonderzeichen "&" im Dateinamen führte zu einer falschen Umbenennung (dennoch sollte grundsätzlich auf Sonderzeichen im Dateinamen verzichtet werden)
+
 0.11.0 (RELEASE)
     IMPLEMENTIERUNGEN:
  -  Tags und Kategorien können jetzt Leerzeichen enthalten (eine Suche nach Tag "Rechnung " findet so nicht fälschlicherweise "Rechnungsstellung")
