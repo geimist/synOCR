@@ -46,13 +46,14 @@
         exit 1
     fi
 
+	# nur starten (LOG erstellen), sofern es etwas zu tun gibt:
     if [ $( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) = 0 ] ;then
         echo '
         <p class="center"><span style="color: #228b22;"><b>es gibt nichts zu tun</b><br>Programmlauf wird beendet.<br></span></p>'
-        exit 1
+        exit 0
     fi
 
-    touch $LOGFILE
+    touch "$LOGFILE"
     umask 000   # damit Files auch von anderen Usern bearbeitet werden können / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
     if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
@@ -73,6 +74,9 @@
         echo "    -----------------------------------" >> $LOGFILE
         echo "    |   synOCR mit Fehlern beendet!   |" >> $LOGFILE
         echo "    -----------------------------------" >> $LOGFILE
+        echo "synOCR wurde mit Fehlern beendet!"
+        echo "weitere Informationen im LOG: $LOGFILE"
+        exit 1
     fi
 
 exit 0
