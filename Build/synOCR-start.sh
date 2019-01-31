@@ -13,12 +13,8 @@
     CONFIG=etc/Konfiguration.txt
     . ./$CONFIG
 
-    LOGDIR="${LOGDIR%/}/"
-    LOGFILE="${LOGDIR}synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log"
-
-    synOCR_pid=$( pidof synOCR.sh )
-
 # läuft bereits eine Instanz von synOCR?
+    synOCR_pid=$( pidof synOCR.sh )
     if [ ! -z "$synOCR_pid" ] ; then
         if [ $callFrom = GUI ] ; then
             echo '<p class="center"><span style="color: #BD0010;"><b>synOCR läuft bereits!</b><br>(Prozess-ID: '$synOCR_pid')</span></p>'
@@ -86,10 +82,13 @@
         exit 0
     fi
 
+# synOCR starten und ggf. Logverzeichnis erstellen
+    LOGDIR="${LOGDIR%/}/"
+    LOGFILE="${LOGDIR}synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log"
     touch "$LOGFILE"
+    
     umask 000   # damit Files auch von anderen Usern bearbeitet werden können / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
-# synOCR starten und ggf. Logverzeichnis erstellen
     if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
         ./synOCR.sh "$LOGFILE" >> $LOGFILE 2>&1
     elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then  
