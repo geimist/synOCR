@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ -f `/usr/bin/dirname $0`/lang/${SYNOPKG_DSM_LANGUAGE} ] ; then
+     . `/usr/bin/dirname $0`/lang/${SYNOPKG_DSM_LANGUAGE}
+else
+     . `/usr/bin/dirname $0`/lang/enu
+fi
+
 # prüft die Kompatibilität mit dem Paket Docker
 machinetyp=$(uname --machine)
 device=$( uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" )
@@ -7,7 +13,7 @@ device=$( uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" )
 if [ $machinetyp = "x86_64" ] ; then
 	exit 0
 else
-	echo "${PKG_NOINSTALL_ERROR_PART1} ${device} ${PKG_NOINSTALL_ERROR_PART2} ${machinetyp} ${PKG_NOINSTALL_ERROR_PART3}" > $SYNOPKG_TEMP_LOGFILE
+	echo "${PKG_NOINSTALL_ERROR_PART1}${device}${PKG_NOINSTALL_ERROR_PART2}${machinetyp}${PKG_NOINSTALL_ERROR_PART3}" > $SYNOPKG_TEMP_LOGFILE
 	exit 1
 fi
 
