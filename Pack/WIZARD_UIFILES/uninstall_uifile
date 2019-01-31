@@ -1,13 +1,13 @@
 [{
-	"step_title": "Deinstallationshinweis",
+	"step_title": "Uninstallation hint",
 	"items": 
 		[{
 		"type": "multiselect",
-        "desc" : "<p>Bei der Deinstallation werden alle Einstellungen gelöscht. Erstelle ggf. vor der Deinstallation eine Sicherung mit HyperBackup.</p><p>Soll ein in synOCR erstellter Zeitplan kann ebenfalls gelöscht werden?<br>(Ein manuell erstellter Task über den DSM-Aufgabenplaner muss ggf. manuell gelöscht werden.)</p>",
+        "desc" : "<p>All settings are deleted during uninstallation. If necessary, create a backup with HyperBackup before uninstalling.</p><p>Should a schedule created in synOCR also be deleted?<br>(A manually created task via the DSM task scheduler may have to be deleted manually.)</p>",
 		"subitems": 
 			[{
 				"key": "pkgwizard_remove_cronjob",
-				"desc": "synOCR Zeitplan löschen"
+				"desc": "delete synOCR task"
 			}]
 		}]
 }]
