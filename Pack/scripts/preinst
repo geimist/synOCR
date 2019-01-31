@@ -1,9 +1,10 @@
 #!/bin/sh
 
-if [ -f `/usr/bin/dirname $0`/lang/${SYNOPKG_DSM_LANGUAGE} ] ; then
-     . `/usr/bin/dirname $0`/lang/${SYNOPKG_DSM_LANGUAGE}
+# Sprachauswahl
+if [ -f $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE} ] ; then
+     . $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE}
 else
-     . `/usr/bin/dirname $0`/lang/enu
+     . $(/usr/bin/dirname $0)/lang/enu
 fi
 
 # prüft die Kompatibilität mit dem Paket Docker
