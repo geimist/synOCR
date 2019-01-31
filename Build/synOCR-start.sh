@@ -82,7 +82,7 @@
         exit 0
     fi
 
-# synOCR starten und ggf. Logverzeichnis erstellen
+# synOCR starten und ggf. Logverzeichnis prüfen und erstellen
     LOGDIR="${LOGDIR%/}/"
     LOGFILE="${LOGDIR}synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log"
     touch "$LOGFILE"
@@ -90,7 +90,7 @@
     umask 000   # damit Files auch von anderen Usern bearbeitet werden können / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
     if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
-        ./synOCR.sh "$LOGFILE" >> $LOGFILE 2>&1
+        ./synOCR.sh "$LOGFILE" >> $LOGFILE 2>&1     # $LOGFILE wird als Parameter an synOCR übergeben, da die Datei dort ggf. bei ERRORFILES benötigt wird
     elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then  
         mkdir -p "$LOGDIR"
         ./synOCR.sh "$LOGFILE" >> $LOGFILE 2>&1
