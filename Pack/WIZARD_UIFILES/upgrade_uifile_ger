@@ -1,0 +1,10 @@
+[
+   {
+      "step_title" : "Wichtiger Hinweis bei einem Upgrade!",
+      "items" : [
+         {
+            "desc" : "<p>Aufgrund eines Problems im DiskStationManager kann synOCR nach einem Upgrade nicht geöffnet werden. Daher <u>ist es nach einem Upgrage notwenig die DSM-Seite zu aktualisieren / neuzuladen (F5)</u> oder synOCR in einem neuen Fenster zu öffnen.</p>"
+         }
+      ]
+   }
+]
