@@ -34,13 +34,13 @@
     if [[ "$page" == "status-run-synocr" ]]; then
     	echo '
     	<div class="Content_1Col_full">'
-    	    /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
+    	    /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh GUI
     #	echo $refreshtime
     	echo '<meta http-equiv="refresh" content="2; URL=index.cgi?page=status"></div>'
     fi
 
 
-# synOTR beenden erzwingen:
+# synOCR beenden erzwingen:
 # ---------------------------------------------------------------------
     if [[ "$page" == "status-kill-synocr" ]]; then
     	killall synOCR.sh
