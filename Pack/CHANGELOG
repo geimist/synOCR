@@ -1,13 +1,13 @@
 Release Notes
 
-0.11.1 (RELEASE)
+0.11.1
     BUGFIXES:
  -  Das Sonderzeichen "&" im Dateinamen führte zu einer falschen Umbenennung (grundsätzlich sollte grundsätzlich auf Sonderzeichen im Dateinamen verzichtet werden!)
  -  ein falscher Exit-Status bei einer leeren Aufgabenliste führte dazu, dass der Aufgabenplaner fälschlicherweise von einem Error ausging und ggf. eine entsprechende Benachrichtigungsmail versendete
  -  Tags mit Leerzeichen wurden nicht erkannt, sofern sie ohne Kategorie gesucht wurden
  -  verbesserte LOG-Ausgabe beim Aufruf über den Aufgabenplaner
 
-0.11.0 (RELEASE)
+0.11.0
     IMPLEMENTIERUNGEN:
  -  Tags und Kategorien können jetzt Leerzeichen enthalten (eine Suche nach Tag "Rechnung " findet so nicht fälschlicherweise "Rechnungsstellung")
  -  Schalter, um Tags als Kategorie zu verwenden (manche wollen vielleicht für jeden Tag einen eigenen Ordner). Eine separate Kategoriezuweisung erübrigt sich in diesem Fall
@@ -17,7 +17,7 @@ Release Notes
  -  eine Installation auf Geräten, die nur inoffiziell Docker unterstützen, war nicht möglich
  -  kleinere Detailverbesserungen
 
-0.10.0 (RELEASE)
+0.10.0
     IMPLEMENTIERUNGEN:
  -  es kann nach Tags im OCR-Text gesucht werden
  -  es kann nach Datum im OCR-Text gesucht werden
@@ -27,7 +27,7 @@ Release Notes
  -  ein fehlender Zielordner wurde ggf. nicht erstellt
  -  der Zähler für offene Jobs war z.T. nicht korrekt
 
-0.9.3 (RELEASE)
+0.9.3
     IMPLEMENTIERUNGEN:
  -  Dateisuche ist jetzt case insensetive (Suchpräfix / .pdf .PDF)
  -  Suchpräfix kann nun automatisch entfernt werden
@@ -36,5 +36,5 @@ Release Notes
  -  bei einem OCRmyPDF Error wurde das Skript z.T. nicht korrekt abgebrochen
  -  kleinere Korrekturen
 
-0.9.2 (RELEASE)
+0.9.2
  -  This is the initial public release of the package
