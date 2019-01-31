@@ -18,6 +18,7 @@
 
     synOCR_pid=$( pidof synOCR.sh )
 
+# läuft bereits eine Instanz von synOCR?
     if [ ! -z "$synOCR_pid" ] ; then
         if [ $callFrom = GUI ] ; then
             echo '<p class="center"><span style="color: #BD0010;"><b>synOCR läuft bereits!</b><br>(Prozess-ID: '$synOCR_pid')</span></p>'
@@ -40,7 +41,8 @@
             echo "Bitte warten, bis die Dateien fertig abgearbeitet wurden."
         fi
     fi
-    
+
+# ist das Quellverzeichnis vorhanden und ist der Pfad zulässig?
     if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
         if [ $callFrom = GUI ] ; then
             echo '
@@ -51,7 +53,8 @@
         fi
         exit 1
     fi
-    
+
+# muss das Zielverzeichnis erstellt werden und ist der Pfad zulässig?
     if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
         mkdir -p "$OUTPUTDIR"
         if [ $callFrom = GUI ] ; then
@@ -71,7 +74,7 @@
         exit 1
     fi
 
-    # nur starten (LOG erstellen), sofern es etwas zu tun gibt:
+# nur starten (LOG erstellen), sofern es etwas zu tun gibt:
     if [ $( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) = 0 ] ;then
         if [ $callFrom = GUI ] ; then
             echo '
@@ -86,6 +89,7 @@
     touch "$LOGFILE"
     umask 000   # damit Files auch von anderen Usern bearbeitet werden können / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
+# synOCR starten und ggf. Logverzeichnis erstellen
     if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
         ./synOCR.sh "$LOGFILE" >> $LOGFILE 2>&1
     elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then  
