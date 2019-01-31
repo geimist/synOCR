@@ -2,9 +2,10 @@ Release Notes
 
 0.11.1 (RELEASE)
     BUGFIXES:
- -  Das Sonderzeichen "&" im Dateinamen führte zu einer falschen Umbenennung (dennoch sollte grundsätzlich auf Sonderzeichen im Dateinamen verzichtet werden)
+ -  Das Sonderzeichen "&" im Dateinamen führte zu einer falschen Umbenennung (grundsätzlich sollte grundsätzlich auf Sonderzeichen im Dateinamen verzichtet werden!)
  -  ein falscher Exit-Status bei einer leeren Aufgabenliste führte dazu, dass der Aufgabenplaner fälschlicherweise von einem Error ausging und ggf. eine entsprechende Benachrichtigungsmail versendete
- -  Tags mit Leerzeichen wurden nicht erkannt, wenn sie ohne Kategorie gesucht wurden
+ -  Tags mit Leerzeichen wurden nicht erkannt, sofern sie ohne Kategorie gesucht wurden
+ -  verbesserte LOG-Ausgabe beim Aufruf über den Aufgabenplaner
 
 0.11.0 (RELEASE)
     IMPLEMENTIERUNGEN:
@@ -12,7 +13,6 @@ Release Notes
  -  Schalter, um Tags als Kategorie zu verwenden (manche wollen vielleicht für jeden Tag einen eigenen Ordner). Eine separate Kategoriezuweisung erübrigt sich in diesem Fall
  -  Schalter, um im gesamten Dokument zu suchen (nicht nur auf der ersten Seite / Gefahr von false positive Ergebnissen steigt!)
  -  PDFs die einen Error hervorrufen, werden in den Unterordner "ERRORFILES" im Quellverzeichnis verschoben, um deren wiederholte Verarbeitung zu vermeiden
-
     BUGFIXES:
  -  eine Installation auf Geräten, die nur inoffiziell Docker unterstützen, war nicht möglich
  -  kleinere Detailverbesserungen
@@ -23,7 +23,6 @@ Release Notes
  -  es kann nach Datum im OCR-Text gesucht werden
  -  es kann eine eigene Umbenennungssyntax angegeben werden
  -  Tags können einer Kategorie zugeordnet werden (entsprechende Unterordner werden im Zielordner erstellt)
-
     BUGFIXES:
  -  ein fehlender Zielordner wurde ggf. nicht erstellt
  -  der Zähler für offene Jobs war z.T. nicht korrekt
@@ -32,7 +31,6 @@ Release Notes
     IMPLEMENTIERUNGEN:
  -  Dateisuche ist jetzt case insensetive (Suchpräfix / .pdf .PDF)
  -  Suchpräfix kann nun automatisch entfernt werden
-
     BUGFIXES:
  -  leere LOGs wurden z.T. nicht korrekt gelöscht
  -  bei einem OCRmyPDF Error wurde das Skript z.T. nicht korrekt abgebrochen
