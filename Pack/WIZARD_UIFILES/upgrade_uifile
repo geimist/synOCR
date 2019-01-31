@@ -3,7 +3,7 @@
       "step_title" : "Important note when upgrading!",
       "items" : [
          {
-            "desc" : "<p>Due to a problem in DiskStationManager synOCR cannot be opened after an upgrade. Therefore <u>it is necessary to reload the DSM page (F5)</u> or open synOCR in a new window after an upgrade.<p>"
+            "desc" : "<p>Due to a problem in DiskStationManager synOCR cannot be opened after an upgrade. Therefore <u>it is necessary to reload the DSM page (F5)</u> or open synOCR in a new window after an upgrade.</p>"
          }
       ]
    }
