@@ -434,6 +434,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 renameCat=$( echo $renameCat | sed -e "s/#//g" )
                 tagarray=( $renameCat )   # Tags als Array definieren
                 i=0
+                DestFolderList=""   # temp. Liste der verwendeten Zielordner um Dateiduplikate (unterschiedliche Tags, aber eine Kategorie) zu vermeiden
                 maxID=${#tagarray[*]}
             #    for a in ${tagarray[@]}; do
             #        echo $a
@@ -456,7 +457,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($count)"
                     fi
                     echo "                          Ziel:   ./${tagdir}/$(basename "${output}")"
-                    cp -l "${outputtmp}" "${output}"
+                    # prüfen, ob selbe Datei bereits einmal in diese Kategorie einsortiert wurde (unterschiedliche Tags, aber gleich Kategorie)
+                    if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
+                        echo "                          selbe Datei ist bereits in Kategorie (${tagarray[$i]}) kopiert worden und wird übersprungen!"
+                    else
+                        cp -l "${outputtmp}" "${output}"
+                    fi
+                    DestFolderList="${tagarray[$i]}\n${DestFolderList}"
                     i=$((i + 1))
                 done
                 echo "                          lösche temp. Zieldatei"
