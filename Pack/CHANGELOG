@@ -1,5 +1,12 @@
 Release Notes
 
+0.12.0
+    IMPLEMENTIERUNGEN:
+ -  zeigen unterschiedliche Tags auf ein und dieselbe Kategorie, so wird die Datei nur einmal in den Kategorieordner verschoben
+ -  
+    BUGFIXES:
+ -  
+
 0.11.1
     BUGFIXES:
  -  Das Sonderzeichen "&" im Dateinamen führte zu einer falschen Umbenennung (grundsätzlich sollte grundsätzlich auf Sonderzeichen im Dateinamen verzichtet werden!)
