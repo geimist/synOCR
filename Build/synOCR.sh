@@ -50,7 +50,6 @@
     read MAC </sys/class/net/eth0/address
     sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
     device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
-    # für HD-Aufnahmen mit avcut mindestens 500 MB free:
 #   echo -n "                          RAM installiert:    "; RAMmax=`free -m | grep 'Mem:' | awk '{print $2}'`; echo "$RAMmax MB"	    # verbauter RAM
 #   echo -n "                          RAM verwendet:      "; RAMused=`free -m | grep 'Mem:' | awk '{print $3}'`;	echo "$RAMused MB"  # genutzter RAM
 #   echo -n "                          RAM verfügbar:      "; RAMfree=$(( $RAMmax - $RAMused )); 	echo "$RAMfree MB"
@@ -171,7 +170,7 @@ fi
 mainrun() 
 {
 #########################################################################################
-# Diese Funktion übergibt die Dateien an docker                                         #
+# Diese Funktion arbeitet die Dateien ab                                                #
 #########################################################################################
     
 IFS=$'\012'	 # entspricht einem $'\n' Newline
@@ -201,7 +200,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
         echo "                          temp. Zieldatei: ${output}"
 
-    # OCRmyPDF:
+    # Diese Funktion übergibt die Dateien an docker:
         OCRmyPDF()
         {
             # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
@@ -221,7 +220,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         echo "                      <-- OCRmyPDF-LOG-END"
         echo -e
 
-    # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERROR verschoben:
+    # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERRORFILES verschoben:
         if [ $(stat -c %s "$output") -eq 0 ] || [ ! -f "$output" ];then
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
             echo "                                              L=> verschiebe nach ERRORFILES"
