@@ -553,7 +553,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 echo "$PB_LOG" | jq -r '.error_code'
             fi
         else
-            echo "                          (INFO: PushBullet-TOKEN nicht gesetzt)"
+            echo "                          INFO: (PushBullet-TOKEN nicht gesetzt)"
         fi
     #    wget --timeout=30 --tries=2 -q -O - "http://${synocrdomain}/synOCR/synOCR_FILECOUNT" >/dev/null 2>&1
 
