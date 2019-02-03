@@ -13,6 +13,8 @@ Release Notes
  -  ein falscher Exit-Status bei einer leeren Aufgabenliste führte dazu, dass der Aufgabenplaner fälschlicherweise von einem Error ausging und ggf. eine entsprechende Benachrichtigungsmail versendete
  -  Tags mit Leerzeichen wurden nicht erkannt, sofern sie ohne Kategorie gesucht wurden
  -  verbesserte LOG-Ausgabe beim Aufruf über den Aufgabenplaner
+ -  der Originaldateiname wurde z.T. bei der Umbenennung nicht korrekt weiter verarbeitet
+ -  Verbesserung der Dateizählererweiterung wenn man die erste Datei ohne Zähler verschoben hatte
 
 0.11.0
     IMPLEMENTIERUNGEN:
