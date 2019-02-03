@@ -185,8 +185,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         date_start=$(date +%s)
 
     # Zieldateiname erstellen (berücksichtigt gleichnamige vorhandene Dateien):
-        if [ $delSearchPraefix = "yes" ] ; then
-            title=$( echo ${title} | sed s/${SearchPraefix}//I )
+        if [ $delSearchPraefix = "yes" ] && [ ! -z "${SearchPraefix}" ]; then
+            title=$( echo "${title}" | sed s/${SearchPraefix}//I )
         fi
 
         destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${title}.*" | wc -l)
