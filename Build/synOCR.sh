@@ -50,12 +50,10 @@
     read MAC </sys/class/net/eth0/address
     sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
     device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
-#   echo -n "                          RAM installiert:    "; RAMmax=`free -m | grep 'Mem:' | awk '{print $2}'`; echo "$RAMmax MB"	    # verbauter RAM
-#   echo -n "                          RAM verwendet:      "; RAMused=`free -m | grep 'Mem:' | awk '{print $3}'`;	echo "$RAMused MB"  # genutzter RAM
-#   echo -n "                          RAM verfügbar:      "; RAMfree=$(( $RAMmax - $RAMused )); 	echo "$RAMfree MB"
     echo "verwendetes Image:        $dockercontainer"
     echo "verwendete Parameter:     $ocropt"
     echo "ersetze Suchpräfix:       $delSearchPraefix"
+    echo "Umbenennungssyntax:       $NameSyntax"
     
 # Konfiguration für LogLevel:
 # ---------------------------------------------------------------------
@@ -170,7 +168,7 @@ fi
 mainrun() 
 {
 #########################################################################################
-# Diese Funktion arbeitet die Dateien ab                                                #
+# Diese Funktion übergibt die Dateien an docker                                         #
 #########################################################################################
     
 IFS=$'\012'	 # entspricht einem $'\n' Newline
@@ -193,14 +191,17 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         if [ $destfilecount -eq 0 ]; then
             output="${OUTPUTDIR}${title}.pdf"
         else
-            count=$( expr $destfilecount + 1 )
-            output="${OUTPUTDIR}${title} ($count).pdf"
-            echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($count)"
+            while [ -f "${OUTPUTDIR}${title} ($destfilecount).pdf" ]
+                do
+                    destfilecount=$( expr $destfilecount + 1 )
+                    echo "                          zähle weiter … ($destfilecount)"
+                done
+            output="${OUTPUTDIR}${title} ($destfilecount).pdf"
+            echo "                          Dateiname ist bereits vorhanden! Ergänze Zähler ($destfilecount)"
         fi
-
         echo "                          temp. Zieldatei: ${output}"
 
-    # Diese Funktion übergibt die Dateien an docker:
+    # OCRmyPDF:
         OCRmyPDF()
         {
             # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
@@ -220,16 +221,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         echo "                      <-- OCRmyPDF-LOG-END"
         echo -e
 
-    # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERRORFILES verschoben:
+    # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERROR verschoben:
         if [ $(stat -c %s "$output") -eq 0 ] || [ ! -f "$output" ];then
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
             echo "                                              L=> verschiebe nach ERRORFILES"
             rm "$output"
             if echo "$dockerlog" | grep -q ERROR ;then
-                if [ -d "${INPUTDIR}ERRORFILES" ] ; then
-                    echo "ERROR-Verzeichnis:        $BACKUPDIR"
-                else
-                    echo "ERROR-Verzeichnis [${INPUTDIR}ERRORFILES] wird erstellt!"
+                if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
+                    echo "                                                  ERROR-Verzeichnis [${INPUTDIR}ERRORFILES] wird erstellt!"
                     mkdir "${INPUTDIR}ERRORFILES"
                 fi
 
@@ -237,9 +236,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 if [ $destfilecount -eq 0 ]; then
                     output="${INPUTDIR}ERRORFILES/${filename%.*}.pdf"
                 else
-                    count=$( expr $destfilecount + 1 )
-                    output="${INPUTDIR}ERRORFILES/${filename%.*} ($count).pdf"
-                    echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($count)"
+                    while [ -f "${INPUTDIR}ERRORFILES/${filename%.*} ($destfilecount).pdf" ]
+                        do
+                            destfilecount=$( expr $destfilecount + 1 )
+                            echo "                                                  zähle weiter … ($destfilecount)"
+                        done
+                    output="${INPUTDIR}ERRORFILES/${filename%.*} ($destfilecount).pdf"
+                    echo "                                                  Dateiname bereits vorhanden! Ergänze Zähler ($destfilecount)"
                 fi
                 mv "$input" "$output"
                 if [ "$loglevel" != 0 ] ;then
@@ -328,7 +331,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             dateIsFound=no
             # suche Format: dd[./-]mm[./-]yy(yy)
             founddate=$( parseRegex "$content" "([1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
-            if [ -n $founddate ]; then
+            if [ ! -z $founddate ]; then
                 echo -n "                          prüfe Datum: $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
                 date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
@@ -352,7 +355,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             # suche Format: yy(yy)[./-]mm[./-]dd
             if [ $dateIsFound = no ]; then
                 founddate=$( parseRegex "$content" "(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-][0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])" | head -n1 )
-                if [ -n $founddate ]; then
+                if [ ! -z $founddate ]; then
                     echo -n "                          prüfe Datum: $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
@@ -377,7 +380,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             # suche Format: mm[./-]dd[./-]yy(yy) amerikanisch
             if [ $dateIsFound = no ]; then
                 founddate=$( parseRegex "$content" "[0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
-                if [ -n $founddate ]; then
+                if [ ! -z $founddate ]; then
                     echo -n "                          prüfe Datum: $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
@@ -447,14 +450,20 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         mkdir "${OUTPUTDIR}${tagdir}"
                         echo "erstellt"
                     fi
+
                     destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
                     if [ $destfilecount -eq 0 ]; then
                         output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
                     else
-                        count=$( expr $destfilecount + 1 )
-                        output="${OUTPUTDIR}${tagdir}/${NewName} ($count).pdf"
-                        echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($count)"
+                        while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
+                            do
+                                destfilecount=$( expr $destfilecount + 1 )
+                                echo "                          zähle weiter … ($destfilecount)"
+                            done
+                        output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
+                        echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($destfilecount)"
                     fi
+                    
                     echo "                          Ziel:   ./${tagdir}/$(basename "${output}")"
                     # prüfen, ob selbe Datei bereits einmal in diese Kategorie einsortiert wurde (unterschiedliche Tags, aber gleich Kategorie)
                     if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
@@ -485,14 +494,20 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         mkdir "${OUTPUTDIR}${tagdir}"
                         echo "erstellt"
                     fi
+
                     destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
                     if [ $destfilecount -eq 0 ]; then
                         output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
                     else
-                        count=$( expr $destfilecount + 1 )
-                        output="${OUTPUTDIR}${tagdir}/${NewName} ($count).pdf"
-                        echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($count)"
+                        while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
+                            do
+                                destfilecount=$( expr $destfilecount + 1 )
+                                echo "                          zähle weiter … ($destfilecount)"
+                            done
+                        output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
+                        echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($destfilecount)"
                     fi
+
                     echo "                          Ziel:   ./${tagdir}/$(basename "${output}")"
                     cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
@@ -504,8 +519,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 if [ $destfilecount -eq 0 ]; then
                     output="${OUTPUTDIR}${NewName}.pdf"
                 else
-                    count=$( expr $destfilecount + 1 )
-                    output="${OUTPUTDIR}${NewName} ($count).pdf"
+                    while [ -f "${OUTPUTDIR}${NewName} ($destfilecount).pdf" ]
+                        do
+                            destfilecount=$( expr $destfilecount + 1 )
+                            echo "                          zähle weiter … ($destfilecount)"
+                        done
+                    output="${OUTPUTDIR}${NewName} ($destfilecount).pdf"
+                    echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($destfilecount)"
                 fi
                 echo "                          Umbenennung ursprüngliche Zieldatei"
                 echo "                          von:    $(basename "${outputtmp}")"
@@ -523,9 +543,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 mv "$input" "${BACKUPDIR}${filename}"
                 echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename}"
             else
-                count=$( expr $sourcefilecount + 1 )
-                mv "$input" "${BACKUPDIR}${filename%.*} ($count).pdf"
-                echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename%.*} ($count).pdf"
+                while [ -f "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf" ]
+                    do
+                        sourcefilecount=$( expr $sourcefilecount + 1 )
+                        echo "                          zähle weiter … ($sourcefilecount)"
+                    done
+                mv "$input" "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
+                echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
             fi
         else
             rm "$input"
@@ -565,7 +589,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo "                      --> counter-File wurde erstellt"
         fi
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-        echo "                          INFO: (Laufzeit letzte Datei: $(( $(date +%s) - $date_start )) Sekunden / $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet)"
+        echo "                          INFO: (Laufzeit letzt Datei: $(( $(date +%s) - $date_start )) Sekunden / $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet)"
     done
 }
 
