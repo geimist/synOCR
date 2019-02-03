@@ -83,7 +83,8 @@
     fi
     
     OUTPUTDIR="${OUTPUTDIR%/}/"
-
+    echo "Quellverzeichnis:         ${OUTPUTDIR}"
+    
     BACKUPDIR="${BACKUPDIR%/}/"
     if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
         echo "BackUp-Verzeichnis:       $BACKUPDIR"
@@ -187,7 +188,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             title=$( echo "${title}" | sed s/${SearchPraefix}//I )
         fi
 
-        destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${title}.*" | wc -l)
+        destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "${title}.*" | wc -l)
         if [ $destfilecount -eq 0 ]; then
             output="${OUTPUTDIR}${title}.pdf"
         else
@@ -232,7 +233,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     mkdir "${INPUTDIR}ERRORFILES"
                 fi
 
-                destfilecount=$(ls -t "${INPUTDIR}ERRORFILES" | egrep -o "${filename%.*}.*" | wc -l)
+                destfilecount=$(ls -t "${INPUTDIR}ERRORFILES" | grep -o "${filename%.*}.*" | wc -l)
                 if [ $destfilecount -eq 0 ]; then
                     output="${INPUTDIR}ERRORFILES/${filename%.*}.pdf"
                 else
@@ -384,6 +385,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     echo -n "                          prüfe Datum: $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
+                    
+                    
+                    # 386 
+                    #      prüfe Datum: [72.07.41 --> ungültiges Format
+                    #      prüfe Datum: [72.07.41./synOCR.sh: line 386: 10#[72 : syntax error: invalid arithmetic operator (error token is "[72 ") --> ungültiges Format
+                    
+                    
                     date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
                     if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
                         date_yy="20${date_yy}"
@@ -451,7 +459,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         echo "erstellt"
                     fi
 
-                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
+                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "${NewName}.*" | wc -l)
                     if [ $destfilecount -eq 0 ]; then
                         output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
                     else
@@ -495,7 +503,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         echo "erstellt"
                     fi
 
-                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | egrep -o "${NewName}.*" | wc -l)
+                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "${NewName}.*" | wc -l)
                     if [ $destfilecount -eq 0 ]; then
                         output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
                     else
@@ -515,7 +523,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 echo "                          lösche temp. Zieldatei"
                 rm "${outputtmp}"
             else
-                destfilecount=$(ls -t "${OUTPUTDIR}" | egrep -o "${NewName}.*" | wc -l)
+                destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "${NewName}.*" | wc -l)
                 if [ $destfilecount -eq 0 ]; then
                     output="${OUTPUTDIR}${NewName}.pdf"
                 else
@@ -538,7 +546,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
     # Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien): ${filename%.*}
         if [ $backup = true ]; then
-            sourcefilecount=$(ls -t "${BACKUPDIR}" | egrep -o "${filename%.*}.*" | wc -l)
+            sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "${filename%.*}.*" | wc -l)
             if [ $sourcefilecount -eq 0 ]; then
                 mv "$input" "${BACKUPDIR}${filename}"
                 echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename}"
