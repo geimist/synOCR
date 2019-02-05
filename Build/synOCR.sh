@@ -385,13 +385,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     echo -n "                          prüfe Datum: $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
-                    
-                    
-                    # 386 
-                    #      prüfe Datum: [72.07.41 --> ungültiges Format
-                    #      prüfe Datum: [72.07.41./synOCR.sh: line 386: 10#[72 : syntax error: invalid arithmetic operator (error token is "[72 ") --> ungültiges Format
-                    
-                    
+
+# 386 
+#      prüfe Datum: [72.07.41 --> ungültiges Format
+#      prüfe Datum: [72.07.41./synOCR.sh: line 386: 10#[72 : syntax error: invalid arithmetic operator (error token is "[72 ") --> ungültiges Format
+
+
                     date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
                     if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
                         date_yy="20${date_yy}"
@@ -428,7 +427,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         # Zieldatei umbenennen:
         outputtmp=${output}
         if [ ! -z "$NameSyntax" ]; then
-            echo -n "                          wende Umbenennungssyntax an [$NameSyntax] --> "
+            echo -n "                          wende Umbenennungssyntax an --> "
             title=$( echo "${title}" | sed "s/\&/%26/g" )    # "&" im Titel würde sonst durch "§tit" ersetzt
             NewName="$NameSyntax"
             NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
@@ -597,7 +596,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo "                      --> counter-File wurde erstellt"
         fi
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-        echo "                          INFO: (Laufzeit letzt Datei: $(( $(date +%s) - $date_start )) Sekunden / $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet)"
+        echo "                          INFO: (Laufzeit letzte Datei: $(( $(date +%s) - $date_start )) Sekunden / $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet)"
     done
 }
 
