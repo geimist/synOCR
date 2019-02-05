@@ -9,7 +9,7 @@ Release Notes
  -  Tags mit Leerzeichen wurden nicht erkannt, sofern sie ohne Kategorie gesucht wurden
  -  verbesserte LOG-Ausgabe beim Aufruf über den Aufgabenplaner
  -  der Originaldateiname wurde z.T. bei der Umbenennung nicht korrekt weiter verarbeitet
- -  Verbesserung der Dateizählererweiterung wenn man die erste Datei ohne Zähler verschoben hatte
+ -  Verbesserung der Dateizählererweiterung wenn man die erste Datei ohne Zähler verschoben hatte, bzw. die Originaldateien schon einen Zähler in der Form (1) hatten.
 
 0.11.0
     IMPLEMENTIERUNGEN:
