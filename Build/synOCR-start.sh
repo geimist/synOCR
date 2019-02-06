@@ -4,6 +4,9 @@
 
 # wurde das Skript von der GUI aufgerufen?
     callFrom=$1
+    if [ -z $callFrom ] ; then
+        callFrom=shell
+    fi
     
 # Arbeitsverzeichnis auslesen und hineinwechseln:
     APPDIR=$(cd $(dirname $0);pwd)
