@@ -2,7 +2,7 @@
 # /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
 # wechselt in synOCR-Verzeichnis und startet synOCR mit bzw. ohne LOG (je nach Konfiguration)
 
-# wurde das Skript von der GUI aufgerufen?
+# wurde das Skript von der GUI aufgerufen (Aufruf mit Parameter "GUI")?
     callFrom=$1
     if [ -z $callFrom ] ; then
         callFrom=shell
