@@ -1,6 +1,12 @@
 Release Notes
 
-0.12.0
+0.12.2
+    IMPLEMENTIERUNGEN:
+ -  
+    BUGFIXES:
+ -  Fehler bei der LOG-Ausgabe beim Aufruf über den Aufgabenplaner
+
+0.12.1
     IMPLEMENTIERUNGEN:
  -  zeigen unterschiedliche Tags auf ein und dieselbe Kategorie, so wird die Datei nur einmal in den Kategorieordner verschoben
     BUGFIXES:
