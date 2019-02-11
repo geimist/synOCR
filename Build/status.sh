@@ -15,14 +15,18 @@
         touch ./etc/counter
         echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
         echo "ocrcount=\"0\"" >> ./etc/counter
+        echo "pagecount=\"0\"" >> ./etc/counter
+    else
+        if ! cat ./etc/counter | grep -q "pagecount" ; then
+            echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
+        fi
     fi
-
+    
 
 # Dateistatus auslesen:
 # ---------------------------------------------------------------------
     # Anzahl unfertiger PDF-Files:    
     count_inputpdf=$( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) # wie viele Dateien 
-
 
 # Installationsstatus auslesen:
 # ---------------------------------------------------------------------
@@ -108,12 +112,12 @@ echo '<table style="width: 700px;" >
  
     if [[ "$count_inputpdf" == 0 ]]; then
         echo '<tr><td class="td_color"></td><td><span style="color:#0086E5;font-weight:normal; ">Dateien zu bearbeiten: </span></td>
-        <td><span style="color:green;font-weight: bold;">Alles erledigt</span></td></tr>'
+        <td><span style="color:green;">Alles erledigt</span></td></tr>'
     else
         echo '<tr><td class="td_color"></td><td><span style="color:#0086E5;font-weight:normal; ">Dateien zu bearbeiten: </span></td>
-        <td><span style="color:#BD0010;font-weight: bold;">'$count_inputpdf'</span></td></tr>'
+        <td><span style="color:#BD0010;">'$count_inputpdf'</span></td></tr>'
     fi
-    echo '<tr><td class="td_color" bgcolor=#fff></td><td><span style="color:#0086E5;font-weight:normal; ">Gesamt seit '$(get_key_value ./etc/counter startcount)':</td><td><span style="color:green;font-weight: bold;">'$(get_key_value ./etc/counter ocrcount)'</span></td></tr>'
+    echo '<tr><td class="td_color" bgcolor=#fff></td><td><span style="color:#0086E5;font-weight:normal; ">Gesamt seit '$(get_key_value ./etc/counter startcount)' PDF/Pages:</td><td><span style="color:green;">'$(get_key_value ./etc/counter ocrcount)'/'$(get_key_value ./etc/counter pagecount)'</span></td></tr>'
 
     echo '
     </table>
