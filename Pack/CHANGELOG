@@ -3,8 +3,10 @@ Release Notes
 0.12.2
     IMPLEMENTIERUNGEN:
  -  
+ -  (der Suchpräfix wird bei Neueinstallationen nicht mehr vorbelegt)
     BUGFIXES:
  -  Fehler bei der LOG-Ausgabe beim Aufruf über den Aufgabenplaner
+ -  
 
 0.12.1
     IMPLEMENTIERUNGEN:
