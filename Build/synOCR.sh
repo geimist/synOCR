@@ -188,7 +188,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             title=$( echo "${title}" | sed s/${SearchPraefix}//I )
         fi
 
-        destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "${title}.*" | wc -l)
+        destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${title}.*" | wc -l)
         if [ $destfilecount -eq 0 ]; then
             output="${OUTPUTDIR}${title}.pdf"
         else
@@ -225,7 +225,6 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERROR verschoben:
         if [ $(stat -c %s "$output") -eq 0 ] || [ ! -f "$output" ];then
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
-            echo "                                              L=> verschiebe nach ERRORFILES"
             rm "$output"
             if echo "$dockerlog" | grep -q ERROR ;then
                 if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
@@ -233,7 +232,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     mkdir "${INPUTDIR}ERRORFILES"
                 fi
 
-                destfilecount=$(ls -t "${INPUTDIR}ERRORFILES" | grep -o "${filename%.*}.*" | wc -l)
+                destfilecount=$(ls -t "${INPUTDIR}ERRORFILES" | grep -o "^${filename%.*}.*" | wc -l)
                 if [ $destfilecount -eq 0 ]; then
                     output="${INPUTDIR}ERRORFILES/${filename%.*}.pdf"
                 else
@@ -249,6 +248,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 if [ "$loglevel" != 0 ] ;then
                     cp "$LOGFILE" "${output}.log"
                 fi
+                echo "                                              L=> verschiebe nach ERRORFILES"
             fi
             continue
         fi
@@ -301,10 +301,16 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         #    done
             while (( i < maxID )); do
                 if echo "${tagarray[$i]}" | grep -q "=" ;then
+                    if echo $(echo "${tagarray[$i]}" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
+                        grep_opt="-qiw"
+                    else
+                        grep_opt="-qi"
+                    fi
+                    tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
                     searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
                     categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
                     echo -n "                          Suche nach Tag:   \"${searchtag}\" => "
-                    if grep -qi "${searchtag}" "$searchfile" ;then
+                    if grep $grep_opt "${searchtag}" "$searchfile" ;then
                         echo "OK (Cat: \"${categorietag}\")"
                         renameTag="#$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}"
                         renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
@@ -312,8 +318,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         echo "-"
                     fi
                 else
+                    if echo $(echo ${tagarray[$i]} | sed -e "s/%20/ /g") | grep -q  "^§" ;then
+                        grep_opt="-qiw"
+                    else
+                        grep_opt="-qi"
+                    fi
+                    tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
                     echo -n "                          Suche nach Tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" => "
-                    if grep -qi "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")" "$searchfile" ;then
+                    if grep $grep_opt "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g" | sed -e "s/^§//g")" "$searchfile" ;then
                         echo "OK"
                         renameTag="#${tagarray[$i]} ${renameTag}"
                     else
@@ -458,7 +470,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         echo "erstellt"
                     fi
 
-                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "${NewName}.*" | wc -l)
+                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
                     if [ $destfilecount -eq 0 ]; then
                         output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
                     else
@@ -481,7 +493,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     DestFolderList="${tagarray[$i]}\n${DestFolderList}"
                     i=$((i + 1))
                 done
-                echo "                          lösche temp. Zieldatei"
+                echo "                      --> lösche temp. Zieldatei"
                 rm "${outputtmp}"
             elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
                 echo "                      --> verschiebe in Tagverzeichnisse"
@@ -502,7 +514,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         echo "erstellt"
                     fi
 
-                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "${NewName}.*" | wc -l)
+                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
                     if [ $destfilecount -eq 0 ]; then
                         output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
                     else
@@ -519,10 +531,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
                 done
-                echo "                          lösche temp. Zieldatei"
+                echo "                      --> lösche temp. Zieldatei"
                 rm "${outputtmp}"
             else
-                destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "${NewName}.*" | wc -l)
+                destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
                 if [ $destfilecount -eq 0 ]; then
                     output="${OUTPUTDIR}${NewName}.pdf"
                 else
@@ -543,9 +555,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         }
         rename
 
+    # Seiten zählen
+        pagecount_latest=$(./bin/pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
+        
     # Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien): ${filename%.*}
         if [ $backup = true ]; then
-            sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "${filename%.*}.*" | wc -l)
+            sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
             if [ $sourcefilecount -eq 0 ]; then
                 mv "$input" "${BACKUPDIR}${filename}"
                 echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename}"
@@ -593,10 +608,16 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             touch ./etc/counter
             echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
             echo "ocrcount=\"0\"" >> ./etc/counter
+            echo "pagecount=\"0\"" >> ./etc/counter
             echo "                      --> counter-File wurde erstellt"
+        else
+            if ! cat ./etc/counter | grep -q "pagecount" ; then
+                echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
+            fi
         fi
+        synosetkeyvalue ./etc/counter pagecount $(expr $(get_key_value ./etc/counter pagecount) + $pagecount_latest)
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-        echo "                          INFO: (Laufzeit letzte Datei: $(( $(date +%s) - $date_start )) Sekunden / $(get_key_value ./etc/counter ocrcount) PDFs bisher verarbeitet)"
+        echo "                          INFO: (Laufzeit letzte Datei: $(( $(date +%s) - $date_start )) Sekunden (Seitenanzahl: $pagecount_latest) | gesamt: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Seiten bisher verarbeitet)"
     done
 }
 
