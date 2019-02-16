@@ -2,7 +2,7 @@ Release Notes
 
 0.13.0
     IMPLEMENTIERUNGEN:
- -  Soll ein Tag nur alleinstehend gefunden werden, ist ein Paragrafenzeichen voranzustellen
+ -  durch Voranzustellen eines Paragrafenzeichen kann ein Tag alleinstehend gefunden werden (§tag)
  -  (der Suchpräfix ist als Standard [bei Neueinstallationen] nicht mehr vorbelegt)
     BUGFIXES:
  -  Fehler bei der LOG-Ausgabe beim Aufruf über den Aufgabenplaner
