@@ -299,7 +299,8 @@ if [[ "$page" == "edit" ]]; then
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung.
             Einzelne Tags werdendurch Semikolon getrennt. 
-            Tags und Kategorien können auch Leerzeichen enthalten (eine Suche nach "<code>Rechnung </code>" findet so nicht fälschlicherweise "<code>Rechnungsstellung</code>")<br><br>
+            Tags und Kategorien können auch Leerzeichen enthalten.<br>
+            Soll ein Tag nur alleinstehend gefunden werden, ist ein Paragrafenzeichen voranzustellen (eine Suche nach "<code>§Rechnung</code>" findet so nicht fälschlicherweise "<code>Rechnungsstellung</code>")<br><br>
             z.B.: <b>Rechnung;Arbeit;Versicherung</b><br>
             <br>
             Tags können auch durch ein Gleichheitszeichen einer Kategorie (für Unterordner) zugeordnet werden 
