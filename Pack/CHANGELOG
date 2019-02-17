@@ -2,7 +2,7 @@ Release Notes
 
 0.13.0
     IMPLEMENTIERUNGEN:
- -  durch Vorastellen eines Paragrafenzeichen kann ein Tag alleinstehend gefunden werden (§tag)
+ -  durch Voranstellen eines Paragrafenzeichen kann ein Tag alleinstehend gefunden werden (§tag)
  -  in der Statistik werden jetzt auch einzelne Seiten gezählt
  -  (der Suchpräfix ist als Standard [bei Neueinstallationen] nicht mehr vorbelegt)
     BUGFIXES:
