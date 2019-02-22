@@ -1,5 +1,9 @@
 Release Notes
 
+0.13.1
+    BUGFIXES:
+ -  Fehler bei der Benutzerberechtigung, sofern der User kein Admin war
+
 0.13.0
     IMPLEMENTIERUNGEN:
  -  durch Voranstellen eines Paragrafenzeichen kann ein Tag alleinstehend gefunden werden (§tag)
