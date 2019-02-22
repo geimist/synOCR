@@ -4,7 +4,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin
 # Zugangsberechtigungen des DSM überprüfen (Syno-Token)
 login=$(php -f /volume*/@appstore/synOCR/includes/token.php) || exit
 login_user=$(echo $login | sed "s/.*user: //;s/ admin:.*//") || exit
-login_admin=$(echo $login | sed -e 's/.*admin: //') || exit
+#login_admin=$(echo $login | sed -e 's/.*admin: //') || exit
 if [ -n "$login" ]; then
 	if [[ "$login" != "0" ]] && [[ "$login_user" != "0" ]]; then
 		access="yes"
