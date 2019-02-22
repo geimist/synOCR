@@ -2,7 +2,7 @@ Release Notes
 
 0.13.1
     BUGFIXES:
- -  Fehler bei der Benutzerberechtigung, sofern der User kein Admin war
+ -  Fehler bei der Benutzerberechtigung, sofern der User nicht zur Gruppe der administrators gehörte (bitte beachte, dass nur eine gemeinsame Konfiguration verwendet wird!)
 
 0.13.0
     IMPLEMENTIERUNGEN:
