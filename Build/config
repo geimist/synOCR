@@ -2,10 +2,13 @@
 	".url": {
 		"SYNO.SDS.synOCR.Application": {
 			"type": "legacy",
-			"allUsers": true,
+			"allUsers": false,
 			"allowMultiInstance": false,
+			"grantPrivilege": "all",
+			"advanceGrantPrivilege" : true,
+			"configablePrivilege" : true,
 			"title": "synOCR",
-			"desc": "",
+			"desc": "synOCR",
 			"icon": "images/synOCR_{0}.png",
 			"appWindow": "SYNO.SDS.synOCR.Application",
 			"texts": "texts",
