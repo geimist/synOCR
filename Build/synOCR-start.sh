@@ -73,6 +73,27 @@
         exit 1
     fi
 
+# Dateizähler:
+    if [ ! -f ./etc/counter ] ; then
+        touch ./etc/counter
+        echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
+        echo "ocrcount=\"0\"" >> ./etc/counter
+        echo "pagecount=\"0\"" >> ./etc/counter
+        echo "checkmon=\"\"" >> ./etc/counter
+        echo "                      --> counter-File wurde erstellt"
+    else
+        if ! cat ./etc/counter | grep -q "pagecount" ; then
+            echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
+        fi
+        if ! cat ./etc/counter | grep -q "checkmon" ; then
+            echo "checkmon=\"\"" >> ./etc/counter
+        fi
+    fi
+    if [[ $(get_key_value ./etc/counter checkmon) != $(date +%m) ]]; then
+        wget --timeout=30 --tries=1 -q -O - "http://geimist.eu/synOCR/VERSION" >/dev/null 2>&1
+        synosetkeyvalue ./etc/counter checkmon $(date +%m)
+    fi
+
 # nur starten (LOG erstellen), sofern es etwas zu tun gibt:
     if [ $( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) = 0 ] ;then
         if [ $callFrom = GUI ] ; then
