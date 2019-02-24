@@ -601,23 +601,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         else
             echo "                          INFO: (PushBullet-TOKEN nicht gesetzt)"
         fi
-    #    wget --timeout=30 --tries=2 -q -O - "http://${synocrdomain}/synOCR/synOCR_FILECOUNT" >/dev/null 2>&1
 
     # Dateizähler:
-        if [ ! -f ./etc/counter ] ; then
-            touch ./etc/counter
-            echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
-            echo "ocrcount=\"0\"" >> ./etc/counter
-            echo "pagecount=\"0\"" >> ./etc/counter
-            echo "                      --> counter-File wurde erstellt"
-        else
-            if ! cat ./etc/counter | grep -q "pagecount" ; then
-                echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
-            fi
-        fi
         synosetkeyvalue ./etc/counter pagecount $(expr $(get_key_value ./etc/counter pagecount) + $pagecount_latest)
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
         echo "                          INFO: (Laufzeit letzte Datei: $(( $(date +%s) - $date_start )) Sekunden (Seitenanzahl: $pagecount_latest) | gesamt: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Seiten bisher verarbeitet)"
+        # wget --timeout=30 --tries=2 -q -O - "http://${synocrdomain}/synOCR/synOCR_FILECOUNT" >/dev/null 2>&1
     done
 }
 
