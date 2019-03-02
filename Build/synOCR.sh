@@ -265,18 +265,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
     # Datei-Attripute übertragen:
         echo "                      --> übertrage die Dateirechte und -besitzer"
-        cp --attributes-only -p "$input" "$output"
+    #    cp --attributes-only -p "$input" "$output"
         
     # Dateirechte-Log:
         if [ $loglevel = "2" ] ; then
-            echo "                      --> Dateirechte Zieldatei:"
-            echo -n "                          "
-            ls -l "$output"
-            
-            echo "                      --> erweitertes Dateirechte übertragen:"
-            chmod --reference "$input" "$output"
-            chown --reference "$input" "$output"
-            
             echo "                      --> Dateirechte Zieldatei:"
             echo -n "                          "
             ls -l "$output"
