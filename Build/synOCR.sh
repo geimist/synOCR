@@ -252,10 +252,37 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             fi
             continue
         fi
+        
+    # Dateirechte-Log:
+        if [ $loglevel = "2" ] ; then
+            echo "                      --> Dateirechte Quelldatei:"
+            echo -n "                          "
+            ls -l "$input"
+            echo "                      --> Dateirechte Zieldatei:"
+            echo -n "                          "
+            ls -l "$output"
+        fi
 
     # Datei-Attripute übertragen:
         echo "                      --> übertrage die Dateirechte und -besitzer"
         cp --attributes-only -p "$input" "$output"
+        
+    # Dateirechte-Log:
+        if [ $loglevel = "2" ] ; then
+            echo "                      --> Dateirechte Zieldatei:"
+            echo -n "                          "
+            ls -l "$output"
+            
+            echo "                      --> erweitertes Dateirechte übertragen:"
+            chmod --reference "$input" "$output"
+            chown --reference "$input" "$output"
+            
+            echo "                      --> Dateirechte Zieldatei:"
+            echo -n "                          "
+            ls -l "$output"
+        fi
+        
+        
         
     # suche nach Datum und Tags in Dokument:
         findDate()
@@ -433,6 +460,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         }
         findDate
 
+        
+    # Dateirechte-Log:
+        if [ $loglevel = "2" ] ; then
+            echo "                      --> Dateirechte Zieldatei:"
+            echo -n "                          "
+            ls -l "$output"
+        fi
+        
     # Dateinamen zusammenstellen und umbenennen:
         rename() 
         {
