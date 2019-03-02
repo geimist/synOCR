@@ -46,12 +46,12 @@ buildversion=$1
 gitpull() 
 {
 #########################################################################################
-# Diese Funktion bereinigt ältere Logfiles                                               #
+# Diese Funktion gleicht die Projektdaten mit dem Server ab                             #
 #########################################################################################
 
 gitpath=`which git`
 if [ -z ${gitpath} ]; then
-    echo "Das Programm git konnte nicht gefunden werden."
+    echo "Es wurde keine GIT-Installation gefunden!"
     exit 1
 fi
 
