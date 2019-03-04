@@ -1,5 +1,13 @@
 Release Notes
 
+0.14.0
+    IMPLEMENTIERUNGEN:
+ -  es wird jetzt in einem temporären Ordner gearbeitet, damit unerfahrene User nicht von leeren Dateien irritiert werden
+ -  
+    BUGFIXES:
+ -  das Handling der Dateirechte wurde geändert
+ -  
+
 0.13.1
     BUGFIXES:
  -  Fehler bei der Benutzerberechtigung. Die Berechtigung zu synOCR kann in der Systemsteuerung/Berechtigung konfiguriert werden (bitte beachte, dass nur eine gemeinsame Konfiguration verwendet wird!).
