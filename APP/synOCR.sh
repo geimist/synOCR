@@ -190,14 +190,29 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         if [ $delSearchPraefix = "yes" ] && [ ! -z "${SearchPraefix}" ]; then
             title=$( echo "${title}" | sed s/${SearchPraefix}//I )
         fi
-        output="${work_tmp}/${title}.pdf"
-        echo "                          temp. Zieldatei: ${output}"
+    
+    # Zieldateiname erstellen (berücksichtigt gleichnamige vorhandene Dateien):
+        destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${title}.*" | wc -l)
+        if [ $destfilecount -eq 0 ]; then
+            output="${OUTPUTDIR}${title}.pdf"
+        else
+            while [ -f "${OUTPUTDIR}${title} ($destfilecount).pdf" ]
+                do
+                    destfilecount=$( expr $destfilecount + 1 )
+                    echo "                          zähle weiter … ($destfilecount)"
+                done
+            output="${OUTPUTDIR}${title} ($destfilecount).pdf"
+            echo "                          Dateiname ist bereits vorhanden! Ergänze Zähler ($destfilecount)"
+        fi
+        
+        outputtmp="${work_tmp}/${title}.pdf"
+        echo "                          temp. Zieldatei: ${outputtmp}"
 
     # OCRmyPDF:
         OCRmyPDF()
         {
             # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
-            cat "$input" | /usr/local/bin/docker run --name synOCR --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$output"
+            cat "$input" | /usr/local/bin/docker run --name synOCR --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
         }
         sleep 1
         dockerlog=$(OCRmyPDF 2>&1)
@@ -214,9 +229,9 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         echo -e
 
     # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERROR verschoben:
-        if [ $(stat -c %s "$output") -eq 0 ] || [ ! -f "$output" ];then
+        if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
             echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
-            rm "$output"
+            rm "${outputtmp}"
             if echo "$dockerlog" | grep -q ERROR ;then
                 if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
                     echo "                                                  ERROR-Verzeichnis [${INPUTDIR}ERRORFILES] wird erstellt!"
@@ -241,8 +256,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 fi
                 echo "                                              L=> verschiebe nach ERRORFILES"
             fi
+            rm -rf "$work_tmp"
             continue
+        else
+            echo "                          Zieldatei (OK): ${output}"
         fi
+        
+    # verschiebe temporäre Datei in Zielordner:
+        mv "${outputtmp}" "${output}"
         
     # Dateirechte-Log:
         if [ $loglevel = "2" ] ; then
