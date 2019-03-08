@@ -251,7 +251,7 @@ if [[ "$page" == "edit" ]]; then
     # dockercontainer
     echo '
         <p>
-        <label>zuverwendendes Dockerimage</label>
+        <label>Dockerimage</label>
         <select name="dockercontainer">'
         if [[ "$dockercontainer" == "jbarlow83/ocrmypdf" ]]; then
             echo '<option value="jbarlow83/ocrmypdf" selected>jbarlow83/ocrmypdf:latest</option>'
