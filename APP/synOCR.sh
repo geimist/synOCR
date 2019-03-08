@@ -276,10 +276,26 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         fi
 
     # Datei-Attripute übertragen:
-        # Probleme bei ACL-Berechtigungen …
-        # echo "                      --> übertrage die Dateirechte und -besitzer"
-        # cp --attributes-only -p "$input" "$output"
-
+        echo -n "                      --> übertrage die Dateirechte und -besitzer "
+        if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
+            # Datum wird bei ACL Übertragung noch nicht angepasst
+            echo "(verwende ACL)"
+            synoacltool -copy "$input" "$output"
+        #elif echo $( synoacltool -get "$input" ) | grep -q "Linux mode" ; then
+        else
+            echo "(verwende Standardlinuxrechte)"
+            #chmod --reference "$input" "$output"
+            #chown --reference "$input" "$output"
+            cp --attributes-only -p "$input" "$output"
+        fi
+        
+    # Dateirechte-Log:
+        if [ $loglevel = "2" ] ; then
+            echo "                      --> Dateirechte Zieldatei:"
+            echo -n "                          "
+            ls -l "$output"
+        fi
+        
     # suche nach Datum und Tags in Dokument:
         findDate()
         {
@@ -545,8 +561,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
                 done
-#                echo "                      --> lösche temp. Zieldatei"
-#                rm "${outputtmp}"
+                echo "                      --> lösche temp. Zieldatei"
+                rm "${outputtmp}"
             else
                 destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
                 if [ $destfilecount -eq 0 ]; then
