@@ -3,10 +3,9 @@ Release Notes
 0.14.0
     IMPLEMENTIERUNGEN:
  -  es wird jetzt in einem temporären Ordner gearbeitet, damit unerfahrene User nicht von leeren Dateien irritiert werden
- -  
+ -  über ein Listfeld lässt sich das Image jbarlow83/ocrmypdf-polyglot (mit allen Sprachen) auswählen
     BUGFIXES:
  -  das Handling der Dateirechte wurde geändert
- -  
 
 0.13.1
     BUGFIXES:
