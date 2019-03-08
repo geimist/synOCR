@@ -268,7 +268,7 @@ if [[ "$page" == "edit" ]]; then
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>Welches Dockerimage soll verwendet werden?<br>
-            jbarlow83/ocrmypdf ist das Standardimage, enthält aber nur die Sprachen: English, German and Simplified Chinese
+            jbarlow83/ocrmypdf ist das Standardimage, enthält aber nur die Sprachen: English, German and Simplified Chinese<br>
             Das Image jbarlow83/ocrmypdf-polyglot enthält alle möglichen Sprachen, ist aber größer!</span></a>
         </p>'
 
