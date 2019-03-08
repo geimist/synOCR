@@ -11,7 +11,6 @@ arch="noarch"
 firmware="6.0-7321"
 startable="yes"
 reloadui="yes"
-silent_install="yes"
 silent_upgrade="yes"
 silent_uninstall="no"
 dsmappname=SYNO.SDS.synOCR.Application
