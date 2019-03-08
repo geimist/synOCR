@@ -14,6 +14,7 @@ if [[ "$page" == "edit-save" ]]; then
     "$set_var" "$dir/etc/Konfiguration.txt" "moveTaggedFiles" "$moveTaggedFiles"
     "$set_var" "$dir/etc/Konfiguration.txt" "NameSyntax" "$NameSyntax"
     "$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
+    "$set_var" "$dir/etc/Konfiguration.txt" "dockercontainer" "$dockercontainer"
     "$set_var" "$dir/etc/Konfiguration.txt" "PBTOKEN" "$PBTOKEN"
     "$set_var" "$dir/etc/Konfiguration.txt" "dsmtextnotify" "$dsmtextnotify"
     "$set_var" "$dir/etc/Konfiguration.txt" "MessageTo" "$MessageTo"
@@ -56,6 +57,7 @@ if [[ "$page" == "edit-import-query" ]] || [[ "$page" == "edit-import" ]]; then
                 "$set_var" "$dir/etc/Konfiguration.txt" "moveTaggedFiles" "$moveTaggedFiles"
                 "$set_var" "$dir/etc/Konfiguration.txt" "NameSyntax" "$NameSyntax"
                 "$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
+                "$set_var" "$dir/etc/Konfiguration.txt" "dockercontainer" "$dockercontainer"
                 "$set_var" "$dir/etc/Konfiguration.txt" "PBTOKEN" "$PBTOKEN"
                 "$set_var" "$dir/etc/Konfiguration.txt" "dsmtextnotify" "$dsmtextnotify"
                 "$set_var" "$dir/etc/Konfiguration.txt" "MessageTo" "$MessageTo"
@@ -244,6 +246,30 @@ if [[ "$page" == "edit" ]]; then
             -r            automatisches drehen von Seiten<br>
             -l            Sprache (deu,enu,...)<br>
             -d            schiefe Scans entzerren<br></span></a>
+        </p>'
+
+    # dockercontainer
+    echo '
+        <p>
+        <label>zuverwendendes Dockerimage</label>
+        <select name="dockercontainer">'
+        if [[ "$dockercontainer" == "jbarlow83/ocrmypdf" ]]; then
+            echo '<option value="jbarlow83/ocrmypdf" selected>jbarlow83/ocrmypdf:latest</option>'
+        else
+            echo '<option value="jbarlow83/ocrmypdf">jbarlow83/ocrmypdf:latest</option>'
+        fi
+        if [[ "$dockercontainer" == "jbarlow83/ocrmypdf-polyglot" ]]; then
+            echo '<option value="jbarlow83/ocrmypdf-polyglot" selected>jbarlow83/ocrmypdf-polyglot:latest</option>'
+        else
+            echo '<option value="jbarlow83/ocrmypdf-polyglot">jbarlow83/ocrmypdf-polyglot:latest</option>'
+        fi
+    echo '
+        </select>
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>Welches Dockerimage soll verwendet werden?<br>
+            jbarlow83/ocrmypdf ist das Standardimage, enthält aber nur die Sprachen: English, German and Simplified Chinese
+            Das Image jbarlow83/ocrmypdf-polyglot enthält alle möglichen Sprachen, ist aber größer!</span></a>
         </p>'
 
     # SearchPraefix
