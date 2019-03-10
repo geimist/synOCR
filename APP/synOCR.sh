@@ -211,6 +211,11 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # OCRmyPDF:
         OCRmyPDF()
         {
+            
+        #    if [ $loglevel = "2" ] ; then
+                # -g: Debug-Modus (der erkannte Text wird jeweils als extra Seite zusätzlich eingefügt)
+        #        ocropt="$ocropt -g"
+        #    fi
             # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
             cat "$input" | /usr/local/bin/docker run --name synOCR --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
         }
@@ -281,6 +286,9 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             # Datum wird bei ACL Übertragung noch nicht angepasst
             echo "(verwende ACL)"
             synoacltool -copy "$input" "$output"
+            date=$( ls --full-time "$input" | awk '{ print $6 }' | sed s/-//g )
+            time=$( ls --full-time "$input" | awk '{ print $7 }' | awk -F. '{ print $1 }' | sed s/://g | sed "s/^\(.\{4\}\)/\1\./" )
+            touch -t ${date}${time} "$output"
         #elif echo $( synoacltool -get "$input" ) | grep -q "Linux mode" ; then
         else
             echo "(verwende Standardlinuxrechte)"
