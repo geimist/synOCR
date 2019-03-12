@@ -2,8 +2,8 @@
 # status.sh
 
     APPDIR=$(cd $(dirname $0);pwd)
-    CONFIG=etc/Konfiguration.txt
-    source ${APPDIR}/${CONFIG}
+#    CONFIG=etc/Konfiguration.txt
+#    source ${APPDIR}/${CONFIG}
 
 
 # docker images | grep -q "jbarlow83/ocrmypdf"
@@ -26,8 +26,20 @@
 # Dateistatus auslesen:
 # ---------------------------------------------------------------------
     # Anzahl unfertiger PDF-Files:    
-    count_inputpdf=$( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) # wie viele Dateien 
+    
+    count_inputpdf=0
+    
+    sSQL="SELECT INPUTDIR, SearchPraefix FROM config WHERE active='1' "
+    sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
 
+    IFS=$'\012'
+    for entry in $sqlerg; do
+        IFS=$OLDIFS
+        INPUTDIR=$(echo "$entry" | awk -F'\t' '{print $1}')
+        SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $2}')
+        count_inputpdf=$( expr $(ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf ) # wie viele Dateien 
+    done
+    
 # Installationsstatus auslesen:
 # ---------------------------------------------------------------------
 
