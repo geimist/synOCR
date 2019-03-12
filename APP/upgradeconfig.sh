@@ -1,37 +1,43 @@
 #!/bin/sh
-# prüft die benutzerangepasste Datei Konfiguration.txt auf neue Variablen und ergänzt ggf. selbige
+# prüft die Konfiguration-DB auf neue Variablen und ergänzt ggf. selbige
 # /volume*/@appstore/synOCR/upgradeconfig.sh
 
 # Arbeitsverzeichnis auslesen und hineinwechseln:
 # ---------------------------------------------------------------------
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
+    
+    new_profile () 
+    {
+    # In dieser Funktion wird ein neuer Profildatensatz in die DB geschrieben
+    # Aufruf: new_profile "Profilname"
+    # --------------------------------------------------------------
+        sqliteinfo=$(sqlite3 ./etc/synOCR.sqlite "INSERT INTO config ( profile ) VALUES ( '$1' )")
+    }
 
-    CONFIG=etc/Konfiguration.txt
-
-    lastrow=`cat ./$CONFIG | tail -n1`  # letzte Zeile eine Leerzeile?
-#    [ ! "$lastrow" == "" ] && echo -e "\n" >> ./$CONFIG
-
-    if [ ! -z "$lastrow" ]; then
-        echo -e "\n" >> ./$CONFIG
+# DB ggf. erstellen:
+    if [ $(stat -c %s "./etc/synOCR.sqlite") -eq 0 ] || [ ! -f "./etc/synOCR.sqlite" ]; then
+        sqlinst="CREATE TABLE \"config\" (\"profile_ID\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"profile\" varchar ,\"active\" varchar DEFAULT ('1') ,\"INPUTDIR\" varchar DEFAULT ('/volume1/homes/admin/Drive/SCANNER/_INPUT') ,\"OUTPUTDIR\" varchar DEFAULT ('/volume1/homes/admin/Drive/SCANNER/_OUTPUT') ,\"BACKUPDIR\" varchar DEFAULT ('/volume1/homes/admin/Drive/SCANNER/_BACKUP') ,\"LOGDIR\" varchar DEFAULT ('/volume1/homes/admin/Drive/SCANNER/_LOG') ,\"LOGmax\" varchar DEFAULT ('10') ,\"SearchPraefix\" varchar ,\"delSearchPraefix\" varchar(5) DEFAULT ('yes') ,\"taglist\" varchar ,\"searchAll\" varchar DEFAULT ('no') ,\"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,\"NameSyntax\" varchar DEFAULT ('§y-§m-§d_§tag_§tit') , \"ocropt\" varchar DEFAULT ('-srd -l deu') ,\"dockercontainer\" varchar DEFAULT ('jbarlow83/ocrmypdf') ,\"PBTOKEN\" varchar ,\"dsmtextnotify\" varchar DEFAULT ('on') ,\"MessageTo\" varchar DEFAULT ('admin') ,\"dsmbeepnotify\" varchar DEFAULT ('on') ,\"loglevel\" varchar DEFAULT ('1') );"
+        sqliteinfo=$(sqlite3 "./etc/synOCR.sqlite" "$sqlinst")
+        sqlinst="CREATE TABLE \"system\" (\"rowid\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"DB_Version\" varchar DEFAULT ('1')  );"
+        sqliteinfo2=$(sqlite3 "./etc/synOCR.sqlite" "$sqlinst")
+    
+    # Tabellen erstellen
+        if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT count(*) FROM config") -eq 0 ] ; then
+            if [ -f "./etc/Konfiguration.txt" ]; then
+                source "./etc/Konfiguration.txt"
+                sqliteinfo=$(sqlite3 ./etc/synOCR.sqlite 
+                "INSERT INTO config ( profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, 
+                                    moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel 
+                                    ) VALUES ( 
+                                    'default', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', 
+                                    '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', 
+                                    '$MessageTo', '$dsmbeepnotify', '$loglevel' )")
+                mv "./etc/Konfiguration.txt" "./etc/Konfiguration_imported.txt"
+            else
+                new_profile "default"
+            fi
+        fi
     fi
-
-    # Prüfe die Konfiguration.txt auf fehlende Parameter:
-    # ---------------------------------------------------------------------
-        if ! cat ./$CONFIG | grep -q "delSearchPraefix" ; then
-            echo "delSearchPraefix=\"no\"" >> ./$CONFIG
-        fi
-        if ! cat ./$CONFIG | grep -q "NameSyntax" ; then
-            echo "NewName=\"\"" >> ./$CONFIG
-        fi
-        if ! cat ./$CONFIG | grep -q "taglist" ; then
-            echo "taglist=\"\"" >> ./$CONFIG
-        fi
-        if ! cat ./$CONFIG | grep -q "moveTaggedFiles" ; then
-            echo "moveTaggedFiles=\"no\"" >> ./$CONFIG
-        fi
-        if ! cat ./$CONFIG | grep -q "searchAll" ; then
-            echo "searchAll=\"no\"" >> ./$CONFIG
-        fi
 
 exit 0
