@@ -32,7 +32,7 @@ if [[ "$mainpage" == "timer" ]]; then
         </p>
         </footer>
 		<div class="clear"></div>'
-		
+
 elif [[ "$mainpage" == "edit" ]]; then
 	echo '
 	    <footer>
@@ -41,10 +41,10 @@ elif [[ "$mainpage" == "edit" ]]; then
 	echo '
 		<div style="text-align: right;">
 	    <button name="page" value="edit-save" class="blue_button">Speichern</button>&nbsp;
-	    <button name="page" value="edit-import-query">Import</button>&nbsp;
-	    <button name="page" value="edit-export">Export</button>&nbsp;
-	    <button name="page"><a href="etc/Konfiguration.txt" download="Konfiguration.txt">Download</a></button>&nbsp;
-	    <button name="page" value="edit-restore-query" class="red_button">R E S E T</button>&nbsp;
+	    <button name="page" value="edit-new_profile-query">neues Profil</button>&nbsp;
+	    <button name="page" value="edit-dup-profile-query">Profil clonen</button>&nbsp; 
+	    <button name="page"><a href="etc/synOCR.sqlite" download="synOCR.sqlite">Download</a></button>&nbsp;
+	    <button name="page" value="edit-del_profile-query" class="red_button">Profil löschen</button>&nbsp;
 	    </div>'
     echo '
         </p>
