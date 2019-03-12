@@ -18,7 +18,8 @@
 # ---------------------------------------------------------------------------------
     synocrdomain="geimist.eu"   # notwendig für Update, Konsitenzprüfung, DEV-Report und evtl. in Zukunft zum abfragen der API-Keys
     niceness=15                 # Die Priorität liegt im Bereich von -20 bis +19 (in ganzzahligen Schritten), wobei -20 die höchste Priorität (=meiste Rechenleistung) und 19 die niedrigste Priorität (=geringste Rechenleistung) ist. Die Standardpriorität ist 0. AUF NEGATIVE WERTE SOLLTE UNBEDINGT VERZICHTET WERDEN!
-    LOGFILE="$1"                # aktuelles Logfile / wird von Startskript übergeben
+    workprofile="$1"            # das vom Startskript übergebene Profil
+    LOGFILE="$2"                # aktuelles Logfile / wird von Startskript übergeben
 
 # an welchen User/Gruppe soll die DSM-Benachrichtigung gesendet werden :
 # ---------------------------------------------------------------------
@@ -39,9 +40,36 @@
 
 # Konfigurationsdatei einbinden:
 # ---------------------------------------------------------------------
-    CONFIG=etc/Konfiguration.txt
-    . ./$CONFIG
+    # CONFIG=etc/Konfiguration.txt
+    # . ./$CONFIG
 
+    sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
+        delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
+        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel FROM config WHERE profile_ID='$workprofile' "
+
+    sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
+
+    profile_ID=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
+    profile=$(echo "$sqlerg" | awk -F'\t' '{print $3}')
+    INPUTDIR=$(echo "$sqlerg" | awk -F'\t' '{print $4}')
+    OUTPUTDIR=$(echo "$sqlerg" | awk -F'\t' '{print $5}')
+    BACKUPDIR=$(echo "$sqlerg" | awk -F'\t' '{print $6}')
+    LOGDIR=$(echo "$sqlerg" | awk -F'\t' '{print $7}')
+    LOGmax=$(echo "$sqlerg" | awk -F'\t' '{print $8}')
+    SearchPraefix=$(echo "$sqlerg" | awk -F'\t' '{print $9}')
+    delSearchPraefix=$(echo "$sqlerg" | awk -F'\t' '{print $10}')
+    taglist=$(echo "$sqlerg" | awk -F'\t' '{print $11}')
+    searchAll=$(echo "$sqlerg" | awk -F'\t' '{print $12}')
+    moveTaggedFiles=$(echo "$sqlerg" | awk -F'\t' '{print $13}')
+    NameSyntax=$(echo "$sqlerg" | awk -F'\t' '{print $14}')
+    ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
+    dockercontainer=$(echo "$sqlerg" | awk -F'\t' '{print $16}')
+    PBTOKEN=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
+    dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
+    MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
+    dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
+    loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
+    
 # Systeminformation / LIBRARY_PATH anpassen / PATH anpassen:
 # --------------------------------------------------------------------- 
     echo "synOCR-Version:           $CLIENTVERSION"
@@ -50,6 +78,7 @@
     read MAC </sys/class/net/eth0/address
     sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
     device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
+    echo "aktuelles Profil:         $profile"
     echo "verwendetes Image:        $dockercontainer"
     echo "verwendete Parameter:     $ocropt"
     echo "ersetze Suchpräfix:       $delSearchPraefix"
