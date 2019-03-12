@@ -222,7 +222,7 @@ if [[ "$page" == "edit" ]]; then
         </div>Trage hier deine Einstellungen ein und passe die Pfade an.
         <br>Hilfe für die einzelnen Felder erhältst du über das blaue Info-Symbol am rechten Rand.
         <br>
-        <br>Über die Profile kannst du beliebig viele Konfigurationen anlegen, welche alle bei jedem 
+        <br>Über die Profile kannst du beliebig viele Konfigurationen anlegen, welche bei alle jedem 
         Programmlauf abgearbeitet werden. Man kann jedes Profil über das entsprechende Feld auch deaktivieren.
         <br>
         <br>Achte unbedingt darauf, die kompletten Pfade inkl. Volume (z.B. <code>/volume1/…</code>) einzutragen und achte auf korrekte Groß- und Kleinschreibung. 
@@ -252,9 +252,8 @@ if [[ "$page" == "edit" ]]; then
             fi
         done
     
-    echo '</select>
-            <button name="page" value="edit" class="blue_button">wechseln</button>&nbsp;
-'
+    echo '</select><button name="page" value="edit" class="blue_button">wechseln</button>&nbsp;'
+    
     # -> Abschnitt Allgemein
     
 # Aufklappbar:
