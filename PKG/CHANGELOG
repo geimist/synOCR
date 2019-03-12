@@ -1,5 +1,11 @@
 Release Notes
 
+0.15.0
+    IMPLEMENTIERUNGEN:
+ -  Die Konfiguration wurde von einer Textdatei auf eine Datenbank umgestellt. So lassen sich jetzt beliebige Profile verwalten.
+    BUGFIXES:
+ -  
+
 0.14.0
     IMPLEMENTIERUNGEN:
  -  es wird jetzt in einem temporären Ordner gearbeitet, damit unerfahrene User nicht von leeren Dateien irritiert werden
