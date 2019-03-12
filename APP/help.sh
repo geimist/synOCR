@@ -67,7 +67,6 @@ echo '<fieldset>
     </summary></p>
     <p>'
     
-    
     echo '<p>Detailiertere Hilfe zu OCRmyPDF findest du auf der Hilfeseite: https://ocrmypdf.readthedocs.io</p>'
     
     echo '</details></fieldset></p>'
@@ -87,10 +86,7 @@ echo '<p>Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ic
     Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen: 
     </p>'
     
-    echo '</details></fieldset></p>'
-
-
-
+    echo '</details><br><hr style="border-style: dashed; size: 1px;"></fieldset></p>'
 
 
 echo '
