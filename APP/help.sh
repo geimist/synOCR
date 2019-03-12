@@ -6,9 +6,21 @@ echo '
 	<div id="Content_1Col">
 	<div class="Content_1Col_full">
 	<div class="title">
-	    synOCR Schnellstart
-	</div>
-	<ol style="list-style:decimal">
+	    synOCR Hilfe
+	</div>'
+	    
+# Aufklappbar:
+    echo '<fieldset>
+    <hr style="border-style: dashed; size: 1px;">
+    <br />
+    <details><p>
+    <summary>
+        <span class="detailsitem">Schnellstart</span>
+    </summary></p>
+    <p>' 
+    #ab hier steht der Text, der auf- und zugeklappt werden soll.
+	
+	echo '<ol style="list-style:decimal">
     <p>
     <li>Passe zunächst deine Installation in den <a href="index.cgi?page=edit" style="'$synotrred';">Einstellungen</a> an.
     </li></p>
@@ -42,17 +54,45 @@ echo '
         <li>hier den nachstehenden Pfad hineinkopieren:</li><br>
         <code><span style="background-color:#cccccc;font-hight:1.1em;">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</span></code>
       </ul><br>
-    </ol>
-    <hr>
-    <p>
-    Detailiertere Hilfe zu OCRmyPDF findest du auf der Hilfeseite: https://ocrmypdf.readthedocs.io
+    </ol>'
+
+    echo '</details></fieldset></p>'
+
+# -> Abschnitt OCRmyPDF:
+echo '<fieldset>
+    <hr style="border-style: dashed; size: 1px;"><br />
+    <details><p>
+    <summary>
+        <span class="detailsitem">OCRmyPDF Optionen</span>
+    </summary></p>
+    <p>'
+    
+    
+    echo '<p>Detailiertere Hilfe zu OCRmyPDF findest du auf der Hilfeseite: https://ocrmypdf.readthedocs.io</p>'
+    
+    echo '</details></fieldset></p>'
+
+# -> Abschnitt sonstiges:
+echo '<fieldset>
+    <hr style="border-style: dashed; size: 1px;"><br />
+    <details><p>
+    <summary>
+        <span class="detailsitem">über synOCR</span>
+    </summary></p>
+    <p>'
+    
+echo '<p>Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ich dafür bereitstellen kann.<br>
+    Begonnen, um meinen Arbeitsablauf mit PDF Dokumenten einfacher zu machen, ist es auch eine Freude für mich, wenn anderen dieses Projekt hilft. Daher erwarte ich keine Gegenleistung!<br>
+    <a href="https://www.paypal.me/geimist" rel="external"><img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="150"/></a><br>
+    Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen: 
     </p>'
-echo '<hr><p>
-    Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ich dafür bereitstellen kann.<br>
-Begonnen, um meinen Arbeitsablauf mit PDF Dokumenten einfacher zu machen, ist es auch eine Freude für mich, wenn anderen dieses Projekt hilft. Daher erwarte ich keine Gegenleistung!<br>
-<a href="https://www.paypal.me/geimist" rel="external"><img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="150"/></a><br>
-Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen: 
-    </p>'
+    
+    echo '</details></fieldset></p>'
+
+
+
+
+
 echo '
 		</div>
 	</div><div class="clear"></div>'
