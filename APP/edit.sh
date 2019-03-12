@@ -1,141 +1,252 @@
 #!/bin/bash
 # edit.sh
+# OLDIFS=$IFS
 
+new_profile () 
+{
+# In dieser Funktion wird ein neuer Profildatensatz in die DB geschrieben
+# Aufruf: new_profile "Profilname"
+# --------------------------------------------------------------
+    sqliteinfo=$(sqlite3 ./etc/synOCR.sqlite "INSERT INTO config ( profile ) VALUES ( '$1' )")
+}  
+
+
+# DB ggf. erstellen:
+if [ $(stat -c %s "./etc/synOCR.sqlite") -eq 0 ] || [ ! -f "./etc/synOCR.sqlite" ]; then
+    sqlinst="CREATE TABLE \"config\" (\"profile_ID\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"profile\" varchar ,\"active\" varchar DEFAULT ('1') ,\"INPUTDIR\" varchar DEFAULT ('/volume1/homes/admin/Drive/SCANNER/_INPUT') ,\"OUTPUTDIR\" varchar DEFAULT ('/volume1/homes/admin/Drive/SCANNER/_OUTPUT') ,\"BACKUPDIR\" varchar DEFAULT ('/volume1/homes/admin/Drive/SCANNER/_BACKUP') ,\"LOGDIR\" varchar DEFAULT ('/volume1/homes/admin/Drive/SCANNER/_LOG') ,\"LOGmax\" varchar DEFAULT ('10') ,\"SearchPraefix\" varchar ,\"delSearchPraefix\" varchar(5) DEFAULT ('yes') ,\"taglist\" varchar ,\"searchAll\" varchar DEFAULT ('no') ,\"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,\"NameSyntax\" varchar DEFAULT ('§y-§m-§d_§tag_§tit') , \"ocropt\" varchar DEFAULT ('-srd -l deu') ,\"dockercontainer\" varchar DEFAULT ('jbarlow83/ocrmypdf') ,\"PBTOKEN\" varchar ,\"dsmtextnotify\" varchar DEFAULT ('on') ,\"MessageTo\" varchar DEFAULT ('admin') ,\"dsmbeepnotify\" varchar DEFAULT ('on') ,\"loglevel\" varchar DEFAULT ('1') );"
+    sqliteinfo=$(sqlite3 "./etc/synOCR.sqlite" "$sqlinst")
+    sqlinst="CREATE TABLE \"system\" (\"rowid\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"DB_Version\" varchar DEFAULT ('1')  );"
+    sqliteinfo2=$(sqlite3 "./etc/synOCR.sqlite" "$sqlinst")
+    sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( DB_Version ) VALUES ( '1' )"
+
+    # Tabellen erstellen
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT count(*) FROM config") -eq 0 ] ; then
+        if [ -f "./etc/Konfiguration.txt" ]; then
+            source "./etc/Konfiguration.txt"
+            sqliteinfo=$(sqlite3 ./etc/synOCR.sqlite 
+            "INSERT INTO config ( profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, 
+                                moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel 
+                                ) VALUES ( 
+                                'default', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', 
+                                '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', 
+                                '$MessageTo', '$dsmbeepnotify', '$loglevel' )")
+            mv "./etc/Konfiguration.txt" "./etc/Konfiguration_imported.txt"
+        else
+            new_profile "default"
+        fi
+    fi
+fi
+
+
+# aktuelles Profil löschen: 
+if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile" ]]; then
+    if [[ "$page" == "edit-del_profile-query" ]]; then
+        echo '
+        <p class="center" style="'$synotrred';">
+            Soll das aktuelle Profil (<b>'$profile'</b>) gelöscht werden?<br /><br /><br />
+            <a href="index.cgi?page=edit-del_profile" class="red_button">Ja</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=edit" class="button">Nein</a></p>'  >> "$stop"
+    elif [[ "$page" == "edit-del_profile" ]]; then
+        sqlite3 ./etc/synOCR.sqlite "DELETE FROM config WHERE profile_ID='$profile_ID';"
+        
+        sSQL="SELECT count(profile_ID) FROM config WHERE profile_ID='$profile_ID' "
+        
+        if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
+            echo '<p class="center" style="'$green';"><b>Das Profil <b>'$profile'</b> wurde gelöscht.</b></p>
+                <br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />' >> "$stop"
+        else
+            echo '<p class="center" style="'$green';">Fehler beim Löschen des Profils (<b>'$profile'</b>)!</p>
+                <br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />' >> "$stop"
+        fi
+    fi
+fi
+
+
+# Profil duplizieren:
+if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile" ]]; then
+
+    if [[ "$page" == "edit-dup-profile-query" ]]; then
+        echo '<div class="Content_1Col_full">'
+        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Gib bitte einen Namen für das neue Profil ein:</p><br />
+        <label><b>Profilname</b></label>'
+        if [ -n "$new_profile_value" ]; then
+            echo '<input type="text" name="new_profile_value" value="'$new_profile_value'" />'
+        else
+            echo '<input type="text" name="new_profile_value" value="" />'
+        fi
+        echo '</p></div><br /><p class="center"><button name="page" value="edit-dup-profile" class="blue_button">erstellen...</button></p><br />
+            </div><div class="clear"></div>'
+    elif [[ "$page" == "edit-dup-profile" ]]; then
+        echo '<div class="Content_1Col_full">'
+        if [ ! -z "$new_profile_value" ] ; then
+            sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
+            if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
+                sSQL="INSERT INTO config ( profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, 
+                                    moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel 
+                                    ) VALUES ( 
+                                    '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', 
+                                    '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', 
+                                    '$MessageTo', '$dsmbeepnotify', '$loglevel' )" #)
+                sqlite3 ./etc/synOCR.sqlite "$sSQL"
+
+                sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
+                if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL2") = "1" ] ; then
+                    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Das Profil <b>'$profile'</b> wurde zum Profil <b>'$new_profile_value'</b> geclont.</p><br /></div>'
+                else
+                    echo '<br /><div class="warning"><br /><p class="center">Fehler beim Duplizieren des Profils!</p><br /></div>'
+                fi
+            else
+                echo '<br /><div class="warning"><br /><p class="center">Das Profil konnte nicht geclont werden,
+                <br>da der Profilname <b>'$new_profile_value'</b> bereits vorhanden ist!</p><br /></div>'
+            fi
+        else
+            echo '<br /><div class="warning"><br /><p class="center">Das Profil konnte nicht geclont werden,
+            <br>da kein Profilname definiert wurde!</p><br /></div>'
+        fi
+        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
+        echo '
+        </div>
+        <div class="clear"></div>'
+    fi
+fi
+
+
+# neues Profil erstellen: 
+if [[ "$page" == "edit-new_profile-query" ]] || [[ "$page" == "edit-new_profile" ]]; then
+    if [[ "$page" == "edit-new_profile-query" ]]; then
+        echo '<div class="Content_1Col_full">'
+        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Gib bitte einen Namen für das neue Profil ein:</p><br />
+        <label><b>Profilname</b></label>'
+        if [ -n "$new_profile_value" ]; then
+            echo '<input type="text" name="new_profile_value" value="'$new_profile_value'" />'
+        else
+            echo '<input type="text" name="new_profile_value" value="" />'
+        fi
+        echo '</p></div><br /><p class="center"><button name="page" value="edit-new_profile" class="blue_button">erstellen...</button></p><br />
+            </div><div class="clear"></div>'
+    elif [[ "$page" == "edit-new_profile" ]]; then
+        echo '<div class="Content_1Col_full">'
+        if [ ! -z "$new_profile_value" ] ; then
+            sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
+            if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
+                new_profile "$new_profile_value"
+                if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "1" ] ; then
+                    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Ein neues Profil mit dem Namen <b>'$new_profile_value'</b> wurde erstellt.</p><br /></div>'
+                else
+                    echo '<br /><div class="warning"><br /><p class="center">Fehler beim Erstellen des Profils!</p><br /></div>'
+                fi
+            else
+                echo '<br /><div class="warning"><br /><p class="center">Das neue Profil konnte nicht erstellt werden,
+                <br>da der Profilname <b>'$new_profile_value'</b> bereits vorhanden ist!</p><br /></div>'
+            fi
+        else
+            echo '<br /><div class="warning"><br /><p class="center">Das neue Profil konnte nicht erstellt werden,
+            <br>da kein Profilname definiert wurde!</p><br /></div>'
+        fi
+        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
+        echo '
+        </div>
+        <div class="clear"></div>'
+    fi
+fi
+
+
+# Datensatz in DB schreiben:
 if [[ "$page" == "edit-save" ]]; then
-    "$set_var" "$dir/etc/Konfiguration.txt" "INPUTDIR" "$INPUTDIR"
-    "$set_var" "$dir/etc/Konfiguration.txt" "OUTPUTDIR" "$OUTPUTDIR"
-    "$set_var" "$dir/etc/Konfiguration.txt" "BACKUPDIR" "$BACKUPDIR"
-    "$set_var" "$dir/etc/Konfiguration.txt" "LOGmax" "$LOGmax"
-    "$set_var" "$dir/etc/Konfiguration.txt" "LOGDIR" "$LOGDIR"
-    "$set_var" "$dir/etc/Konfiguration.txt" "SearchPraefix" "$SearchPraefix"
-    "$set_var" "$dir/etc/Konfiguration.txt" "delSearchPraefix" "$delSearchPraefix"
-    "$set_var" "$dir/etc/Konfiguration.txt" "taglist" "$taglist"
-    "$set_var" "$dir/etc/Konfiguration.txt" "searchAll" "$searchAll"
-    "$set_var" "$dir/etc/Konfiguration.txt" "moveTaggedFiles" "$moveTaggedFiles"
-    "$set_var" "$dir/etc/Konfiguration.txt" "NameSyntax" "$NameSyntax"
-    "$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
-    "$set_var" "$dir/etc/Konfiguration.txt" "dockercontainer" "$dockercontainer"
-    "$set_var" "$dir/etc/Konfiguration.txt" "PBTOKEN" "$PBTOKEN"
-    "$set_var" "$dir/etc/Konfiguration.txt" "dsmtextnotify" "$dsmtextnotify"
-    "$set_var" "$dir/etc/Konfiguration.txt" "MessageTo" "$MessageTo"
-    "$set_var" "$dir/etc/Konfiguration.txt" "dsmbeepnotify" "$dsmbeepnotify"
-    "$set_var" "$dir/etc/Konfiguration.txt" "loglevel" "$loglevel"
+    sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR', 
+        LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll', 
+        moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$ocropt', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN', 
+        dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel' WHERE profile_ID='$profile_ID' "
+    sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
     
     echo '<div class="Content_1Col_full">'
     echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Änderungen wurden gespeichert</p><br /></div>'
+    
+#    echo "$sSQLupdate"
+    
     echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
     echo '</div><div class="clear"></div>'
 fi
 
 
-if [[ "$page" == "edit-import-query" ]] || [[ "$page" == "edit-import" ]]; then
-#        echo '<div class="Content_1Col_full">'
-    if [[ "$page" == "edit-import-query" ]]; then
-        echo '
-        <p class="center">
-            Sollen die aktuellen Einstellungen überschrieben werden?<br /><br />
-            Um eine frühere Konfigurationsdatei zu importieren, lege zunächst in den <a href="index.cgi?page=edit" style="'$synotrred';">Einstellungen</a> 
-            das Quellverzeichnis fest. Die zu importierende Konfigurationsdatei muss den Namen "Konfiguration.txt" 
-            haben und in das Quellverzeichnis gelegt werden. Klicke dann auf weiter.<br /><br />
-            <a href="index.cgi?page=edit-import" class="blue_button">Weiter</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=edit" class="button">Abbrechen</a></p>'  >> "$stop"
-    elif [[ "$page" == "edit-import" ]]; then
-        if [ ! -z "$INPUTDIR" ] && [ -d "$INPUTDIR" ]; then
-        #   echo '<p class="center"><br><b>Konfiguration wurde importiert.</b></p>'
-            SOURCECONFIG="${INPUTDIR%/}/Konfiguration.txt"
-            if [ -f "$SOURCECONFIG" ] ; then
-                source $SOURCECONFIG
-
-                "$set_var" "$dir/etc/Konfiguration.txt" "INPUTDIR" "$INPUTDIR"
-                "$set_var" "$dir/etc/Konfiguration.txt" "OUTPUTDIR" "$OUTPUTDIR"
-                "$set_var" "$dir/etc/Konfiguration.txt" "BACKUPDIR" "$BACKUPDIR"
-                "$set_var" "$dir/etc/Konfiguration.txt" "LOGmax" "$LOGmax"
-                "$set_var" "$dir/etc/Konfiguration.txt" "LOGDIR" "$LOGDIR"
-                "$set_var" "$dir/etc/Konfiguration.txt" "SearchPraefix" "$SearchPraefix"
-                "$set_var" "$dir/etc/Konfiguration.txt" "delSearchPraefix" "$delSearchPraefix"
-                "$set_var" "$dir/etc/Konfiguration.txt" "taglist" "$taglist"
-                "$set_var" "$dir/etc/Konfiguration.txt" "searchAll" "$searchAll"
-                "$set_var" "$dir/etc/Konfiguration.txt" "moveTaggedFiles" "$moveTaggedFiles"
-                "$set_var" "$dir/etc/Konfiguration.txt" "NameSyntax" "$NameSyntax"
-                "$set_var" "$dir/etc/Konfiguration.txt" "ocropt" "$ocropt"
-                "$set_var" "$dir/etc/Konfiguration.txt" "dockercontainer" "$dockercontainer"
-                "$set_var" "$dir/etc/Konfiguration.txt" "PBTOKEN" "$PBTOKEN"
-                "$set_var" "$dir/etc/Konfiguration.txt" "dsmtextnotify" "$dsmtextnotify"
-                "$set_var" "$dir/etc/Konfiguration.txt" "MessageTo" "$MessageTo"
-                "$set_var" "$dir/etc/Konfiguration.txt" "dsmbeepnotify" "$dsmbeepnotify"
-                "$set_var" "$dir/etc/Konfiguration.txt" "loglevel" "$loglevel"
-
-                # neue Konfiguration laden:
-                source $dir/etc/Konfiguration.txt
-
-                echo '<br /><p class="center">Die Konfiguration wurde importiert</p><br />' >> "$stop"
-            else
-                echo '<p class="center">Die Quellkonfiguration konnte nicht im angegebenen Verzeichnis gefunden werden!</p>' >> "$stop"
-            fi
-        else
-            echo '<p class="center"><br><b>Konfiguration konnte nicht importiert werden,
-            <br>da kein korrektes Quellverzeichnis in den Einstellungen definiert wurde!</b></p>' >> "$stop"
-        fi
-        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Fertig ...</button></p><br />
-            <div class="clear"></div>' >> "$stop"
-    fi
-fi
-
-
-if [[ "$page" == "edit-export" ]]; then
-    echo '<div class="Content_1Col_full">'
-    if [ ! -z "$INPUTDIR" ] ; then
-        cp "$dir/etc/Konfiguration.txt" "${INPUTDIR%/}/Konfiguration.txt"
-    #   cp "$dir/etc/counter" "${INPUTDIR%/}/counter"
-        echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Konfigurationsdatei wurde in das Quellverzeichnis gesichert.</p><br /></div>'
-    else
-        echo '<br /><div class="warning"><br /><p class="center">Konfigurationsdatei konnte nicht in das Quellverzeichnis gesichert werden,
-        <br>da kein Quellverzeichnis in den Einstellungen definiert wurde!</p><br /></div>'
-    fi
-    echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
-    echo '
-    </div>
-    <div class="clear"></div>'
-fi
-
-
-if [[ "$page" == "edit-restore-query" ]] || [[ "$page" == "edit-restore" ]]; then
-    if [[ "$page" == "edit-restore-query" ]]; then
-        echo '
-        <p class="center" style="'$synotrred';">
-            Sollen die Werkseinstellungen geladen werden?<br /><br /><br />
-            <a href="index.cgi?page=edit-restore" class="red_button">Ja</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=edit" class="button">Nein</a></p>'  >> "$stop"
-    elif [[ "$page" == "edit-restore" ]]; then
-        if [ -f "$dir/etc/Konfiguration.txt" ]; then
-            rm "$dir/etc/Konfiguration.txt"
-            cp "$dir/usersettings/Konfiguration_org.txt" "$dir/etc/Konfiguration.txt"
-            chmod 755 "$dir/etc/Konfiguration.txt"
-        fi
-        echo '<p class="center" style="'$green';"><b>Werkseinstellungen wurden wiederhergestellt</b></p>
-            <br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />' >> "$stop"
-    fi
-fi
-
-
 if [[ "$page" == "edit" ]]; then
     # Dateiinhalt einlesen für Variablenverwertung
-    if [ -f "$dir/etc/Konfiguration.txt" ]; then
-        source "$dir/etc/Konfiguration.txt"
+    if [ -z "$getprofile" ] ; then
+        sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
+            delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active FROM config WHERE profile_ID='1' "
+    else
+        sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
+            delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active FROM config WHERE profile_ID='$getprofile' "
     fi
+    sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
+
+    # Datensatzfelder separieren:
+        profile_ID=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
+        timestamp=$(echo "$sqlerg" | awk -F'\t' '{print $2}')
+        profile=$(echo "$sqlerg" | awk -F'\t' '{print $3}')
+        INPUTDIR=$(echo "$sqlerg" | awk -F'\t' '{print $4}')
+        OUTPUTDIR=$(echo "$sqlerg" | awk -F'\t' '{print $5}')
+        BACKUPDIR=$(echo "$sqlerg" | awk -F'\t' '{print $6}')
+        LOGDIR=$(echo "$sqlerg" | awk -F'\t' '{print $7}')
+        LOGmax=$(echo "$sqlerg" | awk -F'\t' '{print $8}')
+        SearchPraefix=$(echo "$sqlerg" | awk -F'\t' '{print $9}')
+        delSearchPraefix=$(echo "$sqlerg" | awk -F'\t' '{print $10}')
+        taglist=$(echo "$sqlerg" | awk -F'\t' '{print $11}')
+        searchAll=$(echo "$sqlerg" | awk -F'\t' '{print $12}')
+        moveTaggedFiles=$(echo "$sqlerg" | awk -F'\t' '{print $13}')
+        NameSyntax=$(echo "$sqlerg" | awk -F'\t' '{print $14}')
+        ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
+        dockercontainer=$(echo "$sqlerg" | awk -F'\t' '{print $16}')
+        PBTOKEN=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
+        dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
+        MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
+        dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
+        loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
+        active=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
+
+# DEV:
+#    echo "Profil-ID: $profile_ID"
+#    echo " / Profilname: $profile"
 
     echo '
     <div id="Content_1Col">
     <div class="Content_1Col_full">
         <div class="title">
             synOCR Einstellungen
-        </div>
-        Trage hier deine Einstellungen ein und passe die Pfade an.
+        </div>Trage hier deine Einstellungen ein und passe die Pfade an.
         <br>Hilfe für die einzelnen Felder erhältst du über das blaue Info-Symbol am rechten Rand.
         <br>
         <br>Achte unbedingt darauf, die kompletten Pfade inkl. Volume (z.B. <code>/volume1/…</code>) einzutragen und achte auf korrekte Groß- und Kleinschreibung. 
         Das sicherste ist, wenn du in der Filestation den gewünschten Ordner suchst und du dir über Rechtsklick die Eigenschaften anzeigen lässt. 
         In diesem Dialog kannst du dir den korrekten Pfad kopieren.
         <br><br>'
+    
+    
+# Profilauswahl:
+    sSQL="SELECT profile_ID, profile FROM config "
+    sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
+    echo '<p>
+        <label><b>wechsle zu Profil</b></label>
+        <select name="getprofile">'
+        
+        IFS=$'\012'
+        for entry in $sqlerg; do
+            IFS=$OLDIFS
 
+            profile_ID_DB=$(echo "$entry" | awk -F'\t' '{print $1}')
+            profile_DB=$(echo "$entry" | awk -F'\t' '{print $2}')
+            
+            if [[ "$profile_ID" == $profile_ID_DB ]]; then
+                echo '<option value='$profile_ID_DB' selected>'$profile_DB'</option>'
+            else
+                echo '<option value='$profile_ID_DB'>'$profile_DB'</option>'
+            fi
+        done
+    
+    echo '</select>
+            <button name="page" value="edit" class="blue_button">wechseln</button>&nbsp;
+'
     # -> Abschnitt Allgemein
     
 # Aufklappbar:
@@ -150,6 +261,48 @@ if [[ "$page" == "edit" ]]; then
     # <span style="color:#FFFFFF;">_</span>
     # <div id="ExpFieldset">    </div>
     
+    # Profilname
+    echo '
+        <p>
+        <label>Profilname</label>'
+        if [ -n "$profile" ]; then
+            echo '<input type="text" name="profile" value="'$profile'" />'
+        else
+            echo '<input type="text" name="profile" value="" />'
+        fi
+        echo '<a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>Profile können individuell benannt werden (z.B. Geschäft, Max)</span></a></p>'
+
+    # Profil aktiviert?
+    echo '
+        <p>
+        <label>Profil aktiv</label>
+        <select name="active">'
+        if [[ "$active" == "1" ]]; then
+            echo '<option value="1" selected>Profil aktiviert</option>'
+        else
+            echo '<option value="1">Profil aktiviert</option>'
+        fi
+        if [[ "$active" == "0" ]]; then
+            echo '<option value="0" selected>Profil deaktiviert</option>'
+        else
+            echo '<option value="0">Profil deaktiviert</option>'
+        fi
+    echo '
+        </select>
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>Profile können aktiviert, oder deaktiviert werden.<br>
+            Deaktivierte Profile können zwar modifiziert werden, werden aber von synOCR nicht ausgeführt.</span></a>
+        </p>'
+    
+    # Profile-ID (ohne GUI nach $var schreiben)
+    	encode_value=$profile_ID
+    	decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
+    	"$set_var" "./usersettings/var.txt" "profile_ID" "$decode_value"
+    	"$set_var" "./usersettings/var.txt" "encode_profile_ID" "$encode_value"
+	
     # SOURCEDIR
     echo '
         <p>
@@ -251,7 +404,7 @@ if [[ "$page" == "edit" ]]; then
     # dockercontainer
     echo '
         <p>
-        <label>Dockerimage</label>
+        <label>zuverwendendes Dockerimage</label>
         <select name="dockercontainer">'
         if [[ "$dockercontainer" == "jbarlow83/ocrmypdf" ]]; then
             echo '<option value="jbarlow83/ocrmypdf" selected>jbarlow83/ocrmypdf:latest</option>'
