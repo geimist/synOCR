@@ -222,6 +222,9 @@ if [[ "$page" == "edit" ]]; then
         </div>Trage hier deine Einstellungen ein und passe die Pfade an.
         <br>Hilfe für die einzelnen Felder erhältst du über das blaue Info-Symbol am rechten Rand.
         <br>
+        <br>Über die Profile kannst du beliebig viele Konfigurationen anlegen, welche bei alle jedem 
+        Programmlauf abgearbeitet werden. Man kann jedes Profil über das entsprechende Feld auch deaktivieren.
+        <br>
         <br>Achte unbedingt darauf, die kompletten Pfade inkl. Volume (z.B. <code>/volume1/…</code>) einzutragen und achte auf korrekte Groß- und Kleinschreibung. 
         Das sicherste ist, wenn du in der Filestation den gewünschten Ordner suchst und du dir über Rechtsklick die Eigenschaften anzeigen lässt. 
         In diesem Dialog kannst du dir den korrekten Pfad kopieren.
