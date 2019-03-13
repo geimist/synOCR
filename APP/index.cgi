@@ -36,7 +36,7 @@ else
 	grey2="color: #374355"
     
     # Konfiguration laden:
-    source $dir/app/etc/Konfiguration.txt
+#    source $dir/app/etc/Konfiguration.txt
     
     # MAC-Adresse auslesen (um DEV-Seiten zu verstecken)
     read MAC </sys/class/net/eth0/address
@@ -78,13 +78,11 @@ if [[ "$mainpage" == "start" ]]; then
 	[ -f "$stop" ] && rm "$stop"
 	[ -f "$usersettings/stop2.txt" ] && rm "$usersettings/stop2.txt"
 	mainpage="main"
-#	mainpage="status"
 fi
 
 # Layout - Startseite definieren
 if [ -z "$page" ]; then
 	mainpage="main"
-#	mainpage="status"
 fi
 
 "$set_var" "$var" "page" ""
@@ -125,15 +123,6 @@ echo '
     	<li><a class="navitem" href="index.cgi?page=main"><img class="svg" src="images/home_grey3@geimist.svg" height="25" width="25"/>Übersicht</a></li>'
     fi
 
-    #   neue main-Page (alt status.sh):
-#    if [[ "$mainpage" == "main" ]] ; then
-#    	echo '
-#    	<li><a class="navitemselc" href="index.cgi?page=main"><img class="svg" src="images/status_white@geimist.svg" height="25" width="25"/>Start</a></li>'
-#    else
-#    	echo '
-#    	<li><a class="navitem" href="index.cgi?page=main"><img class="svg" src="images/status_grey3@geimist.svg" height="25" width="25"/>Start</a></li>'
-#    fi
-
 if [[ "$mainpage" == "edit" ]]; then
 	echo '
 	<li><a class="navitemselc" href="index.cgi?page=edit"><img class="svg" src="images/settings_white@geimist.svg" height="25" width="25"/>Konfiguration</a></li>'
@@ -159,13 +148,11 @@ else
 fi
 
 #   alte status.sh:
-    if [[ "$mainpage" == "status" ]] ; then
-    	echo '
-    	<li><a class="navitemselc" href="index.cgi?page=status"><img class="svg" src="images/status_white@geimist.svg" height="25" width="25"/>Status</a></li>'
-    else
-    	echo '
-    	<li><a class="navitem" href="index.cgi?page=status"><img class="svg" src="images/status_grey3@geimist.svg" height="25" width="25"/>Status</a></li>'
-    fi
+#    if [[ "$mainpage" == "status" ]] ; then
+#    	echo '<li><a class="navitemselc" href="index.cgi?page=status"><img class="svg" src="images/status_white@geimist.svg" height="25" width="25"/>Status</a></li>'
+#    else
+#    	echo '<li><a class="navitem" href="index.cgi?page=status"><img class="svg" src="images/status_grey3@geimist.svg" height="25" width="25"/>Status</a></li>'
+#    fi
 
 echo '</ul>
     </div>
