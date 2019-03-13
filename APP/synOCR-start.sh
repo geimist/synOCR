@@ -15,7 +15,7 @@
 # Konfigurationsdatei einbinden:
     #    CONFIG=etc/Konfiguration.txt
     #    . ./$CONFIG
-    sSQL="SELECT profile_ID, INPUTDIR, OUTPUTDIR, LOGDIR, SearchPraefix, loglevel FROM config WHERE active='1' "
+    sSQL="SELECT profile_ID, INPUTDIR, OUTPUTDIR, LOGDIR, SearchPraefix, loglevel, profile FROM config WHERE active='1' "
     sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
 
     IFS=$'\012'
@@ -27,6 +27,7 @@
         LOGDIR=$(echo "$entry" | awk -F'\t' '{print $4}')
         SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $5}')
         loglevel=$(echo "$entry" | awk -F'\t' '{print $6}')
+        profile=$(echo "$entry" | awk -F'\t' '{print $7}')
     
     # läuft bereits eine Instanz von synOCR?
         synOCR_pid=$( pidof synOCR.sh )
@@ -109,14 +110,13 @@
     
     # nur starten (LOG erstellen), sofern es etwas zu tun gibt:
         if [ $( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) = 0 ] ;then
-            if [ $callFrom = GUI ] ; then
-                echo '
-                <p class="center"><span style="color: #228b22;"><b>es gibt nichts zu tun</b><br>Programmlauf wird beendet.<br></span></p>'
-            else
-                echo "es gibt nichts zu tun"
-                echo "Programmlauf wird beendet."
-            fi
-            exit 0
+            #if [ $callFrom = GUI ] ; then
+            #    echo '<p class="center"><span style="color: #228b22;"><b>es gibt im Profil '$profile' nichts zu tun.</b><br></span></p>'
+            #else
+            #    echo "es gibt im Profil '$profile' nichts zu tun"
+            #    #echo "Programmlauf wird beendet."
+            #fi
+            continue
         fi
     
     # synOCR starten und ggf. Logverzeichnis prüfen und erstellen
