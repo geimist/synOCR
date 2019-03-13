@@ -11,6 +11,31 @@
 # Arbeitsverzeichnis auslesen und hineinwechseln:
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
+    
+# läuft bereits eine Instanz von synOCR?
+    synOCR_pid=$( pidof synOCR.sh )
+    if [ ! -z "$synOCR_pid" ] ; then
+        if [ $callFrom = GUI ] ; then
+            echo '<p class="center"><span style="color: #BD0010;"><b>synOCR läuft bereits!</b><br>(Prozess-ID: '$synOCR_pid')</span></p>'
+            echo '<br /><p class="center"><button name="page" value="main-kill-synocr" style="color: #BD0010;">(Beenden erzwingen?)</button></p><br />'
+        else
+            echo "synOCR läuft bereits! (Prozess-ID: ${synOCR_pid})"
+        fi
+        exit
+    else
+        if [ $callFrom = GUI ] ; then
+            echo '<p class="title">synOCR wurde gestartet ...</p><br><br><br><br>
+            <center><table id="system_msg" style="width: 40%;table-align: center;">
+                <tr>   
+                    <th style="width: 20%;"><img class="imageStyle" alt="status_loading" src="images/status_loading.gif" style="float:left;"></th>   
+                    <th style="width: 80%;"><p class="center"><span style="color: #424242;font-weight:normal;">Bitte warten, bis die Dateien<br>fertig abgearbeitet wurden.</span></p></th>
+                </tr>
+            </table></center>'
+        else
+            echo "synOCR wurde gestartet ..."
+            echo "Bitte warten, bis die Dateien fertig abgearbeitet wurden."
+        fi
+    fi
 
 # Konfigurationsdatei einbinden:
     #    CONFIG=etc/Konfiguration.txt
@@ -28,31 +53,6 @@
         SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $5}')
         loglevel=$(echo "$entry" | awk -F'\t' '{print $6}')
         profile=$(echo "$entry" | awk -F'\t' '{print $7}')
-    
-    # läuft bereits eine Instanz von synOCR?
-        synOCR_pid=$( pidof synOCR.sh )
-        if [ ! -z "$synOCR_pid" ] ; then
-            if [ $callFrom = GUI ] ; then
-                echo '<p class="center"><span style="color: #BD0010;"><b>synOCR läuft bereits!</b><br>(Prozess-ID: '$synOCR_pid')</span></p>'
-                echo '<br /><p class="center"><button name="page" value="status-kill-synocr" style="color: #BD0010;">(Beenden erzwingen?)</button></p><br />'
-            else
-                echo "synOCR läuft bereits! (Prozess-ID: ${synOCR_pid})"
-            fi
-            exit
-        else
-            if [ $callFrom = GUI ] ; then
-                echo '<p class="title">synOCR wurde gestartet ...</p><br><br><br><br>
-                <center><table id="system_msg" style="width: 40%;table-align: center;">
-                    <tr>   
-                        <th style="width: 20%;"><img class="imageStyle" alt="status_loading" src="images/status_loading.gif" style="float:left;"></th>   
-                        <th style="width: 80%;"><p class="center"><span style="color: #424242;font-weight:normal;">Bitte warten, bis die Dateien<br>fertig abgearbeitet wurden.</span></p></th>
-                    </tr>
-                </table></center>'
-            else
-                echo "synOCR wurde gestartet ..."
-                echo "Bitte warten, bis die Dateien fertig abgearbeitet wurden."
-            fi
-        fi
     
     # ist das Quellverzeichnis vorhanden und ist der Pfad zulässig?
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
