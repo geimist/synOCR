@@ -46,15 +46,21 @@ fi
 # aktuelles Profil löschen: 
 if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile" ]]; then
     if [[ "$page" == "edit-del_profile-query" ]]; then
-        echo '
-        <p class="center" style="'$synotrred';">
+        echo '<p class="center" style="'$synotrred';">
             Soll das aktuelle Profil (<b>'$profile'</b>) gelöscht werden?<br /><br /><br />
             <a href="index.cgi?page=edit-del_profile" class="red_button">Ja</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=edit" class="button">Nein</a></p>'  >> "$stop"
     elif [[ "$page" == "edit-del_profile" ]]; then
         sqlite3 ./etc/synOCR.sqlite "DELETE FROM config WHERE profile_ID='$profile_ID';"
-        
         sSQL="SELECT count(profile_ID) FROM config WHERE profile_ID='$profile_ID' "
         
+    # das erste Profil der DB als nächstes aktiv schalten (sonst würde ein Profilname mit leeren Daten angezeigt)
+        getprofile=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
+        # getprofile (ohne GUI nach $var schreiben):
+    	encode_value=$getprofile
+    	decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
+    	"$set_var" "./usersettings/var.txt" "getprofile" "$decode_value"
+    	"$set_var" "./usersettings/var.txt" "encode_getprofile" "$encode_value"
+    	
         if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
             echo '<p class="center" style="'$green';"><b>Das Profil <b>'$profile'</b> wurde gelöscht.</b></p>
                 <br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />' >> "$stop"
