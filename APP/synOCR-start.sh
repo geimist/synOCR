@@ -146,7 +146,7 @@
             echo "    -----------------------------------" >> $LOGFILE
             echo "synOCR wurde mit Fehlern beendet!"
             echo "weitere Informationen im LOG: $LOGFILE"
-            exit 1
+        #    exit 1
         fi
     done
     
