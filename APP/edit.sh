@@ -228,7 +228,7 @@ if [[ "$page" == "edit" ]]; then
     sSQL="SELECT profile_ID, profile FROM config "
     sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
     echo '<p>
-        <label style="width: 200px;"><b>wechsle zu Profil</b></label>
+        <label style="width: 200px;padding: 0.5em 0.5em 0.25em 0.25em;"><b>wechsle zu Profil</b></label>
         <select name="getprofile" style="width: 200px;">'
 
         IFS=$'\012'
