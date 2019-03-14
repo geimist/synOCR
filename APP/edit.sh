@@ -60,7 +60,7 @@ if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile"
     	"$set_var" "./usersettings/var.txt" "getprofile" "$decode_value"
     	"$set_var" "./usersettings/var.txt" "encode_getprofile" "$encode_value"
     
-    sleep 1
+        sleep 1
         if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='$profile_ID' ") = "0" ] ; then
             echo '<p class="center" style="'$green';"><b>Das Profil <b>'$profile'</b> wurde gelöscht.</b></p>
                 <br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />' >> "$stop"
@@ -74,7 +74,6 @@ fi
 
 # Profil duplizieren:
 if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile" ]]; then
-
     if [[ "$page" == "edit-dup-profile-query" ]]; then
         echo '<div class="Content_1Col_full">'
         echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Gib bitte einen Namen für das duplizierte Profil ein:</p><br />
@@ -114,9 +113,7 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
             <br>da kein Profilname definiert wurde!</p><br /></div>'
         fi
         echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
-        echo '
-        </div>
-        <div class="clear"></div>'
+        echo '</div><div class="clear"></div>'
     fi
 fi
 
@@ -154,9 +151,7 @@ if [[ "$page" == "edit-new_profile-query" ]] || [[ "$page" == "edit-new_profile"
             <br>da kein Profilname definiert wurde!</p><br /></div>'
         fi
         echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
-        echo '
-        </div>
-        <div class="clear"></div>'
+        echo '</div><div class="clear"></div>'
     fi
 fi
 
@@ -171,9 +166,6 @@ if [[ "$page" == "edit-save" ]]; then
     
     echo '<div class="Content_1Col_full">'
     echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Änderungen wurden gespeichert</p><br /></div>'
-    
-#    echo "$sSQLupdate"
-    
     echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
     echo '</div><div class="clear"></div>'
 fi
@@ -190,7 +182,7 @@ if [[ "$page" == "edit" ]]; then
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
             dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active FROM config WHERE profile_ID='$getprofile' "
     fi
-    sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
+    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
     # Datensatzfelder separieren:
         profile_ID=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
@@ -488,7 +480,8 @@ if [[ "$page" == "edit" ]]; then
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung.
-            Einzelne Tags werdendurch Semikolon getrennt. 
+            Einzelne Tags werdendurch Semikolon getrennt.<br>
+            ! ! ! KEINEN ZEILENUMBRUCH VERWENDEN ! ! !<br>
             Tags und Kategorien können auch Leerzeichen enthalten.<br>
             Soll ein Tag nur alleinstehend gefunden werden, ist ein Paragrafenzeichen voranzustellen (eine Suche nach "<code>§Rechnung</code>" findet so nicht fälschlicherweise "<code>Rechnungsstellung</code>")<br><br>
             z.B.: <b>Rechnung;Arbeit;Versicherung</b><br>
