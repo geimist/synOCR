@@ -7,6 +7,7 @@
     if [ -z $callFrom ] ; then
         callFrom=shell
     fi
+    exit_status=0
     
 # Arbeitsverzeichnis auslesen und hineinwechseln:
     APPDIR=$(cd $(dirname $0);pwd)
@@ -132,7 +133,7 @@
             mkdir -p "$LOGDIR"
             ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1
         else
-        loglevel=0
+            loglevel=0
             ./synOCR.sh "$profile_ID"
         fi
     
@@ -146,8 +147,12 @@
             echo "    -----------------------------------" >> $LOGFILE
             echo "synOCR wurde mit Fehlern beendet!"
             echo "weitere Informationen im LOG: $LOGFILE"
-        #    exit 1
+            exit_status=ERROR
         fi
     done
-    
-exit 0
+
+if  [ $exit_status = "ERROR" ] ; then
+    exit 1
+else
+    exit 0
+fi
