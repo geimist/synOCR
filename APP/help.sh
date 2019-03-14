@@ -67,7 +67,7 @@ echo '<fieldset>
     </summary></p>
     <p>'
     
-    echo '<p>Detailiertere Hilfe zu OCRmyPDF findest du auf der Hilfeseite: https://ocrmypdf.readthedocs.io</p>'
+    echo '<p>Detailiertere Hilfe zu OCRmyPDF findest du auf der <a href="https://ocrmypdf.readthedocs.io" onclick="window.open(this.href); return false;">OCRmyPDF Hilfeseite (klick)</a></p>'
     
     echo '</details></fieldset></p>'
 
@@ -82,7 +82,7 @@ echo '<fieldset>
     
 echo '<p>Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ich dafür bereitstellen kann.<br>
     Begonnen, um meinen Arbeitsablauf mit PDF Dokumenten einfacher zu machen, ist es auch eine Freude für mich, wenn anderen dieses Projekt hilft. Daher erwarte ich keine Gegenleistung!<br>
-    <a href="https://www.paypal.me/geimist" rel="external"><img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="150"/></a><br>
+    <a href="https://www.paypal.me/geimist" onclick="window.open(this.href); return false;"><img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="200"/></a><br>
     Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen: 
     </p>'
     
@@ -92,3 +92,4 @@ echo '<p>Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ic
 echo '
 		</div>
 	</div><div class="clear"></div>'
+	
