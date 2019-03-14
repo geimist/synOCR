@@ -4,6 +4,7 @@ Release Notes
     IMPLEMENTIERUNGEN:
  -  Die Konfiguration wurde von einer Textdatei auf eine Datenbank umgestellt. So lassen sich jetzt beliebige Profile verwalten.
  -  Übersichts- und Statusseite zusammengeführt
+ -  INFO: Das Textfeld für die Tags ist zwar jetzt mehrzeilig, es dürfen aber derzeit keine Zeilenumbrüche verwendet werden!
  -  Detailverbesserungen in der GUI
     BUGFIXES:
  -  
