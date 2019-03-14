@@ -216,10 +216,6 @@ if [[ "$page" == "edit" ]]; then
         loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
         active=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
 
-# DEV:
-#    echo "Profil-ID: $profile_ID"
-#    echo " / Profilname: $profile"
-
     echo '
     <div id="Content_1Col">
     <div class="Content_1Col_full">
@@ -235,15 +231,14 @@ if [[ "$page" == "edit" ]]; then
         Das sicherste ist, wenn du in der Filestation den gewünschten Ordner suchst und du dir über Rechtsklick die Eigenschaften anzeigen lässt. 
         In diesem Dialog kannst du dir den korrekten Pfad kopieren.
         <br><br>'
-    
-    
+
 # Profilauswahl:
     sSQL="SELECT profile_ID, profile FROM config "
     sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
     echo '<p>
-        <label><b>wechsle zu Profil</b></label>
-        <select name="getprofile">'
-        
+        <label style="width: 200px;"><b>wechsle zu Profil</b></label>
+        <select name="getprofile" style="width: 200px;">'
+
         IFS=$'\012'
         for entry in $sqlerg; do
             IFS=$OLDIFS
@@ -257,11 +252,11 @@ if [[ "$page" == "edit" ]]; then
                 echo '<option value='$profile_ID_DB'>'$profile_DB'</option>'
             fi
         done
-    
-    echo '</select><button name="page" value="edit" class="blue_button">wechseln</button>&nbsp;'
-    
+
+    echo '</select><button name="page" value="edit" class="blue_button" style="float:right;">wechseln</button>&nbsp;'
+
     # -> Abschnitt Allgemein
-    
+
 # Aufklappbar:
     echo '<fieldset>
     <hr style="border-style: dashed; size: 1px;">
@@ -302,6 +297,7 @@ if [[ "$page" == "edit" ]]; then
         else
             echo '<option value="0">Profil deaktiviert</option>'
         fi
+
     echo '
         </select>
         <a class="helpbox" href="#HELP">
