@@ -493,7 +493,7 @@ input, textarea {
 
 textarea {
 	resize:vertical;
-	width: 406px;
+	width: 300px;
 	font: normal 1em Verdana,Helvetica,Arial,FreeSans,sans-serif;
 }
 
@@ -998,6 +998,4 @@ div#HorCrumb > div {
 div.HorCrumbs {
 	padding: 4px 20px;
 }
-
-
 
