@@ -77,12 +77,12 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
 
     if [[ "$page" == "edit-dup-profile-query" ]]; then
         echo '<div class="Content_1Col_full">'
-        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Gib bitte einen Namen für das neue Profil ein:</p><br />
-        <label><b>Profilname</b></label>'
+        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Gib bitte einen Namen für das duplizierte Profil ein:</p><br />
+        <label style="width: auto;padding: 0.5em 0.5em 0.25em 0.25em;"><b>Profilname: </b></label>' #style="vertical-align: bottom;" style="width: 200px;"
         if [ -n "$new_profile_value" ]; then
-            echo '<input type="text" name="new_profile_value" value="'$new_profile_value'" />'
+            echo '<input type="text" style="width: 200px;" name="new_profile_value" value="'$new_profile_value'" />'
         else
-            echo '<input type="text" name="new_profile_value" value="" />'
+            echo '<input type="text" style="width: 200px;" name="new_profile_value" value="" />'
         fi
         echo '</p></div><br /><p class="center"><button name="page" value="edit-dup-profile" class="blue_button">erstellen...</button></p><br />
             </div><div class="clear"></div>'
@@ -126,11 +126,11 @@ if [[ "$page" == "edit-new_profile-query" ]] || [[ "$page" == "edit-new_profile"
     if [[ "$page" == "edit-new_profile-query" ]]; then
         echo '<div class="Content_1Col_full">'
         echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Gib bitte einen Namen für das neue Profil ein:</p><br />
-        <label><b>Profilname</b></label>'
+        <label style="width: auto;padding: 0.5em 0.5em 0.25em 0.25em;"><b>Profilname: </b></label>' #style="vertical-align: bottom;" style="width: 200px;"
         if [ -n "$new_profile_value" ]; then
-            echo '<input type="text" name="new_profile_value" value="'$new_profile_value'" />'
+            echo '<input type="text" style="width: 200px;" name="new_profile_value" value="'$new_profile_value'" />'
         else
-            echo '<input type="text" name="new_profile_value" value="" />'
+            echo '<input type="text" style="width: 200px;" name="new_profile_value" value="" />'
         fi
         echo '</p></div><br /><p class="center"><button name="page" value="edit-new_profile" class="blue_button">erstellen...</button></p><br />
             </div><div class="clear"></div>'
