@@ -478,9 +478,11 @@ if [[ "$page" == "edit" ]]; then
         <p>
         <label>zu suchende Tags</label>'
         if [ -n "$taglist" ]; then
-            echo '<input type="text" name="taglist" value="'$taglist'" />'
+        #    echo '<input type="text" name="taglist" value="'$taglist'" />'
+            echo '<textarea id="text" name="taglist" cols="35" rows="4">'$taglist'</textarea>'
         else
-            echo '<input type="text" name="taglist" value="" />'
+        #    echo '<input type="text" name="taglist" value="" />'
+            echo '<textarea id="text" name="taglist" cols="35" rows="4"></textarea>'
         fi
     echo '
         <a class="helpbox" href="#HELP">
