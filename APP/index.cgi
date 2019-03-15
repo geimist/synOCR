@@ -101,7 +101,7 @@ echo '
 	
 	<link rel="icon" type="image/svg+xml" href="images/synOCR-LOGO.svg" sizes="any">
 	<!-- <link rel="shortcut icon" href="images/uh_32.png" type="image/x-icon" /> -->
-	<link rel="stylesheet" type="text/css" href="css/synocr_1.1.0.css" />
+	<link rel="stylesheet" type="text/css" href="includes/synocr_1.1.0.css" />
 	<!--Load the AJAX API-->
     <!--<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>-->
     <script type="text/javascript" src="js/chartsloader.js"></script>
