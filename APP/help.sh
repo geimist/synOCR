@@ -16,14 +16,11 @@ echo '
     <details><p>
     <summary>
         <span class="detailsitem">Schnellstart</span>
-    </summary></p>
-    <p>' 
-    #ab hier steht der Text, der auf- und zugeklappt werden soll.
+    </summary></p><p>' # ab hier steht der Text, der auf- und zugeklappt werden soll.
 	
 	echo '<ol style="list-style:decimal">
-    <p>
     <li>Passe zunächst deine Installation in den <a href="index.cgi?page=edit" style="'$synotrred';">Einstellungen</a> an.
-    </li></p>
+    </li>
     <p>
     <li>Um synOCR regelmäßig laufen zu lassen (was sich empfiehlt), erstelle als nächstes <br>einen automatisierten Programmaufruf.
       <div class="tab"><br>
@@ -58,16 +55,41 @@ echo '
 
     echo '</details></fieldset></p>'
 
-# -> Abschnitt OCRmyPDF:
-echo '<fieldset>
-    <hr style="border-style: dashed; size: 1px;"><br />
-    <details><p>
-    <summary>
-        <span class="detailsitem">OCRmyPDF Optionen</span>
-    </summary></p>
-    <p>'
+# -> Abschnitt FAQ:
+echo '<fieldset><hr style="border-style: dashed; size: 1px;"><br /><details><p><summary><span class="detailsitem">FAQ</span></summary></p>'
     
-    echo '<p>Detailiertere Hilfe zu OCRmyPDF findest du auf der <a href="https://ocrmypdf.readthedocs.io" onclick="window.open(this.href); return false;" style="'$synotrred';">OCRmyPDF Hilfeseite.</a></p>'
+    # -> Abschnitt OCRmyPDF:
+        echo '<fieldset>
+        <details><p><summary><span class="detailsitem">OCRmyPDF Optionen</span></summary></p>
+        <ul class="li_standard"><li>'
+        echo 'Detailiertere Hilfe zu OCRmyPDF findest du auf der <a href="https://ocrmypdf.readthedocs.io" onclick="window.open(this.href); return false;" style="'$synotrred';">OCRmyPDF Hilfeseite.</a>'
+        echo '</li></ul>'
+        echo '</details></fieldset>'
+    # ->
+        echo '<fieldset>
+        <details><p><summary><span class="detailsitem">beim Aufruf von synOCR werde ich vom DSM ausgeloggt</span></summary></p>
+        <ul class="li_standard"><li>'
+        echo 'Abhilfe schafft die Aktivierung von "<i>Browserkompatibilität durch Verzeicht auf IP-Prüfung erhöhen</i>" unter DSM-Systemsteuerung > Sicherheit.'
+        echo '</li></ul>'
+        echo '</details></fieldset>'
+    # ->
+        echo '<fieldset>
+        <details><p><summary><span class="detailsitem">der Sicherheitsberater warnt vor synOCR</span></summary></p>
+        <ul class="li_standard"><li>'
+        echo 'Der Grund für die Warnung liegt nicht in einer Gefahr von synOCR, sondern darin, dass dem Sicherheitsberater die Änderung in der crontab unbekannt ist.'
+        echo '</li><li>'
+        echo 'Abhilfe schafft das "überspringen" im Sicherheitsberater oder ein manueller Task im DSM-Aufgabenplaner.'
+        echo '</li></ul>'
+        echo '</details></fieldset>'
+    # ->
+        echo '<fieldset>
+        <details><p><summary><span class="detailsitem">es werden keine Dateien verarbeitet, obwohl welche vorhanden sind.</span></summary></p>
+        <ul class="li_standard"><li>'
+        echo 'Das kann der Fall sein, wenn der "OCR Such-Präfix" angegeben wurde, aber nicht mit den Dateien übereinstimmt'
+        echo '</li><li>'
+        echo 'überprüfe, ob das gewünschte Profil für den Quellordner in der Konfiguration auch aktiviert ist'
+        echo '</li></ul>'
+        echo '</details></fieldset>'
     
     echo '</details></fieldset></p>'
 
