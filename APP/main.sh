@@ -29,7 +29,7 @@
         IFS=$OLDIFS
         INPUTDIR=$(echo "$entry" | awk -F'\t' '{print $1}')
         SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $2}')
-        count_inputpdf=$( expr $(ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf ) # wie viele Dateien 
+        count_inputpdf=$( expr $(ls -t "${INPUTDIR}" | egrep -oi "^${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf ) # wie viele Dateien 
     done
     
 # Installationsstatus auslesen:
