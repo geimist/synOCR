@@ -42,9 +42,9 @@ elif [[ "$mainpage" == "edit" ]]; then
 		<div style="text-align: right;">
 	    <button name="page" value="edit-save" class="blue_button">Speichern</button>&nbsp;
 	    <button name="page" value="edit-new_profile-query">neues Profil</button>&nbsp;
-	    <button name="page" value="edit-dup-profile-query">Profil clonen</button>&nbsp; 
-	    <button name="page"><a href="etc/synOCR.sqlite" download="synOCR.sqlite">Download</a></button>&nbsp;
-	    <button name="page" value="edit-del_profile-query" class="red_button">Profil löschen</button>&nbsp;
+	    <button name="page" value="edit-dup-profile-query" title="erstellt ein neues Profil mit der Konfiguration des aktuellen Profils …">Profil clonen</button>&nbsp; 
+	    <button name="page"><a href="etc/synOCR.sqlite" download="synOCR.sqlite" title="Download der Konfigurationsdatenbank …">Download</a></button>&nbsp;
+	    <button name="page" value="edit-del_profile-query" class="red_button" title="löscht das aktuelle Profil nach Sicherheitsabfrage …">Profil löschen</button>&nbsp;
 	    </div>'
     echo '
         </p>
