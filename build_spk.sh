@@ -111,7 +111,7 @@ cd "${build_tmp}"/"$PKG"
 # Erstellen des eigentlichen SPK's
 echo ""
 echo " - INFO: Das SPK wird erstellt..."
-$FAKEROOT tar -cf "${project}"_"$set_spk_version".spk ./*
+$FAKEROOT tar -cf "${project}"_"$set_spk_version".spk *
 cp -f "${project}"_"$set_spk_version".spk "${APPDIR}"
 
 echo ""
