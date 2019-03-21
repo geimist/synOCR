@@ -36,10 +36,15 @@ if ! [ -x "$(command -v git)" ]; then
 fi
 
 if ! [ -x "$(command -v fakeroot)" ]; then
-	echo 'WARNING: fakeroot is not installed.' >&2
-	FAKEROOT=$(command -v fakeroot)
+    if [ $(whoami) != "root" ]; then
+        echo "WARNUNG: fakeroot ist nicht installiert und du bist auch nicht root!" >&2
+        exit 1
+    else
+    	echo 'WARNUNG: fakeroot ist nicht installiert!' >&2
+    	FAKEROOT=""
+    fi
 else
-	FAKEROOT=""
+	FAKEROOT=$(command -v fakeroot)
 fi
 
 # Arbeitsverzeichnis auslesen und hineinwechseln:
@@ -56,7 +61,8 @@ echo " - INFO: Erstelle den temporären Buildordner und kopiere Sourcen hinein .
 
 git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
 pushd "$build_tmp"
-set_spk_version="latest-$(date +%s)-$(git log -1 --format="%h")"
+#set_spk_version="latest-$(date +%s)-$(git log -1 --format="%h")"
+set_spk_version="latest_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
 
 if echo "$taggedversions" | egrep -q "$buildversion"; then
 	echo "git checkout zu $buildversion"
