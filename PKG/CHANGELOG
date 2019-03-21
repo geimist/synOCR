@@ -6,8 +6,6 @@ Release Notes
  -  Übersichts- und Statusseite zusammengeführt
  -  INFO: Das Textfeld für die Tags ist zwar jetzt mehrzeilig, es dürfen aber derzeit keine Zeilenumbrüche verwendet werden!
  -  Detailverbesserungen in der GUI
-    BUGFIXES:
- -  
 
 0.14.0
     IMPLEMENTIERUNGEN:
