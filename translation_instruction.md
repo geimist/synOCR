@@ -35,6 +35,7 @@ It is also important that special characters remain in the same place. (e.g. \<b
 - spn = Spanish
 - sve = Swedish
 - hun = Hungarian
+- tha = Tai
 - trk = Turkish
 - ptg = Portuguese European
 - ptb = Portuguese Brazilian
