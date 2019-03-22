@@ -560,8 +560,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     DestFolderList="${tagarray[$i]}\n${DestFolderList}"
                     i=$((i + 1))
                 done
-#                echo "                      --> lösche temp. Zieldatei"
-#                rm "${outputtmp}"
+                rm "${outputtmp}"
             elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
                 echo "                      --> verschiebe in Tagverzeichnisse"
                 renameTag=$( echo $renameTag | sed -e "s/#//g" )
