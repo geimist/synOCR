@@ -277,7 +277,7 @@ if [[ "$page" == "edit" ]]; then
     # Profil aktiviert?
     echo '
         <p>
-        <label>Profil aktiv</label>
+        <label>Profil aktivieren / deaktivieren</label>
         <select name="active">'
         if [[ "$active" == "1" ]]; then
             echo '<option value="1" selected>Profil aktiviert</option>'

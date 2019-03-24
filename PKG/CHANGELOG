@@ -1,5 +1,9 @@
 Release Notes
 
+0.15.1
+BUGFIXES:
+-  die temporäre Zieldatei wurde nicht gelöscht
+
 0.15.0
     IMPLEMENTIERUNGEN:
  -  Die Konfiguration wurde von einer Textdatei auf eine Datenbank umgestellt. So lassen sich jetzt beliebige Profile verwalten.
