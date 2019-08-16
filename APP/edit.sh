@@ -316,7 +316,7 @@ if [[ "$page" == "edit" ]]; then
         echo '
             <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>In diesem Verzeichnis wird nach PDF-Dateien gesucht.</span></a>
+            <span>In diesem Verzeichnis wird nach PDF-Dateien gesucht (nicht rekursiv).</span></a>
             </p>'
 
     # OUTPUTDIR
