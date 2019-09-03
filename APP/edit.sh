@@ -417,6 +417,11 @@ if [[ "$page" == "edit" ]]; then
         else
             echo '<option value="jbarlow83/ocrmypdf-alpine">jbarlow83/ocrmypdf-alpine:latest</option>'
         fi
+        if [[ "$dockercontainer" == "jbarlow83/ocrmypdf:v9.0.1" ]]; then
+            echo '<option value="jbarlow83/ocrmypdf:v9.0.1" selected>jbarlow83/ocrmypdf:v9.0.1</option>'
+        else
+            echo '<option value="jbarlow83/ocrmypdf:v9.0.1">jbarlow83/ocrmypdf:v9.0.1</option>'
+        fi
         if [[ "$dockercontainer" == "jbarlow83/ocrmypdf-polyglot" ]]; then
             echo '<option value="jbarlow83/ocrmypdf-polyglot" selected>jbarlow83/ocrmypdf-polyglot:latest</option>'
         else
