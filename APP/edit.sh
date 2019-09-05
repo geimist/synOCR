@@ -2,6 +2,9 @@
 # edit.sh
 # OLDIFS=$IFS
 
+# Auswahl der Docker-Images für OCRmyPDF als Array:    
+imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.2" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.2" "jbarlow83/ocrmypdf-polyglot:latest")
+
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
     
@@ -407,8 +410,6 @@ if [[ "$page" == "edit" ]]; then
         <p>
         <label>zuverwendendes Dockerimage</label>
         <select name="dockercontainer">'
-        
-        imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.2" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.2" "jbarlow83/ocrmypdf-polyglot:latest")
         
         for entry in ${imagelist[@]}; do
             if [[ "$dockercontainer" == "${entry}" ]]; then
