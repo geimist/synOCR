@@ -407,36 +407,17 @@ if [[ "$page" == "edit" ]]; then
         <p>
         <label>zuverwendendes Dockerimage</label>
         <select name="dockercontainer">'
-        if [[ "$dockercontainer" == "jbarlow83/ocrmypdf" ]]; then
-            echo '<option value="jbarlow83/ocrmypdf" selected>jbarlow83/ocrmypdf:latest</option>'
-        else
-            echo '<option value="jbarlow83/ocrmypdf">jbarlow83/ocrmypdf:latest</option>'
-        fi
-        if [[ "$dockercontainer" == "jbarlow83/ocrmypdf:v9.0.2" ]]; then
-            echo '<option value="jbarlow83/ocrmypdf:v9.0.2" selected>jbarlow83/ocrmypdf:v9.0.2</option>'
-        else
-            echo '<option value="jbarlow83/ocrmypdf:v9.0.2">jbarlow83/ocrmypdf:v9.0.2</option>'
-        fi
-        if [[ "$dockercontainer" == "jbarlow83/ocrmypdf-alpine" ]]; then
-            echo '<option value="jbarlow83/ocrmypdf-alpine" selected>jbarlow83/ocrmypdf-alpine:latest</option>'
-        else
-            echo '<option value="jbarlow83/ocrmypdf-alpine">jbarlow83/ocrmypdf-alpine:latest</option>'
-        fi
-        if [[ "$dockercontainer" == "jbarlow83/ocrmypdf-alpine:v8.2.3" ]]; then
-            echo '<option value="jbarlow83/ocrmypdf-alpine:v8.2.3" selected>jbarlow83/ocrmypdf-alpine:v8.2.3</option>'
-        else
-            echo '<option value="jbarlow83/ocrmypdf-alpine:v8.2.3">jbarlow83/ocrmypdf-alpine:v8.2.3</option>'
-        fi
-        if [[ "$dockercontainer" == "jbarlow83/ocrmypdf-alpine:v9.0.2" ]]; then
-            echo '<option value="jbarlow83/ocrmypdf-alpine:v9.0.2" selected>jbarlow83/ocrmypdf-alpine:v9.0.2</option>'
-        else
-            echo '<option value="jbarlow83/ocrmypdf-alpine:v9.0.2">jbarlow83/ocrmypdf-alpine:v9.0.2</option>'
-        fi
-        if [[ "$dockercontainer" == "jbarlow83/ocrmypdf-polyglot" ]]; then
-            echo '<option value="jbarlow83/ocrmypdf-polyglot" selected>jbarlow83/ocrmypdf-polyglot:latest</option>'
-        else
-            echo '<option value="jbarlow83/ocrmypdf-polyglot">jbarlow83/ocrmypdf-polyglot:latest</option>'
-        fi
+        
+        imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.2" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.2" "jbarlow83/ocrmypdf-polyglot:latest")
+        
+        for entry in ${imagelist[@]}; do
+            if [[ "$dockercontainer" == "${entry}" ]]; then
+                echo "<option value=${entry} selected>${entry}</option>"
+            else
+                echo "<option value=${entry}>${entry}</option>"
+            fi
+        done
+        
     echo '
         </select>
         <a class="helpbox" href="#HELP">
