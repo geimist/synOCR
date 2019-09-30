@@ -152,7 +152,26 @@ echo "$1" | awk '{
             }
         }
     }'
-}  
+} 
+
+
+sec_to_time() 
+{
+# diese Funktion wandelt einen Sekundenwert nach hh:mm:ss
+# Aufruf: sec_to_time "string"
+# https://blog.jkip.de/in-bash-sekunden-umrechnen-in-stunden-minuten-und-sekunden/
+# --------------------------------------------------------------
+    local seconds=$1
+    local sign=""
+    if [[ ${seconds:0:1} == "-" ]]; then
+        seconds=${seconds:1}
+        sign="-"
+    fi
+    local hours=$(( seconds / 3600 ))
+    local minutes=$(( (seconds % 3600) / 60 ))
+    seconds=$(( seconds % 60 ))
+    printf "%s%02d:%02d:%02d" "$sign" $hours $minutes $seconds
+}
 
 
 purge_LOG() 
@@ -669,7 +688,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # Dateizähler:
         synosetkeyvalue ./etc/counter pagecount $(expr $(get_key_value ./etc/counter pagecount) + $pagecount_latest)
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-        echo "                          INFO: (Laufzeit letzte Datei: $(( $(date +%s) - $date_start )) Sekunden (Seitenanzahl: $pagecount_latest) | gesamt: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Seiten bisher verarbeitet)"
+        echo "                          INFO: (Laufzeit letzte Datei: $(sec_to_time $(expr $(date +%s)-${date_start}) ) (Seitenanzahl: $pagecount_latest) | gesamt: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Seiten bisher verarbeitet)"
 
     # temporäres Arbeitsverzeichnis löschen:
         rm -rf "$work_tmp"
