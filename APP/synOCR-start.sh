@@ -122,7 +122,7 @@
     
     # synOCR starten und ggf. Logverzeichnis prüfen und erstellen
         LOGDIR="${LOGDIR%/}/"
-        LOGFILE="${LOGDIR}synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log"
+        LOGFILE="${LOGDIR}synOCR_$(date +%Y-%m-%d_%H-%M).log"
         # touch "$LOGFILE"
         
         umask 000   # damit Files auch von anderen Usern bearbeitet werden können / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
