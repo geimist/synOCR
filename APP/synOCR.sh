@@ -126,6 +126,12 @@
         echo "Dateien werden sofort gelöscht! / Kein gültiges Verzeichnis [$BACKUPDIR]"
         backup=false
     fi
+    echo -n "Docker Test:              "
+    if /usr/local/bin/docker --version | grep -q "version"  ; then
+        echo "OK"
+    else
+        echo "WARNUNG: Docker konnte nicht gefunden werden. Bitte prüfe, ob das Paket Docker installiert wurde!"
+    fi
 
     LOGDIR="${LOGDIR%/}/"
 
