@@ -112,7 +112,7 @@
     fi
     
     OUTPUTDIR="${OUTPUTDIR%/}/"
-    echo "Quellverzeichnis:         ${OUTPUTDIR}"
+    echo "Zielverzeichnis:          ${OUTPUTDIR}"
     
     BACKUPDIR="${BACKUPDIR%/}/"
     if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
