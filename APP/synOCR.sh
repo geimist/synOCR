@@ -76,7 +76,7 @@
     machinetyp=`uname --machine`; echo "Architektur:              $machinetyp"
     dsmbuild=`uname -v | awk '{print $1}' | sed "s/#//g"`; echo "DSM-Build:                $dsmbuild"
     read MAC </sys/class/net/eth0/address
-    sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
+    sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)"
     device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
     echo "aktuelles Profil:         $profile"
     echo "verwendetes Image:        $dockercontainer"
