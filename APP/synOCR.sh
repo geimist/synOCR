@@ -70,7 +70,7 @@
     dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
     
-# Systeminformation / LIBRARY_PATH anpassen / PATH anpassen:
+# Systeminformation:
 # --------------------------------------------------------------------- 
     echo "synOCR-Version:           $CLIENTVERSION"
     machinetyp=`uname --machine`; echo "Architektur:              $machinetyp"
