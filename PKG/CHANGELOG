@@ -1,5 +1,11 @@
 Release Notes
 
+0.1x.x
+    IMPLEMENTIERUNGEN:
+ -  Prüfung auf Dockerinstallation
+    BUGFIXES:
+ -  Minorbugfixes
+
 0.15.2
     IMPLEMENTIERUNGEN:
 -  erweiterte Auswahl an Dockerimages
