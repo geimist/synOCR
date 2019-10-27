@@ -436,7 +436,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         # suche nach Datum:
             dateIsFound=no
             # suche Format: dd[./-]mm[./-]yy(yy)
-            founddate=$( parseRegex "$content" "([1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
+            founddate=$( parseRegex "$content" "([^1-9][1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
+            
             if [ ! -z $founddate ]; then
                 echo -n "                          prüfe Datum: $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
