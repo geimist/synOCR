@@ -23,12 +23,12 @@
 
 # an welchen User/Gruppe soll die DSM-Benachrichtigung gesendet werden :
 # ---------------------------------------------------------------------
-    synOCR_user=$(whoami); echo "synOCR-User:              $synOCR_user"
-    if cat /etc/group | grep administrators | grep -q "$synOCR_user"; then
-        isAdmin=yes
-    else
-        isAdmin=no
-    fi
+#    synOCR_user=$(whoami); echo "synOCR-User:              $synOCR_user"
+#    if cat /etc/group | grep administrators | grep -q "$synOCR_user"; then
+#        isAdmin=yes
+#    else
+#        isAdmin=no
+#    fi
     MessageTo="@administrators"	# Administratoren (Standardeinstellung)
     #MessageTo="$synOTR_user"	# User, welche synOTR aufgerufen hat (funktioniert natürlich nicht bei root, da root kein DSM-GUI-LogIn hat und die Message ins leere läuft)
 
