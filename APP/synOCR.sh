@@ -8,7 +8,6 @@
     echo "    -----------------------------------"
     echo -e
     
-    CLIENTVERSION=$(get_key_value /var/packages/synOCR/INFO version)
     DevChannel="Release"    # BETA
     
 # ---------------------------------------------------------------------------------
@@ -72,12 +71,13 @@
     
 # Systeminformation:
 # --------------------------------------------------------------------- 
-    echo "synOCR-Version:           $CLIENTVERSION"
-    machinetyp=`uname --machine`; echo "Architektur:              $machinetyp"
-    dsmbuild=`uname -v | awk '{print $1}' | sed "s/#//g"`; echo "DSM-Build:                $dsmbuild"
+    echo "synOCR-Version:           $(get_key_value /var/packages/synOCR/INFO version)"
+    echo "Architektur:              $(uname --machine)"
+    echo "DSM-Build:                $(uname -v | awk '{print $1}' | sed "s/#//g")"
     read MAC </sys/class/net/eth0/address
     sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)"
-    device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
+    device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `
+    echo "Gerät:                    $device ($sysID)"
     echo "aktuelles Profil:         $profile"
     echo "verwendetes Image:        $dockercontainer"
     echo "verwendete Parameter:     $ocropt"
@@ -96,7 +96,6 @@
         cURLloglevel="-v"
         wgetloglevel="-v"
     fi
-
 
 # Verzeichnisse prüfen bzw. anlegen und anpassen:
 # ---------------------------------------------------------------------
