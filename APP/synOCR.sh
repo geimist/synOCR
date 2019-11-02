@@ -9,7 +9,7 @@
     echo -e
     
     CLIENTVERSION=$(get_key_value /var/packages/synOCR/INFO version)
-    DevChannel="BETA"    # Release
+    DevChannel="Release"    # BETA
     
 # ---------------------------------------------------------------------------------
 #           GRUNDKONFIGRUATIONEN / INDIVIDUELLE ANPASSUNGEN / Standardwerte       |
