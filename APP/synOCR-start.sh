@@ -104,9 +104,10 @@
             fi
         fi
         if [[ $(get_key_value ./etc/counter checkmon) != $(date +%m) ]]; then
-            if [[ $(wget --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION" | head -n1) = "ok" ]]; then
+            #if [[ $(wget --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION" | head -n1) = "ok" ]]; then
+                wget --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION"
                 synosetkeyvalue ./etc/counter checkmon $(date +%m)
-            fi
+            #fi
         fi
     
     # nur starten (LOG erstellen), sofern es etwas zu tun gibt:
