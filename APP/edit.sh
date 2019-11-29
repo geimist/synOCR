@@ -3,7 +3,7 @@
 # OLDIFS=$IFS
 
 # Auswahl der Docker-Images für OCRmyPDF als Array:    
-imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.3" "jbarlow83/ocrmypdf:v9.1.1" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.3" "jbarlow83/ocrmypdf-polyglot:latest" "magnuscolors/ocrmypdf:five-lang")
+imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.3" "jbarlow83/ocrmypdf:v9.1.1" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.3" "jbarlow83/ocrmypdf-polyglot:latest" "magnuscolors/ocrmypdf:five-lang" "ocrmypdf-ownimage")
 
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
@@ -408,7 +408,7 @@ if [[ "$page" == "edit" ]]; then
     # dockercontainer
     echo '
         <p>
-        <label>zuverwendendes Dockerimage</label>
+        <label>zuverwendendes Dockerimage <br>(Way to the polyglot-image: <a href="https://geimist.eu:30443/geimist/synOCR/issues/13" onclick="window.open(this.href); return false;">LINK</a>)</label>
         <select name="dockercontainer">'
         
         for entry in ${imagelist[@]}; do
@@ -425,7 +425,9 @@ if [[ "$page" == "edit" ]]; then
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>Welches Dockerimage soll verwendet werden?<br>
             jbarlow83/ocrmypdf ist das Standardimage, enthält aber nur die Sprachen: English, German and Simplified Chinese<br>
-            Das Image jbarlow83/ocrmypdf-polyglot enthält alle möglichen Sprachen, ist aber größer!</span></a>
+            Das Image jbarlow83/ocrmypdf-polyglot enthält alle möglichen Sprachen, ist aber größer!<br>
+            (ACHTUNG: das Polyglot-Image wird von jbarlow83 nicht mehr bereitgestellt.)<br>
+            Über das Image "ocrmypdf-ownimage" kann ein selbst mit diesem Namen erstelltes Image angesprochen werden.</span></a>
         </p>'
 
     # SearchPraefix
