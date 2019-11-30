@@ -3,7 +3,7 @@
 # OLDIFS=$IFS
 
 # Auswahl der Docker-Images für OCRmyPDF als Array:    
-imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.3" "jbarlow83/ocrmypdf:v9.1.1" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.3" "jbarlow83/ocrmypdf-polyglot:latest" "magnuscolors/ocrmypdf:five-lang" "ocrmypdf-ownimage" "geimist/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:9.1.1" )
+imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.3" "jbarlow83/ocrmypdf:v9.1.1" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.3" "jbarlow83/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:9.1.1" "ocrmypdf-ownimage" )
 
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
