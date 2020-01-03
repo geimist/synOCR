@@ -4,6 +4,7 @@ Release Notes
     IMPLEMENTIERUNGEN:
  -  Prüfung auf Dockerinstallation
     BUGFIXES:
+ -  "beenden erzwingen" war nicht möglich
  -  Minorbugfixes
 
 0.15.2
