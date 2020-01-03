@@ -49,7 +49,7 @@
 
 # synOCR beenden erzwingen:
 # ---------------------------------------------------------------------
-    if [[ "$page" == "status-kill-synocr" ]]; then
+    if [[ "$page" == "main-kill-synocr" ]]; then
     	killall synOCR.sh
     	echo '<meta http-equiv="refresh" content="0; URL=index.cgi?page=main">'
     fi
