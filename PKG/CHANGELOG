@@ -2,6 +2,9 @@ Release Notes
 
 0.1x.x
     IMPLEMENTIERUNGEN:
+ -  es steht wieder ein aktuelles "polyglot-Image" mit alles Sprachen zur Auswahl
+ -  mit "ocrmypdf-ownimage" ist ein selbst erstelltest Image auswählbar
+ -  ToDo: …(Hashtag-Kennzeichnung konfigurierbar)
  -  Prüfung auf Dockerinstallation
     BUGFIXES:
  -  "beenden erzwingen" war nicht möglich
