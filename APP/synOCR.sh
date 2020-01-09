@@ -348,6 +348,9 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             #chmod --reference "$input" "$output"
             #chown --reference "$input" "$output"
             cp --attributes-only -p "$input" "$output"
+            date=$( ls --full-time "$input" | awk '{ print $6 }' | sed s/-//g )
+            time=$( ls --full-time "$input" | awk '{ print $7 }' | awk -F. '{ print $1 }' | sed s/://g | sed "s/^\(.\{4\}\)/\1\./" )
+            touch -t ${date}${time} "$output"
         fi
         
     # Dateirechte-Log:
