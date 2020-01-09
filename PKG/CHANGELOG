@@ -8,6 +8,7 @@ Release Notes
  -  Prüfung auf Dockerinstallation
     BUGFIXES:
  -  "beenden erzwingen" war nicht möglich
+ -  Dateidatum der Quelldatei wurde nicht korrekt auf die Ausgabedatei übertragen
  -  Minorbugfixes
 
 0.15.2
