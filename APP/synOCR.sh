@@ -339,18 +339,20 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             # Datum wird bei ACL Übertragung noch nicht angepasst
             echo "(verwende ACL)"
             synoacltool -copy "$input" "$output"
-            date=$( ls --full-time "$input" | awk '{ print $6 }' | sed s/-//g )
-            time=$( ls --full-time "$input" | awk '{ print $7 }' | awk -F. '{ print $1 }' | sed s/://g | sed "s/^\(.\{4\}\)/\1\./" )
-            touch -t ${date}${time} "$output"
+            #date=$( ls --full-time "$input" | awk '{ print $6 }' | sed s/-//g )
+            #time=$( ls --full-time "$input" | awk '{ print $7 }' | awk -F. '{ print $1 }' | sed s/://g | sed "s/^\(.\{4\}\)/\1\./" )
+            #touch -t ${date}${time} "$output"
+            touch --reference="$input" "$output"
         #elif echo $( synoacltool -get "$input" ) | grep -q "Linux mode" ; then
         else
             echo "(verwende Standardlinuxrechte)"
             #chmod --reference "$input" "$output"
             #chown --reference "$input" "$output"
             cp --attributes-only -p "$input" "$output"
-            date=$( ls --full-time "$input" | awk '{ print $6 }' | sed s/-//g )
-            time=$( ls --full-time "$input" | awk '{ print $7 }' | awk -F. '{ print $1 }' | sed s/://g | sed "s/^\(.\{4\}\)/\1\./" )
-            touch -t ${date}${time} "$output"
+            #date=$( ls --full-time "$input" | awk '{ print $6 }' | sed s/-//g )
+            #time=$( ls --full-time "$input" | awk '{ print $7 }' | awk -F. '{ print $1 }' | sed s/://g | sed "s/^\(.\{4\}\)/\1\./" )
+            #touch -t ${date}${time} "$output"
+            touch --reference="$input" "$output"
         fi
         
     # Dateirechte-Log:
