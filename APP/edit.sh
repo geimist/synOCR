@@ -3,7 +3,7 @@
 # OLDIFS=$IFS
 
 # Auswahl der Docker-Images für OCRmyPDF als Array:    
-imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.3" "jbarlow83/ocrmypdf:v9.1.1" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.3" "jbarlow83/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:9.1.1" "ocrmypdf-ownimage" )
+imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.4.0" "jbarlow83/ocrmypdf:v9.5.0" "geimist/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:9.4.0" "geimist/ocrmypdf-polyglot:9.5.0" "ocrmypdf-ownimage" )
 
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
@@ -392,7 +392,13 @@ if [[ "$page" == "edit" ]]; then
         <p>
         <label>zuverwendendes Dockerimage <br>(Way to the polyglot-image: <a href="https://geimist.eu:30443/geimist/synOCR/issues/13" onclick="window.open(this.href); return false;">LINK</a>)</label>
         <select name="dockercontainer">'
-        
+                
+        # füge ggf. in Verwendung befindliches Image der Auswahl hinzu um Kompatibilität zu wahren:
+        if ! $(echo "${imagelist[@]}" | grep -q "$dockercontainer" ) ; then
+            echo "nicht vorhanden - füge hinzu"
+            imagelist=("$dockercontainer" "${imagelist[@]}" )
+        fi
+
         for entry in ${imagelist[@]}; do
             if [[ "$dockercontainer" == "${entry}" ]]; then
                 echo "<option value=${entry} selected>${entry}</option>"
