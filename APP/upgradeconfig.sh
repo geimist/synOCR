@@ -3,6 +3,9 @@
 # prüft die Konfiguration-DB auf neue Variablen und ergänzt ggf. selbige
 # /volume*/@appstore/synOCR/upgradeconfig.sh
 
+log=""
+error=1
+
 # Arbeitsverzeichnis auslesen und hineinwechseln:
 # ---------------------------------------------------------------------
     APPDIR=$(cd $(dirname $0);pwd)
@@ -39,27 +42,48 @@
                                     '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', 
                                     '$MessageTo', '$dsmbeepnotify', '$loglevel' )"
                 mv "./etc/Konfiguration.txt" "./etc/Konfiguration_imported.txt"
+                log="$log Konfiguration wurde nach DB migriert"
             else
                 new_profile "default"
+                log="$log das Default-Profil wurde erstellt"
             fi
         fi
     fi
-    
+
 # DB-Update von v1 auf v2:
-    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system") -eq 1 ] ; then
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system") -eq 9 ] ; then
     	# Parameter hinzufügen:
             # filedate auf OCR
             sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"filedate2ocr\" VARCHAR DEFAULT ('no') "
+            # Prüfen:
+            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q filedate2ocr ) ; then
+                log="$log die DB-Spalte konnte nicht erstellt werden (filedate2ocr)"
+                error=1
+            fi
+        
             # Tagkennzeichner
             sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"tagsymbol\" VARCHAR DEFAULT ('#') "
-        # DB-Version anheben:
-        sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET DB_Version='2', timestamp=(datetime('now','localtime')) WHERE rowid=1"        
+            # Prüfen:
+            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q tagsymbol ) ; then
+                log="$log die DB-Spalte konnte nicht erstellt werden (tagsymbol)"
+                error=1
+            fi
+
+        if [[ "$error" == "0" ]]; then
+            # DB-Version anheben:
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET DB_Version='2', timestamp=(datetime('now','localtime')) WHERE rowid=1"
+            log="$log DB-Upgrade erfolgreich durchgeführt (v1 ➜ v2)"
+        fi
     fi
+
+echo "$log"
 
 exit 0
 
 # bei DB-Upgrade auch …
-# ➜ das initiales DB-Createstatement anpassen (inkl. DB-Version)
-# ➜ Parameter in 'Profil duplizieren' in edit.sh anpassen
-# ➜ Parameter in 'Datensatz in DB schreiben' in edit.sh anpassen
-# ➜ "$page" == "edit" in edit.sh Profil einlesen anpassen
+# ➜ upgradeconfig.sh: das initiales DB-Createstatement anpassen (inkl. DB-Version)
+# ➜ edit.sh: Parameter in 'Profil duplizieren' anpassen
+# ➜ edit.sh: Parameter in 'Datensatz in DB schreiben' anpassen
+# ➜ edit.sh: "$page" == "edit" Profil einlesen anpassen
+# ➜ synOCR.sh: DB-Einlesen anpassen
+# ➜ 
