@@ -21,7 +21,7 @@ error=1
 
 # DB ggf. erstellen:
     if [ $(stat -c %s "./etc/synOCR.sqlite") -eq 0 ] || [ ! -f "./etc/synOCR.sqlite" ]; then
-        sqlinst="CREATE TABLE \"config\" (\"profile_ID\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"profile\" varchar ,\"active\" varchar DEFAULT ('1') ,\"INPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_INPUT') ,\"OUTPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_OUTPUT') ,\"BACKUPDIR\" varchar DEFAULT ('/volume1/<PATH>/_BACKUP') ,\"LOGDIR\" varchar DEFAULT ('/volume1/<PATH>/_LOG') ,\"LOGmax\" varchar DEFAULT ('10') ,\"SearchPraefix\" varchar ,\"delSearchPraefix\" varchar(5) DEFAULT ('yes') ,\"taglist\" varchar ,\"searchAll\" varchar DEFAULT ('no') ,\"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,\"NameSyntax\" varchar DEFAULT ('§y-§m-§d_§tag_§tit') , \"ocropt\" varchar DEFAULT ('-srd -l deu') ,\"dockercontainer\" varchar DEFAULT ('jbarlow83/ocrmypdf') ,\"PBTOKEN\" varchar ,\"dsmtextnotify\" varchar DEFAULT ('on') ,\"MessageTo\" varchar DEFAULT ('admin') ,\"dsmbeepnotify\" varchar DEFAULT ('on') ,\"loglevel\" varchar DEFAULT ('1') ,\"filedate2ocr\" VARCHAR DEFAULT ('no') ,\"tagsymbol\" VARCHAR DEFAULT ('#') );"
+        sqlinst="CREATE TABLE \"config\" (\"profile_ID\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"profile\" varchar ,\"active\" varchar DEFAULT ('1') ,\"INPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_INPUT') ,\"OUTPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_OUTPUT') ,\"BACKUPDIR\" varchar DEFAULT ('/volume1/<PATH>/_BACKUP') ,\"LOGDIR\" varchar DEFAULT ('/volume1/<PATH>/_LOG') ,\"LOGmax\" varchar DEFAULT ('10') ,\"SearchPraefix\" varchar ,\"delSearchPraefix\" varchar(5) DEFAULT ('yes') ,\"taglist\" varchar ,\"searchAll\" varchar DEFAULT ('no') ,\"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,\"NameSyntax\" varchar DEFAULT ('§y-§m-§d_§tag_§tit') , \"ocropt\" varchar DEFAULT ('-srd -l deu') ,\"dockercontainer\" varchar DEFAULT ('jbarlow83/ocrmypdf') ,\"PBTOKEN\" varchar ,\"dsmtextnotify\" varchar DEFAULT ('on') ,\"MessageTo\" varchar DEFAULT ('admin') ,\"dsmbeepnotify\" varchar DEFAULT ('on') ,\"loglevel\" varchar DEFAULT ('1') ,\"filedate\" VARCHAR DEFAULT ('ocr') ,\"tagsymbol\" VARCHAR DEFAULT ('#') );"
         sqlite3 "./etc/synOCR.sqlite" "$sqlinst"
         sleep 1
         sqlinst="CREATE TABLE \"system\" (\"rowid\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"DB_Version\" varchar DEFAULT ('1')  );"
@@ -54,10 +54,10 @@ error=1
     if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system") -eq 1 ] ; then
     	# Parameter hinzufügen:
             # filedate auf OCR
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"filedate2ocr\" VARCHAR DEFAULT ('no') "
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"filedate\" VARCHAR DEFAULT ('ocr') "
             # Prüfen:
-            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q filedate2ocr ) ; then
-                log="$log die DB-Spalte konnte nicht erstellt werden (filedate2ocr)"
+            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q filedate ) ; then
+                log="$log die DB-Spalte konnte nicht erstellt werden (filedate)"
                 error=1
             fi
         
@@ -86,4 +86,3 @@ exit 0
 # ➜ edit.sh: Parameter in 'Datensatz in DB schreiben' anpassen
 # ➜ edit.sh: "$page" == "edit" Profil einlesen anpassen
 # ➜ synOCR.sh: DB-Einlesen anpassen
-# ➜ 
