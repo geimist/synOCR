@@ -58,4 +58,8 @@
 
 exit 0
 
-# bei DB-Upgrade auch das initiales DB-Createstatement anpassen (inkl. DB-Version)!
+# bei DB-Upgrade auch …
+# ➜ das initiales DB-Createstatement anpassen (inkl. DB-Version)
+# ➜ Parameter in 'Profil duplizieren' in edit.sh anpassen
+# ➜ Parameter in 'Datensatz in DB schreiben' in edit.sh anpassen
+# ➜ "$page" == "edit" in edit.sh Profil einlesen anpassen
