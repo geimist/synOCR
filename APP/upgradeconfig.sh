@@ -30,7 +30,7 @@ error=1
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( DB_Version ) VALUES ( '1' )"
         sleep 1
         
-        # Tabellen erstellen
+        # Profil erstellen / migrieren:
         if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT count(*) FROM config") -eq 0 ] ; then
             if [ -f "./etc/Konfiguration.txt" ]; then
                 # Migration von der textbasierten auf die DB-basierte Konfiguration
