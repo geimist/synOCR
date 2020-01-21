@@ -51,7 +51,7 @@ error=1
     fi
 
 # DB-Update von v1 auf v2:
-    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system") -eq 9 ] ; then
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system") -eq 1 ] ; then
     	# Parameter hinzufügen:
             # filedate auf OCR
             sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"filedate2ocr\" VARCHAR DEFAULT ('no') "
