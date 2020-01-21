@@ -3,11 +3,12 @@
 # OLDIFS=$IFS
 
 # Auswahl der Docker-Images für OCRmyPDF als Array:    
-imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.3" "jbarlow83/ocrmypdf:v9.1.1" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.3" "jbarlow83/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:9.1.1" "geimist/ocrmypdf-polyglot:9.2.0" "geimist/ocrmypdf-polyglot:9.3.0" "ocrmypdf-ownimage" )
+imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.0.3" "jbarlow83/ocrmypdf:v9.1.1" "jbarlow83/ocrmypdf-alpine:latest" "jbarlow83/ocrmypdf-alpine:v8.2.3" "jbarlow83/ocrmypdf-alpine:v9.0.3" "jbarlow83/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:9.1.1" "ocrmypdf-ownimage" )
 
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
-    
+
+
 new_profile () 
 {
 # In dieser Funktion wird ein neuer Profildatensatz in die DB geschrieben
@@ -17,33 +18,8 @@ new_profile ()
 }  
 
 
-# DB ggf. erstellen:
-if [ $(stat -c %s "./etc/synOCR.sqlite") -eq 0 ] || [ ! -f "./etc/synOCR.sqlite" ]; then
-    sqlinst="CREATE TABLE \"config\" (\"profile_ID\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"profile\" varchar ,\"active\" varchar DEFAULT ('1') ,\"INPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_INPUT') ,\"OUTPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_OUTPUT') ,\"BACKUPDIR\" varchar DEFAULT ('/volume1/<PATH>/_BACKUP') ,\"LOGDIR\" varchar DEFAULT ('/volume1/<PATH>/_LOG') ,\"LOGmax\" varchar DEFAULT ('10') ,\"SearchPraefix\" varchar ,\"delSearchPraefix\" varchar(5) DEFAULT ('yes') ,\"taglist\" varchar ,\"searchAll\" varchar DEFAULT ('no') ,\"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,\"NameSyntax\" varchar DEFAULT ('§y-§m-§d_§tag_§tit') , \"ocropt\" varchar DEFAULT ('-srd -l deu') ,\"dockercontainer\" varchar DEFAULT ('jbarlow83/ocrmypdf') ,\"PBTOKEN\" varchar ,\"dsmtextnotify\" varchar DEFAULT ('on') ,\"MessageTo\" varchar DEFAULT ('admin') ,\"dsmbeepnotify\" varchar DEFAULT ('on') ,\"loglevel\" varchar DEFAULT ('1') );"
-    sqlite3 "./etc/synOCR.sqlite" "$sqlinst"
-    sleep 1
-    sqlinst="CREATE TABLE \"system\" (\"rowid\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"DB_Version\" varchar DEFAULT ('1')  );"
-    sqlite3 "./etc/synOCR.sqlite" "$sqlinst"
-    sleep 1
-    sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( DB_Version ) VALUES ( '1' )"
-    sleep 1
-    
-    # Tabellen erstellen
-    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT count(*) FROM config") -eq 0 ] ; then
-        if [ -f "./etc/Konfiguration.txt" ]; then
-            source "./etc/Konfiguration.txt"
-            sqlite3 ./etc/synOCR.sqlite "INSERT INTO config ( profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, 
-                                moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel 
-                                ) VALUES ( 
-                                'default', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', 
-                                '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', 
-                                '$MessageTo', '$dsmbeepnotify', '$loglevel' )"
-            mv "./etc/Konfiguration.txt" "./etc/Konfiguration_imported.txt"
-        else
-            new_profile "default"
-        fi
-    fi
-fi
+# Check DB (ggf. erstellen / upgrade):
+    DBupgradelog=$(./upgradeconfig.sh)
 
 
 # aktuelles Profil löschen: 
@@ -94,11 +70,11 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
             sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
             if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
                 sSQL="INSERT INTO config ( profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, 
-                                    moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel 
+                                    moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol 
                                     ) VALUES ( 
                                     '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', 
                                     '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', 
-                                    '$MessageTo', '$dsmbeepnotify', '$loglevel' )" #)
+                                    '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol' )"
                 sqlite3 ./etc/synOCR.sqlite "$sSQL"
 
                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
@@ -164,7 +140,7 @@ if [[ "$page" == "edit-save" ]]; then
     sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR', 
         LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll', 
         moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$ocropt', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN', 
-        dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel' WHERE profile_ID='$profile_ID' "
+        dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol' WHERE profile_ID='$profile_ID' "
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
     
     echo '<div class="Content_1Col_full">'
@@ -179,11 +155,11 @@ if [[ "$page" == "edit" ]]; then
     if [ -z "$getprofile" ] ; then
         sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active FROM config WHERE profile_ID='1' "
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol FROM config WHERE profile_ID='1' "
     else
         sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active FROM config WHERE profile_ID='$getprofile' "
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol FROM config WHERE profile_ID='$getprofile' "
     fi
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -210,6 +186,8 @@ if [[ "$page" == "edit" ]]; then
         dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
         loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
         active=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
+        filedate=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
+        tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
 
     echo '
     <div id="Content_1Col">
@@ -226,6 +204,10 @@ if [[ "$page" == "edit" ]]; then
         Das sicherste ist, wenn du in der Filestation den gewünschten Ordner suchst und du dir über Rechtsklick die Eigenschaften anzeigen lässt. 
         In diesem Dialog kannst du dir den korrekten Pfad kopieren.
         <br><br>'
+        
+        if [ ! -z "$DBupgradelog" ] ; then
+            echo "<p>Ergebnis von DB-Update: $DBupgradelog </p>"
+        fi
 
 # Profilauswahl:
     sSQL="SELECT profile_ID, profile FROM config "
@@ -577,6 +559,49 @@ if [[ "$page" == "edit" ]]; then
             <br>
             <br>
             <br></span></a>
+        </p>'
+
+    # Tagkennzeichnung
+    echo '
+        <p>
+        <label>Tags im Dateinamen kennzeichnen:</label>'
+        if [ -n "$tagsymbol" ]; then
+            echo '<input type="text" name="tagsymbol" value="'$tagsymbol'" />'
+        else
+            echo '<input type="text" name="tagsymbol" value="" />'
+        fi
+    echo '
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>gefundene tags können im Dateinamen gekennzeichnet werden (z.B. mit #)<br></span></a>
+        </p>'
+
+    # Filedate
+    echo '
+        <p>
+        <label>Dateidatum korregieren:</label>
+        <select name="filedate">'
+        if [[ "$filedate" == "now" ]]; then
+            echo '<option value="now" selected>aktuelle Zeit</option>'
+        else
+            echo '<option value="now">aktuelle Zeit</option>'
+        fi
+        if [[ "$filedate" == "ocr" ]]; then
+            echo '<option value="ocr" selected>gefundenes OCR-Datum verwenden</option>'
+        else
+            echo '<option value="ocr">gefundenes OCR-Datum verwenden</option>'
+        fi
+        if [[ "$filedate" == "source" ]]; then
+            echo '<option value="soucre" selected>Datum der Quelldatei verwenden</option>'
+        else
+            echo '<option value="source">Datum der Quelldatei verwenden</option>'
+        fi
+    echo '
+        </select>
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>Wie soll das Datum der Zieldatei angepasst werden?<br>
+            Ist OCR-Datum gewählt, wird aber keins gefunden, so wird das Datum der Quelldatei verwendet.</span></a>
         </p>'
 
     echo '
