@@ -4,7 +4,7 @@
 # /volume*/@appstore/synOCR/upgradeconfig.sh
 
 log=""
-error=1
+error=0
 
 # Arbeitsverzeichnis auslesen und hineinwechseln:
 # ---------------------------------------------------------------------
@@ -51,24 +51,33 @@ error=1
     fi
 
 # DB-Update von v1 auf v2:
-    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system") -eq 1 ] ; then
-    	# Parameter hinzufügen:
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1") -eq 1 ] ; then
+    	# DB-Parameter hinzufügen:
             # filedate auf OCR
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"filedate\" VARCHAR DEFAULT ('ocr') "
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"filedate\" varchar DEFAULT ('ocr') "
             # Prüfen:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q filedate ) ; then
                 log="$log die DB-Spalte konnte nicht erstellt werden (filedate)"
                 error=1
             fi
-        
             # Tagkennzeichner
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"tagsymbol\" VARCHAR DEFAULT ('#') "
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"tagsymbol\" varchar DEFAULT ('#') "
             # Prüfen:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q tagsymbol ) ; then
                 log="$log die DB-Spalte konnte nicht erstellt werden (tagsymbol)"
                 error=1
             fi
-
+            # checkmon
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system ADD COLUMN \"checkmon\" varchar "
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET checkmon='$(get_key_value ./etc/counter checkmon)' WHERE rowid=1"
+            # Prüfen:
+            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q checkmon ) ; then
+                log="$log die DB-Spalte konnte nicht erstellt werden (checkmon)"
+                error=1
+            else
+                sed -i '/checkmon/d' ./etc/counter
+            fi
+            
         if [[ "$error" == "0" ]]; then
             # DB-Version anheben:
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET DB_Version='2', timestamp=(datetime('now','localtime')) WHERE rowid=1"
