@@ -14,7 +14,7 @@
     cd ${APPDIR}
     
 # läuft bereits eine Instanz von synOCR?
-    synOCR_pid=$( /bin/pidof synOCR.sh )
+    synOCR_pid=$( pidof synOCR.sh )
     if [ ! -z "$synOCR_pid" ] ; then
         if [ $callFrom = GUI ] ; then
             echo '<p class="center"><span style="color: #BD0010;"><b>synOCR läuft bereits!</b><br>(Prozess-ID: '$synOCR_pid')</span></p>'
@@ -93,23 +93,19 @@
             echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
             echo "ocrcount=\"0\"" >> ./etc/counter
             echo "pagecount=\"0\"" >> ./etc/counter
-            echo "checkmon=\"\"" >> ./etc/counter
             echo "                      --> counter-File wurde erstellt"
         else
             if ! cat ./etc/counter | grep -q "pagecount" ; then
                 echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
             fi
-            if ! cat ./etc/counter | grep -q "checkmon" ; then
-                echo "checkmon=\"\"" >> ./etc/counter
+        fi
+        if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT checkmon FROM system WHERE rowid=1") != $(date +%m) ]]; then
+            if [[ $(wget --no-check-certificate --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION2" | head -n1) = "ok" ]]; then
+                wget --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION2"
+                sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET checkmon='$(date +%m)' WHERE rowid=1"
             fi
         fi
-        if [[ $(get_key_value ./etc/counter checkmon) != $(date +%m) ]]; then
-            #if [[ $(wget --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION" | head -n1) = "ok" ]]; then
-                wget --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION"
-                synosetkeyvalue ./etc/counter checkmon $(date +%m)
-            #fi
-        fi
-    
+
     # nur starten (LOG erstellen), sofern es etwas zu tun gibt:
         if [ $( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) = 0 ] ;then
             #if [ $callFrom = GUI ] ; then
@@ -123,7 +119,7 @@
     
     # synOCR starten und ggf. Logverzeichnis prüfen und erstellen
         LOGDIR="${LOGDIR%/}/"
-        LOGFILE="${LOGDIR}synOCR_$(date +%Y-%m-%d_%H-%M).log"
+        LOGFILE="${LOGDIR}synOCR_`date +%Y`-`date +%m`-`date +%d`_`date +%H`-`date +%M`.log"
         # touch "$LOGFILE"
         
         umask 000   # damit Files auch von anderen Usern bearbeitet werden können / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
