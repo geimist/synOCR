@@ -8,7 +8,8 @@
     echo "    -----------------------------------"
     echo -e
     
-    DevChannel="Release"    # BETA
+    CLIENTVERSION=$(get_key_value /var/packages/synOCR/INFO version)
+    DevChannel="BETA"    # Release
     
 # ---------------------------------------------------------------------------------
 #           GRUNDKONFIGRUATIONEN / INDIVIDUELLE ANPASSUNGEN / Standardwerte       |
@@ -22,12 +23,12 @@
 
 # an welchen User/Gruppe soll die DSM-Benachrichtigung gesendet werden :
 # ---------------------------------------------------------------------
-#    synOCR_user=$(whoami); echo "synOCR-User:              $synOCR_user"
-#    if cat /etc/group | grep administrators | grep -q "$synOCR_user"; then
-#        isAdmin=yes
-#    else
-#        isAdmin=no
-#    fi
+    synOCR_user=$(whoami); echo "synOCR-User:              $synOCR_user"
+    if cat /etc/group | grep administrators | grep -q "$synOCR_user"; then
+        isAdmin=yes
+    else
+        isAdmin=no
+    fi
     MessageTo="@administrators"	# Administratoren (Standardeinstellung)
     #MessageTo="$synOTR_user"	# User, welche synOTR aufgerufen hat (funktioniert natürlich nicht bei root, da root kein DSM-GUI-LogIn hat und die Message ins leere läuft)
 
@@ -44,7 +45,7 @@
 
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
-        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel FROM config WHERE profile_ID='$workprofile' "
+        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol FROM config WHERE profile_ID='$workprofile' "
 
     sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
 
@@ -68,21 +69,25 @@
     MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
     dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
+    filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
+    tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
     
-# Systeminformation:
+# Systeminformation / LIBRARY_PATH anpassen / PATH anpassen:
 # --------------------------------------------------------------------- 
-    echo "synOCR-Version:           $(get_key_value /var/packages/synOCR/INFO version)"
-    echo "Architektur:              $(uname --machine)"
-    echo "DSM-Build:                $(uname -v | awk '{print $1}' | sed "s/#//g")"
+    echo "synOCR-Version:           $CLIENTVERSION"
+    machinetyp=`uname --machine`; echo "Architektur:              $machinetyp"
+    dsmbuild=`uname -v | awk '{print $1}' | sed "s/#//g"`; echo "DSM-Build:                $dsmbuild"
     read MAC </sys/class/net/eth0/address
-    sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)"
-    device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `
-    echo "Gerät:                    $device ($sysID)"
+    sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
+    device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
     echo "aktuelles Profil:         $profile"
+    echo "DB-Version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system")"
     echo "verwendetes Image:        $dockercontainer"
     echo "verwendete Parameter:     $ocropt"
     echo "ersetze Suchpräfix:       $delSearchPraefix"
     echo "Umbenennungssyntax:       $NameSyntax"
+    echo "Symbol Tagkennzeichnung:  ${tagsymbol}"
+    echo "Quelle für Dateidatum:    ${filedate}"
     
 # Konfiguration für LogLevel:
 # ---------------------------------------------------------------------
@@ -96,6 +101,7 @@
         cURLloglevel="-v"
         wgetloglevel="-v"
     fi
+
 
 # Verzeichnisse prüfen bzw. anlegen und anpassen:
 # ---------------------------------------------------------------------
@@ -125,13 +131,7 @@
         echo "Dateien werden sofort gelöscht! / Kein gültiges Verzeichnis [$BACKUPDIR]"
         backup=false
     fi
-    echo -n "Docker Test:              "
-    if /usr/local/bin/docker --version | grep -q "version"  ; then
-        echo "OK"
-    else
-        echo "WARNUNG: Docker konnte nicht gefunden werden. Bitte prüfe, ob das Paket Docker installiert wurde!"
-    fi
-
+    
     LOGDIR="${LOGDIR%/}/"
 
 #################################################################################################
@@ -157,26 +157,7 @@ echo "$1" | awk '{
             }
         }
     }'
-} 
-
-
-sec_to_time() 
-{
-# diese Funktion wandelt einen Sekundenwert nach hh:mm:ss
-# Aufruf: sec_to_time "string"
-# https://blog.jkip.de/in-bash-sekunden-umrechnen-in-stunden-minuten-und-sekunden/
-# --------------------------------------------------------------
-    local seconds=$1
-    local sign=""
-    if [[ ${seconds:0:1} == "-" ]]; then
-        seconds=${seconds:1}
-        sign="-"
-    fi
-    local hours=$(( seconds / 3600 ))
-    local minutes=$(( (seconds % 3600) / 60 ))
-    seconds=$(( seconds % 60 ))
-    printf "%s%02d:%02d:%02d" "$sign" $hours $minutes $seconds
-}
+}  
 
 
 purge_LOG() 
@@ -236,7 +217,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         echo -e
         filename=$(basename "$input")
         title=${filename%.*}
-        echo -n "    VERARBEITE:       --> $filename"
+        echo -n "    VERARBEITE:       ➜ $filename"
         echo " ($(date))"
         date_start=$(date +%s)
 
@@ -281,14 +262,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         #   WARNING -    2: [tesseract] lots of diacritics - possibly poor OCR
 
         echo -e
-        echo "                      --> OCRmyPDF-LOG:"
+        echo "                      ➜ OCRmyPDF-LOG:"
         echo "$dockerlog" | sed -e "s/^/                       /g"
-        echo "                      <-- OCRmyPDF-LOG-END"
+        echo "                      ← OCRmyPDF-LOG-END"
         echo -e
 
     # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERROR verschoben:
         if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
-            echo "                          L=> fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
+            echo "                          ┖➜ fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
             rm "${outputtmp}"
             if echo "$dockerlog" | grep -q ERROR ;then
                 if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
@@ -312,7 +293,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 if [ "$loglevel" != 0 ] ;then
                     cp "$LOGFILE" "${output}.log"
                 fi
-                echo "                                              L=> verschiebe nach ERRORFILES"
+                echo "                                              ┖➜ verschiebe nach ERRORFILES"
             fi
             rm -rf "$work_tmp"
             continue
@@ -325,33 +306,30 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         
     # Dateirechte-Log:
         if [ $loglevel = "2" ] ; then
-            echo "                      --> Dateirechte Quelldatei:"
+            echo "                      ➜ Dateirechte Quelldatei:"
             echo -n "                          "
             ls -l "$input"
-            echo "                      --> Dateirechte Zieldatei:"
+            echo "                      ➜ Dateirechte Zieldatei:"
             echo -n "                          "
             ls -l "$output"
         fi
 
     # Datei-Attripute übertragen:
-        echo -n "                      --> übertrage die Dateirechte und -besitzer "
+        # Datumsanpassung in die Datumsfunktion verlegt.
+        echo -n "                      ➜ übertrage die Dateirechte und -besitzer "
         if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
-            # Datum wird bei ACL Übertragung noch nicht angepasst
             echo "(verwende ACL)"
             synoacltool -copy "$input" "$output"
-            touch --reference="$input" "$output"
-        #elif echo $( synoacltool -get "$input" ) | grep -q "Linux mode" ; then
+            #touch --reference="$input" "$output"
         else
             echo "(verwende Standardlinuxrechte)"
-            #chmod --reference "$input" "$output"
-            #chown --reference "$input" "$output"
             cp --attributes-only -p "$input" "$output"
-            touch --reference="$input" "$output"
+            #touch --reference="$input" "$output"
         fi
         
     # Dateirechte-Log:
         if [ $loglevel = "2" ] ; then
-            echo "                      --> Dateirechte Zieldatei:"
+            echo "                      ➜ Dateirechte Zieldatei:"
             echo -n "                          "
             ls -l "$output"
         fi
@@ -384,7 +362,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             tagarray=( $taglist2 )   # Tags als Array definieren
             i=0
             maxID=${#tagarray[*]}
-            echo "                      --> suche Tags und Datum:"
+            echo "                      ➜ suche Tags und Datum:"
             echo "                          Tag-Anzahl:       $maxID"
 
         #    for a in ${tagarray[@]}; do
@@ -400,10 +378,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
                     searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
                     categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
-                    echo -n "                          Suche nach Tag:   \"${searchtag}\" => "
+                    echo -n "                          Suche nach Tag:   \"${searchtag}\" ➜  "
                     if grep $grep_opt "${searchtag}" "$searchfile" ;then
                         echo "OK (Cat: \"${categorietag}\")"
-                        renameTag="#$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}"
+                        renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g")${renameTag}"
                         renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
                     else
                         echo "-"
@@ -415,10 +393,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         grep_opt="-qi"
                     fi
                     tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
-                    echo -n "                          Suche nach Tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" => "
+                    echo -n "                          Suche nach Tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
                     if grep $grep_opt "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g" | sed -e "s/^§//g")" "$searchfile" ;then
                         echo "OK"
-                        renameTag="#${tagarray[$i]} ${renameTag}"
+                        renameTag="${tagsymbol}${tagarray[$i]}${renameTag}"
                     else
                         echo "-"
                     fi
@@ -434,8 +412,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         # suche nach Datum:
             dateIsFound=no
             # suche Format: dd[./-]mm[./-]yy(yy)
-            founddate=$( parseRegex "$content" "([^1-9][1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
-            
+            founddate=$( parseRegex "$content" "([1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
             if [ ! -z $founddate ]; then
                 echo -n "                          prüfe Datum: $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
@@ -446,13 +423,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 fi
                 date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                 if [ $? -eq 0 ]; then
-                    echo " --> gültig"
+                    echo " ➜ gültig"
                     echo "                          Tag:  ${date_dd}"
                     echo "                          Monat:${date_mm}"
                     echo "                          Jahr: ${date_yy}"
                     dateIsFound=yes
                 else
-                    echo " --> ungültiges Format"
+                    echo " ➜ ungültiges Format"
                 fi
                 founddate=""
             fi
@@ -470,13 +447,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     fi
                     date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                     if [ $? -eq 0 ]; then
-                        echo " --> gültig"
+                        echo " ➜ gültig"
                         echo "                          Tag:  ${date_dd}"
                         echo "                          Monat:${date_mm}"
                         echo "                          Jahr: ${date_yy}"
                         dateIsFound=yes
                     else
-                        echo " --> ungültiges Format"
+                        echo " ➜ ungültiges Format"
                     fi
                     founddate=""
                 fi
@@ -491,8 +468,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
 
 # hier stimmt etwas noch nicht mit der RegEx fürs Datum:
-#      prüfe Datum: [72.07.41 --> ungültiges Format
-#      prüfe Datum: [72.07.41./synOCR.sh: line 386: 10#[72 : syntax error: invalid arithmetic operator (error token is "[72 ") --> ungültiges Format
+#      prüfe Datum: [72.07.41 ➜ ungültiges Format
+#      prüfe Datum: [72.07.41./synOCR.sh: line 386: 10#[72 : syntax error: invalid arithmetic operator (error token is "[72 ") ➜ ungültiges Format
 
                     date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
                     if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
@@ -500,26 +477,46 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     fi
                     date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                     if [ $? -eq 0 ]; then
-                        echo " --> gültig"
+                        echo " ➜ gültig"
                         echo "                          Tag:  ${date_dd}"
                         echo "                          Monat:${date_mm}"
                         echo "                          Jahr: ${date_yy}"
                         dateIsFound=yes
                     else
-                        echo " --> ungültiges Format"
+                        echo " ➜ ungültiges Format"
                     fi
                     founddate=""
                 fi
             fi
             
             if [ $dateIsFound = no ]; then
-                echo "                          Datum nicht gefunden - verwende Dateidatum:"
+                echo "                          Datum in OCR-Text nicht gefunden - verwende Dateidatum:"
                 date_dd=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $3}')
                 date_mm=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $2}')
                 date_yy=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $1}') 
                 echo "                          Tag:  ${date_dd}"
                 echo "                          Monat:${date_mm}"
                 echo "                          Jahr: ${date_yy}"
+            fi
+                
+            # Dateidatum anpassen:
+            echo -n "                      ➜ Dateidatum anpassen (Quelle: "
+            if [[ "$filedate" == "ocr" ]]; then
+                if [ $dateIsFound = no ]; then
+                    echo "Quelldatei [OCR ausgewählt, aber nicht gefunden])"
+                    touch --reference="$input" "$output"
+                else
+                    echo "OCR)"
+                    TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
+#    TZ=UTC touch -t 201112110000 /volume3/SSD/SCANNER/SCAN__Vertrag1.txt
+                fi
+            elif [[ "$filedate" == "now" ]]; then
+                echo "NOW)"
+                TZ=$(date +%Z) touch -m "$output"
+            else
+            #elif [[ "$filedate" == "source" ]]; then
+                echo "Quelldatei)"
+                touch --reference="$input" "$output"
             fi
         }
         findDate
@@ -530,7 +527,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         # Zieldatei umbenennen:
         outputtmp=${output}
         if [ ! -z "$NameSyntax" ]; then
-            echo -n "                          wende Umbenennungssyntax an --> "
+            echo -n "                          wende Umbenennungssyntax an ➜ "
             title=$( echo "${title}" | sed "s/\&/%26/g" )    # "&" im Titel würde sonst durch "§tit" ersetzt
             NewName="$NameSyntax"
             NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
@@ -542,7 +539,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo "$NewName"
 
             if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
-                echo "                      --> verschiebe in Kategorieverzeichnisse"
+                echo "                      ➜ verschiebe in Kategorieverzeichnisse"
                 renameCat=$( echo $renameCat | sed -e "s/#//g" )
                 tagarray=( $renameCat )   # Tags als Array definieren
                 i=0
@@ -553,7 +550,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             #    done
                 while (( i < maxID )); do
                     tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-                    echo -n "                          Tag-Ordner \"${tagdir}\" vorhanden? => "
+                    echo -n "                          Tag-Ordner \"${tagdir}\" vorhanden? ➜  "
                     if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
                         echo "OK"
                     else
@@ -586,7 +583,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 done
                 rm "${outputtmp}"
             elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
-                echo "                      --> verschiebe in Tagverzeichnisse"
+                echo "                      ➜ verschiebe in Tagverzeichnisse"
                 renameTag=$( echo $renameTag | sed -e "s/#//g" )
                 tagarray=( $renameTag )   # Tags als Array definieren
                 i=0
@@ -596,7 +593,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             #    done
                 while (( i < maxID )); do
                     tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-                    echo -n "                          Tag-Ordner \"${tagdir}\" vorhanden? => "
+                    echo -n "                          Tag-Ordner \"${tagdir}\" vorhanden? ➜  "
                     if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
                         echo "OK"
                     else
@@ -621,7 +618,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
                 done
-                echo "                      --> lösche temp. Zieldatei"
+                echo "                      ➜ lösche temp. Zieldatei"
                 rm "${outputtmp}"
             else
                 destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
@@ -651,7 +648,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
             if [ $sourcefilecount -eq 0 ]; then
                 mv "$input" "${BACKUPDIR}${filename}"
-                echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename}"
+                echo "                      ➜ verschiebe Quelldatei nach: ${BACKUPDIR}${filename}"
             else
                 while [ -f "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf" ]
                     do
@@ -659,11 +656,11 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         echo "                          zähle weiter … ($sourcefilecount)"
                     done
                 mv "$input" "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
-                echo "                      --> verschiebe Quelldatei nach: ${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
+                echo "                      ➜ verschiebe Quelldatei nach: ${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
             fi
         else
             rm "$input"
-            echo "                      --> lösche Quelldatei"
+            echo "                      ➜ lösche Quelldatei"
         fi
 
     # Benachrichtigung:
@@ -693,7 +690,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # Dateizähler:
         synosetkeyvalue ./etc/counter pagecount $(expr $(get_key_value ./etc/counter pagecount) + $pagecount_latest)
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-        echo "                          INFO: (Laufzeit letzte Datei: $(sec_to_time $(expr $(date +%s)-${date_start}) ) (Seitenanzahl: $pagecount_latest) | gesamt: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Seiten bisher verarbeitet)"
+        echo "                          INFO: (Laufzeit letzte Datei: $(( $(date +%s) - $date_start )) Sekunden (Seitenanzahl: $pagecount_latest) | gesamt: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Seiten bisher verarbeitet)"
 
     # temporäres Arbeitsverzeichnis löschen:
         rm -rf "$work_tmp"
