@@ -4,6 +4,7 @@
 
 # Dateizähler:
 # ---------------------------------------------------------------------
+    count_inputpdf=0
     if [ ! -f ./etc/counter ] ; then
         touch ./etc/counter
         echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
@@ -19,7 +20,6 @@
 # ---------------------------------------------------------------------
     # Anzahl unfertiger PDF-Files:    
     
-    count_inputpdf=0
     
     sSQL="SELECT INPUTDIR, SearchPraefix FROM config WHERE active='1' "
     sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
@@ -61,22 +61,31 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
 		<div class="Content_1Col_full"> 
             <br><br><p style="text-align:center"> <span style="color:#BD0010;font-weight:bold;font-size:1.1em; ">OCR auf Synology DiskStation</span> </p>'
 
+# check Docker:
+    if ! $(/usr/local/bin/docker --version | grep -q "version") ; then
+        echo '<p class="center" style="'$synotrred';">W A R N I N G:<br>Docker could not be found.<br>Please check if the Docker package has been installed!<br /><br /></p>'
+        echo '<div class="image-right"> </div>
+            <img class="imageStyle"
+            src="images/status_error@geimist.svg"
+            height="120"
+            width="120"
+            style="float:right;padding: 10px">'  
+    elif [[ "$count_inputpdf" == 0 ]]; then
+        echo '<div class="image-right"> </div>
+            <img class="imageStyle"
+            src="images/status_green@geimist.svg"
+            height="120"
+            width="120"
+            style="float:right;padding: 10px">'   	    
+    else	    
+        echo '<div class="image-right"> </div>
+            <img class="imageStyle"
+            src="images/sanduhr_blue@geimist.svg"
+            height="120"
+            width="120"
+            style="float:right;padding: 10px">'    	    
+    fi
 
-if [[ "$count_inputpdf" == 0 ]]; then
-    echo '<div class="image-right"> </div>
-        <img class="imageStyle"
-        src="images/status_green@geimist.svg"
-        height="120"
-        width="120"
-        style="float:right;padding: 10px">'   	    
-else	    
-    echo '<div class="image-right"> </div>
-        <img class="imageStyle"
-        src="images/sanduhr_blue@geimist.svg"
-        height="120"
-        width="120"
-        style="float:right;padding: 10px">'    	    
-fi  	    
     echo '<span class="title">Beschreibung:</span>
         <p style="text-align:left;"> <br>
           SynOCR liefert eine einfache GUI für den Dockercontainer OCRmyPDF.</p>
