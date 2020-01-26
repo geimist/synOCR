@@ -9,39 +9,35 @@
     echo -e
     
     CLIENTVERSION=$(get_key_value /var/packages/synOCR/INFO version)
-    DevChannel="BETA"    # Release
+    DevChannel="Release"    # BETA
     
 # ---------------------------------------------------------------------------------
-#           GRUNDKONFIGRUATIONEN / INDIVIDUELLE ANPASSUNGEN / Standardwerte       |
-#           (alle Werte können durch setzen in der Konfiguration.txt              |
-#           überschrieben werden)                                                 |
+#           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
 # ---------------------------------------------------------------------------------
-    synocrdomain="geimist.eu"   # notwendig für Update, Konsitenzprüfung, DEV-Report und evtl. in Zukunft zum abfragen der API-Keys
-    niceness=15                 # Die Priorität liegt im Bereich von -20 bis +19 (in ganzzahligen Schritten), wobei -20 die höchste Priorität (=meiste Rechenleistung) und 19 die niedrigste Priorität (=geringste Rechenleistung) ist. Die Standardpriorität ist 0. AUF NEGATIVE WERTE SOLLTE UNBEDINGT VERZICHTET WERDEN!
-    workprofile="$1"            # das vom Startskript übergebene Profil
-    LOGFILE="$2"                # aktuelles Logfile / wird von Startskript übergeben
+    synocrdomain="geimist.eu"   # 
+    niceness=15                 # The priority is in the range from -20 to +19 (in integer steps), where -20 is the highest priority (=most computing power) and 19 is the lowest priority (=lowest computing power). The default priority is 0. NEGATIVE VALUES SHOULD NEVER BE DEFAULTED!
+    workprofile="$1"            # the profile submitted by the start script
+    LOGFILE="$2"                # current logfile / is submitted by start script
 
 # an welchen User/Gruppe soll die DSM-Benachrichtigung gesendet werden :
 # ---------------------------------------------------------------------
-    synOCR_user=$(whoami); echo "synOCR-User:              $synOCR_user"
+    synOCR_user=$(whoami); echo "synOCR-user:              $synOCR_user"
     if cat /etc/group | grep administrators | grep -q "$synOCR_user"; then
         isAdmin=yes
     else
         isAdmin=no
     fi
-    MessageTo="@administrators"	# Administratoren (Standardeinstellung)
+    MessageTo="@administrators"	# Administrators (standard)
     #MessageTo="$synOTR_user"	# User, welche synOTR aufgerufen hat (funktioniert natürlich nicht bei root, da root kein DSM-GUI-LogIn hat und die Message ins leere läuft)
 
-# Arbeitsverzeichnis auslesen und hineinwechseln:
+# Read out and change into the working directory:
 # ---------------------------------------------------------------------
-    OLDIFS=$IFS	                # ursprünglichen Fieldseparator sichern
+    OLDIFS=$IFS	                # Save original field separator
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
 
-# Konfigurationsdatei einbinden:
+# Load configuration:
 # ---------------------------------------------------------------------
-    # CONFIG=etc/Konfiguration.txt
-    # . ./$CONFIG
 
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
@@ -72,63 +68,69 @@
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
     
-# Systeminformation / LIBRARY_PATH anpassen / PATH anpassen:
+# System Information / Adjust LIBRARY_PATH / Adjust PATH:
 # --------------------------------------------------------------------- 
-    echo "synOCR-Version:           $CLIENTVERSION"
-    machinetyp=`uname --machine`; echo "Architektur:              $machinetyp"
-    dsmbuild=`uname -v | awk '{print $1}' | sed "s/#//g"`; echo "DSM-Build:                $dsmbuild"
+    echo "synOCR-version:           $CLIENTVERSION"
+    machinetyp=`uname --machine`; echo "Architecture:             $machinetyp"
+    dsmbuild=`uname -v | awk '{print $1}' | sed "s/#//g"`; echo "DSM-build:                $dsmbuild"
     read MAC </sys/class/net/eth0/address
     sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
-    device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Gerät:                    $device ($sysID)"	    #  | sed "s/ds//g"
-    echo "aktuelles Profil:         $profile"
-    echo "DB-Version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system")"
-    echo "verwendetes Image:        $dockercontainer"
-    echo "verwendete Parameter:     $ocropt"
-    echo "ersetze Suchpräfix:       $delSearchPraefix"
-    echo "Umbenennungssyntax:       $NameSyntax"
-    echo "Symbol Tagkennzeichnung:  ${tagsymbol}"
-    echo "Quelle für Dateidatum:    ${filedate}"
-    
-# Konfiguration für LogLevel:
+    device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Device:                   $device ($sysID)"	    #  | sed "s/ds//g"
+    echo "current Profil:           $profile"
+    echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system")"
+    echo "used image:               $dockercontainer"
+    echo "used ocr-parameter:       $ocropt"
+    echo "replace search prefix:    $delSearchPraefix"
+    echo "renaming syntax:          $NameSyntax"
+    echo "Symbol for tag marking:   ${tagsymbol}"
+    echo "source for filedate:      ${filedate}"
+    echo -n "Docker Test:              "
+    if /usr/local/bin/docker --version | grep -q "version"  ; then
+        echo "OK"
+    else
+        echo "WARNING: Docker could not be found. Please check if the Docker package has been installed!"
+    fi
+
+# Configuration for LogLevel:
 # ---------------------------------------------------------------------
-    # LOGlevel:     0 => Logging inaktiv / 1 => normal / 2 => erweitert
+    # LOGlevel:     0 => Logging inaktiv / 1 => normal / 2 => extended
     if [ $loglevel = "1" ] ; then
         echo "Loglevel:                 normal"
         cURLloglevel="-s"
         wgetloglevel="-q"
     elif [ $loglevel = "2" ] ; then
-        echo "Loglevel:                 erweitert"
+        echo "Loglevel:                 extended"
         cURLloglevel="-v"
         wgetloglevel="-v"
     fi
 
 
-# Verzeichnisse prüfen bzw. anlegen und anpassen:
+# Check or create and adjust directories:
 # ---------------------------------------------------------------------
-    echo "Anwendungsverzeichnis:    ${APPDIR}"
+    echo "Application Directory:    ${APPDIR}"
     
-    # Variablenkorrektur für ältere Konfiguration.txt und Slash anpassen:
+    # Adjust variable correction for older Konfiguration.txt and slash:
     INPUTDIR="${INPUTDIR%/}/"
     if [ -d "$INPUTDIR" ] ; then
-        echo "Quellverzeichnis:         $INPUTDIR"
+        echo "Source directory:         $INPUTDIR"
     else
-        echo "Quellverzeichnis ungültig oder nicht gesetzt!"
+        echo "Source directory invalid or not set!"
         exit 1
     fi
     
     OUTPUTDIR="${OUTPUTDIR%/}/"
-    echo "Zielverzeichnis:          ${OUTPUTDIR}"
+    echo "Target directory:         ${OUTPUTDIR}"
     
     BACKUPDIR="${BACKUPDIR%/}/"
     if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
-        echo "BackUp-Verzeichnis:       $BACKUPDIR"
+        echo "BackUp directory:         $BACKUPDIR"
         backup=true
     elif echo "$BACKUPDIR" | grep -q "/volume" ; then
         mkdir -p "$BACKUPDIR"
-        echo "BackUp-Verzeichnis wurde erstellt [$BACKUPDIR]"
+        echo "BackUp directory was created [$BACKUPDIR]"
         backup=true
     else
-        echo "Dateien werden sofort gelöscht! / Kein gültiges Verzeichnis [$BACKUPDIR]"
+        echo "Files are deleted immediately! / No valid directory [$BACKUPDIR]"
         backup=false
     fi
     
@@ -137,7 +139,7 @@
 #################################################################################################
 #        _______________________________________________________________________________        #
 #       |                                                                               |       #
-#       |                           BEGINN DER FUNKTIONEN                               |       #
+#       |                       BEGINNING OF THE FUNCTIONS                              |       #
 #       |_______________________________________________________________________________|       #
 #                                                                                               #
 #################################################################################################
@@ -145,8 +147,8 @@
 
 parseRegex () 
 {
-# In dieser Funktion wird der mit einem regulären Ausdruck beschriebene Teilstring zurückgegeben
-# Aufruf: parseRegex "string" "regex"
+# This function returns the substring described by a regular expression
+# Call: parseRegex "string" "regex"
 # https://stackoverflow.com/questions/5536018/how-to-print-matched-regex-pattern-using-awk
 # --------------------------------------------------------------
 echo "$1" | awk '{
@@ -163,17 +165,17 @@ echo "$1" | awk '{
 purge_LOG() 
 {
 #########################################################################################
-# Diese Funktion bereinigt ältere Logfiles                                               #
+# This function cleans up older log files                                               #
 #########################################################################################
 
 if [ -z $LOGmax ]; then
-    echo "purge_LOG deaktiviert"
+    echo "purge_LOG deactivated"
     return
 fi
 
-# leere Logs löschen:
+# Delete empty logs:
 # (sollte durch Abfrage in Startskript nicht mehr benötigt werden)
-for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # Auflistung aller LOG-Dateien
+for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # Listing of all LOG files
     do
         # if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
         if [ $( cat "${LOGDIR}$i" | sed -n "/Funktionsaufrufe/,/synOCR ENDE/p" | wc -c ) -eq 160 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
@@ -185,16 +187,12 @@ for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # A
         fi
     done
 
-# überzählige logs löschen:
+# delete surplus logs:
 count2del=$( expr $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax )
 if [ ${count2del} -ge 0 ]; then
     for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} `
         do
-        #    if [ $endgueltigloeschen = "on" ] ; then
-                rm "${LOGDIR}$i"
-        #    else
-        #        mv "${LOGDIR}$i" "$OTRkeydeldir"
-        #    fi
+            rm "${LOGDIR}$i"
         done
 fi
 }
@@ -203,21 +201,21 @@ fi
 mainrun() 
 {
 #########################################################################################
-# Diese Funktion übergibt die Dateien an docker                                         #
+# This function passes the files to docker                                         #
 #########################################################################################
     
-IFS=$'\012'	 # entspricht einem $'\n' Newline
+IFS=$'\012'	 # corresponds to a $'\n' newline
 for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -type f) #  -mmin +"$timediff" -o -name "${SearchPraefix}*.PDF" 
     do
         IFS=$OLDIFS
-    # temporäres Arbeitsverzeichnis erstellen
+    # create temporary working directory
         work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
         trap 'rm -rf "$work_tmp"; exit' EXIT
         
         echo -e
         filename=$(basename "$input")
         title=${filename%.*}
-        echo -n "    VERARBEITE:       ➜ $filename"
+        echo -n "    PROCESSING:       ➜ $filename"
         echo " ($(date))"
         date_start=$(date +%s)
 
@@ -225,7 +223,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             title=$( echo "${title}" | sed s/${SearchPraefix}//I )
         fi
     
-    # Zieldateiname erstellen (berücksichtigt gleichnamige vorhandene Dateien):
+    # Create destination filename (considers existing files with the same name):
         destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${title}.*" | wc -l)
         if [ $destfilecount -eq 0 ]; then
             output="${OUTPUTDIR}${title}.pdf"
@@ -233,14 +231,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             while [ -f "${OUTPUTDIR}${title} ($destfilecount).pdf" ]
                 do
                     destfilecount=$( expr $destfilecount + 1 )
-                    echo "                          zähle weiter … ($destfilecount)"
+                    echo "                          continue counting … ($destfilecount)"
                 done
             output="${OUTPUTDIR}${title} ($destfilecount).pdf"
-            echo "                          Dateiname ist bereits vorhanden! Ergänze Zähler ($destfilecount)"
+            echo "                          File name already exists! Add counter ($destfilecount)"
         fi
         
         outputtmp="${work_tmp}/${title}.pdf"
-        echo "                          temp. Zieldatei: ${outputtmp}"
+        echo "                          temp. target file: ${outputtmp}"
 
     # OCRmyPDF:
         OCRmyPDF()
@@ -267,13 +265,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         echo "                      ← OCRmyPDF-LOG-END"
         echo -e
 
-    # prüfen, ob Zieldatei gültig (nicht leer) ist, sonst weiter / defekte Quelldateien werden inkl. LOG nach ERROR verschoben:
+    # check if target file is valid (not empty), otherwise continue / defective source files are moved to ERROR including LOG:
         if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
-            echo "                          ┖➜ fehlgeschlagen! (Zieldatei ist leer oder nicht vorhanden)"
+            echo "                          ┖➜ failed! (target file is empty or not available)"
             rm "${outputtmp}"
             if echo "$dockerlog" | grep -q ERROR ;then
                 if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
-                    echo "                                                  ERROR-Verzeichnis [${INPUTDIR}ERRORFILES] wird erstellt!"
+                    echo "                                                  ERROR-Directory [${INPUTDIR}ERRORFILES] will be created!"
                     mkdir "${INPUTDIR}ERRORFILES"
                 fi
 
@@ -284,52 +282,52 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     while [ -f "${INPUTDIR}ERRORFILES/${filename%.*} ($destfilecount).pdf" ]
                         do
                             destfilecount=$( expr $destfilecount + 1 )
-                            echo "                                                  zähle weiter … ($destfilecount)"
+                            echo "                                                  continue counting … ($destfilecount)"
                         done
                     output="${INPUTDIR}ERRORFILES/${filename%.*} ($destfilecount).pdf"
-                    echo "                                                  Dateiname bereits vorhanden! Ergänze Zähler ($destfilecount)"
+                    echo "                                                  File name already exists! Add counter ($destfilecount)"
                 fi
                 mv "$input" "$output"
                 if [ "$loglevel" != 0 ] ;then
                     cp "$LOGFILE" "${output}.log"
                 fi
-                echo "                                              ┖➜ verschiebe nach ERRORFILES"
+                echo "                                              ┖➜ move to ERRORFILES"
             fi
             rm -rf "$work_tmp"
             continue
         else
-            echo "                          Zieldatei (OK): ${output}"
+            echo "                          target file (OK): ${output}"
         fi
         
-    # verschiebe temporäre Datei in Zielordner:
+    # move temporary file to destination folder:
         mv "${outputtmp}" "${output}"
         
-    # Dateirechte-Log:
+    # File permissions-Log:
         if [ $loglevel = "2" ] ; then
-            echo "                      ➜ Dateirechte Quelldatei:"
+            echo "                      ➜ File permissions source file:"
             echo -n "                          "
             ls -l "$input"
-            echo "                      ➜ Dateirechte Zieldatei:"
+            echo "                      ➜ File permissions target file:"
             echo -n "                          "
             ls -l "$output"
         fi
 
-    # Datei-Attripute übertragen:
-        # Datumsanpassung in die Datumsfunktion verlegt.
-        echo -n "                      ➜ übertrage die Dateirechte und -besitzer "
+    # Transmitting file attributes:
+        # ( ➜ Date adjustment moved to the date function)
+        echo -n "                      ➜ transfer the file permissions and owners "
         if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
-            echo "(verwende ACL)"
+            echo "(use ACL)"
             synoacltool -copy "$input" "$output"
             #touch --reference="$input" "$output"
         else
-            echo "(verwende Standardlinuxrechte)"
+            echo "(use standard linux permissions)"
             cp --attributes-only -p "$input" "$output"
             #touch --reference="$input" "$output"
         fi
         
-    # Dateirechte-Log:
+    # File permissions-Log:
         if [ $loglevel = "2" ] ; then
-            echo "                      ➜ Dateirechte Zieldatei:"
+            echo "                      ➜ File permissions target file:"
             echo -n "                          "
             ls -l "$output"
         fi
@@ -378,7 +376,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
                     searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
                     categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
-                    echo -n "                          Suche nach Tag:   \"${searchtag}\" ➜  "
+                    echo -n "                          Search by tag:   \"${searchtag}\" ➜  "
                     if grep $grep_opt "${searchtag}" "$searchfile" ;then
                         echo "OK (Cat: \"${categorietag}\")"
                         renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g")${renameTag}"
@@ -393,7 +391,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         grep_opt="-qi"
                     fi
                     tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
-                    echo -n "                          Suche nach Tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
+                    echo -n "                          Search by tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
                     if grep $grep_opt "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g" | sed -e "s/^§//g")" "$searchfile" ;then
                         echo "OK"
                         renameTag="${tagsymbol}${tagarray[$i]}${renameTag}"
@@ -405,7 +403,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             done
             renameTag=${renameTag% }
             renameCat=${renameCat% }
-            echo "                          renameTag lautet: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
+            echo "                          rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
             }
             tagsearch
 
@@ -414,7 +412,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             # suche Format: dd[./-]mm[./-]yy(yy)
             founddate=$( parseRegex "$content" "([1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
             if [ ! -z $founddate ]; then
-                echo -n "                          prüfe Datum: $founddate"
+                echo -n "                          check date: $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
                 date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
                 date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
@@ -423,13 +421,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 fi
                 date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                 if [ $? -eq 0 ]; then
-                    echo " ➜ gültig"
-                    echo "                          Tag:  ${date_dd}"
-                    echo "                          Monat:${date_mm}"
-                    echo "                          Jahr: ${date_yy}"
+                    echo " ➜ valid"
+                    echo "                          day:  ${date_dd}"
+                    echo "                          month:${date_mm}"
+                    echo "                          year: ${date_yy}"
                     dateIsFound=yes
                 else
-                    echo " ➜ ungültiges Format"
+                    echo " ➜ invalid format"
                 fi
                 founddate=""
             fi
@@ -447,13 +445,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     fi
                     date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                     if [ $? -eq 0 ]; then
-                        echo " ➜ gültig"
-                        echo "                          Tag:  ${date_dd}"
-                        echo "                          Monat:${date_mm}"
-                        echo "                          Jahr: ${date_yy}"
+                        echo " ➜ valid"
+                        echo "                          day:  ${date_dd}"
+                        echo "                          month:${date_mm}"
+                        echo "                          year: ${date_yy}"
                         dateIsFound=yes
                     else
-                        echo " ➜ ungültiges Format"
+                        echo " ➜ invalid format"
                     fi
                     founddate=""
                 fi
@@ -477,33 +475,33 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     fi
                     date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                     if [ $? -eq 0 ]; then
-                        echo " ➜ gültig"
-                        echo "                          Tag:  ${date_dd}"
-                        echo "                          Monat:${date_mm}"
-                        echo "                          Jahr: ${date_yy}"
+                        echo " ➜ valid"
+                        echo "                          day:  ${date_dd}"
+                        echo "                          month:${date_mm}"
+                        echo "                          year: ${date_yy}"
                         dateIsFound=yes
                     else
-                        echo " ➜ ungültiges Format"
+                        echo " ➜ invalid format"
                     fi
                     founddate=""
                 fi
             fi
             
             if [ $dateIsFound = no ]; then
-                echo "                          Datum in OCR-Text nicht gefunden - verwende Dateidatum:"
+                echo "                          Date not found in OCR text - use file date:"
                 date_dd=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $3}')
                 date_mm=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $2}')
                 date_yy=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $1}') 
-                echo "                          Tag:  ${date_dd}"
-                echo "                          Monat:${date_mm}"
-                echo "                          Jahr: ${date_yy}"
+                echo "                          day:  ${date_dd}"
+                echo "                          month:${date_mm}"
+                echo "                          year: ${date_yy}"
             fi
                 
             # Dateidatum anpassen:
-            echo -n "                      ➜ Dateidatum anpassen (Quelle: "
+            echo -n "                      ➜ Adapt file date (Source: "
             if [[ "$filedate" == "ocr" ]]; then
                 if [ $dateIsFound = no ]; then
-                    echo "Quelldatei [OCR ausgewählt, aber nicht gefunden])"
+                    echo "Source file [OCR selected but not found])"
                     touch --reference="$input" "$output"
                 else
                     echo "OCR)"
@@ -515,7 +513,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 TZ=$(date +%Z) touch -m "$output"
             else
             #elif [[ "$filedate" == "source" ]]; then
-                echo "Quelldatei)"
+                echo "Source file)"
                 touch --reference="$input" "$output"
             fi
         }
@@ -527,7 +525,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         # Zieldatei umbenennen:
         outputtmp=${output}
         if [ ! -z "$NameSyntax" ]; then
-            echo -n "                          wende Umbenennungssyntax an ➜ "
+            echo -n "                          apply renaming syntax ➜ "
             title=$( echo "${title}" | sed "s/\&/%26/g" )    # "&" im Titel würde sonst durch "§tit" ersetzt
             NewName="$NameSyntax"
             NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
@@ -539,7 +537,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo "$NewName"
 
             if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
-                echo "                      ➜ verschiebe in Kategorieverzeichnisse"
+                echo "                      ➜ move to category directories"
                 renameCat=$( echo $renameCat | sed -e "s/#//g" )
                 tagarray=( $renameCat )   # Tags als Array definieren
                 i=0
@@ -550,12 +548,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             #    done
                 while (( i < maxID )); do
                     tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-                    echo -n "                          Tag-Ordner \"${tagdir}\" vorhanden? ➜  "
+                    echo -n "                          tag directories \"${tagdir}\" exists? ➜  "
                     if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
                         echo "OK"
                     else
                         mkdir "${OUTPUTDIR}${tagdir}"
-                        echo "erstellt"
+                        echo "created"
                     fi
 
                     destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
@@ -565,16 +563,16 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
                             do
                                 destfilecount=$( expr $destfilecount + 1 )
-                                echo "                          zähle weiter … ($destfilecount)"
+                                echo "                          continue counting … ($destfilecount)"
                             done
                         output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
-                        echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($destfilecount)"
+                        echo "                          File name already exists! Add counter ($destfilecount)"
                     fi
                     
-                    echo "                          Ziel:   ./${tagdir}/$(basename "${output}")"
+                    echo "                          target:   ./${tagdir}/$(basename "${output}")"
                     # prüfen, ob selbe Datei bereits einmal in diese Kategorie einsortiert wurde (unterschiedliche Tags, aber gleich Kategorie)
                     if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
-                        echo "                          selbe Datei ist bereits in Kategorie (${tagarray[$i]}) kopiert worden und wird übersprungen!"
+                        echo "                          same file has already been copied into category (${tagarray[$i]}) and is skipped!"
                     else
                         cp -l "${outputtmp}" "${output}"
                     fi
@@ -583,8 +581,21 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 done
                 rm "${outputtmp}"
             elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
-                echo "                      ➜ verschiebe in Tagverzeichnisse"
+                echo "                      ➜ move to tag directories"
+
+
+# ????????????????????????????????????????????????????????
+
+
                 renameTag=$( echo $renameTag | sed -e "s/#//g" )
+
+
+
+
+
+
+
+
                 tagarray=( $renameTag )   # Tags als Array definieren
                 i=0
                 maxID=${#tagarray[*]}
@@ -593,12 +604,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             #    done
                 while (( i < maxID )); do
                     tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-                    echo -n "                          Tag-Ordner \"${tagdir}\" vorhanden? ➜  "
+                    echo -n "                          tag directories \"${tagdir}\" exists? ➜  "
                     if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
                         echo "OK"
                     else
                         mkdir "${OUTPUTDIR}${tagdir}"
-                        echo "erstellt"
+                        echo "created"
                     fi
 
                     destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
@@ -608,17 +619,17 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                         while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
                             do
                                 destfilecount=$( expr $destfilecount + 1 )
-                                echo "                          zähle weiter … ($destfilecount)"
+                                echo "                          continue counting … ($destfilecount)"
                             done
                         output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
-                        echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($destfilecount)"
+                        echo "                          File name already exists! Add counter ($destfilecount)"
                     fi
 
-                    echo "                          Ziel:   ./${tagdir}/$(basename "${output}")"
+                    echo "                          target:   ./${tagdir}/$(basename "${output}")"
                     cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
                 done
-                echo "                      ➜ lösche temp. Zieldatei"
+                echo "                      ➜ delete temp. target file"
                 rm "${outputtmp}"
             else
                 destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
@@ -628,12 +639,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     while [ -f "${OUTPUTDIR}${NewName} ($destfilecount).pdf" ]
                         do
                             destfilecount=$( expr $destfilecount + 1 )
-                            echo "                          zähle weiter … ($destfilecount)"
+                            echo "                          continue counting … ($destfilecount)"
                         done
                     output="${OUTPUTDIR}${NewName} ($destfilecount).pdf"
-                    echo "                          Dateiname bereits vorhanden! Ergänze Zähler ($destfilecount)"
+                    echo "                          File name already exists! Add counter ($destfilecount)"
                 fi
-                echo "                          Zieldatei: $(basename "${output}")"
+                echo "                          target file: $(basename "${output}")"
                 mv "${outputtmp}" "${output}"
             fi
         fi
@@ -648,21 +659,22 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
             if [ $sourcefilecount -eq 0 ]; then
                 mv "$input" "${BACKUPDIR}${filename}"
-                echo "                      ➜ verschiebe Quelldatei nach: ${BACKUPDIR}${filename}"
+                echo "                      ➜ move source file to: ${BACKUPDIR}${filename}"
             else
                 while [ -f "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf" ]
                     do
                         sourcefilecount=$( expr $sourcefilecount + 1 )
-                        echo "                          zähle weiter … ($sourcefilecount)"
+                        echo "                          continue counting … ($sourcefilecount)"
                     done
                 mv "$input" "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
-                echo "                      ➜ verschiebe Quelldatei nach: ${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
+                echo "                      ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
             fi
         else
             rm "$input"
-            echo "                      ➜ lösche Quelldatei"
+            echo "                      ➜ delete source file"
         fi
 
+# hier muss die automatische Spracheinstellung mit eingebaut werden:
     # Benachrichtigung:
         if [ $dsmtextnotify = "on" ] ; then
             sleep 1
@@ -684,13 +696,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 echo "$PB_LOG" | jq -r '.error_code'
             fi
         else
-            echo "                          INFO: (PushBullet-TOKEN nicht gesetzt)"
+            echo "                          INFO: (PushBullet-TOKEN not set)"
         fi
 
     # Dateizähler:
         synosetkeyvalue ./etc/counter pagecount $(expr $(get_key_value ./etc/counter pagecount) + $pagecount_latest)
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-        echo "                          INFO: (Laufzeit letzte Datei: $(( $(date +%s) - $date_start )) Sekunden (Seitenanzahl: $pagecount_latest) | gesamt: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Seiten bisher verarbeitet)"
+        echo "                          INFO: (runtime last file: $(( $(date +%s) - $date_start )) seconds (pagecount: $pagecount_latest) | all: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Pages processed up to now)"
 
     # temporäres Arbeitsverzeichnis löschen:
         rm -rf "$work_tmp"
