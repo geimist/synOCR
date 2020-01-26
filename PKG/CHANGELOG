@@ -3,7 +3,6 @@ Release Notes
 0.16.0
     IMPLEMENTIERUNGEN:
  -  es steht wieder ein aktuelles "polyglot-Image" mit allen Sprachen zur Auswahl
- -  mit "ocrmypdf-ownimage" ist ein vom Benutzer selbst erstelltes Image auswählbar
  -  manuell heruntergeladene Images stehen ebenfalls zur Auswahl (sofern "ocrmypdf" im Namen enthalten ist)
  -  eine tag-Kennzeichnung ist nun konfigurierbar (für keinen, einfach leer lassen)
  -  Prüfung auf vorhandene Dockerinstallation
