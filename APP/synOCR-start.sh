@@ -14,7 +14,7 @@
     cd ${APPDIR}
     
 # läuft bereits eine Instanz von synOCR?
-    synOCR_pid=$( pidof synOCR.sh )
+    synOCR_pid=$( /bin/pidof synOCR.sh )
     if [ ! -z "$synOCR_pid" ] ; then
         if [ $callFrom = GUI ] ; then
             echo '<p class="center"><span style="color: #BD0010;"><b>synOCR läuft bereits!</b><br>(Prozess-ID: '$synOCR_pid')</span></p>'
