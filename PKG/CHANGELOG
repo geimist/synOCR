@@ -1,14 +1,18 @@
 Release Notes
 
-0.1x.x
+0.16.0
     IMPLEMENTIERUNGEN:
  -  es steht wieder ein aktuelles "polyglot-Image" mit allen Sprachen zur Auswahl
- -  mit "ocrmypdf-ownimage" ist ein selbst erstelltest Image auswählbar
- -  ToDo: …(Hashtag-Kennzeichnung konfigurierbar)
- -  Prüfung auf Dockerinstallation
+ -  mit "ocrmypdf-ownimage" ist ein vom Benutzer selbst erstelltes Image auswählbar
+ -  eine tag-Kennzeichnung ist nun konfigurierbar (für keinen einfach leer lassen)
+ -  Prüfung bei Installation auf Dockerinstallation
+ -  das Dateidatum der Ausgabedatei kann nun auf: Quelldatei, OCR oder JETZT gesetzt werden
+ -  
+ -  
+
     BUGFIXES:
  -  "beenden erzwingen" war nicht möglich
- -  Dateidatum der Quelldatei wurde nicht korrekt auf die Ausgabedatei übertragen
+ -  Dateidatum der Quelldatei wurde teilweise nicht korrekt auf die Ausgabedatei übertragen
  -  Minorbugfixes
 
 0.15.2
