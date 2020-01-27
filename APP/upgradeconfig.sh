@@ -42,10 +42,10 @@ error=0
                                     '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', 
                                     '$MessageTo', '$dsmbeepnotify', '$loglevel' )"
                 mv "./etc/Konfiguration.txt" "./etc/Konfiguration_imported.txt"
-                log="$log Konfiguration wurde nach DB migriert"
+                log="$log ➜ Konfiguration wurde nach DB migriert"
             else
                 new_profile "default"
-                log="$log das Default-Profil wurde erstellt"
+                log="$log ➜ das Default-Profil wurde erstellt"
             fi
         fi
     fi
@@ -57,14 +57,14 @@ error=0
             sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"filedate\" varchar DEFAULT ('ocr') "
             # Prüfen:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q filedate ) ; then
-                log="$log die DB-Spalte konnte nicht erstellt werden (filedate)"
+                log="$log ➜ die DB-Spalte konnte nicht erstellt werden (filedate)"
                 error=1
             fi
             # Tagkennzeichner
             sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"tagsymbol\" varchar DEFAULT ('#') "
             # Prüfen:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q tagsymbol ) ; then
-                log="$log die DB-Spalte konnte nicht erstellt werden (tagsymbol)"
+                log="$log ➜ die DB-Spalte konnte nicht erstellt werden (tagsymbol)"
                 error=1
             fi
             # checkmon
@@ -72,7 +72,7 @@ error=0
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET checkmon='$(get_key_value ./etc/counter checkmon)' WHERE rowid=1"
             # Prüfen:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q checkmon ) ; then
-                log="$log die DB-Spalte konnte nicht erstellt werden (checkmon)"
+                log="$log ➜ die DB-Spalte konnte nicht erstellt werden (checkmon)"
                 error=1
             else
                 sed -i '/checkmon/d' ./etc/counter
