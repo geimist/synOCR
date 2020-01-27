@@ -574,7 +574,7 @@ if [[ "$page" == "edit" ]]; then
             <b>§tag</b> (gefundene, oben angegebene Tags)<br>
             <b>§tit</b> (Titel der Originaldatei)<br>
             <br>
-            >><b>§y-§m-§d_§tag_§tit</b><< erzeugt<br>
+            >><b>§yocr-§mocr-§docr_§tag_§tit</b><< erzeugt<br>
             z.B. >><b>2018-12-09_#Rechnung_00376.pdf</b><<<br>
             <br>
             Datumsangaben werden zuerst im Dokument gesucht. Wenn erfolglos, wird das Dateidatum verwendet.<br>
