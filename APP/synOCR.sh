@@ -8,7 +8,6 @@
     echo "    -----------------------------------"
     echo -e
     
-    CLIENTVERSION=$(get_key_value /var/packages/synOCR/INFO version)
     DevChannel="Release"    # BETA
     
 # ---------------------------------------------------------------------------------
@@ -43,7 +42,7 @@
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
         dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol FROM config WHERE profile_ID='$workprofile' "
 
-    sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
+    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
     profile_ID=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
     profile=$(echo "$sqlerg" | awk -F'\t' '{print $3}')
@@ -68,14 +67,15 @@
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
     
-# System Information / Adjust LIBRARY_PATH / Adjust PATH:
+# System Information:
 # --------------------------------------------------------------------- 
-    echo "synOCR-version:           $CLIENTVERSION"
-    machinetyp=`uname --machine`; echo "Architecture:             $machinetyp"
-    dsmbuild=`uname -v | awk '{print $1}' | sed "s/#//g"`; echo "DSM-build:                $dsmbuild"
+    echo "synOCR-Version:           $(get_key_value /var/packages/synOCR/INFO version)"
+    machinetyp=$(uname --machine); echo "Architecture:             $machinetyp"
+    dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                $dsmbuild"
     read MAC </sys/class/net/eth0/address
-    sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
-    device=`uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" `; echo "Device:                   $device ($sysID)"	    #  | sed "s/ds//g"
+    sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)"
+    device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
+    echo "Device:                   $device ($sysID)"	    #  | sed "s/ds//g"
     echo "current Profil:           $profile"
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system")"
     echo "used image:               $dockercontainer"
@@ -143,6 +143,24 @@
 #       |_______________________________________________________________________________|       #
 #                                                                                               #
 #################################################################################################
+
+sec_to_time() 
+{
+# this function converts a second value to hh:mm:ss
+# call: sec_to_time "string"
+# https://blog.jkip.de/in-bash-sekunden-umrechnen-in-stunden-minuten-und-sekunden/
+# --------------------------------------------------------------
+    local seconds=$1
+    local sign=""
+    if [[ ${seconds:0:1} == "-" ]]; then
+        seconds=${seconds:1}
+        sign="-"
+    fi
+    local hours=$(( seconds / 3600 ))
+    local minutes=$(( (seconds % 3600) / 60 ))
+    seconds=$(( seconds % 60 ))
+    printf "%s%02d:%02d:%02d" "$sign" $hours $minutes $seconds
+}
 
 
 parseRegex () 
@@ -360,8 +378,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             tagarray=( $taglist2 )   # Tags als Array definieren
             i=0
             maxID=${#tagarray[*]}
-            echo "                      ➜ suche Tags und Datum:"
-            echo "                          Tag-Anzahl:       $maxID"
+            echo "                      ➜ search tags and date:"
+            echo "                          tag count:       $maxID"
 
         #    for a in ${tagarray[@]}; do
         #        echo $a
@@ -410,7 +428,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         # suche nach Datum:
             dateIsFound=no
             # suche Format: dd[./-]mm[./-]yy(yy)
-            founddate=$( parseRegex "$content" "([1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
+            founddate=$( parseRegex "$content" "\y([1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
+            # INFO about \y: In other GNU software, the word-boundary operator is ‘\b’. However, that conflicts with the awk language’s definition of ‘\b’ as backspace, 
+            # so gawk uses a different letter. The current method of using ‘\y’ for the GNU ‘\b’ appears to be the lesser of two evils.
+            # https://www.gnu.org/software/gawk/manual/html_node/GNU-Regexp-Operators.html
             if [ ! -z $founddate ]; then
                 echo -n "                          check date: $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
@@ -434,7 +455,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
             # suche Format: yy(yy)[./-]mm[./-]dd
             if [ $dateIsFound = no ]; then
-                founddate=$( parseRegex "$content" "(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-][0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])" | head -n1 )
+                founddate=$( parseRegex "$content" "\y(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\.\/-][0-1]?[0-9][\.\/-](0[1-9]|[1-2][0-9]|3[0-1])\y" | head -n1 )
                 if [ ! -z $founddate ]; then
                     echo -n "                          prüfe Datum: $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
@@ -459,16 +480,11 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
             # suche Format: mm[./-]dd[./-]yy(yy) amerikanisch
             if [ $dateIsFound = no ]; then
-                founddate=$( parseRegex "$content" "[0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})" | head -n1 )
+                founddate=$( parseRegex "$content" "\y[0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
                 if [ ! -z $founddate ]; then
                     echo -n "                          prüfe Datum: $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
-
-# hier stimmt etwas noch nicht mit der RegEx fürs Datum:
-#      prüfe Datum: [72.07.41 ➜ ungültiges Format
-#      prüfe Datum: [72.07.41./synOCR.sh: line 386: 10#[72 : syntax error: invalid arithmetic operator (error token is "[72 ") ➜ ungültiges Format
-
                     date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
                     if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
                         date_yy="20${date_yy}"
@@ -486,12 +502,16 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     founddate=""
                 fi
             fi
+
+            date_dd_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $3}')
+            date_mm_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $2}')
+            date_yy_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $1}') 
             
             if [ $dateIsFound = no ]; then
                 echo "                          Date not found in OCR text - use file date:"
-                date_dd=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $3}')
-                date_mm=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $2}')
-                date_yy=$(ls -l --time-style=full-iso "$input" | awk '{print $6}' | awk -F- '{print $1}') 
+                date_dd=$date_dd_source
+                date_mm=$date_mm_source
+                date_yy=$date_yy_source
                 echo "                          day:  ${date_dd}"
                 echo "                          month:${date_mm}"
                 echo "                          year: ${date_yy}"
@@ -505,12 +525,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     touch --reference="$input" "$output"
                 else
                     echo "OCR)"
-                    TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
-#    TZ=UTC touch -t 201112110000 /volume3/SSD/SCANNER/SCAN__Vertrag1.txt
+                    TZ=UTC touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
+         #           TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
                 fi
             elif [[ "$filedate" == "now" ]]; then
                 echo "NOW)"
-                TZ=$(date +%Z) touch -m "$output"
+                #TZ=$(date +%Z) 
+                touch –time=modify "$output"
             else
             #elif [[ "$filedate" == "source" ]]; then
                 echo "Source file)"
@@ -528,17 +549,29 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo -n "                          apply renaming syntax ➜ "
             title=$( echo "${title}" | sed "s/\&/%26/g" )    # "&" im Titel würde sonst durch "§tit" ersetzt
             NewName="$NameSyntax"
-            NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
-            NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
-            NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
+            NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
+            NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
+            NewName=$( echo "$NewName" | sed "s/§ysource/${date_yy_source}/g" )
+            NewName=$( echo "$NewName" | sed "s/§dnow/$(date +%d)/g" )
+            NewName=$( echo "$NewName" | sed "s/§mnow/$(date +%m)/g" )
+            NewName=$( echo "$NewName" | sed "s/§ynow/$(date +%Y)/g" )
+            NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
+            NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
+            NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
             NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g" )
             NewName=$( echo "$NewName" | sed "s/§tit/${title}/g" | sed "s/%26/\&/g" )
             NewName=$( echo "$NewName" | sed "s/%20/ /g" )
+            
+            # Fallback für alte Parameter:
+            NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
+            NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
+            NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
+            
             echo "$NewName"
 
             if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
                 echo "                      ➜ move to category directories"
-                renameCat=$( echo $renameCat | sed -e "s/#//g" )
+                renameCat=$( echo ${renameCat} | sed -e "s/${tagsymbol}//g" )
                 tagarray=( $renameCat )   # Tags als Array definieren
                 i=0
                 DestFolderList=""   # temp. Liste der verwendeten Zielordner um Dateiduplikate (unterschiedliche Tags, aber eine Kategorie) zu vermeiden
@@ -582,20 +615,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 rm "${outputtmp}"
             elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
                 echo "                      ➜ move to tag directories"
-
-
-# ????????????????????????????????????????????????????????
-
-
-                renameTag=$( echo $renameTag | sed -e "s/#//g" )
-
-
-
-
-
-
-
-
+                renameTag=$( echo $renameTag | sed -e "s/${tagsymbol}//g" )
                 tagarray=( $renameTag )   # Tags als Array definieren
                 i=0
                 maxID=${#tagarray[*]}
@@ -702,8 +722,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # Dateizähler:
         synosetkeyvalue ./etc/counter pagecount $(expr $(get_key_value ./etc/counter pagecount) + $pagecount_latest)
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-        echo "                          INFO: (runtime last file: $(( $(date +%s) - $date_start )) seconds (pagecount: $pagecount_latest) | all: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Pages processed up to now)"
-
+        echo "                          INFO: (runtime last file: $(sec_to_time $(expr $(date +%s)-${date_start}) ) (pagecount: $pagecount_latest) | all: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Pages processed up to now)"
     # temporäres Arbeitsverzeichnis löschen:
         rm -rf "$work_tmp"
     done
