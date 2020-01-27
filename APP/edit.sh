@@ -1,9 +1,10 @@
 #!/bin/bash
 # edit.sh
-# OLDIFS=$IFS
+OLDIFS=$IFS
 
 # Auswahl der Docker-Images für OCRmyPDF als Array:    
-imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.4.0" "jbarlow83/ocrmypdf:v9.5.0" "geimist/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:9.4.0" "geimist/ocrmypdf-polyglot:9.5.0" "ocrmypdf-ownimage" )
+#imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.4.0" "jbarlow83/ocrmypdf:v9.5.0" "geimist/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:9.4.0" "geimist/ocrmypdf-polyglot:9.5.0" "ocrmypdf-ownimage" )
+#imagelist=("jbarlow83/ocrmypdf:latest" "geimist/ocrmypdf-polyglot:latest" )
 
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
@@ -301,7 +302,8 @@ if [[ "$page" == "edit" ]]; then
         echo '
             <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>In diesem Verzeichnis wird nach PDF-Dateien gesucht (nicht rekursiv).</span></a>
+            <span>In diesem Verzeichnis wird nach PDF-Dateien gesucht (nicht rekursiv).<br>
+            Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/input/)</span></a>
             </p>'
 
     # OUTPUTDIR
@@ -316,7 +318,8 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Ausgabeverzeichnis der fertigen PDF-Dateien (wird ggf. erstellt)</span></a>
+            <span>Ausgabeverzeichnis der fertigen PDF-Dateien (wird ggf. erstellt)
+            Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/output/)</span></a>
         </p>'
 
     # BACKUPDIR
@@ -332,7 +335,8 @@ if [[ "$page" == "edit" ]]; then
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>Sofern hier ein gültiger Pfad eingetragen wird, werden die Originaldateien hier gesichert (wird ggf. erstellt).<br>
-            Ist kein gültiges Verzeichnis hinterlegt, werden die Originaldateien endgültig gelöscht.</span></a>
+            Ist kein gültiges Verzeichnis hinterlegt, werden die Originaldateien endgültig gelöscht.
+            Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/Backup/)</span></a>
         </p>'
 
     # LOGDIR 
@@ -347,7 +351,8 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Verzeichnis der LOG-Dateien (wird ggf. erstellt)</span></a>
+            <span>Verzeichnis der LOG-Dateien (wird ggf. erstellt)
+            Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/LOG/)</span></a>
         </p>'
 
 
@@ -390,16 +395,23 @@ if [[ "$page" == "edit" ]]; then
     # dockercontainer
     echo '
         <p>
-        <label>zuverwendendes Dockerimage <br>(Way to the polyglot-image: <a href="https://geimist.eu:30443/geimist/synOCR/issues/13" onclick="window.open(this.href); return false;">LINK</a>)</label>
+        <label>zuverwendendes Dockerimage</label>
         <select name="dockercontainer">'
-                
-        # füge ggf. in Verwendung befindliches Image der Auswahl hinzu um Kompatibilität zu wahren:
-        if ! $(echo "${imagelist[@]}" | grep -q "$dockercontainer" ) ; then
-            echo "nicht vorhanden - füge hinzu"
-            imagelist=("$dockercontainer" "${imagelist[@]}" )
+
+        # Lokale ocrmypdf-Images:
+        imagelist=($(/usr/local/bin/docker images | sort | awk '/ocrmypdf/ && !/<none>/ {print $1 ":" $2}'))
+        
+        # auf Standardimages prüfen und ggf. hinzufügen:
+        if ! $(echo "${imagelist[@]}" | grep -q "jbarlow83/ocrmypdf:latest" ) ; then
+            imagelist+=("jbarlow83/ocrmypdf:latest")
+        fi
+        if ! $(echo "${imagelist[@]}" | grep -q "geimist/ocrmypdf-polyglot:latest" ) ; then
+            imagelist+=("geimist/ocrmypdf-polyglot:latest")
         fi
 
+        IFS=$'\012'
         for entry in ${imagelist[@]}; do
+            IFS=$OLDIFS
             if [[ "$dockercontainer" == "${entry}" ]]; then
                 echo "<option value=${entry} selected>${entry}</option>"
             else
@@ -412,10 +424,9 @@ if [[ "$page" == "edit" ]]; then
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>Welches Dockerimage soll verwendet werden?<br>
-            jbarlow83/ocrmypdf ist das Standardimage, enthält aber nur die Sprachen: English, German and Simplified Chinese<br>
-            Das Image jbarlow83/ocrmypdf-polyglot enthält alle möglichen Sprachen, ist aber größer!<br>
-            (ACHTUNG: das Polyglot-Image wird von jbarlow83 nicht mehr bereitgestellt.)<br>
-            Über das Image "ocrmypdf-ownimage" kann ein selbst mit diesem Namen erstelltes Image angesprochen werden.</span></a>
+            jbarlow83/ocrmypdf ist das Standardimage, enthält aktuell aber nur die Sprachen: English, German and Simplified Chinese<br>
+            Polyglot-Images enthalten alle möglichen Sprachen, sind aber größer!<br>
+            Manuell heruntergeladene Images stehen ebenfalls zur Auswahl, sofern "ocrmypdf" im Namen enthalten ist.</span></a>
         </p>'
 
     # SearchPraefix
@@ -551,9 +562,15 @@ if [[ "$page" == "edit" ]]; then
             <span>Fertige PDFs mit einer Bestimmten Syntax umbenennen.<br><br>
             Folgende Variablen sind in Kombination mit Fließtext möglich<br>
             (Sonderzeichen können unvorhersehbare Folgen haben!):<br>
-            <b>§d</b> (Datum / Tag)<br>
-            <b>§m</b> (Datum / Monat)<br>
-            <b>§y</b> (Datum / Jahr)<br>
+            <b>§docr</b> (Datum / Tag - im Text gefunden [fallback auf Quelldatei])<br>
+            <b>§mocr</b> (Datum / Monat - im Text gefunden [fallback auf Quelldatei])<br>
+            <b>§yocr</b> (Datum / Jahr - im Text gefunden [fallback auf Quelldatei])<br>
+            <b>§dnow</b> (Datum / Tag - heute)<br>
+            <b>§mnow</b> (Datum / Monat - heute)<br>
+            <b>§ynow</b> (Datum / Jahr - heute)<br>
+            <b>§dsource</b> (Datum / Tag der Quelldatei)<br>
+            <b>§msource</b> (Datum / Monat der Quelldatei)<br>
+            <b>§ysource</b> (Datum / Jahr der Quelldatei)<br>
             <b>§tag</b> (gefundene, oben angegebene Tags)<br>
             <b>§tit</b> (Titel der Originaldatei)<br>
             <br>
@@ -579,13 +596,14 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>gefundene tags können im Dateinamen gekennzeichnet werden (z.B. mit #)<br></span></a>
+            <span>gefundene tags können im Dateinamen gekennzeichnet werden (z.B. mit #)<br>
+            (Sonderzeichen können unvorhersehbare Folgen haben!):<br></span></a>
         </p>'
 
     # Filedate
     echo '
         <p>
-        <label>Dateidatum korregieren:</label>
+        <label>Dateidatum korrigieren:</label>
         <select name="filedate">'
         if [[ "$filedate" == "now" ]]; then
             echo '<option value="now" selected>aktuelle Zeit</option>'
