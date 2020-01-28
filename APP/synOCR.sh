@@ -78,7 +78,7 @@
     echo "Device:                   $device ($sysID)"	    #  | sed "s/ds//g"
     echo "current Profil:           $profile"
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system")"
-    echo "used image (created):     $dockercontainer ($(docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
+    echo "used image (created):     $dockercontainer ($(/usr/local/bin/docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
     echo "used ocr-parameter:       $ocropt"
     echo "replace search prefix:    $delSearchPraefix"
     echo "renaming syntax:          $NameSyntax"
