@@ -1,5 +1,5 @@
 #!/bin/bash
-# edit.sh
+# /usr/syno/synoman/webman/3rdparty/synOCR/edit.sh
 
 OLDIFS=$IFS
 APPDIR=$(cd $(dirname $0);pwd)
