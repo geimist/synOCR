@@ -78,7 +78,7 @@
     echo "Device:                   $device ($sysID)"	    #  | sed "s/ds//g"
     echo "current Profil:           $profile"
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system")"
-    echo "used image:               $dockercontainer"
+    echo "used image (created):     $dockercontainer ($(docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
     echo "used ocr-parameter:       $ocropt"
     echo "replace search prefix:    $delSearchPraefix"
     echo "renaming syntax:          $NameSyntax"
@@ -433,7 +433,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             # so gawk uses a different letter. The current method of using ‘\y’ for the GNU ‘\b’ appears to be the lesser of two evils.
             # https://www.gnu.org/software/gawk/manual/html_node/GNU-Regexp-Operators.html
             if [ ! -z $founddate ]; then
-                echo -n "                          check date: $founddate"
+                echo -n "                          check date (dd mm [yy]yy): $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
                 date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
                 date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
@@ -457,7 +457,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             if [ $dateIsFound = no ]; then
                 founddate=$( parseRegex "$content" "\y(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\.\/-][0-1]?[0-9][\.\/-](0[1-9]|[1-2][0-9]|3[0-1])\y" | head -n1 )
                 if [ ! -z $founddate ]; then
-                    echo -n "                          prüfe Datum: $founddate"
+                    echo -n "                          check date ([yy]yy mm dd): $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
                     date_yy=$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')    
@@ -482,7 +482,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             if [ $dateIsFound = no ]; then
                 founddate=$( parseRegex "$content" "\y[0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
                 if [ ! -z $founddate ]; then
-                    echo -n "                          prüfe Datum: $founddate"
+                    echo -n "                          check date (mm dd [yy]yy): $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
                     date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
