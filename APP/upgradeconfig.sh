@@ -1,7 +1,6 @@
 #!/bin/sh
-# upgradeconfig.sh
+# /usr/syno/synoman/webman/3rdparty/synOCR/upgradeconfig.sh
 # prüft die Konfiguration-DB auf neue Variablen und ergänzt ggf. selbige
-# /volume*/@appstore/synOCR/upgradeconfig.sh
 
 log=""
 error=0
