@@ -40,7 +40,6 @@ if ! [ -x "$(command -v fakeroot)" ]; then
         echo "WARNUNG: fakeroot ist nicht installiert und du bist auch nicht root!" >&2
         exit 1
     else
-    	echo 'WARNUNG: fakeroot ist nicht installiert!' >&2
     	FAKEROOT=""
     fi
 else
@@ -52,6 +51,10 @@ fi
 # shellcheck disable=SC2086
 APPDIR=$(cd "$(dirname $0)";pwd)
 cd "${APPDIR}"
+
+
+git pull	# aktualisieren
+
 
 build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
 buildversion=${1:-latest}
