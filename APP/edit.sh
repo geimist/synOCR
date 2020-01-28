@@ -1,11 +1,7 @@
 #!/bin/bash
 # edit.sh
+
 OLDIFS=$IFS
-
-# Auswahl der Docker-Images für OCRmyPDF als Array:    
-#imagelist=("jbarlow83/ocrmypdf:latest" "jbarlow83/ocrmypdf:v9.4.0" "jbarlow83/ocrmypdf:v9.5.0" "geimist/ocrmypdf-polyglot:latest" "geimist/ocrmypdf-polyglot:9.4.0" "geimist/ocrmypdf-polyglot:9.5.0" "ocrmypdf-ownimage" )
-#imagelist=("jbarlow83/ocrmypdf:latest" "geimist/ocrmypdf-polyglot:latest" )
-
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
 
