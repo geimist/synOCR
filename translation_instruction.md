@@ -1,4 +1,4 @@
-### You miss your language in synOCR? 
+### You miss your language in synOCR GUI? 
 
 Then, you can help to translate synOCR in your language.  
 (currently only the paket management is multilingual - the synOCR GUI will follow in a future release)
