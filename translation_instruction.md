@@ -15,6 +15,8 @@ It is also important that special characters remain in the same place. (e.g. \<b
 - ./PKG/scripts/lang/**\<language_code\>**
 - ./PKG/WIZARD_UIFILES/uninstall\_uifile\_**\<language\_code\>**
 - ./PKG/WIZARD_UIFILES/upgrade\_uifile\_**\<language\_code\>**
+- ./PKG/INFO ➜ Parameter "description"
+    - description_**\<language\_code\>**="\<translated description\>"   
   
   
 **The following languages are possible:**
