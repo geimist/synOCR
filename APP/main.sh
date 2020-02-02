@@ -59,11 +59,11 @@
 if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     echo '<div id="Content_1Col">
 		<div class="Content_1Col_full"> 
-            <br><br><p style="text-align:center"> <span style="color:#BD0010;font-weight:bold;font-size:1.1em; ">OCR auf Synology DiskStation</span> </p>'
+            <br><br><p style="text-align:center"> <span style="color:#BD0010;font-weight:bold;font-size:1.1em; ">'$lang_main_title1'</span> </p>'
 
 # check Docker:
     if ! $(/usr/local/bin/docker --version | grep -q "version") ; then
-        echo '<p class="center" style="'$synotrred';">W A R N I N G:<br>Docker could not be found.<br>Please check if the Docker package has been installed!<br /><br /></p>'
+        echo '<p class="center" style="'$synotrred';">'§lang_main_dockerfailed'<br /><br /></p>'
         echo '<div class="image-right"> </div>
             <img class="imageStyle"
             src="images/status_error@geimist.svg"
@@ -86,16 +86,18 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
             style="float:right;padding: 10px">'    	    
     fi
 
-    echo '<span class="title">Beschreibung:</span>
-        <p style="text-align:left;"> <br>
-          SynOCR liefert eine einfache GUI für den Dockercontainer OCRmyPDF.</p>
-          <p>Es können derzeit wahrscheinlich nicht alle Parameter in Verbindung mit 
-          OCRmyPDF genutzt werden, aber die wichtigsten. Einfach in der <a href="index.cgi?page=edit" style="'$synotrred';">Konfiguration</a> den 
-          Quell- und Zielordner eintragen. Jetzt ist schon über den Button unten ein manueller 
-          Programmlauf möglich. Der automatische Programmlauf ist (wie in der <a href="index.cgi?page=help" style="'$synotrred';">Hilfe</a> beschrieben) 
-          entweder über den <a href="index.cgi?page=timer" style="'$synotrred';">Zeitplaner</a> oder den DSM-Aufgabenplaner einzustellen.'
+    echo '<span class="title">'$lang_main_title2':</span>
+        <p style="text-align:left;"> <br><br>
+          '$lang_main_desc1'</p><p>
+          '$lang_main_desc2' <a href="index.cgi?page=edit" style="'$synocrred';">
+          '$lang_main_desc3'</a> 
+          '$lang_main_desc4' <a href="index.cgi?page=help" style="'$synocrred';">
+          '$lang_main_desc5'</a> 
+          '$lang_main_desc6' <a href="index.cgi?page=timer" style="'$synocrred';">
+          '$lang_main_desc7'</a> 
+          '$lang_main_desc8' '$lang_main_desc9
 
-    echo '<br><br><br><p class="center"><button name="page" class="blue_button" value="main-run-synocr">jetzt manuellen synOCR Durchlauf starten</button></p><br />'
+    echo '<br><br><br><p class="center"><button name="page" class="blue_button" value="main-run-synocr">'$lang_main_buttonrun'</button></p><br />'
 
 # Abschnitt Status / Statistik:	
     echo '<fieldset>
@@ -103,7 +105,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     	<br />
     	<details><p>
         <summary>
-            <span class="detailsitem">Status / Statistik:</span>
+            <span class="detailsitem">'$lang_main_statshead':</span>
         </summary></p>'
 
     echo '<table style="width: 700px;" >
@@ -111,21 +113,21 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
             <th style="width: 1;"></th><th style="width: 250px;"></th><th></th><th style="width: 250px;"></th>
         </tr>
         <tr>
-            <td class="td_color" colspan="2"><b>Offene Aufgaben:</b></td><td></td><td></td>
+            <td class="td_color" colspan="2"><b>'$lang_main_openjobs':</b></td><td></td><td></td>
         </tr>'
  
     if [[ "$count_inputpdf" == 0 ]]; then
-        echo '<tr><td class="td_color"></td><td><span style="color:#0086E5;font-weight:normal; ">Dateien zu bearbeiten: </span></td>
-        <td><span style="color:green;">Alles erledigt</span></td></tr>'
+        echo '<tr><td class="td_color"></td><td><span style="color:#0086E5;font-weight:normal; ">'$lang_main_openfilecount': </span></td>
+        <td><span style="color:green;">'$lang_main_alldone'</span></td></tr>'
     else
-        echo '<tr><td class="td_color"></td><td><span style="color:#0086E5;font-weight:normal; ">Dateien zu bearbeiten: </span></td>
+        echo '<tr><td class="td_color"></td><td><span style="color:#0086E5;font-weight:normal; ">'$lang_main_openfilecount': </span></td>
         <td><span style="color:#BD0010;">'$count_inputpdf'</span></td></tr>'
     fi
     
-    echo '<tr><td class="td_color" bgcolor=#fff></td><td><span style="color:#0086E5;font-weight:normal; ">Gesamt seit '$(get_key_value ./etc/counter startcount)' PDF/Pages:</td><td><span style="color:green;">'$(get_key_value ./etc/counter ocrcount)'/'$(get_key_value ./etc/counter pagecount)'</span></td></tr>'
+    echo '<tr><td class="td_color" bgcolor=#fff></td><td><span style="color:#0086E5;font-weight:normal; ">'$lang_main_totalsince' '$(get_key_value ./etc/counter startcount)' (PDF / '$lang_main_pages'):</td><td><span style="color:green;">'$(get_key_value ./etc/counter ocrcount)' / '$(get_key_value ./etc/counter pagecount)'</span></td></tr>'
 
     echo '</table>
-        <!-- <p>Hier wird in Zukunft noch eine Statusübersicht / Statistik zu finden sein …<br>
+        <!-- <p>Hier soll in Zukunft noch eine Statusübersicht / Statistik zu finden sein …<br>
         - https://developers.google.com/chart/interactive/docs/quick_start<br>
         - http://jsfiddle.net/api/post/jquery/1.6/ (http://elycharts.com/examples) </p>
         <br><div class="tab"><p>'$dbinfo'</p></div>-->
