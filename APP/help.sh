@@ -1,12 +1,12 @@
 #!/bin/bash
-# help.sh
+# /usr/syno/synoman/webman/3rdparty/synOCR/help.sh
 
 
 echo '
 	<div id="Content_1Col">
 	<div class="Content_1Col_full">
 	<div class="title">
-	    synOCR Hilfe
+	    synOCR '$lang_page4'
 	</div>'
 	    
 # Aufklappbar:
@@ -15,40 +15,37 @@ echo '
     <br />
     <details><p>
     <summary>
-        <span class="detailsitem">Schnellstart</span>
+        <span class="detailsitem">'$lang_help_title_QS'</span>
     </summary></p><p>' # ab hier steht der Text, der auf- und zugeklappt werden soll.
 	
 	echo '<ol style="list-style:decimal">
-    <li>Passe zunächst deine Installation in den <a href="index.cgi?page=edit" style="'$synotrred';">Einstellungen</a> an.
-    </li>
-    <p>
-    <li>Um synOCR regelmäßig laufen zu lassen (was sich empfiehlt), erstelle als nächstes <br>einen automatisierten Programmaufruf.
-      <div class="tab"><br>
-      Dazu hast du 2 Möglichkeiten:<br>verwende den <a href="index.cgi?page=timer" style="'$synotrred';">Zeitplaner</a> für einen programmierten 
-      synOCR-Start.<br><br>Hierbei ist zu beachten, dass der DSM-Sicherheitsbereater den Zusätzlichen Croneintrag (da für DSM unbekannt) bemängelt!</p><hr>
-      <p>Oder, erstelle alternativ im Aufgabenplaner einen neuen Task mit diesem
-      Programmpfad<br>(zu empfehlen, sofern du kürzere Intervalle als "stündlich" benötigst):</p>
+    <li>'$lang_help_QS_1_beforelink' <a href="index.cgi?page=edit" style="'$synocrred';">'$lang_page2'</a>'$lang_help_QS_1_afterlink'</li>
+    <p><li>'$lang_help_QS_2'<div class="tab"><br>
+      '$lang_help_QS_3'<br>
+      '$lang_help_QS_4_beforelink' <a href="index.cgi?page=timer" style="'$synocrred';">'$lang_page3'</a> '$lang_help_QS_4_afterlink'<br><br>
+      '$lang_help_QS_5'</p><hr><p>
+      '$lang_help_QS_6'</p>
     <p style="margin-left: 40px;"><code>/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</code></p>
-    <h3>Öffne dazu im DSM die Systemsteuerung </h3>
+    <h3>'$lang_help_QS_sub1_tit'</h3>
         <ul class="li_standard">
-        <li>Aufgabenplaner </li>
-        <li>Schaltfläche <i>Erstellen</i> </li>
-        <li><i>geplante Aufgabe</i> </li>
-        <li><i>Benutzerdefiniertes Skript</i></li>
+        <li>'$lang_help_QS_sub1_1'</li>
+        <li>'$lang_help_QS_sub1_2'</li>
+        <li><i>'$lang_help_QS_sub1_3'</i></li>
+        <li><i>'$lang_help_QS_sub1_4'</i></li>
         </ul><br>
-    <h3>Registerkarte "Allgemein":</h3>
+    <h3>'$lang_help_QS_sub2_tit'</h3>
         <ul class="li_standard">
-        <li>Benutzer root</li>
-        <li>ein beliebiger Name unter <i>Vorgang</i></li>
-        <li>Haken bei <i>aktiviert</i></li>
+        <li>'$lang_help_QS_sub2_1' <i>root</i></li>
+        <li>'$lang_help_QS_sub2_2'</li>
+        <li>'$lang_help_QS_sub2_3'</li>
         </ul><br>
-    <h3>Registerkarte "Zeitplan":</h3>
+    <h3>'$lang_help_QS_sub3_tit'</h3>
         <ul class="li_standard">
-        <li>hier gewünschtes Intervall (z.B. stündlich)</li>
+        <li>'$lang_help_QS_sub3_1'</li>
         </ul><br>
-    <h3>Registerkarte "Aufgabeneinstellung":</h3>
+    <h3>'$lang_help_QS_sub4_tit'</h3>
         <ul class="li_standard">
-        <li>hier den nachstehenden Pfad hineinkopieren:</li><br>
+        <li>'$lang_help_QS_sub4_1'</li><br>
         <code><span style="background-color:#cccccc;font-hight:1.1em;">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</span></code>
       </ul><br>
     </ol>'
@@ -56,39 +53,34 @@ echo '
     echo '</details></fieldset></p>'
 
 # -> Abschnitt FAQ:
-echo '<fieldset><hr style="border-style: dashed; size: 1px;"><br /><details><p><summary><span class="detailsitem">FAQ</span></summary></p>'
+echo '<fieldset><hr style="border-style: dashed; size: 1px;"><br /><details><p><summary><span class="detailsitem">'$lang_help_title_FAQ'</span></summary></p>'
     
     # -> Abschnitt OCRmyPDF:
         echo '<fieldset>
-        <details><p><summary><span class="detailsitem">OCRmyPDF Optionen</span></summary></p>
+        <details><p><summary><span class="detailsitem">'$lang_help_FAQ_sub1_tit'</span></summary></p>
         <ul class="li_standard"><li>'
-        echo 'Detailiertere Hilfe zu OCRmyPDF findest du auf der <a href="https://ocrmypdf.readthedocs.io" onclick="window.open(this.href); return false;" style="'$synotrred';">OCRmyPDF Hilfeseite.</a>'
+        echo $lang_help_FAQ_sub1_1_beforelink' <a href="https://ocrmypdf.readthedocs.io" onclick="window.open(this.href); return false;" style="'$synocrred';">'$lang_help_FAQ_sub1_1_linktitle'</a>'$lang_help_FAQ_sub1_1_afterlink
         echo '</li></ul>'
         echo '</details></fieldset>'
     # ->
         echo '<fieldset>
-        <details><p><summary><span class="detailsitem">beim Aufruf von synOCR werde ich vom DSM ausgeloggt</span></summary></p>
-        <ul class="li_standard"><li>'
-        echo 'Abhilfe schafft die Aktivierung von "<i>Browserkompatibilität durch Verzeicht auf IP-Prüfung erhöhen</i>" unter DSM-Systemsteuerung > Sicherheit.'
-        echo '</li></ul>'
+        <details><p><summary><span class="detailsitem">'$lang_help_FAQ_sub2_tit'</span></summary></p>
+        <ul class="li_standard"><li>'$lang_help_FAQ_sub2_1'</li></ul>'
         echo '</details></fieldset>'
     # ->
         echo '<fieldset>
-        <details><p><summary><span class="detailsitem">der Sicherheitsberater warnt vor synOCR</span></summary></p>
-        <ul class="li_standard"><li>'
-        echo 'Der Grund für die Warnung liegt nicht in einer Gefahr von synOCR, sondern darin, dass dem Sicherheitsberater die Änderung in der crontab unbekannt ist.'
-        echo '</li><li>'
-        echo 'Abhilfe schafft das "überspringen" im Sicherheitsberater oder ein manueller Task im DSM-Aufgabenplaner.'
-        echo '</li></ul>'
+        <details><p><summary><span class="detailsitem">'$lang_help_FAQ_sub3_tit'</span></summary></p><ul class="li_standard">'
+        echo '<li>'$lang_help_FAQ_sub3_1'</li><li>'$lang_help_FAQ_sub3_2'</li></ul>'
         echo '</details></fieldset>'
     # ->
         echo '<fieldset>
-        <details><p><summary><span class="detailsitem">es werden keine Dateien verarbeitet, obwohl welche vorhanden sind.</span></summary></p>
-        <ul class="li_standard"><li>'
-        echo 'Das kann der Fall sein, wenn der "OCR Such-Präfix" angegeben wurde, aber nicht mit den Dateien übereinstimmt'
-        echo '</li><li>'
-        echo 'überprüfe, ob das gewünschte Profil für den Quellordner in der Konfiguration auch aktiviert ist'
-        echo '</li></ul>'
+        <details><p><summary><span class="detailsitem">'$lang_help_FAQ_sub4_tit'</span></summary></p><ul class="li_standard">'
+        echo '<li>'$lang_help_FAQ_sub4_1'</li><li>'$lang_help_FAQ_sub4_2'</li></ul>'
+        echo '</details></fieldset>'
+    # ->
+        echo '<fieldset>
+        <details><p><summary><span class="detailsitem">'$lang_help_FAQ_sub5_tit'</span></summary></p><ul class="li_standard">'
+        echo '<li>'$lang_help_FAQ_sub5_beforelink' <a href="https://www.synology-forum.de/showthread.html?99647-synOCR-GUI-f%C3%BCr-OCRmyPDF" onclick="window.open(this.href); return false;" style="'$synocrred';">'$lang_help_FAQ_sub5_linktitle'</a>'$lang_help_FAQ_sub5_afterlink'</li></ul>'
         echo '</details></fieldset>'
     
     echo '</details></fieldset></p>'
@@ -98,15 +90,12 @@ echo '<fieldset>
     <hr style="border-style: dashed; size: 1px;"><br />
     <details><p>
     <summary>
-        <span class="detailsitem">über synOCR</span>
+        <span class="detailsitem">'$lang_help_about_title'</span>
     </summary></p>
     <p>'
     
-echo '<p>Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ich dafür bereitstellen kann.<br>
-    Begonnen, um meinen Arbeitsablauf mit PDF Dokumenten einfacher zu machen, ist es auch eine Freude für mich, wenn anderen dieses Projekt hilft. Daher erwarte ich keine Gegenleistung!<br>
-    <a href="https://www.paypal.me/geimist" onclick="window.open(this.href); return false;"><img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="200"/></a><br>
-    Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen - DANKE: 
-    </p>'
+echo '<p>'$lang_help_about_1'<br><a href="https://www.paypal.me/geimist" onclick="window.open(this.href); return false;">
+        <img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="200"/></a><br>'$lang_help_about_2'</p>'
     
     echo '</details><br><hr style="border-style: dashed; size: 1px;"></fieldset></p>'
 
