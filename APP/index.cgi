@@ -29,6 +29,7 @@ else
 	green="color: #00B10D"
 	red="color: #DF0101"
 	synotrred="color: #BD0010"
+	synocrred="color: #BD0010"
 	blue="color: #2A588C"
 	orange="color: #FFA500"
 	grey="color: #424242"
@@ -43,6 +44,10 @@ else
 	sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
 fi
 
+source $dir/includes/functions.sh
+
+# Sprachvariablen laden:
+    language
 
 if [ -z "$backifs" ]; then
 	backifs="$IFS"
@@ -117,34 +122,34 @@ echo '
 #   alte main-Page:
     if [[ "$mainpage" == "main" ]]; then
     	echo '
-    	<li><a class="navitemselc" href="index.cgi?page=main"><img class="svg" src="images/home_white@geimist.svg" height="25" width="25"/>Übersicht</a></li>'
+    	<li><a class="navitemselc" href="index.cgi?page=main"><img class="svg" src="images/home_white@geimist.svg" height="25" width="25"/>'$lang_page1'</a></li>'
     else
     	echo '
-    	<li><a class="navitem" href="index.cgi?page=main"><img class="svg" src="images/home_grey3@geimist.svg" height="25" width="25"/>Übersicht</a></li>'
+    	<li><a class="navitem" href="index.cgi?page=main"><img class="svg" src="images/home_grey3@geimist.svg" height="25" width="25"/>'$lang_page1'</a></li>'
     fi
 
 if [[ "$mainpage" == "edit" ]]; then
 	echo '
-	<li><a class="navitemselc" href="index.cgi?page=edit"><img class="svg" src="images/settings_white@geimist.svg" height="25" width="25"/>Konfiguration</a></li>'
+	<li><a class="navitemselc" href="index.cgi?page=edit"><img class="svg" src="images/settings_white@geimist.svg" height="25" width="25"/>'$lang_page2'</a></li>'
 else
 	echo '
-	<li><a class="navitem" href="index.cgi?page=edit"><img class="svg" src="images/settings_grey3@geimist.svg" height="25" width="25"/>Konfiguration</a></li>'
+	<li><a class="navitem" href="index.cgi?page=edit"><img class="svg" src="images/settings_grey3@geimist.svg" height="25" width="25"/>'$lang_page2'</a></li>'
 fi
 
 if [[ "$mainpage" == "timer" ]]; then
 	echo '
-	<li><a class="navitemselc" href="index.cgi?page=timer"><img class="svg" src="images/calendar_white@geimist.svg" height="25" width="25"/>Zeitplaner</a></li>'
+	<li><a class="navitemselc" href="index.cgi?page=timer"><img class="svg" src="images/calendar_white@geimist.svg" height="25" width="25"/>'$lang_page3'</a></li>'
 else
 	echo '
-	<li><a class="navitem" href="index.cgi?page=timer"><img class="svg" src="images/calendar_grey3@geimist.svg" height="25" width="25"/>Zeitplaner</a></li>'
+	<li><a class="navitem" href="index.cgi?page=timer"><img class="svg" src="images/calendar_grey3@geimist.svg" height="25" width="25"/>'$lang_page3'</a></li>'
 fi
 
 if [[ "$mainpage" == "help" ]]; then
 	echo '
-	<li><a class="navitemselc" href="index.cgi?page=help"><img class="svg" src="images/help_white@geimist.svg" height="25" width="25"/>Hilfe</a></li>'
+	<li><a class="navitemselc" href="index.cgi?page=help"><img class="svg" src="images/help_white@geimist.svg" height="25" width="25"/>'$lang_page4'</a></li>'
 else
 	echo '
-	<li><a class="navitem" href="index.cgi?page=help"><img class="svg" src="images/help_grey3@geimist.svg" height="25" width="25"/>Hilfe</a></li>'
+	<li><a class="navitem" href="index.cgi?page=help"><img class="svg" src="images/help_grey3@geimist.svg" height="25" width="25"/>'$lang_page4'</a></li>'
 fi
 
 #   alte status.sh:
@@ -167,7 +172,7 @@ echo '
 	<form action="index.cgi" method="get" autocomplete="on">'
 
 	if [ -z "$mainpage" ]; then
-		echo 'Die Seite konnte nicht geladen werden!'
+		echo 'The page could not be found!'
 	else
 		script="$mainpage.sh"
 		if [ -f "$script" ]; then
