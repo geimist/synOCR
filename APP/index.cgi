@@ -1,4 +1,6 @@
 #!/bin/bash
+# /usr/syno/synoman/webman/3rdparty/synOCR/index.cgi
+
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin
 
 # Zugangsberechtigungen des DSM überprüfen (Syno-Token)
