@@ -1,7 +1,6 @@
 ### You miss your language in synOCR GUI? 
 
 Then, you can help to translate synOCR in your language.  
-(currently only the paket management is multilingual - the synOCR GUI will follow in a future release)
 
 Translate text only between double quotation marks.  
 It is also important that special characters remain in the same place. (e.g. \<br\> / \<b\> …)
@@ -12,7 +11,10 @@ It is also important that special characters remain in the same place. (e.g. \<b
 
 **The following files are needed to translate:**
 
+Mainfile for GUI:
 - ./APP/lang/lang_**\<language\_code\>**.txt
+
+other files for Packetmanagement:   
 - ./PKG/scripts/lang/**\<language_code\>**
 - ./PKG/WIZARD_UIFILES/uninstall\_uifile\_**\<language\_code\>**
 - ./PKG/WIZARD_UIFILES/upgrade\_uifile\_**\<language\_code\>**
