@@ -6,12 +6,13 @@ Then, you can help to translate synOCR in your language.
 Translate text only between double quotation marks.  
 It is also important that special characters remain in the same place. (e.g. \<br\> / \<b\> …)
   
+(The reference file is first German, then English)
 
 -----
 
-
 **The following files are needed to translate:**
 
+- ./APP/lang/lang_**\<language\_code\>**.txt
 - ./PKG/scripts/lang/**\<language_code\>**
 - ./PKG/WIZARD_UIFILES/uninstall\_uifile\_**\<language\_code\>**
 - ./PKG/WIZARD_UIFILES/upgrade\_uifile\_**\<language\_code\>**
