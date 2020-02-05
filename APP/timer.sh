@@ -1,5 +1,5 @@
 #!/bin/bash
-# timer.sh
+# /usr/syno/synoman/webman/3rdparty/synOCR/timer.sh
 #right_timeplaner=1 # DEV: erzwungen, da nicht explizit hinterlegt / Prüfung evtl. löschen
 timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 
@@ -11,7 +11,7 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 	fi
 
 	if [[ "$page" == "timer-set-4" ]]; then
-		[ -n "$timer_frequenz" ] || echo 'Frequenz konnte nicht übertragen werden' >> "$stop"
+		[ -n "$timer_frequenz" ] || echo "$lang_timer_set4" >> "$stop"
 	fi
 	
 	# Funktionen
@@ -33,9 +33,9 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 		timer=$(echo $timer | sed 's/ /,/g;s/7/0/g')
 		sed -i "/$variable=/d" "$var"
 		echo "timer=\"$timer\"" >> "$var"
-		[ -n "$timer" ] || echo 'Es wurde kein Tag ausgewählt!' >> "$stop"
-		[ -n "$timer_hour" ] || echo 'Es wurde keine Stunde ausgewählt!' >> "$stop"
-		[ -n "$timer_minute" ] || echo 'Es wurde keine Minute ausgewählt!' >> "$stop"
+		[ -n "$timer" ] || echo "$lang_timer_set3_1" >> "$stop"
+		[ -n "$timer_hour" ] || echo "$lang_timer_set3_2" >> "$stop"
+		[ -n "$timer_minute" ] || echo "$lang_timer_set3_3" >> "$stop"
 
 		if [[ "$timer_times" == "one" ]]; then
 			echo '<meta http-equiv="refresh" content="0; url=index.cgi?page=timer-set-5">'
@@ -46,31 +46,25 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 		[ -f "$var" ] && rm "$var"
 		if [[ "$page" == "timer-delete-query" ]]; then
 			echo '
-		    <p class="center" style="'$synotrred';">
-				Soll der Cronjob wirklich entfernt werden?<br /><br /><b>'$(echo "$timer_scriptname" | sed 's/\\//g')'</b><br /><br /><br />
-				<a href="index.cgi?page=timer-delete&timer_scriptname='$encode_timer_scriptname'" class="red_button">Ja</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=timer" class="button">Nein</a></p>'  >> "$stop"
+		    <p class="center" style="'$synocrred';">'$lang_timer_delete_1'<br /><br /><b>'$(echo "$timer_scriptname" | sed 's/\\//g')'</b><br /><br /><br />
+				<a href="index.cgi?page=timer-delete&timer_scriptname='$encode_timer_scriptname'" class="red_button">'$lang_yes'</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=timer" class="button">'$lang_no'</a></p>'  >> "$stop"
 		elif [[ "$page" == "timer-delete" ]]; then
 			sed -i "/synOCR-start.sh/d" "/etc/crontab"; exit_delete=$?
 			if [[ "$exit_delete" == "0" ]]; then
 				echo '
-					<p class="center" style="'$green';">Der Cronjob wurde gelöscht!<br /><br /><b>synOCR-start.sh</b><br /><br /><br /><a href="index.cgi?page=timer" class="blue_button">weiter</a><br>' >> "$stop"
+					<p class="center" style="'$green';">'$lang_timer_delete_2'<br /><br /><b>synOCR-start.sh</b><br /><br /><br /><a href="index.cgi?page=timer" class="blue_button">'$lang_buttonnext'</a><br>' >> "$stop"
 			else
-				echo '<p class="center" style="'$synotrred';">Der Cronjob konnte leider nicht gelöscht werden!<br /><br /><b>'$(echo "$timer_scriptname" | sed 's/\\//g')'</b><br /><br /><br /><a href="index.cgi?page=timer" class="button">weiter</a>' >> "$stop"
+				echo '<p class="center" style="'$synocrred';">'$lang_timer_delete_3'<br /><br /><b>'$(echo "$timer_scriptname" | sed 's/\\//g')'</b><br /><br /><br /><a href="index.cgi?page=timer" class="button">'$lang_buttonnext'</a>' >> "$stop"
 			fi
 		fi
 	elif [[ "$page" == "timer" ]]; then
 		echo '
 	    <div id="Content_1Col">
 			<div class="Content_1Col_full">
-    		    <div class="title">
-    		        synOCR Zeitplaner
-    		    </div>
-			<p class="center">'
+    		    <div class="title">synOCR '$lang_page3'</div><p class="center">'
             i="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 		echo '
-			<button name="page" value="timer-set-1" class="blue_button">Neuer Zeitplan</button>
-			</p>
-			<br><br>
+			<button name="page" value="timer-set-1" class="blue_button">'$lang_timer_button_new'</button></p><br><br>
             <fieldset>'
 		crontab=$(cat /etc/crontab | awk -F $'\t' 'NR > 1 {print $1 " " $2 " " $3 " " $4 " " $5 " " $6 " " $7 " " $8}' | sed 's/ $//' | grep -E 'synOCR-start.sh')
 		if [ -n "$crontab" ]; then  # bei vorhandenem Zeitplan
@@ -93,33 +87,33 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
                 	<br />
                     <details><p>
                     <summary>
-                        <span class="detailsitem">Aktueller Croneintrag für synOCR</span>
+                        <span class="detailsitem">'$lang_timer_currentcron_title'</span>
                     </summary></p>
                         <p>
                 
 					<table>
-					<tr><td class="left_25">Programmpfad</td><td>: <b style="'$grey'; font-weight: normal;"> '$(echo "$timer_scriptname" | sed 's/\\//g')'</b></td></tr>'
+					<tr><td class="left_25">'$lang_timer_currentcron_sub1'</td><td>: <b style="'$grey'; font-weight: normal;"> '$(echo "$timer_scriptname" | sed 's/\\//g')'</b></td></tr>'
     				if [[ "$cron_day" == "*" ]]; then
-    					echo '<tr><td class="left_25">Wochentag(e)</td><td>: <b style="'$grey'; font-weight: normal;"> Jeden Tag</b></td></tr>'
+    					echo '<tr><td class="left_25">'$lang_timer_currentcron_sub2'</td><td>: <b style="'$grey'; font-weight: normal;"> '$lang_timer_everyday'</b></td></tr>'
     				else
-    					dayname=$(echo "$cron_day" | sed 's/,/, /g;s/1/Montag/g;s/2/Dienstag/g;s/3/Mittwoch/g;s/4/Donnerstag/g;s/5/Freitag/g;s/6/Samstag/g;s/0/Sonntag/g;')
-    					echo '<tr><td class="left_25">Wochentag(e)</td><td>: <b style="'$grey'; font-weight: normal;"> '$dayname'</b></td></tr>'
+    					dayname=$(echo "$cron_day" | sed 's/,/, /g;s/1/'$lang_timer_monday'/g;s/2/'$lang_timer_tuesday'/g;s/3/'$lang_timer_wednesday'/g;s/4/'$lang_timer_thursday'/g;s/5/'$lang_timer_friday'/g;s/6/'$lang_timer_saturday'/g;s/0/'$lang_timer_sunday'/g;')
+    					echo '<tr><td class="left_25">'$lang_timer_currentcron_sub2'</td><td>: <b style="'$grey'; font-weight: normal;"> '$dayname'</b></td></tr>'
     				fi
     				if [[ "$cron_hour" == *\/1 ]]; then
     					echo '
-    						<tr><td class="left_25">Uhrzeit / Intervall</td><td>: <b style="'$grey'; font-weight: normal;"> von '$(echo "$cron_hour" | sed 's/-.*//;s#\(^[0-9]$\)#0\1#g')':'$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')' Uhr bis '$(echo "$cron_hour" | sed 's/.*-//;s/\/.*//')':'$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')' Uhr - stündlich </b></td></tr>'
+    						<tr><td class="left_25">'$lang_timer_time' / '$lang_timer_interval'</td><td>: <b style="'$grey'; font-weight: normal;"> '$lang_timer_from' '$(echo "$cron_hour" | sed 's/-.*//;s#\(^[0-9]$\)#0\1#g')':'$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')' '$lang_timer_oclock' '$lang_timer_up2' '$(echo "$cron_hour" | sed 's/.*-//;s/\/.*//')':'$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')' '$lang_timer_oclock' - '$lang_timer_hourly' </b></td></tr>'
     				elif [[ "$cron_hour" == *\/[2-9] ]] || [[ "$cron_hour" == *\/[1-2][0-3] ]]; then
     					echo '
-    						<tr><td class="left_25">Uhrzeit und Intervall</td><td>: <b style="'$grey'; font-weight: normal;"> von '$(echo "$cron_hour" | sed 's/-.*//;s#\(^[0-9]$\)#0\1#g')':'$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')' Uhr bis '$(echo "$cron_hour" | sed 's/.*-//;s/\/.*//;s#\(^[0-9]$\)#0\1#g')':'$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')' Uhr - alle '$(echo "$cron_hour" | sed 's/.*\///')' Stunden </b></td></tr>'
+    						<tr><td class="left_25">'$lang_timer_time' '$lang_and' '$lang_timer_interval'</td><td>: <b style="'$grey'; font-weight: normal;"> '$lang_timer_from' '$(echo "$cron_hour" | sed 's/-.*//;s#\(^[0-9]$\)#0\1#g')':'$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')' '$lang_timer_oclock' '$lang_timer_up2' '$(echo "$cron_hour" | sed 's/.*-//;s/\/.*//;s#\(^[0-9]$\)#0\1#g')':'$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')' '$lang_timer_oclock' - '$lang_timer_all' '$(echo "$cron_hour" | sed 's/.*\///')' '$lang_timer_houres' </b></td></tr>'
     				else
     					echo '
-    						<tr><td class="left_25">Uhrzeit</td><td>: <b style="'$grey'; font-weight: normal;"> um '"$(echo "$cron_hour" | sed 's#\(^[0-9]$\)#0\1#g')"':'"$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')"' Uhr</b></td></tr>'
+    						<tr><td class="left_25">'$lang_timer_time'</td><td>: <b style="'$grey'; font-weight: normal;"> '$lang_timer_at' '"$(echo "$cron_hour" | sed 's#\(^[0-9]$\)#0\1#g')"':'"$(echo "$cron_minute" | sed 's#\(^[0-9]$\)#0\1#g')"' '$lang_timer_oclock'</b></td></tr>'
     				fi
 				echo '
-					<tr><td class="left_25">Crontab</td><td>: <b style="'$grey'; font-weight: normal;"> '"$i"'</b></td></tr></table><br /><br />'
+					<tr><td class="left_25">'$lang_timer_crontab'</td><td>: <b style="'$grey'; font-weight: normal;"> '"$i"'</b></td></tr></table><br /><br />'
         		echo '
         		    <p class="center">
-        		    <button name="page" class="red_button"><a href="index.cgi?page=timer-delete-query&timer_scriptname='$timer_scriptname'" style="color: white;">Löschen</a></button>
+        		    <button name="page" class="red_button"><a href="index.cgi?page=timer-delete-query&timer_scriptname='$timer_scriptname'" style="color: white;">'$lang_delete'</a></button>
         		    &nbsp;&nbsp;</p>
                     </details></p><br>'
 			done
@@ -154,17 +148,17 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 			<div id="Content_1Col">
     			<div class="Content_1Col_full">
     			    <p>&nbsp;</p>
-    			    <div class="title">Zeitplan einrichten</div>
+    			    <div class="title">'$lang_timer_create_title'</div>
         			<div class="info">
-        			<h3>&raquo; 1. Wie oft soll synOCR pro Tag (pro Woche) ausgeführt werden?<br>
-        			<span style="color: #BD0010;">INFO: Der DSM-Sicherheitsbereater wird den zusätzlichen Croneintrag (da für DSM unbekannt) bemängeln!</span></h3>
+        			<h3>&raquo; 1. '$lang_timer_create_set1_1'<br>
+        			<span style="color: #BD0010;">'$lang_timer_create_securitywarn'</span></h3>
             			<div>
                 			<div>
                 			<input class="left" type="radio" id="radio-one" name="timer_times" value="one" '${checked_one:+checked}' '${disable_times:+disabled}'/>
-                			<label class="left" style="width: 220px;" for="radio-one">Einmal am Tag</label>
+                			<label class="left" style="width: 220px;" for="radio-one">'$lang_timer_create_set1_1xday'</label>
                     			<div>
                     			<input class="left" type="radio" id="radio-more" name="timer_times" value="more" '${checked_more:+checked}' '${disable_times:+disabled}'/>
-                    			<label class="left" style="width: 220px;" for="radio-more">Mehrmals am Tag</label>
+                    			<label class="left" style="width: 220px;" for="radio-more">'$lang_timer_create_set1_Xxday'</label>
                     			</div>
                 			</div>
             			</div><br /><br />
@@ -182,7 +176,7 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
                     <div class="divtr">
                         <div class="divtd_left">
 					        <div class="info">
-					        <h3>&raquo; 2. An den folgenden Tagen ausführen:</h3>'
+					        <h3>&raquo; 2. '$lang_timer_create_set2_1':</h3>'
 				tage=(1 2 3 4 5 6 0)
 				for tag in ${tage[*]}; do
 					unset found
@@ -194,19 +188,19 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 						fi
 					done
 					if (( $tag == 1 )); then
-						dayname='Montag'
+						dayname=$lang_timer_monday
 					elif (( $tag == 2 )); then
-						dayname='Dienstag'
+						dayname=$lang_timer_tuesday
 					elif (( $tag == 3 )); then
-						dayname='Mittwoch'
+						dayname=$lang_timer_wednesday
 					elif (( $tag == 4 )); then
-						dayname='Donnerstag'
+						dayname=$lang_timer_thursday
 					elif (( $tag == 5 )); then
-						dayname='Freitag'
+						dayname=$lang_timer_friday
 					elif (( $tag == 6 )); then
-						dayname='Samstag'
+						dayname=$lang_timer_saturday
 					elif (( $tag == 0 )); then
-						dayname='Sonntag'
+						dayname=$lang_timer_sunday
 					fi
 
 					if [[ "$page" == "timer-set-2" ]]; then
@@ -245,13 +239,13 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
                     <div class="divtd_right">
 					<div class="info">'
 				if [[ "$timer_times" != "more" ]]; then
-					echo '<h3>&raquo; 3. Ausführungszeit:</h3>'
+					echo '<h3>&raquo; 3. '$lang_timer_create_set3_1':</h3>'
 				else
-					echo '<h3>&raquo; 3. Ausführungszeit von:</h3>'
+					echo '<h3>&raquo; 3. '$lang_timer_create_set3_1' '$lang_timer_from':</h3>'
 				fi
 				echo '
 					<p><select name="timer_hour" style="width: 100px;">
-					<option selected="selected" value="" disabled>Stunde</option>'
+					<option selected="selected" value="" disabled>'$lang_timer_houre'</option>'
 				set_hour=0
 				while [ $set_hour -le 23 ]; do
 					show_hour=$(echo "$set_hour" | sed 's#\(^[0-9]$\)#0\1#g')
@@ -265,7 +259,7 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 				echo '
 					</select>&nbsp;&nbsp;:
 					<select name="timer_minute" style="width: 100px;">
-					<option selected="selected" value="" disabled>Minute</option>'
+					<option selected="selected" value="" disabled>'$lang_timer_minute'</option>'
 				set_minute=0
 				while [ $set_minute -le 59 ]; do
 					show_minute=$(echo "$set_minute" | sed 's#\(^[0-9]$\)#0\1#g')
@@ -287,10 +281,10 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 					bc_max=$(echo "$bc_diff" | sed 's/[0-9][0-9]$//')
 					bc_x=$((bc_max+1))
 					echo '
-						<h3>&raquo; 4. Anzahl der Wiederholungen:</h3>
+						<h3>&raquo; 4. '$lang_timer_create_set4_1':</h3>
 						<p><select name="timer_frequenz" style="width: 228px;">
-						<option selected="selected" value="" disabled>Frequenz</option>
-						<option selected="selected" value="1" '${disable_frequenz:+disabled}'>Jede Stunde</option>'
+						<option selected="selected" value="" disabled>'$lang_timer_freq'</option>
+						<option selected="selected" value="1" '${disable_frequenz:+disabled}'>'$lang_timer_everyhoure'</option>'
 						
                         # weitere Frequenzen fehlen noch:
 						# <option selected="selected" value="1" '${disable_frequenz:+disabled}'>Jede Minute</option>
@@ -304,9 +298,9 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 						bc_end=$((bc_end+timer_hour))
 						if [[ $set_frequency == $timer_frequenz ]]; then
 							bc_z="$bc_end"
-							echo '<option value="'$set_frequency'" selected '${disable_frequenz:+disabled}'>alle '$set_frequency' Stunden</option>'
+							echo '<option value="'$set_frequency'" selected '${disable_frequenz:+disabled}'>'$lang_timer_all' '$set_frequency' '$lang_timer_houres'</option>'
 						else
-							echo '<option value="'$set_frequency'" '${disable_frequenz:+disabled}'>alle '$set_frequency' Stunden</option>'
+							echo '<option value="'$set_frequency'" '${disable_frequenz:+disabled}'>'$lang_timer_all' '$set_frequency' '$lang_timer_houres'</option>'
 						fi
 						set_frequency=`expr $set_frequency + 1`
 					done
@@ -316,9 +310,9 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 
 			if [[ "$timer_times" == "more" ]] && [[ "$page" == "timer-set-4" ]]; then
 				echo '
-					<h3>&raquo; 5. Ausführungszeit bis:</h3>
+					<h3>&raquo; 5. '$lang_timer_create_set3_1' '$lang_timer_up2':</h3>
 					<p><select name="timer_to_hour" style="width: 100px;">
-					<option selected="selected" value="" disabled>Stunde</option>'
+					<option selected="selected" value="" disabled>'$lang_timer_houre'</option>'
 				set_hour=$((timer_hour+timer_frequenz))
 				while [ $set_hour -le 23 ]; do
 					show_hour=$(echo "$set_hour" | sed 's#\(^[0-9]$\)#0\1#g')
@@ -333,7 +327,7 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 				echo '
 					</select>&nbsp;&nbsp;:
 					<select name="timer_to_minute" style="width: 100px;">
-					<option selected="selected" value="'$timer_minute'" disabled>Minute</option>
+					<option selected="selected" value="'$timer_minute'" disabled>'$lang_timer_minute'</option>
 					<option selected="selected" value="'$timer_minute'" selected>'$show_minute'</option>
 					</select></p><br />'
 			fi
@@ -345,37 +339,37 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 			</div>
 			<div class="clear"></div>'
 		else
-			echo 'treffe bitte eine Auswahl!' >> "$stop"
+			echo $lang_timer_create_set4_2 >> "$stop"
 		fi
 
 		elif [[ "$page" == "timer-set-5" ]]; then
-			dayname=$(echo $timer | sed 's/,/, /g;s/1/Montag/g;s/2/Dienstag/g;s/3/Mittwoch/g;s/4/Donnerstag/g;s/5/Freitag/g;s/6/Samstag/g;s/0/Sonntag/g;')
+			dayname=$(echo $timer | sed 's/,/, /g;s/1/'$lang_timer_monday'/g;s/2/'$lang_timer_tuesday'/g;s/3/'$lang_timer_wednesday'/g;s/4/'$lang_timer_thursday'/g;s/5/'$lang_timer_friday'/g;s/6/'$lang_timer_saturday'/g;s/0/'$lang_timer_sunday'/g;')
 			show_hour=$(echo "$timer_hour" | sed 's#\(^[0-9]$\)#0\1#g')
 			show_to_hour=$(echo "$timer_to_hour" | sed 's#\(^[0-9]$\)#0\1#g')
 			show_minute=$(echo "$timer_minute" | sed 's#\(^[0-9]$\)#0\1#g')
-			[ -n "$timer_scriptname" ] || echo 'Scriptname konnte nicht übertragen werden' >> "$stop"
-			[ -n "$dayname" ] || echo 'Dayname konnte nicht übertragen werden' >> "$stop"
-			[ -n "$timer_hour" ] || echo 'Stunde konnte nicht übertragen werden' >> "$stop"
-			[ -n "$timer_minute" ] || echo 'Minute konnte nicht übertragen werden' >> "$stop"
+			[ -n "$timer_scriptname" ] || echo $lang_timer_create_set5_1 >> "$stop"
+			[ -n "$dayname" ] || echo $lang_timer_create_set5_2 >> "$stop"
+			[ -n "$timer_hour" ] || echo $lang_timer_create_set5_3 >> "$stop"
+			[ -n "$timer_minute" ] || echo $lang_timer_create_set5_4 >> "$stop"
 			if [[ "$timer_times" == "more" ]]; then
-				[ -n "$timer_to_hour" ] || echo 'Stunde -bis- konnte nicht übertragen werden' >> "$stop"
-				[ -n "$timer_frequenz" ] || echo 'Frequenz konnte nicht übertragen werden' >> "$stop"
+				[ -n "$timer_to_hour" ] || echo $lang_timer_create_set5_5 >> "$stop"
+				[ -n "$timer_frequenz" ] || echo $lang_timer_create_set5_6 >> "$stop"
 			fi
 			if [ ! -f "$stop" ]; then
 			echo '
 				<div id="Content_1Col">
 				<div class="Content_1Col_full"><p>&nbsp;</p>
-				<h2>Folgende Daten werden übernommen...</h2>
-				<br><div class="info"><p class="center">Das Script <b>'"$timer_scriptname"'</b><br /><br />wird am <b>'"$dayname"'</b> '
+				<h2>'$lang_timer_create_set5_7'</h2>
+				<br><div class="info"><p class="center">'$lang_timer_create_set5_7a' <b>'"$timer_scriptname"'</b><br /><br />'$lang_timer_create_set5_7b' <b>'"$dayname"'</b> '
 			if [[ "$timer_times" != "more" ]]; then
-				echo 'um <b>'$show_hour':'$show_minute' Uhr</b> ausgeführt!<br /><br />'
+				echo $lang_timer_at' <b>'$show_hour':'$show_minute' '$lang_timer_oclock'</b> '$lang_timer_create_set5_7c'!<br /><br />'
 			else
-				echo '<br /><br />in der Zeit von <b>'$show_hour':'$show_minute' Uhr</b> bis <b>'$show_to_hour':'$show_minute' Uhr</b>, '
+				echo '<br /><br />'$lang_timer_create_set5_7d' <b>'$show_hour':'$show_minute' '$lang_timer_oclock'</b> '$lang_timer_up2' <b>'$show_to_hour':'$show_minute' '$lang_timer_oclock'</b>, '
 			if [ -n "$timer_frequenz" ]; then
 				if (( $timer_frequenz == 1 )); then
-					echo '<b>stündlich</b> ausgeführt!<br /><br />'
+					echo '<b>'$lang_timer_hourly'</b> '$lang_timer_create_set5_7c'!<br /><br />'
 				else
-					echo '<b>alle '$timer_frequenz' Stunden</b> ausgeführt!<br /><br />'
+					echo '<b>'$lang_timer_all' '$timer_frequenz' '$lang_timer_houres'</b> '$lang_timer_create_set5_7c'!<br /><br />'
 				fi
 			fi
 		fi
@@ -390,11 +384,11 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 		
 		echo '
 			<div class="Content_1Col_full"><p>&nbsp;</p>
-			<div class="info"><p class="center"><b>Folgender Eintrag wird an CRONTAB übergeben:</b><br /><br />
+			<div class="info"><p class="center"><b>'$lang_timer_create_result':</b><br /><br />
 			'$timer_minute $timer_hour$timer_to_hour$timer_frequenz' * * '$timer'</p></div></div></div><div class="clear"></div>'
 			fi
 		elif [[ "$page" == "timer-set-6" ]]; then
-			dayname=$(echo $timer | sed 's/,/, /g;s/1/Montag/g;s/2/Dienstag/g;s/3/Mittwoch/g;s/4/Donnerstag/g;s/5/Freitag/g;s/6/Samstag/g;s/0/Sonntag/g;')
+			dayname=$(echo $timer | sed 's/,/, /g;s/1/'$lang_timer_monday'/g;s/2/'$lang_timer_tuesday'/g;s/3/'$lang_timer_wednesday'/g;s/4/'$lang_timer_thursday'/g;s/5/'$lang_timer_friday'/g;s/6/'$lang_timer_saturday'/g;s/0/'$lang_timer_sunday'/g;')
 			if [ -n "$timer_to_hour" ]; then
 				timer_to_hour="-$timer_to_hour"
 			fi
