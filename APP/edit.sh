@@ -23,8 +23,8 @@ new_profile ()
 if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile" ]]; then
     if [[ "$page" == "edit-del_profile-query" ]]; then
         echo '<p class="center" style="'$synotrred';">
-            Soll das aktuelle Profil (<b>'$profile'</b>) gelöscht werden?<br /><br /><br />
-            <a href="index.cgi?page=edit-del_profile" class="red_button">Ja</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=edit" class="button">Nein</a></p>'  >> "$stop"
+            '$lang_edit_delques_1' (<b>'$profile'</b>) '$lang_edit_delques_2'<br /><br /><br />
+            <a href="index.cgi?page=edit-del_profile" class="red_button">'$lang_yes'</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=edit" class="button">'$lang_no'</a></p>'  >> "$stop"
     elif [[ "$page" == "edit-del_profile" ]]; then
         sqlite3 ./etc/synOCR.sqlite "DELETE FROM config WHERE profile_ID='$profile_ID';"
         
@@ -38,11 +38,11 @@ if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile"
     
         sleep 1
         if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='$profile_ID' ") = "0" ] ; then
-            echo '<p class="center" style="'$green';"><b>Das Profil <b>'$profile'</b> wurde gelöscht.</b></p>
-                <br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />' >> "$stop"
+            echo '<p class="center" style="'$green';"><b>'$lang_edit_profname' <b>'$profile'</b> '$lang_edit_delfin2'.</b></p>
+                <br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />' >> "$stop"
         else
-            echo '<p class="center" style="'$green';">Fehler beim Löschen des Profils (<b>'$profile'</b>)!</p>
-                <br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />' >> "$stop"
+            echo '<p class="center" style="'$green';">'$lang_edit_deler' (<b>'$profile'</b>)!</p>
+                <br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />' >> "$stop"
         fi
     fi
 fi
@@ -52,14 +52,14 @@ fi
 if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile" ]]; then
     if [[ "$page" == "edit-dup-profile-query" ]]; then
         echo '<div class="Content_1Col_full">'
-        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Gib bitte einen Namen für das duplizierte Profil ein:</p><br />
-        <label style="width: auto;padding: 0.5em 0.5em 0.25em 0.25em;"><b>Profilname: </b></label>' #style="vertical-align: bottom;" style="width: 200px;"
+        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_dup1':</p><br />
+        <label style="width: auto;padding: 0.5em 0.5em 0.25em 0.25em;"><b>'$lang_edit_profname': </b></label>' #style="vertical-align: bottom;" style="width: 200px;"
         if [ -n "$new_profile_value" ]; then
             echo '<input type="text" style="width: 200px;" name="new_profile_value" value="'$new_profile_value'" />'
         else
             echo '<input type="text" style="width: 200px;" name="new_profile_value" value="" />'
         fi
-        echo '</p></div><br /><p class="center"><button name="page" value="edit-dup-profile" class="blue_button">erstellen...</button></p><br />
+        echo '</p></div><br /><p class="center"><button name="page" value="edit-dup-profile" class="blue_button">'$lang_edit_create'...</button></p><br />
             </div><div class="clear"></div>'
     elif [[ "$page" == "edit-dup-profile" ]]; then
         echo '<div class="Content_1Col_full">'
@@ -76,19 +76,19 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
 
                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
                 if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL2") = "1" ] ; then
-                    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Das Profil <b>'$profile'</b> wurde zum Profil <b>'$new_profile_value'</b> geclont.</p><br /></div>'
+                    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_profname' <b>'$profile'</b> '$lang_edit_dup2' <b>'$new_profile_value'</b> '$lang_edit_dup3'.</p><br /></div>'
                 else
-                    echo '<br /><div class="warning"><br /><p class="center">Fehler beim Duplizieren des Profils!</p><br /></div>'
+                    echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_dup4'</p><br /></div>'
                 fi
             else
-                echo '<br /><div class="warning"><br /><p class="center">Das Profil konnte nicht geclont werden,
-                <br>da der Profilname <b>'$new_profile_value'</b> bereits vorhanden ist!</p><br /></div>'
+                echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_dup4'
+                <br>'$lang_edit_dup5' <b>'$new_profile_value'</b> '$lang_edit_dup6'</p><br /></div>'
             fi
         else
-            echo '<br /><div class="warning"><br /><p class="center">Das Profil konnte nicht geclont werden,
-            <br>da kein Profilname definiert wurde!</p><br /></div>'
+            echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_dup4'
+            <br>'$lang_edit_dup7'</p><br /></div>'
         fi
-        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
+        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />'
         echo '</div><div class="clear"></div>'
     fi
 fi
@@ -98,14 +98,14 @@ fi
 if [[ "$page" == "edit-new_profile-query" ]] || [[ "$page" == "edit-new_profile" ]]; then
     if [[ "$page" == "edit-new_profile-query" ]]; then
         echo '<div class="Content_1Col_full">'
-        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Gib bitte einen Namen für das neue Profil ein:</p><br />
-        <label style="width: auto;padding: 0.5em 0.5em 0.25em 0.25em;"><b>Profilname: </b></label>' #style="vertical-align: bottom;" style="width: 200px;"
+        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_new1':</p><br />
+        <label style="width: auto;padding: 0.5em 0.5em 0.25em 0.25em;"><b>'$lang_edit_profname': </b></label>' #style="vertical-align: bottom;" style="width: 200px;"
         if [ -n "$new_profile_value" ]; then
             echo '<input type="text" style="width: 200px;" name="new_profile_value" value="'$new_profile_value'" />'
         else
             echo '<input type="text" style="width: 200px;" name="new_profile_value" value="" />'
         fi
-        echo '</p></div><br /><p class="center"><button name="page" value="edit-new_profile" class="blue_button">erstellen...</button></p><br />
+        echo '</p></div><br /><p class="center"><button name="page" value="edit-new_profile" class="blue_button">'$lang_edit_create'...</button></p><br />
             </div><div class="clear"></div>'
     elif [[ "$page" == "edit-new_profile" ]]; then
         echo '<div class="Content_1Col_full">'
@@ -114,19 +114,19 @@ if [[ "$page" == "edit-new_profile-query" ]] || [[ "$page" == "edit-new_profile"
             if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
                 new_profile "$new_profile_value"
                 if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "1" ] ; then
-                    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Ein neues Profil mit dem Namen <b>'$new_profile_value'</b> wurde erstellt.</p><br /></div>'
+                    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_new2' <b>'$new_profile_value'</b> '$lang_edit_new3'.</p><br /></div>'
                 else
-                    echo '<br /><div class="warning"><br /><p class="center">Fehler beim Erstellen des Profils!</p><br /></div>'
+                    echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_new4'</p><br /></div>'
                 fi
             else
-                echo '<br /><div class="warning"><br /><p class="center">Das neue Profil konnte nicht erstellt werden,
-                <br>da der Profilname <b>'$new_profile_value'</b> bereits vorhanden ist!</p><br /></div>'
+                echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_new4'
+                <br>'$lang_edit_dup5' <b>'$new_profile_value'</b> '$lang_edit_dup6'</p><br /></div>'
             fi
         else
-            echo '<br /><div class="warning"><br /><p class="center">Das neue Profil konnte nicht erstellt werden,
-            <br>da kein Profilname definiert wurde!</p><br /></div>'
+            echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_new4'
+            <br>'$lang_edit_dup7'</p><br /></div>'
         fi
-        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
+        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />'
         echo '</div><div class="clear"></div>'
     fi
 fi
@@ -141,8 +141,8 @@ if [[ "$page" == "edit-save" ]]; then
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
     
     echo '<div class="Content_1Col_full">'
-    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Änderungen wurden gespeichert</p><br /></div>'
-    echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
+    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_savefin'</p><br /></div>'
+    echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />'
     echo '</div><div class="clear"></div>'
 fi
 
@@ -190,27 +190,21 @@ if [[ "$page" == "edit" ]]; then
     <div id="Content_1Col">
     <div class="Content_1Col_full">
         <div class="title">
-            synOCR Einstellungen
-        </div>Trage hier deine Einstellungen ein und passe die Pfade an.
-        <br>Hilfe für die einzelnen Felder erhältst du über das blaue Info-Symbol am rechten Rand.
-        <br>
-        <br>Über die Profile kannst du beliebig viele Konfigurationen anlegen, welche alle bei jedem 
-        Programmlauf abgearbeitet werden. Man kann jedes Profil über das entsprechende Feld auch deaktivieren.
-        <br>
-        <br>Achte unbedingt darauf, die kompletten Pfade inkl. Volume (z.B. <code>/volume1/…</code>) einzutragen und achte auf korrekte Groß- und Kleinschreibung. 
-        Das sicherste ist, wenn du in der Filestation den gewünschten Ordner suchst und du dir über Rechtsklick die Eigenschaften anzeigen lässt. 
-        In diesem Dialog kannst du dir den korrekten Pfad kopieren.
-        <br><br>'
+            synOCR '$lang_page2'
+        </div>'$lang_edit_summary1'<br>
+        '$lang_edit_summary2'<br><br>
+        '$lang_edit_summary3'<br><br>
+        '$lang_edit_summary4'<br><br>'
         
         if [ ! -z "$DBupgradelog" ] ; then
-            echo "<p>Ergebnis von DB-Update: $DBupgradelog </p>"
+            echo "<p>'$lang_edit_dbupdate': $DBupgradelog </p>"
         fi
 
 # Profilauswahl:
     sSQL="SELECT profile_ID, profile FROM config "
     sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
     echo '<p>
-        <label style="width: 200px;padding: 0.5em 0.5em 0.25em 0.25em;"><b>wechsle zu Profil</b></label>
+        <label style="width: 200px;padding: 0.5em 0.5em 0.25em 0.25em;"><b>'$lang_edit_change_profile'</b></label>
         <select name="getprofile" style="width: 200px;">'
 
         IFS=$'\012'
@@ -227,7 +221,7 @@ if [[ "$page" == "edit" ]]; then
             fi
         done
 
-    echo '</select><button name="page" value="edit" class="blue_button" style="float:right;">wechseln</button>&nbsp;'
+    echo '</select><button name="page" value="edit" class="blue_button" style="float:right;">'$lang_buttonchange'</button>&nbsp;'
 
     # -> Abschnitt Allgemein
 
@@ -237,16 +231,14 @@ if [[ "$page" == "edit" ]]; then
     <br />
     <details><p>
     <summary>
-        <span class="detailsitem">Allgemein</span>
+        <span class="detailsitem">'$lang_edit_set1_title'</span>
     </summary></p>
     <p>' #ab hier steht der Text, der auf- und zugeklappt werden soll.
-    # <span style="color:#FFFFFF;">_</span>
-    # <div id="ExpFieldset">    </div>
-    
+   
     # Profilname
     echo '
         <p>
-        <label>Profilname</label>'
+        <label>'$lang_edit_profname'</label>'
         if [ -n "$profile" ]; then
             echo '<input type="text" name="profile" value="'$profile'" />'
         else
@@ -254,30 +246,30 @@ if [[ "$page" == "edit" ]]; then
         fi
         echo '<a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Profile können individuell benannt werden (z.B. Geschäft, Max)</span></a></p>'
+            <span>'$lang_edit_set1_profilename_help'</span></a></p>'
 
     # Profil aktiviert?
     echo '
         <p>
-        <label>Profil aktivieren / deaktivieren</label>
+        <label>'$lang_edit_set1_profile_activ_title'</label>
         <select name="active">'
         if [[ "$active" == "1" ]]; then
-            echo '<option value="1" selected>Profil aktiviert</option>'
+            echo '<option value="1" selected>'$lang_edit_set1_profile_activ'</option>'
         else
-            echo '<option value="1">Profil aktiviert</option>'
+            echo '<option value="1">'$lang_edit_set1_profile_activ'</option>'
         fi
         if [[ "$active" == "0" ]]; then
-            echo '<option value="0" selected>Profil deaktiviert</option>'
+            echo '<option value="0" selected>'$lang_edit_set1_profile_inactiv'</option>'
         else
-            echo '<option value="0">Profil deaktiviert</option>'
+            echo '<option value="0">'$lang_edit_set1_profile_inactiv'</option>'
         fi
 
     echo '
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Profile können aktiviert, oder deaktiviert werden.<br>
-            Deaktivierte Profile können zwar modifiziert werden, werden aber von synOCR nicht ausgeführt.</span></a>
+            <span>'$lang_edit_set1_profile_activ_help1'<br>
+            '$lang_edit_set1_profile_activ_help2'</span></a>
         </p>'
     
     # Profile-ID (ohne GUI nach $var schreiben)
@@ -289,7 +281,7 @@ if [[ "$page" == "edit" ]]; then
     # SOURCEDIR
     echo '
         <p>
-        <label>Quellverzeichnis</label>'
+        <label>'$lang_edit_set1_sourcedir_title'</label>'
         if [ -n "$INPUTDIR" ]; then
             echo '<input type="text" name="INPUTDIR" value="'$INPUTDIR'" />'
         else
@@ -298,14 +290,14 @@ if [[ "$page" == "edit" ]]; then
         echo '
             <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>In diesem Verzeichnis wird nach PDF-Dateien gesucht (nicht rekursiv).<br>
-            Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/input/)</span></a>
+            <span>'$lang_edit_set1_sourcedir_help1'<br>
+            '$lang_edit_set1_sourcedir_help2'</span></a>
             </p>'
 
     # OUTPUTDIR
     echo '
         <p>
-        <label>Zielverzeichnis</label>'
+        <label>'$lang_edit_set1_targetdir_title'</label>'
         if [ -n "$OUTPUTDIR" ]; then
             echo '<input type="text" name="OUTPUTDIR" value="'$OUTPUTDIR'" />'
         else
@@ -314,14 +306,14 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Ausgabeverzeichnis der fertigen PDF-Dateien (wird ggf. erstellt)
-            Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/output/)</span></a>
+            <span>'$lang_edit_set1_targetdir_help1'<br>
+            '$lang_edit_set1_targetdir_help2'</span></a>
         </p>'
 
     # BACKUPDIR
     echo '
         <p>
-        <label>Backup-Verzeichnis</label>'
+        <label>'$lang_edit_set1_backupdir_title'</label>'
         if [ -n "$BACKUPDIR" ]; then
             echo '<input type="text" name="BACKUPDIR" value="'$BACKUPDIR'" />'
         else
@@ -330,15 +322,15 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Sofern hier ein gültiger Pfad eingetragen wird, werden die Originaldateien hier gesichert (wird ggf. erstellt).<br>
-            Ist kein gültiges Verzeichnis hinterlegt, werden die Originaldateien endgültig gelöscht.
-            Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/Backup/)</span></a>
+            <span>'$lang_edit_set1_backupdir_help1'<br>
+            '$lang_edit_set1_backupdir_help2'<br>
+            '$lang_edit_set1_backupdir_help3'</span></a>
         </p>'
 
     # LOGDIR 
     echo '
         <p>
-        <label>Verzeichnis für LOG-Dateien</label>'
+        <label>'$lang_edit_set1_logdir_title'</label>'
         if [ -n "$LOGDIR" ]; then
             echo '<input type="text" name="LOGDIR" value="'$LOGDIR'" />'
         else
@@ -347,8 +339,8 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Verzeichnis der LOG-Dateien (wird ggf. erstellt)
-            Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/LOG/)</span></a>
+            <span>'$lang_edit_set1_logdir_help1'<br>
+            '$lang_edit_set1_logdir_help2'</span></a>
         </p>'
 
 
@@ -364,14 +356,14 @@ if [[ "$page" == "edit" ]]; then
     <br />
     <details><p>
     <summary>
-        <span class="detailsitem">OCR Optionen und Umbenennung</span>
+        <span class="detailsitem">'$lang_edit_set2_title'</span>
     </summary></p>
     <p>'
 
     # ocropt
     echo '
         <p>
-        <label>OCR Optionen</label>'
+        <label>'$lang_edit_set2_ocropt_title'</label>'
         if [ -n "$ocropt" ]; then
             echo '<input type="text" name="ocropt" value="'$ocropt'" />'
         else
@@ -380,18 +372,18 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Hier können individuelle Parameter für OCRmyPDF angegeben werden<br><br>
-            -s            PDF-Dateien mit vorhandenem Textlayer nicht erneut OCRen<br>
-            --force-ocr   erneutes OCRen erzwingen<br>
-            -r            automatisches drehen von Seiten<br>
-            -l            Sprache (deu,enu,...)<br>
-            -d            schiefe Scans entzerren<br></span></a>
+            <span>'$lang_edit_set2_ocropt_help1'<br><br>
+            -l&nbsp;&nbsp;'$lang_edit_set2_ocropt_help5' (deu,enu,...)<br>
+            -s&nbsp;&nbsp;'$lang_edit_set2_ocropt_help2'<br>
+            -f&nbsp;&nbsp;'$lang_edit_set2_ocropt_help3'<br>
+            -r&nbsp;&nbsp;'$lang_edit_set2_ocropt_help4'<br>
+            -d&nbsp;&nbsp;'$lang_edit_set2_ocropt_help6'<br></span></a>
         </p>'
 
     # dockercontainer
     echo '
         <p>
-        <label>zuverwendendes Dockerimage</label>
+        <label>'$lang_edit_set2_dockerimage_title'</label>
         <select name="dockercontainer">'
 
         # Lokale ocrmypdf-Images:
@@ -419,16 +411,16 @@ if [[ "$page" == "edit" ]]; then
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Welches Dockerimage soll verwendet werden?<br>
-            jbarlow83/ocrmypdf ist das Standardimage, enthält aktuell aber nur die Sprachen: English, German and Simplified Chinese<br>
-            Polyglot-Images enthalten alle möglichen Sprachen, sind aber größer!<br>
-            Manuell heruntergeladene Images stehen ebenfalls zur Auswahl, sofern "ocrmypdf" im Namen enthalten ist.</span></a>
+            <span>'$lang_edit_set2_dockerimage_help1'<br>
+            jbarlow83/ocrmypdf '$lang_edit_set2_dockerimage_help2'<br>
+            '$lang_edit_set2_dockerimage_help3'<br>
+            '$lang_edit_set2_dockerimage_help4'</span></a>
         </p>'
 
     # SearchPraefix
     echo '
         <p>
-        <label>OCR Such-Präfix</label>'
+        <label>'$lang_edit_set2_searchpref_title'</label>'
         if [ -n "$SearchPraefix" ]; then
             echo '<input type="text" name="SearchPraefix" value="'$SearchPraefix'" />'
         else
@@ -437,37 +429,37 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Nur PDFs mit definiertem Präfix bearbeiten (z.B. "SCAN_")<br>
-            leerlassen, wenn alle Dokumente verarbeitet werden sollen</span></a>
+            <span>'$lang_edit_set2_searchpref_help1'<br>
+            '$lang_edit_set2_searchpref_help2'</span></a>
         </p>'
 
     # delSearchPraefix
     echo '
         <p>
-        <label><span style="color: #FFFFFF;">.</span></label>
+        <label><span style="color: #FFFFFF;">.'$lang_edit_set2_delsearchpref_title'</span></label>
         <select name="delSearchPraefix">'
         if [[ "$delSearchPraefix" == "no" ]]; then
-            echo '<option value="no" selected>Suchpräfix erhalten</option>'
+            echo '<option value="no" selected>'$lang_edit_set2_delsearchpref_keep'</option>'
         else
-            echo '<option value="no">Suchpräfix erhalten</option>'
+            echo '<option value="no">'$lang_edit_set2_delsearchpref_keep'</option>'
         fi
         if [[ "$delSearchPraefix" == "yes" ]]; then
-            echo '<option value="yes" selected>Suchpräfix entfernen</option>'
+            echo '<option value="yes" selected>'$lang_edit_set2_delsearchpref_delete'</option>'
         else
-            echo '<option value="yes">Suchpräfix entfernen</option>'
+            echo '<option value="yes">'$lang_edit_set2_delsearchpref_delete'</option>'
         fi
     echo '
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Soll der Suchpräfix im Anschluss entfernt werden?<br>
-            Nur so und in Verbindung mit einem Suchpräfix kann der Quellordner auch gleichzeitig der Zielordner sein!</span></a>
+            <span>'$lang_edit_set2_delsearchpref_help1'<br>
+            '$lang_edit_set2_delsearchpref_help2'</span></a>
         </p>'
 
     # Taglist
     echo '
         <p>
-        <label>zu suchende Tags</label>'
+        <label>'$lang_edit_set2_taglist_title'</label>'
         if [ -n "$taglist" ]; then
         #    echo '<input type="text" name="taglist" value="'$taglist'" />'
             echo '<textarea id="text" name="taglist" cols="35" rows="4">'$taglist'</textarea>'
@@ -478,75 +470,72 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung.
-            Einzelne Tags werdendurch Semikolon getrennt.<br>
-            <strong>! ! ! KEINEN ZEILENUMBRUCH VERWENDEN ! ! !</strong><br>
-            Tags und Kategorien können auch Leerzeichen enthalten.<br>
-            Soll ein Tag nur alleinstehend gefunden werden, ist ein Paragrafenzeichen voranzustellen (eine Suche nach "<code>§Rechnung</code>" findet so nicht fälschlicherweise "<code>Rechnungsstellung</code>")<br><br>
-            z.B.: <b>Rechnung;Arbeit;Versicherung</b><br>
+            <span>'$lang_edit_set2_taglist_help1'<br>
+            '$lang_edit_set2_taglist_help2'<br>
+            <strong>'$lang_edit_set2_taglist_help3'</strong><br>
+            '$lang_edit_set2_taglist_help4'<br>
+            '$lang_edit_set2_taglist_help5'<br><br>
+            '$lang_edit_set2_taglist_help6'<br>
             <br>
-            Tags können auch durch ein Gleichheitszeichen einer Kategorie (für Unterordner) zugeordnet werden 
-            (greift nur, sofern man auch die Kategorieordner  [nachstehende Option] verwendet).<br><br>
-            z.B.: <b>Rechnung;HUK24=Versicherung;Allianz=Versicherung</b><br>
-            <br>
-            <br></span></a>
+            '$lang_edit_set2_taglist_help7'<br><br>
+            '$lang_edit_set2_taglist_help8'<br><br><br></span></a>
         </p>'
 
     # searchAll
     echo '
         <p>
-        <label>Suchbereich für Tags</label>
+        <label>'$lang_edit_set2_searchall_title'</label>
         <select name="searchAll">'
         if [[ "$searchAll" == "no" ]]; then
-            echo '<option value="no" selected>Bereich: nur erste Seite</option>'
+            echo '<option value="no" selected>'$lang_edit_set2_searchall_1page'</option>'
         else
-            echo '<option value="no">Bereich: nur erste Seite</option>'
+            echo '<option value="no">'$lang_edit_set2_searchall_1page'</option>'
         fi
         if [[ "$searchAll" == "searchAll" ]]; then
-            echo '<option value="searchAll" selected>Bereich: gesamtes Dokument</option>'
+            echo '<option value="searchAll" selected>'$lang_edit_set2_searchall_all'</option>'
         else
-            echo '<option value="searchAll">Bereich: gesamtes Dokument</option>'
+            echo '<option value="searchAll">'$lang_edit_set2_searchall_all'</option>'
         fi
     echo '
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>In welchem Bereich soll nach Tags gesucht werden?
-            Standard ist nur auf erster Seite. Je größer der Suchbereich, desto mehr false positive gibt es.</span></a>
+            <span>'$lang_edit_set2_searchall_help1'<br>
+            '$lang_edit_set2_searchall_help2'</span></a>
         </p>'
 
     # moveTaggedFiles
     echo '
         <p>
-        <label><span style="color: #FFFFFF;">Tag-Unterverzeichnisse nutzen</span></label>
+        <label><span style="color: #FFFFFF;">'$lang_edit_set2_moveTaggedFiles_title'</span></label>
         <select name="moveTaggedFiles">'
         if [[ "$moveTaggedFiles" == "no" ]]; then
-            echo '<option value="no" selected>im Zielordner behalten</option>'
+            echo '<option value="no" selected>'$lang_edit_set2_moveTaggedFiles_targetdir'</option>'
         else
-            echo '<option value="no">im Zielordner behalten</option>'
+            echo '<option value="no">'$lang_edit_set2_moveTaggedFiles_targetdir'</option>'
         fi
         if [[ "$moveTaggedFiles" == "useCatDir" ]]; then
-            echo '<option value="useCatDir" selected>Ziel-PDF in Kategorieordner einsortieren</option>'
+            echo '<option value="useCatDir" selected>'$lang_edit_set2_moveTaggedFiles_useCatDir'</option>'
         else
-            echo '<option value="useCatDir">Ziel-PDF in Kategorieordner einsortieren</option>'
+            echo '<option value="useCatDir">'$lang_edit_set2_moveTaggedFiles_useCatDir'</option>'
         fi
         if [[ "$moveTaggedFiles" == "useTagDir" ]]; then
-            echo '<option value="useTagDir" selected>Ziel-PDF in Tagordner einsortieren</option>'
+            echo '<option value="useTagDir" selected>'$lang_edit_set2_moveTaggedFiles_useTagDir'</option>'
         else
-            echo '<option value="useTagDir">Ziel-PDF in Tagordner einsortieren</option>'
+            echo '<option value="useTagDir">'$lang_edit_set2_moveTaggedFiles_useTagDir'</option>'
         fi
     echo '
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Sollen Tag-Unterverzeichnisse, bzw. Kategorieordner genutzt werden?<br>
-            Bei mehreren zutreffenden Tags werden Hardlinks gesetzt.</span></a>
+            <span>'$lang_edit_set2_moveTaggedFiles_help1'<br>
+            '$lang_edit_set2_moveTaggedFiles_help2'</span></a>
         </p>'
 
     # OCR Rename-Syntax
     echo '
         <p>
-        <label>OCR Rename-Syntax</label>'
+        <label>'$lang_edit_set2_renamesyntax_title'</label>'
         if [ -n "$NameSyntax" ]; then
             echo '<input type="text" name="NameSyntax" value="'$NameSyntax'" />'
         else
@@ -555,35 +544,29 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Fertige PDFs mit einer Bestimmten Syntax umbenennen.<br><br>
-            Folgende Variablen sind in Kombination mit Fließtext möglich<br>
-            (Sonderzeichen können unvorhersehbare Folgen haben!):<br>
-            <b>§docr</b> (Datum / Tag - im Text gefunden [fallback auf Quelldatei])<br>
-            <b>§mocr</b> (Datum / Monat - im Text gefunden [fallback auf Quelldatei])<br>
-            <b>§yocr</b> (Datum / Jahr - im Text gefunden [fallback auf Quelldatei])<br>
-            <b>§dnow</b> (Datum / Tag - heute)<br>
-            <b>§mnow</b> (Datum / Monat - heute)<br>
-            <b>§ynow</b> (Datum / Jahr - heute)<br>
-            <b>§dsource</b> (Datum / Tag der Quelldatei)<br>
-            <b>§msource</b> (Datum / Monat der Quelldatei)<br>
-            <b>§ysource</b> (Datum / Jahr der Quelldatei)<br>
-            <b>§tag</b> (gefundene, oben angegebene Tags)<br>
-            <b>§tit</b> (Titel der Originaldatei)<br>
-            <br>
-            >><b>§yocr-§mocr-§docr_§tag_§tit</b><< erzeugt<br>
-            z.B. >><b>2018-12-09_#Rechnung_00376.pdf</b><<<br>
-            <br>
-            Datumsangaben werden zuerst im Dokument gesucht. Wenn erfolglos, wird das Dateidatum verwendet.<br>
-            <br>
-            <br>
-            <br>
-            <br></span></a>
+            <span>'$lang_edit_set2_renamesyntax_help1'<br><br>
+            '$lang_edit_set2_renamesyntax_help2'<br>
+            '$lang_edit_set2_renamesyntax_help3':<br>
+            <b>§docr</b> ('$lang_edit_set2_renamesyntax_help4')<br>
+            <b>§mocr</b> ('$lang_edit_set2_renamesyntax_help5')<br>
+            <b>§yocr</b> ('$lang_edit_set2_renamesyntax_help6')<br>
+            <b>§dnow</b> ('$lang_edit_set2_renamesyntax_help7')<br>
+            <b>§mnow</b> ('$lang_edit_set2_renamesyntax_help8')<br>
+            <b>§ynow</b> ('$lang_edit_set2_renamesyntax_help9')<br>
+            <b>§dsource</b> ('$lang_edit_set2_renamesyntax_help10')<br>
+            <b>§msource</b> ('$lang_edit_set2_renamesyntax_help11')<br>
+            <b>§ysource</b> ('$lang_edit_set2_renamesyntax_help12')<br>
+            <b>§tag</b> ('$lang_edit_set2_renamesyntax_help13')<br>
+            <b>§tit</b> ('$lang_edit_set2_renamesyntax_help14')<br><br>
+            >><b>§yocr-§mocr-§docr_§tag_§tit</b><< '$lang_edit_set2_renamesyntax_help15'<br>
+            '$lang_edit_set2_renamesyntax_help16' >><b>2018-12-09_#Rechnung_00376.pdf</b><<<br>
+            <br>'$lang_edit_set2_renamesyntax_help17'<br><br><br><br><br></span></a>
         </p>'
 
     # Tagkennzeichnung
     echo '
         <p>
-        <label>Tags im Dateinamen kennzeichnen:</label>'
+        <label>'$lang_edit_set2_tagsymbol_title':</label>'
         if [ -n "$tagsymbol" ]; then
             echo '<input type="text" name="tagsymbol" value="'$tagsymbol'" />'
         else
@@ -592,36 +575,36 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>gefundene tags können im Dateinamen gekennzeichnet werden (z.B. mit #)<br>
-            (Sonderzeichen können unvorhersehbare Folgen haben!):<br></span></a>
+            <span>'$lang_edit_set2_tagsymbol_help1'<br>
+            '$lang_edit_set2_tagsymbol_help2'<br></span></a>
         </p>'
 
     # Filedate
     echo '
         <p>
-        <label>Dateidatum korrigieren:</label>
+        <label>'$lang_edit_set2_filedate_title':</label>
         <select name="filedate">'
         if [[ "$filedate" == "now" ]]; then
-            echo '<option value="now" selected>aktuelle Zeit</option>'
+            echo '<option value="now" selected>'$lang_edit_set2_filedate_now'</option>'
         else
-            echo '<option value="now">aktuelle Zeit</option>'
+            echo '<option value="now">'$lang_edit_set2_filedate_now'</option>'
         fi
         if [[ "$filedate" == "ocr" ]]; then
-            echo '<option value="ocr" selected>gefundenes OCR-Datum verwenden</option>'
+            echo '<option value="ocr" selected>'$lang_edit_set2_filedate_ocr'</option>'
         else
-            echo '<option value="ocr">gefundenes OCR-Datum verwenden</option>'
+            echo '<option value="ocr">'$lang_edit_set2_filedate_ocr'</option>'
         fi
         if [[ "$filedate" == "source" ]]; then
-            echo '<option value="soucre" selected>Datum der Quelldatei verwenden</option>'
+            echo '<option value="soucre" selected>'$lang_edit_set2_filedate_source'</option>'
         else
-            echo '<option value="source">Datum der Quelldatei verwenden</option>'
+            echo '<option value="source">'$lang_edit_set2_filedate_source'</option>'
         fi
     echo '
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Wie soll das Datum der Zieldatei angepasst werden?<br>
-            Ist OCR-Datum gewählt, wird aber keins gefunden, so wird das Datum der Quelldatei verwendet.</span></a>
+            <span>'$lang_edit_set2_filedate_help1'<br>
+            '$lang_edit_set2_filedate_help2'</span></a>
         </p>'
 
     echo '
@@ -635,14 +618,14 @@ if [[ "$page" == "edit" ]]; then
     <br />
     <details><p>
     <summary>
-        <span class="detailsitem">DSM-Benachrichtigung und sonstige Einstellungen</span>
+        <span class="detailsitem">'$lang_edit_set3_title'</span>
     </summary></p>
     <p>'
 
     # LOGmax
     echo '
         <p>
-        <label>maximale LOG-Dateien</label>'
+        <label>'$lang_edit_set3_logmax_title'</label>'
         if [ -n "$LOGmax" ]; then
             echo '<input type="text" name="LOGmax" value="'$LOGmax'" />'
         else
@@ -651,35 +634,36 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>maximale Anzahl der LOG-Dateien (leere Logs werden sofort gelöscht)</span></a>
+            <span>'$lang_edit_set3_logmax_help'</span></a>
         </p>'
 
     # dsmtextnotify
     echo '
         <p>
-        <label>Systembenachrichtigung (Text)</label>
+        <label>'$lang_edit_set3_dsmtextnotify_title'</label>
         <select name="dsmtextnotify">'
         if [[ "$dsmtextnotify" == "off" ]]; then
-            echo '<option value="off" selected>aus</option>'
+            echo '<option value="off" selected>'$lang_edit_set3_dsmtextnotify_off'</option>'
         else
-            echo '<option value="off">aus</option>'
+            echo '<option value="off">'$lang_edit_set3_dsmtextnotify_off'</option>'
         fi
         if [[ "$dsmtextnotify" == "on" ]]; then
-            echo '<option value="on" selected>ein</option>'
+            echo '<option value="on" selected>'$lang_edit_set3_dsmtextnotify_on'</option>'
         else
-            echo '<option value="on">ein</option>'
+            echo '<option value="on">'$lang_edit_set3_dsmtextnotify_on'</option>'
         fi
     echo '
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>ein => Benachrichtigung per Text aktiv im Benachrichtigungszentrum<br>aus => keine Textbenachrichtigung</span></a>
+            <span>'$lang_edit_set3_dsmtextnotify_help1'
+            <br>'$lang_edit_set3_dsmtextnotify_help2'</span></a>
         </p>'
 
     # MessageTo
     echo '
         <p>
-        <label>Benachrichtigung an User</label>'
+        <label>'$lang_edit_set3_MessageTo_title'</label>'
         if [ -n "$MessageTo" ]; then
             echo '<input type="text" name="MessageTo" value="'$MessageTo'" />'
         else
@@ -688,15 +672,15 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>User, an den die Benachrichtigungen gesendet werden.
-            <br>Auf diese Art kann man sich in Verbindung mit dem Paket "Notification Forwarder" über synOCR-Ereignisse z.B. über einen Pushdienst benachrichtigen lassen.
-            <br>Bleibt der Wert leer, so wird die Gruppe "administrators" benachrichtigt.
+            <span>'$lang_edit_set3_MessageTo_help1'
+            <br>'$lang_edit_set3_MessageTo_help2'
+            <br>'$lang_edit_set3_MessageTo_help3'
         </span></a></p>'
 
     # PushBullet-Token
     echo '
         <p>
-        <label>PushBullet-Token</label>'
+        <label>'$lang_edit_set3_PBTOKEN_title'</label>'
         if [ -n "$PBTOKEN" ]; then
             echo '<input type="text" name="PBTOKEN" value="'$PBTOKEN'" />'
         else
@@ -705,59 +689,61 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Dein persönlicher PushBullet-Token.
-            <br>Benachrichtigungen werden an den entsprechenden Account gesendet.
-            <br>Bei Nichtgebrauch leer lassen.
-        </span></a></p>'
+            <span>'$lang_edit_set3_PBTOKEN_help1'<br>
+            '$lang_edit_set3_PBTOKEN_help2'<br>
+            '$lang_edit_set3_PBTOKEN_help3'</span></a>
+        </p>'
 
     # dsmbeepnotify
     echo '
         <p>
-        <label>Systembenachrichtigung (Piep)</label>
+        <label>'$lang_edit_set3_dsmbeepnotify_title'</label>
         <select name="dsmbeepnotify">'
         if [[ "$dsmbeepnotify" == "off" ]]; then
-            echo '<option value="off" selected>aus</option>'
+            echo '<option value="off" selected>'$lang_edit_set3_dsmbeepnotify_off'</option>'
         else
-            echo '<option value="off">aus</option>'
+            echo '<option value="off">'$lang_edit_set3_dsmbeepnotify_off'</option>'
         fi
         if [[ "$dsmbeepnotify" == "on" ]]; then
-            echo '<option value="on" selected>ein</option>'
+            echo '<option value="on" selected>'$lang_edit_set3_dsmbeepnotify_on'</option>'
         else
-            echo '<option value="on">ein</option>'
+            echo '<option value="on">'$lang_edit_set3_dsmbeepnotify_on'</option>'
         fi
     echo '
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>Ein kurzer Piep, sobald ein PDF fertig bearbeitet wurde.</span></a>
+            <span>'$lang_edit_set3_dsmbeepnotify_help1'</span></a>
         </p>'
 
     # LOGlevel
     echo '
         <p>
-        <label>LOGlevel (0,1,2)</label>
+        <label>'$lang_edit_set3_loglevel_title'</label>
         <select name="loglevel">'
         if [[ "$loglevel" == "0" ]]; then
-            echo '<option value="0" selected>aus</option>'
+            echo '<option value="0" selected>'$lang_edit_set3_loglevel_off'</option>'
         else
-            echo '<option value="0">aus</option>'
+            echo '<option value="0">'$lang_edit_set3_loglevel_off'</option>'
         fi
         if [[ "$loglevel" == "1" ]]; then
-            echo '<option value="1" selected>1 (standard)</option>'
+            echo '<option value="1" selected>'$lang_edit_set3_loglevel_1'</option>'
         else
-            echo '<option value="1">1 (standard)</option>'
+            echo '<option value="1">'$lang_edit_set3_loglevel_1'</option>'
         fi
         if [[ "$loglevel" == "2" ]]; then
-            echo '<option value="2" selected>2 (erweitert)</option>'
+            echo '<option value="2" selected>'$lang_edit_set3_loglevel_2'</option>'
         else
-            echo '<option value="2">2 (erweitert)</option>'
+            echo '<option value="2">'$lang_edit_set3_loglevel_2'</option>'
         fi
 
     echo '
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>0  => es wird keine Log-Datei erstellt<br>1 => normales Log (standard)<br>2 => erweitertes Log</span></a>
+            <span>'$lang_edit_set3_loglevel_help1'<br>
+            '$lang_edit_set3_loglevel_help2'<br>
+            '$lang_edit_set3_loglevel_help3'</span><br><br><br></a>
         </p>'
 
     echo '
