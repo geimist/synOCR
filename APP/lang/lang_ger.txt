@@ -1,1 +1,317 @@
 # german language file for synOCR
+# /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_ger.txt
+# translation instructions can you found here: https://geimist.eu:30443/geimist/synOCR/src/branch/master/translation_instruction.md
+
+#-------------------------------------------
+# general:
+#-------------------------------------------
+lang_page1="Übersicht"
+lang_page2="Konfiguration"
+lang_page3="Zeitplaner"
+lang_page4="Hilfe"
+lang_yes="ja"
+lang_no="nein"
+lang_and="und"
+lang_delete="löschen"
+lang_buttonback="zurück"
+lang_buttonnext="weiter"
+lang_buttonsave="Speichern"
+lang_buttonchange="wechseln"
+lang_foot_buttonsavetimer="Zeitplan speichern"
+lang_foot_buttonnewprofile="neues Profil"
+lang_foot_buttoncloneprof="Profil klonen"
+lang_foot_buttoncloneprof_tit="erstellt ein neues Profil mit der Konfiguration des aktuellen Profils …"
+lang_foot_buttondownDB="Download"
+lang_foot_buttondownDB_tit="Download der Konfigurationsdatenbank …"
+lang_foot_buttondelprof="Profil löschen"
+lang_foot_buttondelprof_tit="löscht das aktuelle Profil nach Sicherheitsabfrage …"
+
+#-------------------------------------------
+# page settings:
+#-------------------------------------------
+lang_edit_delques_1="Soll das aktuelle Profil"
+lang_edit_delques_2="gelöscht werden?"
+lang_edit_profname="Das Profil"
+lang_edit_delfin2="wurde gelöscht"
+lang_edit_deler="Fehler beim Löschen des Profils"
+lang_edit_dup1="Gib bitte einen Namen für das duplizierte Profil ein"
+lang_edit_profname="Profilname"
+lang_edit_create="erstellen"
+lang_edit_dup2="wurde zum Profil"
+lang_edit_dup3="geklont"
+lang_edit_dup4="Fehler beim Duplizieren des Profils!"
+lang_edit_dup5="Der Profilename"
+lang_edit_dup6="ist bereits vorhanden!"
+lang_edit_dup7="Es wurde kein Profilname definiert!"
+lang_edit_new1="Gib bitte einen Namen für das neue Profil ein"
+lang_edit_new2="Ein neues Profil mit dem Namen"
+lang_edit_new3="wurde erstellt"
+lang_edit_new4="Fehler beim Erstellen des Profils!"
+lang_edit_savefin="Änderungen wurden gespeichert"
+
+lang_edit_summary1="Trage hier deine Einstellungen ein und passe die Pfade an."
+lang_edit_summary2="Hilfe für die einzelnen Felder erhältst du über das blaue Info-Symbol am rechten Rand."
+lang_edit_summary3="Über die Profile kannst du beliebig viele Konfigurationen anlegen, welche alle bei jedem Programmlauf abgearbeitet werden. Man kann jedes Profil über das entsprechende Feld auch deaktivieren."
+lang_edit_summary4="Achte unbedingt darauf, die kompletten Pfade inkl. Volume (z.B. <code>/volume1/…</code>) einzutragen und achte auf korrekte Groß- und Kleinschreibung. Das sicherste ist, wenn du in der Filestation den gewünschten Ordner suchst und du dir über Rechtsklick die Eigenschaften anzeigen lässt. In diesem Dialog kannst du dir den korrekten Pfad kopieren."                                        # keep html-tag
+
+lang_edit_dbupdate="Ergebnis von DB-Update"
+lang_edit_change_profile="wechsle zu Profil"
+
+lang_edit_set1_title="Allgemein"
+
+lang_edit_set1_profilename_help="Profile können individuell benannt werden (z.B. Geschäft, Max)"
+
+lang_edit_set1_profile_activ_title="Profil aktivieren / deaktivieren"
+lang_edit_set1_profile_activ="Profil aktiviert"
+lang_edit_set1_profile_inactiv="Profil deaktiviert"
+lang_edit_set1_profile_activ_help1="Profile können aktiviert, oder deaktiviert werden."
+lang_edit_set1_profile_activ_help2="Deaktivierte Profile können zwar modifiziert werden, werden aber von synOCR nicht ausgeführt."
+
+lang_edit_set1_sourcedir_title="Quellverzeichnis"
+lang_edit_set1_sourcedir_help1="In diesem Verzeichnis wird nach PDF-Dateien gesucht (nicht rekursiv)."
+lang_edit_set1_sourcedir_help2="Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/input/)"
+
+lang_edit_set1_targetdir_title="Zielverzeichnis"
+lang_edit_set1_targetdir_help1="Ausgabeverzeichnis der fertigen PDF-Dateien (wird ggf. erstellt)."
+lang_edit_set1_targetdir_help2="Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/output/)"
+
+lang_edit_set1_backupdir_title="Backup-Verzeichnis"
+lang_edit_set1_backupdir_help1="Sofern hier ein gültiger Pfad eingetragen wird, werden die Originaldateien hier gesichert (wird ggf. erstellt)."
+lang_edit_set1_backupdir_help2="Ist kein gültiges Verzeichnis hinterlegt, werden die Originaldateien endgültig gelöscht."
+lang_edit_set1_backupdir_help3="Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/Backup/)"
+
+lang_edit_set1_logdir_title="Verzeichnis für LOG-Dateien"
+lang_edit_set1_logdir_help1="Verzeichnis der LOG-Dateien (wird ggf. erstellt)"
+lang_edit_set1_logdir_help2="Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/LOG/)" 
+
+lang_edit_set2_title="OCR Optionen und Umbenennung"
+
+lang_edit_set2_ocropt_title="OCR Optionen"
+lang_edit_set2_ocropt_help1="Hier können individuelle Parameter für OCRmyPDF angegeben werden"
+lang_edit_set2_ocropt_help2="PDF-Dateien mit vorhandenem Textlayer nicht erneut OCRen"
+lang_edit_set2_ocropt_help3="erneutes OCRen erzwingen"
+lang_edit_set2_ocropt_help4="automatisches drehen von Seiten"
+lang_edit_set2_ocropt_help5="Sprachcode"
+lang_edit_set2_ocropt_help6="schiefe Scans entzerren"
+
+lang_edit_set2_dockerimage_title="zuverwendendes Dockerimage"
+lang_edit_set2_dockerimage_help1="Welches Dockerimage soll verwendet werden?"
+lang_edit_set2_dockerimage_help2="ist das Standardimage, enthält aktuell aber nur die Sprachen: English, German and Simplified Chinese."
+lang_edit_set2_dockerimage_help3="Polyglot-Images enthalten alle möglichen Sprachen, sind aber größer!"
+lang_edit_set2_dockerimage_help4="Manuell heruntergeladene oder selbst erstellte Images stehen ebenfalls zur Auswahl, sofern &quot;ocrmypdf&quot; im Namen enthalten ist."
+
+lang_edit_set2_searchpref_title="OCR Such-Präfix"
+lang_edit_set2_searchpref_help1="Nur PDFs mit definiertem Präfix bearbeiten (z.B. &quot;SCAN_&quot;)"       # keep html-tag
+lang_edit_set2_searchpref_help2="leerlassen, wenn alle Dokumente verarbeitet werden sollen"
+lang_edit_set2_delsearchpref_title=""
+lang_edit_set2_delsearchpref_keep="Suchpräfix erhalten"
+lang_edit_set2_delsearchpref_delete="Suchpräfix entfernen"
+lang_edit_set2_delsearchpref_help1="Soll der Suchpräfix im Anschluss entfernt werden?"
+lang_edit_set2_delsearchpref_help2="Nur so und in Verbindung mit einem Suchpräfix kann der Quellordner auch gleichzeitig der Zielordner sein!"
+
+lang_edit_set2_taglist_title="zu suchende Tags"
+lang_edit_set2_taglist_help1="Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung."
+lang_edit_set2_taglist_help2="Einzelne Tags werdendurch Semikolon getrennt."
+lang_edit_set2_taglist_help3="! ! ! KEINEN ZEILENUMBRUCH VERWENDEN ! ! !"
+lang_edit_set2_taglist_help4="Tags und Kategorien können auch Leerzeichen enthalten."
+lang_edit_set2_taglist_help5="Soll ein Tag nur alleinstehend gefunden werden, ist ein Paragrafenzeichen voranzustellen (eine Suche nach &quot;<code>§Rechnung</code>&quot; findet so nicht fälschlicherweise &quot;<code>Rechnungsstellung</code>&quot;)"   # keep html-tag
+lang_edit_set2_taglist_help6="z.B.: <b>Rechnung;Arbeit;Versicherung</b>"                                    # keep html-tag
+lang_edit_set2_taglist_help7="Tags können auch durch ein Gleichheitszeichen einer Kategorie (für Unterordner) zugeordnet werden (greift nur, sofern man auch die Kategorieordner  [nachstehende Option] verwendet)."
+lang_edit_set2_taglist_help8="z.B.: <b>Rechnung;HUK24=Versicherung;Allianz=Versicherung</b>"                # keep html-tag
+
+lang_edit_set2_searchall_title="Suchbereich für Tags"
+lang_edit_set2_searchall_1page="Bereich: nur erste Seite"
+lang_edit_set2_searchall_all="Bereich: gesamtes Dokument"
+lang_edit_set2_searchall_help1="In welchem Bereich soll nach Tags gesucht werden?"
+lang_edit_set2_searchall_help2="Standard ist nur auf erster Seite. Je größer der Suchbereich, desto mehr false positive gibt es."
+
+lang_edit_set2_moveTaggedFiles_title="Tag-Unterverzeichnisse nutzen"
+lang_edit_set2_moveTaggedFiles_targetdir="im Zielordner behalten"
+lang_edit_set2_moveTaggedFiles_useCatDir="Ziel-PDF in Kategorieordner einsortieren"
+lang_edit_set2_moveTaggedFiles_useTagDir="Ziel-PDF in Tagordner einsortieren"
+lang_edit_set2_moveTaggedFiles_help1="Sollen Tag-Unterverzeichnisse, bzw. Kategorieordner genutzt werden?"
+lang_edit_set2_moveTaggedFiles_help2="Bei mehreren zutreffenden Tags werden Hardlinks gesetzt."
+
+lang_edit_set2_renamesyntax_title="OCR Rename-Syntax"
+lang_edit_set2_renamesyntax_help1="Fertige PDFs mit einer Bestimmten Syntax umbenennen."
+lang_edit_set2_renamesyntax_help2="Folgende Variablen sind in Kombination mit Fließtext möglich"
+lang_edit_set2_renamesyntax_help3="(Sonderzeichen können unvorhersehbare Folgen haben!)"
+lang_edit_set2_renamesyntax_help4="Datum / Tag - im Text gefunden"
+lang_edit_set2_renamesyntax_help5="Datum / Monat - im Text gefunden"
+lang_edit_set2_renamesyntax_help6="Datum / Jahr - im Text gefunden"
+lang_edit_set2_renamesyntax_help7="Datum / Tag - heute"
+lang_edit_set2_renamesyntax_help8="Datum / Monat - heute"
+lang_edit_set2_renamesyntax_help9="Datum / Jahr - heute"
+lang_edit_set2_renamesyntax_help10="Datum / Tag der Quelldatei"
+lang_edit_set2_renamesyntax_help11="Datum / Monat der Quelldatei"
+lang_edit_set2_renamesyntax_help12="Datum / Jahr der Quelldatei"
+lang_edit_set2_renamesyntax_help13="gefundene, oben angegebene Tags"
+lang_edit_set2_renamesyntax_help14="Titel der Originaldatei"
+lang_edit_set2_renamesyntax_help15="erzeugt"
+lang_edit_set2_renamesyntax_help16="z.B."
+lang_edit_set2_renamesyntax_help17="Datumsangaben werden zuerst im Dokument gesucht. Wenn erfolglos, wird das Dateidatum verwendet."
+
+lang_edit_set2_tagsymbol_title="Tags im Dateinamen kennzeichnen"
+lang_edit_set2_tagsymbol_help1="gefundene tags können im Dateinamen gekennzeichnet werden (z.B. mit #)"
+lang_edit_set2_tagsymbol_help2="(Sonderzeichen können unvorhersehbare Folgen haben!)"
+
+lang_edit_set2_filedate_title="Dateidatum korrigieren"
+lang_edit_set2_filedate_now="aktuelle Zeit"
+lang_edit_set2_filedate_ocr="gefundenes OCR-Datum verwenden"
+lang_edit_set2_filedate_source="Datum der Quelldatei verwenden"
+lang_edit_set2_filedate_help1="Wie soll das Datum der Zieldatei angepasst werden?"
+lang_edit_set2_filedate_help2="Ist OCR-Datum gewählt, wird aber keins gefunden, so wird das Datum der Quelldatei verwendet."
+
+lang_edit_set3_title="DSM-Benachrichtigung und sonstige Einstellungen"
+
+lang_edit_set3_logmax_title="maximale LOG-Dateien"
+lang_edit_set3_logmax_help="maximale Anzahl der LOG-Dateien (leere Logs werden sofort gelöscht)"
+
+lang_edit_set3_dsmtextnotify_title="Systembenachrichtigung (Text)"
+lang_edit_set3_dsmtextnotify_on="ein"
+lang_edit_set3_dsmtextnotify_off="aus"
+lang_edit_set3_dsmtextnotify_help1="ein ➜ Benachrichtigung per Text aktiv im Benachrichtigungszentrum"
+lang_edit_set3_dsmtextnotify_help2="aus ➜ keine Textbenachrichtigung"
+
+lang_edit_set3_MessageTo_title="Benachrichtigung an User"
+lang_edit_set3_MessageTo_help1="User, an den die Benachrichtigungen gesendet werden."
+lang_edit_set3_MessageTo_help2="Auf diese Art kann man sich in Verbindung mit dem Paket &quot;Notification Forwarder&quot; über synOCR-Ereignisse z.B. über einen Pushdienst benachrichtigen lassen."   # keep html-tag
+lang_edit_set3_MessageTo_help3="Bleibt der Wert leer, so wird die Gruppe &quot;administrators&quot; benachrichtigt."
+
+lang_edit_set3_PBTOKEN_title="PushBullet-Token"
+lang_edit_set3_PBTOKEN_help1="Dein persönlicher PushBullet-Token."
+lang_edit_set3_PBTOKEN_help2="Benachrichtigungen werden an den entsprechenden Account gesendet."
+lang_edit_set3_PBTOKEN_help3="Bei Nichtgebrauch leer lassen."
+
+lang_edit_set3_dsmbeepnotify_title="Systembenachrichtigung (Piep)"
+lang_edit_set3_dsmbeepnotify_on="ein"
+lang_edit_set3_dsmbeepnotify_off="aus"
+lang_edit_set3_dsmbeepnotify_help1="Ein kurzer Piep, sobald ein PDF fertig bearbeitet wurde."
+
+lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
+lang_edit_set3_loglevel_off="0 (aus)"
+lang_edit_set3_loglevel_1="1 (standard)"
+lang_edit_set3_loglevel_2="2 (erweitert)"
+lang_edit_set3_loglevel_help1="0  => es wird keine Log-Datei erstellt"
+lang_edit_set3_loglevel_help2="1 => normales Log (standard)"
+lang_edit_set3_loglevel_help3="2 => erweitertes Log"
+
+#-------------------------------------------
+# page main:
+#-------------------------------------------
+lang_main_title1="OCR auf Synology DSM"
+lang_main_title2="Beschreibung"
+lang_main_dockerfailed="A C H T U N G:<br>Docker wurde nicht gefunden.<br>Bitte prüfe, ob das Paket Docker installiert ist!"    # keep html-tag
+lang_main_desc1="SynOCR liefert eine einfache GUI für den Dockercontainer OCRmyPDF. Eine Konfiguration in Docker ist nicht erforderlich."
+lang_main_desc2="Es können derzeit wahrscheinlich nicht alle Parameter in Verbindung mit OCRmyPDF genutzt werden, aber die wichtigsten. Einfach in der Konfiguration den Quell- und Zielordner eintragen. Jetzt ist schon über den Button unten ein manueller Programmlauf möglich. Der automatische Programmlauf ist (wie in der Hilfe beschrieben) entweder über den Zeitplaner oder den DSM-Aufgabenplaner einzustellen."
+lang_main_buttonrun="jetzt manuellen synOCR Durchlauf starten"
+lang_main_statshead="Status / Statistik"
+lang_main_openjobs="Offene Aufgaben"
+lang_main_openfilecount="Dateien zu bearbeiten"
+lang_main_alldone="Alles erledigt"
+lang_main_totalsince="Gesamt seit"
+lang_main_pages="Seiten"
+
+#-------------------------------------------
+# page help:
+#-------------------------------------------
+lang_help_title_QS="Schnellstart"
+lang_help_QS_1_beforelink="Passe zunächst deine Installation in den"
+lang_help_QS_1_afterlink="an."
+lang_help_QS_2="Um synOCR regelmäßig laufen zu lassen (was sich empfiehlt), erstelle als nächstes <br>einen automatisierten Programmaufruf."                                                # keep html-tag
+lang_help_QS_3="Dazu hast du 2 Möglichkeiten:"
+lang_help_QS_4_beforelink="verwende den"
+lang_help_QS_4_afterlink="für einen programmierten synOCR-Start."
+lang_help_QS_5="Hierbei ist zu beachten, dass der DSM-Sicherheitsbereater den Zusätzlichen Croneintrag (da für DSM unbekannt) bemängelt!"
+lang_help_QS_6="Oder, erstelle alternativ im Aufgabenplaner einen neuen Task mit diesem Programmpfad<br>(zu empfehlen, sofern du kürzere Intervalle als &quot;stündlich&quot; benötigst):"  # keep coded dublequotes: &quot; / keep html-tag
+lang_help_QS_sub1_tit="Öffne dazu im DSM die Systemsteuerung"
+lang_help_QS_sub1_1="Aufgabenplaner"                                    # ensure exact translation from the DSM!
+lang_help_QS_sub1_2="Schaltfläche <i>Erstellen</i>"                     # keep html-tag
+lang_help_QS_sub1_3="geplante Aufgabe"
+lang_help_QS_sub1_4="Benutzerdefiniertes Skript"
+lang_help_QS_sub2_tit="Registerkarte &quot;Allgemein&quot;:"            # keep coded dublequotes: &quot;
+lang_help_QS_sub2_1="Benutzer"
+lang_help_QS_sub2_2="ein beliebiger Name unter <i>Vorgang</i>"          # keep html-tag
+lang_help_QS_sub2_3="Haken bei <i>aktiviert</i>"                        # keep html-tag
+lang_help_QS_sub3_tit="Registerkarte &quot;Zeitplan&quot;:"             # keep coded dublequotes: &quot;
+lang_help_QS_sub3_1="hier gewünschtes Intervall (z.B. stündlich)"
+lang_help_QS_sub4_tit="Registerkarte &quot;Aufgabeneinstellung&quot;:"  # keep coded dublequotes: &quot;
+lang_help_QS_sub4_1="hier den nachstehenden Pfad hineinkopieren:"
+lang_help_title_FAQ="FAQ"
+lang_help_FAQ_sub1_tit="OCRmyPDF Optionen"
+lang_help_FAQ_sub1_1_beforelink="Detailiertere Hilfe zu OCRmyPDF findest du auf der"
+lang_help_FAQ_sub1_1_linktitle="OCRmyPDF Hilfeseite"
+lang_help_FAQ_sub1_1_afterlink="."
+lang_help_FAQ_sub2_tit="beim Aufruf von synOCR werde ich vom DSM ausgeloggt"
+lang_help_FAQ_sub2_1="Abhilfe schafft die Aktivierung von &quot;<i>Browserkompatibilität durch Verzeicht auf IP-Prüfung erhöhen</i>&quot; unter DSM-Systemsteuerung > Sicherheit."              # keep coded dublequotes: &quot; / keep html-tag
+lang_help_FAQ_sub3_tit="der Sicherheitsberater warnt vor synOCR"
+lang_help_FAQ_sub3_1="Der Grund für die Warnung liegt nicht in einer Gefahr von synOCR, sondern darin, dass dem Sicherheitsberater die Änderung in der crontab unbekannt ist."
+lang_help_FAQ_sub3_2="Abhilfe schafft das &quot;überspringen&quot; im Sicherheitsberater oder ein manueller Task im DSM-Aufgabenplaner."                                                        # keep coded dublequotes: &quot;
+lang_help_FAQ_sub4_tit="es werden keine Dateien verarbeitet, obwohl welche vorhanden sind."
+lang_help_FAQ_sub4_1="Das kann der Fall sein, wenn der &quot;OCR Such-Präfix&quot; angegeben wurde, aber nicht mit den Dateien übereinstimmt"                                                   # keep coded dublequotes: &quot;
+lang_help_FAQ_sub4_2="überprüfe, ob das gewünschte Profil für den Quellordner in der Konfiguration auch aktiviert ist"                                                                          # keep coded dublequotes: &quot;
+lang_help_FAQ_sub5_tit="meine Frage ist nicht dabei …"
+lang_help_FAQ_sub5_beforelink="Für alle weiteren Fragen und Probeme nutze bitte das Supportforum:"
+lang_help_FAQ_sub5_linktitle="synOCR Supportforum"
+lang_help_FAQ_sub5_afterlink=""
+lang_help_about_title="über synOCR"
+lang_help_about_1="Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ich dafür bereitstellen kann.<br> Begonnen, um meinen Arbeitsablauf mit PDF Dokumenten einfacher zu machen, ist es auch eine Freude für mich, wenn anderen dieses Projekt hilft. Daher erwarte ich keine Gegenleistung!" # keep html-tag
+lang_help_about_2="Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen - DANKE:"
+
+#-------------------------------------------
+# page scheduler:
+#-------------------------------------------
+lang_timer_create_title="Zeitplan einrichten"
+lang_timer_create_securitywarn="INFO: Der DSM-Sicherheitsbereater wird den zusätzlichen Croneintrag (da für DSM unbekannt) bemängeln!"
+lang_timer_create_set1_1="Wie oft soll synOCR pro Tag (pro Woche) ausgeführt werden?"
+lang_timer_create_set1_1xday="Einmal am Tag"
+lang_timer_create_set1_Xxday="Mehrmals am Tag"
+lang_timer_create_set2_1="An den folgenden Tagen ausführen"
+lang_timer_create_set3_1="Ausführungszeit"
+lang_timer_create_set4_1="Anzahl der Wiederholungen"
+lang_timer_create_set4_2="treffe bitte eine Auswahl!"
+lang_timer_create_set5_1="Scriptname konnte nicht übertragen werden"
+lang_timer_create_set5_2="Dayname konnte nicht übertragen werden"
+lang_timer_create_set5_3="Stunde konnte nicht übertragen werden"
+lang_timer_create_set5_4="Minute konnte nicht übertragen werden"
+lang_timer_create_set5_5="Stunde -bis- konnte nicht übertragen werden"
+lang_timer_create_set5_6="Frequenz konnte nicht übertragen werden"
+lang_timer_create_set5_7="Folgende Daten werden übernommen..."
+lang_timer_create_set5_7a="Das Script"
+lang_timer_create_set5_7b="wird am"
+lang_timer_create_set5_7c="ausgeführt"
+lang_timer_create_set5_7d="in der Zeit von"
+lang_timer_create_result="Folgender Eintrag wird an CRONTAB übergeben"
+lang_timer_set3_1="Es wurde kein Tag ausgewählt!"
+lang_timer_set3_2="Es wurde keine Stunde ausgewählt!"
+lang_timer_set3_3="Es wurde keine Minute ausgewählt!"
+lang_timer_set4="Frequenz konnte nicht übertragen werden"
+lang_timer_delete_1="Soll der Cronjob wirklich entfernt werden?"
+lang_timer_delete_2="Der Cronjob wurde gelöscht!"
+lang_timer_delete_3="Der Cronjob konnte leider nicht gelöscht werden!"
+lang_timer_button_new="Neuer Zeitplan"
+lang_timer_currentcron_title="Aktueller Croneintrag für synOCR"
+lang_timer_currentcron_sub1="Programmpfad"
+lang_timer_crontab="Crontab"
+lang_timer_currentcron_sub2="Wochentag(e)"
+lang_timer_monday="Montag"
+lang_timer_tuesday="Dienstag"
+lang_timer_wednesday="Mittwoch"
+lang_timer_thursday="Donnerstag"
+lang_timer_friday="Freitag"
+lang_timer_saturday="Samstag"
+lang_timer_sunday="Sonntag"
+lang_timer_everyday="Jeden Tag"
+lang_timer_oclock="Uhr"
+lang_timer_time="Uhrzeit"
+lang_timer_minute="Minute"
+lang_timer_hourly="stündlich"
+lang_timer_houre="Stunde"
+lang_timer_houres="Stunden"
+lang_timer_interval="Intervall"
+lang_timer_freq="Frequenz"
+lang_timer_from="von"
+lang_timer_up2="bis"
+lang_timer_all="alle"
+lang_timer_at="um"
+lang_timer_everyhoure="Jede Stunde"
