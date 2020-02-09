@@ -548,7 +548,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         outputtmp=${output}
         if [ ! -z "$NameSyntax" ]; then
             echo -n "                          apply renaming syntax ➜ "
-     	    title=$(echo "${title}" | sed -f ./includes/encode.sed)             # für sed-Kompatibilität Sonderzeichen encodieren
+            title=$(echo "${title}" | sed -f ./includes/encode.sed)             # für sed-Kompatibilität Sonderzeichen encodieren
             renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
             
             NewName="$NameSyntax"
@@ -570,7 +570,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
             NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
 
-     	    NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # Sonderzeicheichen decodieren
+            NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # Sonderzeicheichen decodieren
 
             echo "$NewName"
 
