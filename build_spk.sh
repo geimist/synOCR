@@ -18,6 +18,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
+
 function finish {
 	git worktree remove --force "$build_tmp"
 	rm -rf "$build_tmp"
@@ -56,7 +58,6 @@ cd "${APPDIR}"
 git pull	# aktualisieren
 
 
-build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
 buildversion=${1:-latest}
 taggedversions=$(git tag)
 
