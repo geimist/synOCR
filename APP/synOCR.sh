@@ -548,8 +548,9 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         outputtmp=${output}
         if [ ! -z "$NameSyntax" ]; then
             echo -n "                          apply renaming syntax ➜ "
-            title=$( echo "${title}" | sed "s/\&/%26/g" )    # "&" würde sonst die Ersetzung der syntax "§tit" durch sed verhindern (müsste für sed maskiert werden)
-            renameTag=$( echo "${renameTag}" | sed "s/\&/%26/g" )    # "&" würde sonst die Ersetzung der syntax "§tit" durch sed verhindern (müsste für sed maskiert werden)
+     	    title=$(echo "${title}" | sed -f ./includes/encode.sed)             # für sed-Kompatibilität Sonderzeichen encodieren
+            renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
+            
             NewName="$NameSyntax"
             NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
             NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
@@ -560,15 +561,17 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
             NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
             NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
-            NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g" | sed "s/%26/\&/g"  )
-            NewName=$( echo "$NewName" | sed "s/§tit/${title}/g" | sed "s/%26/\&/g" )
+            NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g")
+            NewName=$( echo "$NewName" | sed "s/§tit/${title}/g")
             NewName=$( echo "$NewName" | sed "s/%20/ /g" )
-            
+   
             # Fallback für alte Parameter:
             NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
             NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
             NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
-            
+
+     	    NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # Sonderzeicheichen decodieren
+
             echo "$NewName"
 
             if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
