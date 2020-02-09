@@ -18,6 +18,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
+
 function finish {
 	git worktree remove --force "$build_tmp"
 	rm -rf "$build_tmp"
@@ -56,7 +58,7 @@ cd "${APPDIR}"
 git pull	# aktualisieren
 
 
-build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
+#build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
 buildversion=${1:-latest}
 taggedversions=$(git tag)
 
@@ -109,21 +111,21 @@ if test -d "${build_tmp}/.helptoc"; then
 fi
 
 # Rechte anpassen
-#	echo ""
-#	echo " - INFO: Dateirechte anpassen ..."
-#	for i in $(find "${build_tmp}/APP/" -type f)
-#        do
+	echo ""
+	echo " - INFO: Dateirechte anpassen ..."
+	for i in $(find "${build_tmp}/APP/" -type f)
+        do
         #    echo "ändere APP: $i"
-#            chmod 755 "$i"
-#            chown root:root "$i"
-#        done
+            chmod 755 "$i"
+            chown root:root "$i"
+        done
 	
-#	for i in $(find "${build_tmp}/PKG/" -type f)
-#        do
+	for i in $(find "${build_tmp}/PKG/" -type f)
+        do
         #    echo "ändere PKG: $i"
-#            chmod 755 "$i"
-#            chown root:root "$i"
-#        done
+            chmod 755 "$i"
+            chown root:root "$i"
+        done
 
 # Packen und Ablegen der aktuellen Installation in den entsprechenden /Pack - Ordner
 echo ""
