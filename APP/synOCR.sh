@@ -544,10 +544,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         rename() 
         {
         # Zieldatei umbenennen:
+        echo "                      ➜ renaming:"
         outputtmp=${output}
         if [ ! -z "$NameSyntax" ]; then
             echo -n "                          apply renaming syntax ➜ "
-            title=$( echo "${title}" | sed "s/\&/%26/g" )    # "&" im Titel würde sonst durch "§tit" ersetzt
+            title=$( echo "${title}" | sed "s/\&/%26/g" )    # "&" würde sonst die Ersetzung der syntax "§tit" durch sed verhindern (müsste für sed maskiert werden)
+            renameTag=$( echo "${renameTag}" | sed "s/\&/%26/g" )    # "&" würde sonst die Ersetzung der syntax "§tit" durch sed verhindern (müsste für sed maskiert werden)
             NewName="$NameSyntax"
             NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
             NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
@@ -558,7 +560,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
             NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
             NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
-            NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g" )
+            NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g" | sed "s/%26/\&/g"  )
             NewName=$( echo "$NewName" | sed "s/§tit/${title}/g" | sed "s/%26/\&/g" )
             NewName=$( echo "$NewName" | sed "s/%20/ /g" )
             
