@@ -12,13 +12,13 @@ It is also important that special characters remain in the same place. (e.g. \<b
 **The following files are needed to translate:**
 
 Mainfile for GUI:
-- ./APP/lang/lang_**\<language\_code\>**.txt
+- .[/APP/lang/](https://geimist.eu:30443/geimist/synOCR/src/branch/master/APP/lang)lang_**\<language\_code\>**.txt
 
 other files for Packetmanagement:   
-- ./PKG/scripts/lang/**\<language_code\>**
-- ./PKG/WIZARD_UIFILES/uninstall\_uifile\_**\<language\_code\>**
-- ./PKG/WIZARD_UIFILES/upgrade\_uifile\_**\<language\_code\>**
-- ./PKG/INFO ➜ Parameter "description"
+- .[/PKG/scripts/lang/](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/scripts/lang)**\<language_code\>**
+- .[/PKG/WIZARD_UIFILES/](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/WIZARD_UIFILES)uninstall\_uifile\_**\<language\_code\>**
+- .[/PKG/WIZARD_UIFILES/](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/WIZARD_UIFILES)upgrade\_uifile\_**\<language\_code\>**
+- .[/PKG/INFO](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/INFO) ➜ Parameter "description"
     - description_**\<language\_code\>**="\<translated description\>"   
   
   
