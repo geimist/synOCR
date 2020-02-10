@@ -79,7 +79,7 @@ lang_edit_set1_profilename_help="Profiles can be named individually (e.g. Shop, 
 
 lang_edit_set1_profile_activ_title="activate / deactivate profile"
 lang_edit_set1_profile_activ="Profile active"
-lang_edit_set1_profile_inactiv="Profile deactivated."
+lang_edit_set1_profile_inactiv="Profile deactivated"
 lang_edit_set1_profile_activ_help1="Profiles can be activated or deactivated."
 lang_edit_set1_profile_activ_help2="Deactivated profiles can be modified, but are not executed by synOCR."
 
@@ -208,9 +208,9 @@ lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
 lang_edit_set3_loglevel_off="0 (off)"
 lang_edit_set3_loglevel_1="1 (standard)"
 lang_edit_set3_loglevel_2="2 (extended)"
-lang_edit_set3_loglevel_help1="0  => no log file is created"
-lang_edit_set3_loglevel_help2="1 => normal log (standard)"
-lang_edit_set3_loglevel_help3="2 => extended log"
+lang_edit_set3_loglevel_help1="0 ➜ no log file is created"
+lang_edit_set3_loglevel_help2="1 ➜ normal log (standard)"
+lang_edit_set3_loglevel_help3="2 ➜ extended log"
 
 #-------------------------------------------
 # page help:
