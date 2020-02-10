@@ -16,8 +16,8 @@ Mainfile for GUI:
 
 other files for Packetmanagement:   
 - .[/PKG/scripts/lang/](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/scripts/lang)**\<language_code\>**
-- .[/PKG/WIZARD_UIFILES/](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/WIZARD_UIFILES)uninstall\_uifile\_**\<language\_code\>** ((➜ only Parameter **"step_title"** and **"desc"** !)
-- .[/PKG/WIZARD_UIFILES/](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/WIZARD_UIFILES)upgrade\_uifile\_**\<language\_code\>** ((➜ only Parameter **"step_title"** and **"desc"** !)
+- .[/PKG/WIZARD_UIFILES/](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/WIZARD_UIFILES)uninstall\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
+- .[/PKG/WIZARD_UIFILES/](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/WIZARD_UIFILES)upgrade\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
 - .[/PKG/INFO](https://geimist.eu:30443/geimist/synOCR/src/branch/master/PKG/INFO) (➜ only Parameter **"description"** !)
     - description_**\<language\_code\>**="\<translated description\>"   
   
