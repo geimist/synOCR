@@ -6,6 +6,10 @@ Release Notes
     BUGFIXES:
  -  
 
+0.16.2
+    BUGFIXES:
+ -  verbesserte Datumserkennung
+
 0.16.1
     BUGFIXES:
  -  Sonderzeichen in tags führte zu fehlerhafter Umbenennung
