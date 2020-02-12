@@ -77,7 +77,7 @@
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
     echo "Device:                   $device ($sysID)"	    #  | sed "s/ds//g"
     echo "current Profil:           $profile"
-    echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system")"
+    echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1")"
     echo "used image (created):     $dockercontainer ($(/usr/local/bin/docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
     echo "used ocr-parameter:       $ocropt"
     echo "replace search prefix:    $delSearchPraefix"
@@ -138,10 +138,10 @@
 
 #################################################################################################
 #        _______________________________________________________________________________        #
-#       |                                                                               |       #
-#       |                       BEGINNING OF THE FUNCTIONS                              |       #
+#       |                                       |       #
+#       |               BEGINNING OF THE FUNCTIONS              |       #
 #       |_______________________________________________________________________________|       #
-#                                                                                               #
+#                                               #
 #################################################################################################
 
 sec_to_time() 
@@ -183,7 +183,7 @@ echo "$1" | awk '{
 purge_LOG() 
 {
 #########################################################################################
-# This function cleans up older log files                                               #
+# This function cleans up older log files                               #
 #########################################################################################
 
 if [ -z $LOGmax ]; then
@@ -219,7 +219,7 @@ fi
 mainrun() 
 {
 #########################################################################################
-# This function passes the files to docker                                         #
+# This function passes the files to docker                         #
 #########################################################################################
     
 IFS=$'\012'	 # corresponds to a $'\n' newline
@@ -233,7 +233,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         echo -e
         filename=$(basename "$input")
         title=${filename%.*}
-        echo -n "    PROCESSING:       ➜ $filename"
+        echo -n "PROCESSING:   ➜ $filename"
         echo " ($(date))"
         date_start=$(date +%s)
 
@@ -249,14 +249,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             while [ -f "${OUTPUTDIR}${title} ($destfilecount).pdf" ]
                 do
                     destfilecount=$( expr $destfilecount + 1 )
-                    echo "                          continue counting … ($destfilecount)"
+                    echo "                  continue counting … ($destfilecount)"
                 done
             output="${OUTPUTDIR}${title} ($destfilecount).pdf"
-            echo "                          File name already exists! Add counter ($destfilecount)"
+            echo "                  File name already exists! Add counter ($destfilecount)"
         fi
         
         outputtmp="${work_tmp}/${title}.pdf"
-        echo "                          temp. target file: ${outputtmp}"
+        echo "                  temp. target file: ${outputtmp}"
 
     # OCRmyPDF:
         OCRmyPDF()
@@ -264,7 +264,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             
         #    if [ $loglevel = "2" ] ; then
                 # -g: Debug-Modus (der erkannte Text wird jeweils als extra Seite zusätzlich eingefügt)
-        #        ocropt="$ocropt -g"
+                # ocropt="$ocropt -g"
         #    fi
             # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
             cat "$input" | /usr/local/bin/docker run --name synOCR --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
@@ -278,18 +278,18 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         #   WARNING -    2: [tesseract] lots of diacritics - possibly poor OCR
 
         echo -e
-        echo "                      ➜ OCRmyPDF-LOG:"
-        echo "$dockerlog" | sed -e "s/^/                       /g"
-        echo "                      ← OCRmyPDF-LOG-END"
+        echo "              ➜ OCRmyPDF-LOG:"
+        echo "$dockerlog" | sed -e "s/^/               /g"
+        echo "              ← OCRmyPDF-LOG-END"
         echo -e
 
     # check if target file is valid (not empty), otherwise continue / defective source files are moved to ERROR including LOG:
         if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
-            echo "                          ┖➜ failed! (target file is empty or not available)"
+            echo "                  ┖➜ failed! (target file is empty or not available)"
             rm "${outputtmp}"
             if echo "$dockerlog" | grep -q ERROR ;then
                 if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
-                    echo "                                                  ERROR-Directory [${INPUTDIR}ERRORFILES] will be created!"
+                    echo "                                  ERROR-Directory [${INPUTDIR}ERRORFILES] will be created!"
                     mkdir "${INPUTDIR}ERRORFILES"
                 fi
 
@@ -298,23 +298,23 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     output="${INPUTDIR}ERRORFILES/${filename%.*}.pdf"
                 else
                     while [ -f "${INPUTDIR}ERRORFILES/${filename%.*} ($destfilecount).pdf" ]
-                        do
-                            destfilecount=$( expr $destfilecount + 1 )
-                            echo "                                                  continue counting … ($destfilecount)"
-                        done
+                do
+                    destfilecount=$( expr $destfilecount + 1 )
+                    echo "                                  continue counting … ($destfilecount)"
+                done
                     output="${INPUTDIR}ERRORFILES/${filename%.*} ($destfilecount).pdf"
-                    echo "                                                  File name already exists! Add counter ($destfilecount)"
+                    echo "                                  File name already exists! Add counter ($destfilecount)"
                 fi
                 mv "$input" "$output"
                 if [ "$loglevel" != 0 ] ;then
                     cp "$LOGFILE" "${output}.log"
                 fi
-                echo "                                              ┖➜ move to ERRORFILES"
+                echo "                              ┖➜ move to ERRORFILES"
             fi
             rm -rf "$work_tmp"
             continue
         else
-            echo "                          target file (OK): ${output}"
+            echo "                  target file (OK): ${output}"
         fi
         
     # move temporary file to destination folder:
@@ -322,17 +322,17 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         
     # File permissions-Log:
         if [ $loglevel = "2" ] ; then
-            echo "                      ➜ File permissions source file:"
-            echo -n "                          "
+            echo "              ➜ File permissions source file:"
+            echo -n "                  "
             ls -l "$input"
-            echo "                      ➜ File permissions target file:"
-            echo -n "                          "
+            echo "              ➜ File permissions target file:"
+            echo -n "                  "
             ls -l "$output"
         fi
 
     # Transmitting file attributes:
         # ( ➜ Date adjustment moved to the date function)
-        echo -n "                      ➜ transfer the file permissions and owners "
+        echo -n "              ➜ transfer the file permissions and owners "
         if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
             echo "(use ACL)"
             synoacltool -copy "$input" "$output"
@@ -345,8 +345,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         
     # File permissions-Log:
         if [ $loglevel = "2" ] ; then
-            echo "                      ➜ File permissions target file:"
-            echo -n "                          "
+            echo "              ➜ File permissions target file:"
+            echo -n "                  "
             ls -l "$output"
         fi
         
@@ -378,8 +378,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             tagarray=( $taglist2 )   # Tags als Array definieren
             i=0
             maxID=${#tagarray[*]}
-            echo "                      ➜ search tags and date:"
-            echo "                          tag count:       $maxID"
+            echo "              ➜ search tags and date:"
+            echo "                  tag count:       $maxID"
 
         #    for a in ${tagarray[@]}; do
         #        echo $a
@@ -387,53 +387,53 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             while (( i < maxID )); do
                 if echo "${tagarray[$i]}" | grep -q "=" ;then
                     if echo $(echo "${tagarray[$i]}" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
-                        grep_opt="-qiw"
+                grep_opt="-qiw"
                     else
-                        grep_opt="-qi"
+                grep_opt="-qi"
                     fi
                     tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
                     searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
                     categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
-                    echo -n "                          Search by tag:   \"${searchtag}\" ➜  "
+                    echo -n "                  Search by tag:   \"${searchtag}\" ➜  "
                     if grep $grep_opt "${searchtag}" "$searchfile" ;then
-                        echo "OK (Cat: \"${categorietag}\")"
-                        renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g")${renameTag}"
-                        renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
+                echo "OK (Cat: \"${categorietag}\")"
+                renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g")${renameTag}"
+                renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
                     else
-                        echo "-"
+                echo "-"
                     fi
                 else
                     if echo $(echo ${tagarray[$i]} | sed -e "s/%20/ /g") | grep -q  "^§" ;then
-                        grep_opt="-qiw"
+                grep_opt="-qiw"
                     else
-                        grep_opt="-qi"
+                grep_opt="-qi"
                     fi
                     tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
-                    echo -n "                          Search by tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
+                    echo -n "                  Search by tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
                     if grep $grep_opt "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g" | sed -e "s/^§//g")" "$searchfile" ;then
-                        echo "OK"
-                        renameTag="${tagsymbol}${tagarray[$i]}${renameTag}"
+                echo "OK"
+                renameTag="${tagsymbol}${tagarray[$i]}${renameTag}"
                     else
-                        echo "-"
+                echo "-"
                     fi
                 fi
                 i=$((i + 1))
             done
             renameTag=${renameTag% }
             renameCat=${renameCat% }
-            echo "                          rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
+            echo "                  rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
             }
             tagsearch
 
         # suche nach Datum:
             dateIsFound=no
             # suche Format: dd[./-]mm[./-]yy(yy)
-            founddate=$( parseRegex "$content" "\y([1-9]|[1-2][0-9]|3[0-1])[\./-][0-1]?[0-9][\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
+            founddate=$( parseRegex "$content" "\y([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
             # INFO about \y: In other GNU software, the word-boundary operator is ‘\b’. However, that conflicts with the awk language’s definition of ‘\b’ as backspace, 
             # so gawk uses a different letter. The current method of using ‘\y’ for the GNU ‘\b’ appears to be the lesser of two evils.
             # https://www.gnu.org/software/gawk/manual/html_node/GNU-Regexp-Operators.html
             if [ ! -z $founddate ]; then
-                echo -n "                          check date (dd mm [yy]yy): $founddate"
+                echo -n "                  check date (dd mm [yy]yy): $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
                 date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
                 date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
@@ -441,11 +441,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     date_yy="20${date_yy}"
                 fi
                 date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+
                 if [ $? -eq 0 ]; then
                     echo " ➜ valid"
-                    echo "                          day:  ${date_dd}"
-                    echo "                          month:${date_mm}"
-                    echo "                          year: ${date_yy}"
+                    echo "                  day:  ${date_dd}"
+                    echo "                  month:${date_mm}"
+                    echo "                  year: ${date_yy}"
                     dateIsFound=yes
                 else
                     echo " ➜ invalid format"
@@ -455,24 +456,24 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
             # suche Format: yy(yy)[./-]mm[./-]dd
             if [ $dateIsFound = no ]; then
-                founddate=$( parseRegex "$content" "\y(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\.\/-][0-1]?[0-9][\.\/-](0[1-9]|[1-2][0-9]|3[0-1])\y" | head -n1 )
+                founddate=$( parseRegex "$content" "\y(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\y" | head -n1 )
                 if [ ! -z $founddate ]; then
-                    echo -n "                          check date ([yy]yy mm dd): $founddate"
+                    echo -n "                  check date ([yy]yy mm dd): $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
                     date_yy=$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')    
                     if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
-                        date_yy="20${date_yy}"
+                date_yy="20${date_yy}"
                     fi
                     date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                     if [ $? -eq 0 ]; then
-                        echo " ➜ valid"
-                        echo "                          day:  ${date_dd}"
-                        echo "                          month:${date_mm}"
-                        echo "                          year: ${date_yy}"
-                        dateIsFound=yes
+                echo " ➜ valid"
+                echo "                  day:  ${date_dd}"
+                echo "                  month:${date_mm}"
+                echo "                  year: ${date_yy}"
+                dateIsFound=yes
                     else
-                        echo " ➜ invalid format"
+                echo " ➜ invalid format"
                     fi
                     founddate=""
                 fi
@@ -480,24 +481,24 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
             # suche Format: mm[./-]dd[./-]yy(yy) amerikanisch
             if [ $dateIsFound = no ]; then
-                founddate=$( parseRegex "$content" "\y[0-1]?[0-9][\./-](0[1-9]|[1-2][0-9]|3[0-1])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
+                founddate=$( parseRegex "$content" "\y([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
                 if [ ! -z $founddate ]; then
-                    echo -n "                          check date (mm dd [yy]yy): $founddate"
+                    echo -n "                  check date (mm dd [yy]yy): $founddate"
                     date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
                     date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
                     date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
                     if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
-                        date_yy="20${date_yy}"
+                date_yy="20${date_yy}"
                     fi
                     date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                     if [ $? -eq 0 ]; then
-                        echo " ➜ valid"
-                        echo "                          day:  ${date_dd}"
-                        echo "                          month:${date_mm}"
-                        echo "                          year: ${date_yy}"
-                        dateIsFound=yes
+                echo " ➜ valid"
+                echo "                  day:  ${date_dd}"
+                echo "                  month:${date_mm}"
+                echo "                  year: ${date_yy}"
+                dateIsFound=yes
                     else
-                        echo " ➜ invalid format"
+                echo " ➜ invalid format"
                     fi
                     founddate=""
                 fi
@@ -508,17 +509,17 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             date_yy_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $1}') 
             
             if [ $dateIsFound = no ]; then
-                echo "                          Date not found in OCR text - use file date:"
+                echo "                  Date not found in OCR text - use file date:"
                 date_dd=$date_dd_source
                 date_mm=$date_mm_source
                 date_yy=$date_yy_source
-                echo "                          day:  ${date_dd}"
-                echo "                          month:${date_mm}"
-                echo "                          year: ${date_yy}"
+                echo "                  day:  ${date_dd}"
+                echo "                  month:${date_mm}"
+                echo "                  year: ${date_yy}"
             fi
                 
             # Dateidatum anpassen:
-            echo -n "                      ➜ Adapt file date (Source: "
+            echo -n "              ➜ Adapt file date (Source: "
             if [[ "$filedate" == "ocr" ]]; then
                 if [ $dateIsFound = no ]; then
                     echo "Source file [OCR selected but not found])"
@@ -544,13 +545,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         rename() 
         {
         # Zieldatei umbenennen:
-        echo "                      ➜ renaming:"
+        echo "              ➜ renaming:"
         outputtmp=${output}
         if [ ! -z "$NameSyntax" ]; then
-            echo -n "                          apply renaming syntax ➜ "
-            title=$(echo "${title}" | sed -f ./includes/encode.sed)             # für sed-Kompatibilität Sonderzeichen encodieren
-            renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
-            
+            echo -n "                  apply renaming syntax ➜ "
+            title=$( echo "${title}" | sed "s/\&/%26/g" )    # "&" würde sonst die Ersetzung der syntax "§tit" durch sed verhindern (müsste für sed maskiert werden)
+            renameTag=$( echo "${renameTag}" | sed "s/\&/%26/g" )    # "&" würde sonst die Ersetzung der syntax "§tit" durch sed verhindern (müsste für sed maskiert werden)
             NewName="$NameSyntax"
             NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
             NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
@@ -561,21 +561,19 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
             NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
             NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
-            NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g")
-            NewName=$( echo "$NewName" | sed "s/§tit/${title}/g")
+            NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g" | sed "s/%26/\&/g"  )
+            NewName=$( echo "$NewName" | sed "s/§tit/${title}/g" | sed "s/%26/\&/g" )
             NewName=$( echo "$NewName" | sed "s/%20/ /g" )
-   
+            
             # Fallback für alte Parameter:
             NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
             NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
             NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
-
-            NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # Sonderzeicheichen decodieren
-
+            
             echo "$NewName"
 
             if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
-                echo "                      ➜ move to category directories"
+                echo "              ➜ move to category directories"
                 renameCat=$( echo ${renameCat} | sed -e "s/${tagsymbol}//g" )
                 tagarray=( $renameCat )   # Tags als Array definieren
                 i=0
@@ -586,40 +584,40 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             #    done
                 while (( i < maxID )); do
                     tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-                    echo -n "                          tag directories \"${tagdir}\" exists? ➜  "
+                    echo -n "                  tag directories \"${tagdir}\" exists? ➜  "
                     if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
-                        echo "OK"
+                echo "OK"
                     else
-                        mkdir "${OUTPUTDIR}${tagdir}"
-                        echo "created"
+                mkdir "${OUTPUTDIR}${tagdir}"
+                echo "created"
                     fi
 
                     destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
                     if [ $destfilecount -eq 0 ]; then
-                        output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
+                output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
                     else
-                        while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
-                            do
-                                destfilecount=$( expr $destfilecount + 1 )
-                                echo "                          continue counting … ($destfilecount)"
-                            done
-                        output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
-                        echo "                          File name already exists! Add counter ($destfilecount)"
+                while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
+                    do
+                destfilecount=$( expr $destfilecount + 1 )
+                echo "                  continue counting … ($destfilecount)"
+                    done
+                output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
+                echo "                  File name already exists! Add counter ($destfilecount)"
                     fi
                     
-                    echo "                          target:   ./${tagdir}/$(basename "${output}")"
+                    echo "                  target:   ./${tagdir}/$(basename "${output}")"
                     # prüfen, ob selbe Datei bereits einmal in diese Kategorie einsortiert wurde (unterschiedliche Tags, aber gleich Kategorie)
                     if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
-                        echo "                          same file has already been copied into category (${tagarray[$i]}) and is skipped!"
+                echo "                  same file has already been copied into category (${tagarray[$i]}) and is skipped!"
                     else
-                        cp -l "${outputtmp}" "${output}"
+                cp -l "${outputtmp}" "${output}"
                     fi
                     DestFolderList="${tagarray[$i]}\n${DestFolderList}"
                     i=$((i + 1))
                 done
                 rm "${outputtmp}"
             elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
-                echo "                      ➜ move to tag directories"
+                echo "              ➜ move to tag directories"
                 renameTag=$( echo $renameTag | sed -e "s/${tagsymbol}//g" )
                 tagarray=( $renameTag )   # Tags als Array definieren
                 i=0
@@ -629,32 +627,32 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             #    done
                 while (( i < maxID )); do
                     tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-                    echo -n "                          tag directories \"${tagdir}\" exists? ➜  "
+                    echo -n "                  tag directories \"${tagdir}\" exists? ➜  "
                     if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
-                        echo "OK"
+                echo "OK"
                     else
-                        mkdir "${OUTPUTDIR}${tagdir}"
-                        echo "created"
+                mkdir "${OUTPUTDIR}${tagdir}"
+                echo "created"
                     fi
 
                     destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
                     if [ $destfilecount -eq 0 ]; then
-                        output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
+                output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
                     else
-                        while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
-                            do
-                                destfilecount=$( expr $destfilecount + 1 )
-                                echo "                          continue counting … ($destfilecount)"
-                            done
-                        output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
-                        echo "                          File name already exists! Add counter ($destfilecount)"
+                while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
+                    do
+                destfilecount=$( expr $destfilecount + 1 )
+                echo "                  continue counting … ($destfilecount)"
+                    done
+                output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
+                echo "                  File name already exists! Add counter ($destfilecount)"
                     fi
 
-                    echo "                          target:   ./${tagdir}/$(basename "${output}")"
+                    echo "                  target:   ./${tagdir}/$(basename "${output}")"
                     cp -l "${outputtmp}" "${output}"
                     i=$((i + 1))
                 done
-                echo "                      ➜ delete temp. target file"
+                echo "              ➜ delete temp. target file"
                 rm "${outputtmp}"
             else
                 destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
@@ -662,14 +660,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                     output="${OUTPUTDIR}${NewName}.pdf"
                 else
                     while [ -f "${OUTPUTDIR}${NewName} ($destfilecount).pdf" ]
-                        do
-                            destfilecount=$( expr $destfilecount + 1 )
-                            echo "                          continue counting … ($destfilecount)"
-                        done
+                do
+                    destfilecount=$( expr $destfilecount + 1 )
+                    echo "                  continue counting … ($destfilecount)"
+                done
                     output="${OUTPUTDIR}${NewName} ($destfilecount).pdf"
-                    echo "                          File name already exists! Add counter ($destfilecount)"
+                    echo "                  File name already exists! Add counter ($destfilecount)"
                 fi
-                echo "                          target file: $(basename "${output}")"
+                echo "                  target file: $(basename "${output}")"
                 mv "${outputtmp}" "${output}"
             fi
         fi
@@ -684,19 +682,19 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
             if [ $sourcefilecount -eq 0 ]; then
                 mv "$input" "${BACKUPDIR}${filename}"
-                echo "                      ➜ move source file to: ${BACKUPDIR}${filename}"
+                echo "              ➜ move source file to: ${BACKUPDIR}${filename}"
             else
                 while [ -f "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf" ]
                     do
-                        sourcefilecount=$( expr $sourcefilecount + 1 )
-                        echo "                          continue counting … ($sourcefilecount)"
+                sourcefilecount=$( expr $sourcefilecount + 1 )
+                echo "                  continue counting … ($sourcefilecount)"
                     done
                 mv "$input" "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
-                echo "                      ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
+                echo "              ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
             fi
         else
             rm "$input"
-            echo "                      ➜ delete source file"
+            echo "              ➜ delete source file"
         fi
 
 # hier muss die automatische Spracheinstellung mit eingebaut werden:
@@ -714,28 +712,28 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         if [ ! -z $PBTOKEN ] ; then
             PB_LOG=`curl $cURLloglevel --header "Access-Token:${PBTOKEN}" https://api.pushbullet.com/v2/pushes -d type=note -d title="synOCR" -d body="Datei [$(basename "${output}")] ist fertig."`
             if [ $loglevel = "2" ] ; then
-                echo "                          PushBullet-LOG:"
-                echo "$PB_LOG" | sed -e "s/^/                       /g"
+                echo "                  PushBullet-LOG:"
+                echo "$PB_LOG" | sed -e "s/^/               /g"
             elif echo "$PB_LOG" | grep -q "error"; then # für Loglevel 1 nur Errorausgabe
-                echo -n "                          PushBullet-Error: "
+                echo -n "                  PushBullet-Error: "
                 echo "$PB_LOG" | jq -r '.error_code'
             fi
         else
-            echo "                          INFO: (PushBullet-TOKEN not set)"
+            echo "                  INFO: (PushBullet-TOKEN not set)"
         fi
 
     # Dateizähler:
         synosetkeyvalue ./etc/counter pagecount $(expr $(get_key_value ./etc/counter pagecount) + $pagecount_latest)
         synosetkeyvalue ./etc/counter ocrcount $(expr $(get_key_value ./etc/counter ocrcount) + 1)
-        echo "                          INFO: (runtime last file: $(sec_to_time $(expr $(date +%s)-${date_start}) ) (pagecount: $pagecount_latest) | all: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Pages processed up to now)"
+        echo "                  INFO: (runtime last file: $(sec_to_time $(expr $(date +%s)-${date_start}) ) (pagecount: $pagecount_latest) | all: $(get_key_value ./etc/counter ocrcount) PDFs / > $(get_key_value ./etc/counter pagecount) Pages processed up to now)"
     # temporäres Arbeitsverzeichnis löschen:
         rm -rf "$work_tmp"
     done
 }
 
 #        _______________________________________________________________________________
-#       |                                                                               |
-#       |                           AUFRUF DER FUNKTIONEN                               |
+#       |                                       |
+#       |                   AUFRUF DER FUNKTIONEN               |
 #       |_______________________________________________________________________________|
 
     echo -e; echo -e
