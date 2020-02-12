@@ -58,7 +58,6 @@ cd "${APPDIR}"
 git pull	# aktualisieren
 
 
-#build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
 buildversion=${1:-latest}
 taggedversions=$(git tag)
 
