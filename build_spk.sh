@@ -54,9 +54,7 @@ fi
 APPDIR=$(cd "$(dirname $0)";pwd)
 cd "${APPDIR}"
 
-
 git pull	# aktualisieren
-
 
 buildversion=${1:-latest}
 taggedversions=$(git tag)
