@@ -1,6 +1,6 @@
 Release Notes
 
-0.16.2
+0.16.2 [2020-x-x]
     BUGFIXES:
  -  verbesserte Datumserkennung
 
@@ -21,33 +21,33 @@ Release Notes
  -  Dateidatum der Quelldatei wurde teilweise nicht korrekt auf die Ausgabedatei übertragen
  -  Minorbugfixes
 
-0.15.2
+0.15.2 [2019-09-03]
     IMPLEMENTIERUNGEN:
 -  erweiterte Auswahl an Dockerimages
 
-0.15.1
+0.15.1 [2019-03-25]
     BUGFIXES:
 -  die temporäre Zieldatei wurde nicht gelöscht
 
-0.15.0
+0.15.0 [2019-03-21]
     IMPLEMENTIERUNGEN:
  -  Die Konfiguration wurde von einer Textdatei auf eine Datenbank umgestellt. So lassen sich jetzt beliebige Profile verwalten.
  -  Übersichts- und Statusseite zusammengeführt
  -  INFO: Das Textfeld für die Tags ist zwar jetzt mehrzeilig, es dürfen aber derzeit keine Zeilenumbrüche verwendet werden!
  -  Detailverbesserungen in der GUI
 
-0.14.0
+0.14.0 [2019-03-11]
     IMPLEMENTIERUNGEN:
  -  es wird jetzt in einem temporären Ordner gearbeitet, damit unerfahrene User nicht von leeren Dateien irritiert werden
  -  über ein Listfeld lässt sich das Image jbarlow83/ocrmypdf-polyglot (mit allen Sprachen) auswählen
     BUGFIXES:
  -  das Handling der Dateirechte wurde geändert
 
-0.13.1
+0.13.1 [2019-02-25]
     BUGFIXES:
  -  Fehler bei der Benutzerberechtigung. Die Berechtigung zu synOCR kann in der Systemsteuerung/Berechtigung konfiguriert werden (bitte beachte, dass nur eine gemeinsame Konfiguration verwendet wird!).
 
-0.13.0
+0.13.0 [2019-02-18]
     IMPLEMENTIERUNGEN:
  -  durch Voranstellen eines Paragrafenzeichen kann ein Tag alleinstehend gefunden werden (§tag)
  -  in der Statistik werden jetzt auch einzelne Seiten gezählt
@@ -55,7 +55,7 @@ Release Notes
     BUGFIXES:
  -  Fehler bei der LOG-Ausgabe beim Aufruf über den Aufgabenplaner
 
-0.12.1
+0.12.1 [2019-02-05]
     IMPLEMENTIERUNGEN:
  -  zeigen unterschiedliche Tags auf ein und dieselbe Kategorie, so wird die Datei nur einmal in den Kategorieordner verschoben
     BUGFIXES:
@@ -66,7 +66,7 @@ Release Notes
  -  der Originaldateiname wurde z.T. bei der Umbenennung nicht korrekt weiter verarbeitet
  -  Verbesserung der Dateizählererweiterung wenn man die erste Datei ohne Zähler verschoben hatte, bzw. die Originaldateien schon einen Zähler in der Form (1) hatten.
 
-0.11.0
+0.11.0 [2019-01-29]
     IMPLEMENTIERUNGEN:
  -  Tags und Kategorien können jetzt Leerzeichen enthalten (eine Suche nach Tag "Rechnung " findet so nicht fälschlicherweise "Rechnungsstellung")
  -  Schalter, um Tags als Kategorie zu verwenden (manche wollen vielleicht für jeden Tag einen eigenen Ordner). Eine separate Kategoriezuweisung erübrigt sich in diesem Fall
@@ -76,7 +76,7 @@ Release Notes
  -  eine Installation auf Geräten, die nur inoffiziell Docker unterstützen, war nicht möglich
  -  kleinere Detailverbesserungen
 
-0.10.0
+0.10.0 [2019-01-21]
     IMPLEMENTIERUNGEN:
  -  es kann nach Tags im OCR-Text gesucht werden
  -  es kann nach Datum im OCR-Text gesucht werden
@@ -86,7 +86,7 @@ Release Notes
  -  ein fehlender Zielordner wurde ggf. nicht erstellt
  -  der Zähler für offene Jobs war z.T. nicht korrekt
 
-0.9.3
+0.9.3 [2019-01-17]
     IMPLEMENTIERUNGEN:
  -  Dateisuche ist jetzt case insensetive (Suchpräfix / .pdf .PDF)
  -  Suchpräfix kann nun automatisch entfernt werden
@@ -95,5 +95,5 @@ Release Notes
  -  bei einem OCRmyPDF Error wurde das Skript z.T. nicht korrekt abgebrochen
  -  kleinere Korrekturen
 
-0.9.2
+0.9.2 [2019-01-11]
  -  This is the initial public release of the package
