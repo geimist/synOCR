@@ -6,9 +6,9 @@ Release Notes
 
 0.16.1 [2020-02-09]
     BUGFIXES:
- -  Sonderzeichen in Tags führte zu fehlerhafter Umbenennung
+ -  Sonderzeichen in tags führte zu fehlerhafter Umbenennung
 
-0.16.0 [2020-01-29]
+0.16.0 [2020-01-28]
     IMPLEMENTIERUNGEN:
  -  es steht wieder ein aktuelles "polyglot-Image" mit allen Sprachen zur Auswahl
  -  manuell heruntergeladene Images stehen ebenfalls zur Auswahl (sofern "ocrmypdf" im Namen enthalten ist)
@@ -25,7 +25,7 @@ Release Notes
     IMPLEMENTIERUNGEN:
 -  erweiterte Auswahl an Dockerimages
 
-0.15.1 [2019-03-25]
+0.15.1 [2019-03-24]
     BUGFIXES:
 -  die temporäre Zieldatei wurde nicht gelöscht
 
@@ -36,18 +36,18 @@ Release Notes
  -  INFO: Das Textfeld für die Tags ist zwar jetzt mehrzeilig, es dürfen aber derzeit keine Zeilenumbrüche verwendet werden!
  -  Detailverbesserungen in der GUI
 
-0.14.0 [2019-03-11]
+0.14.0 [2019-03-10]
     IMPLEMENTIERUNGEN:
  -  es wird jetzt in einem temporären Ordner gearbeitet, damit unerfahrene User nicht von leeren Dateien irritiert werden
  -  über ein Listfeld lässt sich das Image jbarlow83/ocrmypdf-polyglot (mit allen Sprachen) auswählen
     BUGFIXES:
  -  das Handling der Dateirechte wurde geändert
 
-0.13.1 [2019-02-25]
+0.13.1 [2019-02-24]
     BUGFIXES:
  -  Fehler bei der Benutzerberechtigung. Die Berechtigung zu synOCR kann in der Systemsteuerung/Berechtigung konfiguriert werden (bitte beachte, dass nur eine gemeinsame Konfiguration verwendet wird!).
 
-0.13.0 [2019-02-18]
+0.13.0 [2019-02-17]
     IMPLEMENTIERUNGEN:
  -  durch Voranstellen eines Paragrafenzeichen kann ein Tag alleinstehend gefunden werden (§tag)
  -  in der Statistik werden jetzt auch einzelne Seiten gezählt
@@ -86,7 +86,7 @@ Release Notes
  -  ein fehlender Zielordner wurde ggf. nicht erstellt
  -  der Zähler für offene Jobs war z.T. nicht korrekt
 
-0.9.3 [2019-01-17]
+0.9.3 [2019-01-16]
     IMPLEMENTIERUNGEN:
  -  Dateisuche ist jetzt case insensetive (Suchpräfix / .pdf .PDF)
  -  Suchpräfix kann nun automatisch entfernt werden
