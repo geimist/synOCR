@@ -2,11 +2,11 @@ Release Notes
 
 0.16.2 [2020-x-x]
     BUGFIXES:
- -  verbesserte Datumserkennung
+ -  Korrektur der Datumserkennung
 
 0.16.1 [2020-02-09]
     BUGFIXES:
- -  Sonderzeichen in tags führte zu fehlerhafter Umbenennung
+ -  Sonderzeichen in Tags führte zu fehlerhafter Umbenennung
 
 0.16.0 [2020-01-29]
     IMPLEMENTIERUNGEN:
