@@ -98,10 +98,13 @@
         echo "Loglevel:                 normal"
         cURLloglevel="-s"
         wgetloglevel="-q"
+        dockerlogLeftSpace="               "
     elif [ $loglevel = "2" ] ; then
         echo "Loglevel:                 extended"
         cURLloglevel="-v"
         wgetloglevel="-v"
+        dockerlogLeftSpace="                  "
+        ocropt="$ocropt -v2"
     fi
 
 
@@ -261,9 +264,6 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # OCRmyPDF:
         OCRmyPDF()
         {
-            if [ $loglevel = "2" ] ; then
-                ocropt="$ocropt -v2"
-            fi
             # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
             cat "$input" | /usr/local/bin/docker run --name synOCR --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
         }
@@ -273,13 +273,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
         echo -e
         echo "              ➜ OCRmyPDF-LOG:"
-        
-        if [ $loglevel = "2" ] ; then
-            echo "$dockerlog" | sed -e "s/^/                  /g"
-        else
-            echo "$dockerlog" | sed -e "s/^/               /g"
-        fi
-
+        echo "$dockerlog" | sed -e "s/^/${dockerlogLeftSpace}/g"
         echo "              ← OCRmyPDF-LOG-END"
         echo -e
 
