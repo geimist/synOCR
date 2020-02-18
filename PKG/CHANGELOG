@@ -1,12 +1,12 @@
 Release Notes
 
 0.1x.0 [2020-x-x]
-    IMPLEMENTIERUNGEN:
- -  
+    IMPLEMENTATIONS:
+ -  multilingual GUI (currently German, English)
     BUGFIXES:
  -  
 
-0.16.2 [2020-x-x]
+0.16.2 [2020-02-18]
     BUGFIXES:
  -  Korrektur der Datumserkennung
 
