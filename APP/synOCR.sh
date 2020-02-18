@@ -261,25 +261,25 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     # OCRmyPDF:
         OCRmyPDF()
         {
-            
-        #    if [ $loglevel = "2" ] ; then
-                # -g: Debug-Modus (der erkannte Text wird jeweils als extra Seite zusätzlich eingefügt)
-                # ocropt="$ocropt -g"
-        #    fi
+            if [ $loglevel = "2" ] ; then
+                ocropt="$ocropt -v2"
+            fi
             # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
             cat "$input" | /usr/local/bin/docker run --name synOCR --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
         }
         sleep 1
         dockerlog=$(OCRmyPDF 2>&1)
         sleep 1
-        
-        # Example:
-        #   WARNING -    2: [tesseract] unsure about page orientation
-        #   WARNING -    2: [tesseract] lots of diacritics - possibly poor OCR
 
         echo -e
         echo "              ➜ OCRmyPDF-LOG:"
-        echo "$dockerlog" | sed -e "s/^/               /g"
+        
+        if [ $loglevel = "2" ] ; then
+            echo "$dockerlog" | sed -e "s/^/                  /g"
+        else
+            echo "$dockerlog" | sed -e "s/^/               /g"
+        fi
+
         echo "              ← OCRmyPDF-LOG-END"
         echo -e
 
