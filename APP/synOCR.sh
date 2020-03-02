@@ -565,7 +565,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
             NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
 
-            NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # Sonderzeicheichen decodieren
+            NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # Sonderzeichen decodieren
+            renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
 
             echo "$NewName"
 
@@ -615,7 +616,9 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 rm "${outputtmp}"
             elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
                 echo "              ➜ move to tag directories"
-                renameTag=$( echo $renameTag | sed -e "s/${tagsymbol}//g" )
+                if [ ! -z "$tagsymbol" ]; then
+                    renameTag=$( echo $renameTag | sed -e "s/${tagsymbol}//g" )
+                fi
                 tagarray=( $renameTag )   # Tags als Array definieren
                 i=0
                 maxID=${#tagarray[*]}
