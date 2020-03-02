@@ -6,6 +6,10 @@ Release Notes
     BUGFIXES:
  -  
 
+0.16.3 [2020-03-02]
+    BUGFIXES:
+ -  Problem beim Einsortieren in Tagordner
+
 0.16.2 [2020-02-18]
     BUGFIXES:
  -  Korrektur der Datumserkennung
