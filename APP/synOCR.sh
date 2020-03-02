@@ -577,7 +577,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
             if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
                 echo "                      ➜ move to category directories"
-                renameCat=$( echo ${renameCat} | sed -e "s/${tagsymbol}//g" )
+                #renameCat=$( echo ${renameCat} | sed -e "s/${tagsymbol}//g" )
                 tagarray=( $renameCat )   # Tags als Array definieren
                 i=0
                 DestFolderList=""   # temp. Liste der verwendeten Zielordner um Dateiduplikate (unterschiedliche Tags, aber eine Kategorie) zu vermeiden
