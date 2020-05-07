@@ -84,6 +84,25 @@ error=0
         fi
     fi
 
+# DB-Update von v2 auf v3:
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1") -eq 2 ] ; then
+    	# DB-Parameter hinzufügen:
+            # Docker-Image-Update - no (0) or yes (1):
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system ADD COLUMN \"dockerimageupdate\" varchar DEFAULT ('1') "
+            # Prüfen:
+            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q dockerimageupdate ) ; then
+                log="$log ➜ die DB-Spalte konnte nicht erstellt werden (dockerimageupdate)"
+                error=1
+            fi
+            
+        if [[ "$error" == "0" ]]; then
+            # DB-Version anheben:
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET DB_Version='3', timestamp=(datetime('now','localtime')) WHERE rowid=1"
+            log="$log
+            DB-Upgrade erfolgreich durchgeführt (v2 ➜ v3)"
+        fi
+    fi
+
 echo "$log"
 
 exit 0
