@@ -369,8 +369,13 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         # suche nach Tags:
             tagsearch() 
             {
+            echo "                      ➜ search tags and date:"
             if [ -z "$taglist" ]; then
+                echo "                        no tags defined"
                 return
+            elif [ -f "$taglist" ]; then
+            	echo "                        source for tags is file [$taglist]"
+            	taglist=$(cat "$taglist")
             fi
             renameTag=""
             renameCat=""
@@ -378,7 +383,6 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             tagarray=( $taglist2 )   # Tags als Array definieren
             i=0
             maxID=${#tagarray[*]}
-            echo "                      ➜ search tags and date:"
             echo "                          tag count:       $maxID"
 
         #    for a in ${tagarray[@]}; do
