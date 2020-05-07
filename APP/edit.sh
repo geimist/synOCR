@@ -417,6 +417,29 @@ if [[ "$page" == "edit" ]]; then
             '$lang_edit_set2_dockerimage_help4'</span></a>
         </p>'
 
+    # docker-image-update
+    echo '
+        <p>
+        <label>'$lang_edit_set2_dockerimageupdate_title'</label>
+        <select name="dockerimageupdate">'
+        if [[ "$dockerimageupdate" == "0" ]]; then
+            echo '<option value="0" selected>'$lang_edit_set2_dockerimageupdate_no'</option>'
+        else
+            echo '<option value="0">'$lang_edit_set2_dockerimageupdate_no'</option>'
+        fi
+        if [[ "$dockerimageupdate" == "1" ]]; then
+            echo '<option value="1" selected>'$lang_edit_set2_dockerimageupdate_yes'</option>'
+        else
+            echo '<option value="1">'$lang_edit_set2_dockerimageupdate_yes'</option>'
+        fi
+        
+    echo '
+        </select>
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>'$lang_edit_set2_dockerimageupdate_help1'<br></span></a>
+        </p>'
+
     # SearchPraefix
     echo '
         <p>

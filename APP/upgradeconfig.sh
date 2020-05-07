@@ -94,6 +94,13 @@ error=0
                 log="$log ➜ die DB-Spalte konnte nicht erstellt werden (dockerimageupdate)"
                 error=1
             fi
+            # Docker-Image-Update - check date:
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system ADD COLUMN \"dockerimageupdate_checked\" "
+            # Prüfen:
+            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q dockerimageupdate_checked ) ; then
+                log="$log ➜ die DB-Spalte konnte nicht erstellt werden (dockerimageupdate_checked)"
+                error=1
+            fi
             
         if [[ "$error" == "0" ]]; then
             # DB-Version anheben:

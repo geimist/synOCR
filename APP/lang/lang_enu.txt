@@ -116,6 +116,11 @@ lang_edit_set2_dockerimage_help2="is the default image, but currently only conta
 lang_edit_set2_dockerimage_help3="Polyglot images contain all possible languages, but are bigger!"
 lang_edit_set2_dockerimage_help4="Manually downloaded or self-created images are also available for selection if &quot;ocrmypdf&quot; is included in the name."     # keep html-tag
 
+lang_edit_set2_dockerimageupdate_title="Keep Dockerimage up-to-date?"
+lang_edit_set2_dockerimageupdate_yes="autoupdate (standard)"
+lang_edit_set2_dockerimageupdate_no="keep version"
+lang_edit_set2_dockerimageupdate_help1="Dockerimages with :latest-tag can be updated."
+
 lang_edit_set2_searchpref_title="OCR search prefix"
 lang_edit_set2_searchpref_help1="Process only PDFs with defined prefix (e.g. &quot;SCAN_&quot;)"       # keep html-tag
 lang_edit_set2_searchpref_help2="leave blank if all documents are to be processed"
