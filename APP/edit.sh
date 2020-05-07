@@ -425,6 +425,29 @@ if [[ "$page" == "edit" ]]; then
             Manuell heruntergeladene Images stehen ebenfalls zur Auswahl, sofern "ocrmypdf" im Namen enthalten ist.</span></a>
         </p>'
 
+    # docker-image-update
+    echo '
+        <p>
+        <label>Dockerimage aktuell halten?</label>
+        <select name="dockerimageupdate">'
+        if [[ "$dockerimageupdate" == "0" ]]; then
+            echo '<option value="0" selected>nicht prüfen</option>'
+        else
+            echo '<option value="0">nicht prüfen</option>'
+        fi
+        if [[ "$dockerimageupdate" == "1" ]]; then
+            echo '<option value="1" selected>aktuell halten (standard)</option>'
+        else
+            echo '<option value="1">aktuell halten (standard)</option>'
+        fi
+        
+    echo '
+        </select>
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>Dockerimages mit :latest-Tag können aktualisiert werden.<br></span></a>
+        </p>'
+
     # SearchPraefix
     echo '
         <p>
