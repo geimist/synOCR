@@ -140,6 +140,9 @@ if [[ "$page" == "edit-save" ]]; then
         dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol' WHERE profile_ID='$profile_ID' "
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
     
+    # globale Änderung in Tabelle system schreiben:
+    sqlite3 ./etc/synOCR.sqlite "UPDATE system SET dockerimageupdate='$dockerimageupdate' WHERE rowid=1 "
+    
     echo '<div class="Content_1Col_full">'
     echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">Änderungen wurden gespeichert</p><br /></div>'
     echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">Weiter...</button></p><br />'
