@@ -140,6 +140,9 @@ if [[ "$page" == "edit-save" ]]; then
         dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol' WHERE profile_ID='$profile_ID' "
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
     
+    # globale Änderung in Tabelle system schreiben:
+    sqlite3 ./etc/synOCR.sqlite "UPDATE system SET dockerimageupdate='$dockerimageupdate' WHERE rowid=1 "
+    
     echo '<div class="Content_1Col_full">'
     echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_savefin'</p><br /></div>'
     echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />'
@@ -185,6 +188,9 @@ if [[ "$page" == "edit" ]]; then
         active=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
         filedate=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
         tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
+    
+    # globale Werte auslesen:
+	    dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
 
     echo '
     <div id="Content_1Col">
