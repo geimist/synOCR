@@ -148,7 +148,7 @@
 #                                                                                               #
 #################################################################################################
 
-check_dockerimage() 
+update_dockerimage() 
 {
 # this function checks for image update
 # --------------------------------------------------------------
@@ -769,7 +769,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     echo "    |    ==> Funktionsaufrufe <==    |"
     echo "    ----------------------------------"
 
-    check_dockerimage
+    update_dockerimage
     mainrun
     purge_LOG
 
