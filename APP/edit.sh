@@ -489,6 +489,9 @@ if [[ "$page" == "edit" ]]; then
             (greift nur, sofern man auch die Kategorieordner  [nachstehende Option] verwendet).<br><br>
             z.B.: <b>Rechnung;HUK24=Versicherung;Allianz=Versicherung</b><br>
             <br>
+            Umfangreiche Tags können auch in einer separaten Textdatei gespeichert werden.<br>In diesem Fall ist hier der absolute Pfad einzutragen.<br>
+            (z.B. /volume1/ocr/taglist.txt)<br>
+            <br>
             <br></span></a>
         </p>'
 
