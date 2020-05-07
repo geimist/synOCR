@@ -66,15 +66,12 @@
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
-    
-    dockerimageupdate=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
-    dockerimageupdate_checked=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
 
 # globale Werte auslesen:
-#    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT dockerimageupdate, dockerimageupdate_checked FROM system WHERE rowid=1 ")
+    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT dockerimageupdate, dockerimageupdate_checked FROM system WHERE rowid=1 ")
     
-#    dockerimageupdate=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
-#    dockerimageupdate_checked=$(echo "$sqlerg" | awk -F'\t' '{print $2}')
+    dockerimageupdate=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
+    dockerimageupdate_checked=$(echo "$sqlerg" | awk -F'\t' '{print $2}')
     
 # System Information:
 # --------------------------------------------------------------------- 
