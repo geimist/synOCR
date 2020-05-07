@@ -41,7 +41,7 @@
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
         dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol FROM config WHERE profile_ID='$workprofile' "
-
+        
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
     profile_ID=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
@@ -66,6 +66,8 @@
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
+    dockerimageupdate=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
+    dockerimageupdate_checked=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
     
 # System Information:
 # --------------------------------------------------------------------- 
