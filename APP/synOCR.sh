@@ -152,9 +152,9 @@ check_dockerimage()
 {
 # this function checks for image update
 # --------------------------------------------------------------
-    if echo $dockercontainer | grep -qE "latest$" && [[ $dockerimageupdate = 1 ]] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='$dockercontainer' ") = $(date +%Y-%m-%d) ]];then
+    check_date=$(date +%Y-%m-%d)
+    if echo $dockercontainer | grep -qE "latest$" && [[ $dockerimageupdate = 1 ]] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='$dockercontainer' ") = "$check_date" ]];then
         updatelog=$(docker pull $dockercontainer) #> /dev/null  2>&1
-        check_date=$(date +%Y-%m-%d)
         if [ -z $(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='$dockercontainer'") ]; then
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '$dockercontainer', '$check_date' )"	# , $(($today-1))
         else
