@@ -134,6 +134,9 @@ lang_edit_set2_taglist_help5="If a tag is only to be found alone, a paragraph si
 lang_edit_set2_taglist_help6="e.g.: <b>Billing, work, insurance </b>"                                    # keep html-tag
 lang_edit_set2_taglist_help7="Tags can also be assigned to a category (for subfolders) using an equal sign (only applies if you also use the category folders [option below])."
 lang_edit_set2_taglist_help8="e.g.: <b>Invoice;HUK24=Insurance;Allianz=Insurance</b>"                # keep html-tag
+lang_edit_set2_taglist_help9="Extensive tags can also be stored in a separate text file."
+lang_edit_set2_taglist_help10="In this case the absolute path must be entered here."
+lang_edit_set2_taglist_help11="(e.g. /volume1/ocr/taglist.txt)"
 
 lang_edit_set2_searchall_title="Search range for tags"
 lang_edit_set2_searchall_1page="Range: first page only"

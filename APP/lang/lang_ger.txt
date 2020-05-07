@@ -118,6 +118,9 @@ lang_edit_set2_taglist_help5="Soll ein Tag nur alleinstehend gefunden werden, is
 lang_edit_set2_taglist_help6="z.B.: <b>Rechnung;Arbeit;Versicherung</b>"                                    # keep html-tag
 lang_edit_set2_taglist_help7="Tags können auch durch ein Gleichheitszeichen einer Kategorie (für Unterordner) zugeordnet werden (greift nur, sofern man auch die Kategorieordner  [nachstehende Option] verwendet)."
 lang_edit_set2_taglist_help8="z.B.: <b>Rechnung;HUK24=Versicherung;Allianz=Versicherung</b>"                # keep html-tag
+lang_edit_set2_taglist_help9="Umfangreiche Tags können auch in einer separaten Textdatei gespeichert werden."
+lang_edit_set2_taglist_help10="In diesem Fall ist hier der absolute Pfad einzutragen."
+lang_edit_set2_taglist_help11="(z.B. /volume1/ocr/taglist.txt)"
 
 lang_edit_set2_searchall_title="Suchbereich für Tags"
 lang_edit_set2_searchall_1page="Bereich: nur erste Seite"

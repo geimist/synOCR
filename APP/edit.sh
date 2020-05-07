@@ -478,7 +478,10 @@ if [[ "$page" == "edit" ]]; then
             '$lang_edit_set2_taglist_help6'<br>
             <br>
             '$lang_edit_set2_taglist_help7'<br><br>
-            '$lang_edit_set2_taglist_help8'<br><br><br></span></a>
+            '$lang_edit_set2_taglist_help8'<br><br>
+            '$lang_edit_set2_taglist_help9'<br>
+            '$lang_edit_set2_taglist_help10'<br>
+            '$lang_edit_set2_taglist_help11'<br><br></span></a>
         </p>'
 
     # searchAll
