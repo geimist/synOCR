@@ -6,6 +6,11 @@ Release Notes
     BUGFIXES:
  -  
 
+0.17.0 [2020-05-10]
+    IMPLEMENTIERUNGEN:
+ -  Tags können über ein externes Textfile geladen werden
+ -  Dockerimages mit :latest-Tag können automatisch aktualisiert werden
+
 0.16.3 [2020-03-02]
     BUGFIXES:
  -  Problem beim Einsortieren in Tagordner
