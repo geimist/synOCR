@@ -97,8 +97,8 @@ error=0
             # Docker-Image-Update - check date:
             sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"dockerimageupdate_checked\" "
             # Prüfen:
-            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q dockerimageupdate_checked ) ; then
-                log="$log ➜ die DB-Spalte konnte nicht erstellt werden (dockerimageupdate_checked)"
+            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(dockerupdate)" | awk -F'|' '{print $2}' | grep -q image ) ; then
+                log="$log ➜ die DB-Spalte konnte nicht erstellt werden (image)"
                 error=1
             fi
             
