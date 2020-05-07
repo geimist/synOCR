@@ -95,18 +95,15 @@ error=0
                 error=1
             fi
             # Docker-Image-Update - check date:
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system ADD COLUMN \"dockerimageupdate_checked\" "
+            sqlinst="CREATE TABLE \"dockerupdate\" (\"rowid\" INTEGER PRIMARY KEY ,\"image\" varchar,\"date_checked\" varchar );"
+            sqlite3 "./etc/synOCR.sqlite" "$sqlinst"
             # Prüfen:
-            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q dockerimageupdate_checked ) ; then
-                log="$log ➜ die DB-Spalte konnte nicht erstellt werden (dockerimageupdate_checked)"
-                error=1
-            fi
             
         if [[ "$error" == "0" ]]; then
             # DB-Version anheben:
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET DB_Version='3', timestamp=(datetime('now','localtime')) WHERE rowid=1"
             log="$log
-            DB-Upgrade erfolgreich durchgeführt (v2 ➜ v3)"
+            DB-Upgrade successfully processed (v2 ➜ v3)"
         fi
     fi
 
