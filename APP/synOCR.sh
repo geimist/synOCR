@@ -160,21 +160,22 @@ update_dockerimage()
     if echo $dockercontainer | grep -qE "latest$" && [[ $dockerimageupdate = 1 ]] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='$dockercontainer' ") = "$check_date" ]];then
         echo -n "                      ➜ update image [$dockercontainer] ➜ "
         updatelog=$(/usr/local/bin/docker pull $dockercontainer)
+        
         if [ -z $(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='$dockercontainer'") ]; then
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '$dockercontainer', '$check_date' )"
         else
             sqlite3 "./etc/synOCR.sqlite" "UPDATE dockerupdate SET date_checked='$check_date' WHERE image='$dockercontainer' "
         fi
-    fi
-    
-    if echo "$updatelog" | grep -q "Image is up to date"; then
-    	echo "image is up to date"
-    elif echo "$updatelog" | grep -q "Downloaded newer image"; then
-        echo "updated successfully"
-    fi
-    
-    if [ $loglevel = "2" ] ; then
-        echo "$updatelog" | sed -e "s/^/                          /g"
+        
+        if echo "$updatelog" | grep -q "Image is up to date"; then
+        	echo "image is up to date"
+        elif echo "$updatelog" | grep -q "Downloaded newer image"; then
+            echo "updated successfully"
+        fi
+        
+        if [ $loglevel = "2" ] ; then
+            echo "$updatelog" | sed -e "s/^/                          /g"
+        fi
     fi
 }
 
