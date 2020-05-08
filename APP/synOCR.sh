@@ -40,7 +40,7 @@
 
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
-        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, dockerimageupdate, dockerimageupdate_checked FROM config WHERE profile_ID='$workprofile' "
+        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol FROM config WHERE profile_ID='$workprofile' "
 
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -164,6 +164,10 @@ update_dockerimage()
         else
             sqlite3 "./etc/synOCR.sqlite" "UPDATE dockerupdate SET date_checked='$check_date' WHERE image='$dockercontainer' "
         fi
+    fi
+    if [ $loglevel = "2" ] ; then
+        echo "              ➜ update image [$dockercontainer]:"
+        echo "$updatelog" | sed -e "s/^/                /g"
     fi
 }
 
