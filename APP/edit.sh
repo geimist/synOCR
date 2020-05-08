@@ -190,7 +190,7 @@ if [[ "$page" == "edit" ]]; then
         tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
     
     # globale Werte auslesen:
-	    dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
+        dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
 
     echo '
     <div id="Content_1Col">
