@@ -1,6 +1,6 @@
 Release Notes
 
-0.17.0 [2020-05-10]
+0.17.0 [2020-05-08]
     IMPLEMENTIERUNGEN:
  -  Tags können über ein externes Textfile geladen werden
  -  Dockerimages mit :latest-Tag können automatisch aktualisiert werden
