@@ -117,7 +117,7 @@ exit 0
 
 # bei DB-Upgrade auch …
 # ➜ upgradeconfig.sh: das initiales DB-Createstatement anpassen (inkl. DB-Version)
-# ➜ edit.sh: Parameter in 'Profil duplizieren' anpassen
+# ➜ edit.sh: Parameter in 'Profil duplizieren' anpassen (bei Änderungen an Tabelle config)
 # ➜ edit.sh: Parameter in 'Datensatz in DB schreiben' anpassen
 # ➜ edit.sh: "$page" == "edit" Profil einlesen anpassen
 # ➜ synOCR.sh: DB-Einlesen anpassen
