@@ -40,7 +40,7 @@
 
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
-        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, dockerimageupdate, dockerimageupdate_checked FROM config WHERE profile_ID='$workprofile' "
+        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol FROM config WHERE profile_ID='$workprofile' "
 
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -81,7 +81,7 @@
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
     echo "Device:                   $device ($sysID)"	    #  | sed "s/ds//g"
     echo "current Profil:           $profile"
-    echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system")"
+    echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1")"
     echo "used image (created):     $dockercontainer ($(/usr/local/bin/docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
     echo "used ocr-parameter:       $ocropt"
     echo "replace search prefix:    $delSearchPraefix"
@@ -160,6 +160,10 @@ update_dockerimage()
         else
             sqlite3 "./etc/synOCR.sqlite" "UPDATE dockerupdate SET date_checked='$check_date' WHERE image='$dockercontainer' "
         fi
+    fi
+    if [ $loglevel = "2" ] ; then
+        echo "              ➜ update image [$dockercontainer]:"
+        echo "$updatelog" | sed -e "s/^/                /g"
     fi
 }
 
