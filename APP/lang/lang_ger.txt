@@ -265,6 +265,7 @@ lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="über synOCR"
 lang_help_about_1="Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ich dafür bereitstellen kann.<br> Begonnen, um meinen Arbeitsablauf mit PDF Dokumenten einfacher zu machen, ist es auch eine Freude für mich, wenn anderen dieses Projekt hilft. Daher erwarte ich keine Gegenleistung!" # keep html-tag
 lang_help_about_2="Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen - DANKE:"
+lang_help_about_3=""
 
 #-------------------------------------------
 # page scheduler:
