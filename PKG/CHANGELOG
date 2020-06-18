@@ -6,6 +6,10 @@ Release Notes
     BUGFIXES:
  -  
 
+0.17.1 [2020-06-18]
+    BUGFIXES:
+ -  Fehler, wenn keine Umbenennungssyntax angegeben wurde
+
 0.17.0 [2020-05-10]
     IMPLEMENTIERUNGEN:
  -  Tags können über ein externes Textfile geladen werden

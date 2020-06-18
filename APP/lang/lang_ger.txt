@@ -224,7 +224,7 @@ lang_main_pages="Seiten"
 # page help:
 #-------------------------------------------
 lang_help_title_QS="Schnellstart"
-lang_help_QS_1_beforelink="Passe zunächst deine Installation in den"
+lang_help_QS_1_beforelink="Passe zunächst deine Installation in der"
 lang_help_QS_1_afterlink="an."
 lang_help_QS_2="Um synOCR regelmäßig laufen zu lassen (was sich empfiehlt), erstelle als nächstes <br>einen automatisierten Programmaufruf."                                                # keep html-tag
 lang_help_QS_3="Dazu hast du 2 Möglichkeiten:"
