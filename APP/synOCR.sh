@@ -581,135 +581,137 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         # Zieldatei umbenennen:
         echo "                      ➜ renaming:"
         outputtmp=${output}
-        if [ ! -z "$NameSyntax" ]; then
-            echo -n "                          apply renaming syntax ➜ "
-            title=$(echo "${title}" | sed -f ./includes/encode.sed)             # für sed-Kompatibilität Sonderzeichen encodieren
-            renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
-            
-            NewName="$NameSyntax"
-            NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
-            NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
-            NewName=$( echo "$NewName" | sed "s/§ysource/${date_yy_source}/g" )
-            NewName=$( echo "$NewName" | sed "s/§dnow/$(date +%d)/g" )
-            NewName=$( echo "$NewName" | sed "s/§mnow/$(date +%m)/g" )
-            NewName=$( echo "$NewName" | sed "s/§ynow/$(date +%Y)/g" )
-            NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
-            NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
-            NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
-            NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g")
-            NewName=$( echo "$NewName" | sed "s/§tit/${title}/g")
-            NewName=$( echo "$NewName" | sed "s/%20/ /g" )
-   
-            # Fallback für alte Parameter:
-            NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
-            NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
-            NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
+        if [ -z "$NameSyntax" ]; then
+            # wenn vom User keine Umbenennungssyntax angegeben wurde, wird der Quelldateiname verwendet
+            NameSyntax="§tit"
+        fi
+        echo -n "                          apply renaming syntax ➜ "
+        title=$(echo "${title}" | sed -f ./includes/encode.sed)             # für sed-Kompatibilität Sonderzeichen encodieren
+        renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
+        
+        NewName="$NameSyntax"
+        NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
+        NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
+        NewName=$( echo "$NewName" | sed "s/§ysource/${date_yy_source}/g" )
+        NewName=$( echo "$NewName" | sed "s/§dnow/$(date +%d)/g" )
+        NewName=$( echo "$NewName" | sed "s/§mnow/$(date +%m)/g" )
+        NewName=$( echo "$NewName" | sed "s/§ynow/$(date +%Y)/g" )
+        NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
+        NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
+        NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
+        NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g")
+        NewName=$( echo "$NewName" | sed "s/§tit/${title}/g")
+        NewName=$( echo "$NewName" | sed "s/%20/ /g" )
 
-            NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # Sonderzeicheichen decodieren
-            renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
+        # Fallback für alte Parameter:
+        NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
+        NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
+        NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
 
-            echo "$NewName"
+        NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # Sonderzeicheichen decodieren
+        renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
 
-            if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
-                echo "                      ➜ move to category directories"
-                #renameCat=$( echo ${renameCat} | sed -e "s/${tagsymbol}//g" )
-                tagarray=( $renameCat )   # Tags als Array definieren
-                i=0
-                DestFolderList=""   # temp. Liste der verwendeten Zielordner um Dateiduplikate (unterschiedliche Tags, aber eine Kategorie) zu vermeiden
-                maxID=${#tagarray[*]}
-            #    for a in ${tagarray[@]}; do
-            #        echo $a
-            #    done
-                while (( i < maxID )); do
-                    tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-                    echo -n "                          tag directories \"${tagdir}\" exists? ➜  "
-                    if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
-                        echo "OK"
-                    else
-                        mkdir "${OUTPUTDIR}${tagdir}"
-                        echo "created"
-                    fi
+        echo "$NewName"
 
-                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
-                    if [ $destfilecount -eq 0 ]; then
-                        output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
-                    else
-                        while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
-                            do
-                                destfilecount=$( expr $destfilecount + 1 )
-                                echo "                          continue counting … ($destfilecount)"
-                            done
-                        output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
-                        echo "                          File name already exists! Add counter ($destfilecount)"
-                    fi
-                    
-                    echo "                          target:   ./${tagdir}/$(basename "${output}")"
-                    # prüfen, ob selbe Datei bereits einmal in diese Kategorie einsortiert wurde (unterschiedliche Tags, aber gleich Kategorie)
-                    if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
-                        echo "                          same file has already been copied into category (${tagarray[$i]}) and is skipped!"
-                    else
-                        cp -l "${outputtmp}" "${output}"
-                    fi
-                    DestFolderList="${tagarray[$i]}\n${DestFolderList}"
-                    i=$((i + 1))
-                done
-                rm "${outputtmp}"
-            elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
-                echo "                      ➜ move to tag directories"
-                if [ ! -z "$tagsymbol" ]; then
-                    renameTag=$( echo $renameTag | sed -e "s/${tagsymbol}//g" )
-                fi
-                tagarray=( $renameTag )   # Tags als Array definieren
-                i=0
-                maxID=${#tagarray[*]}
-            #    for a in ${tagarray[@]}; do
-            #        echo $a
-            #    done
-                while (( i < maxID )); do
-                    tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-                    echo -n "                          tag directories \"${tagdir}\" exists? ➜  "
-                    if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
-                        echo "OK"
-                    else
-                        mkdir "${OUTPUTDIR}${tagdir}"
-                        echo "created"
-                    fi
-
-                    destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
-                    if [ $destfilecount -eq 0 ]; then
-                        output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
-                    else
-                        while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
-                            do
-                                destfilecount=$( expr $destfilecount + 1 )
-                                echo "                          continue counting … ($destfilecount)"
-                            done
-                        output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
-                        echo "                          File name already exists! Add counter ($destfilecount)"
-                    fi
-
-                    echo "                          target:   ./${tagdir}/$(basename "${output}")"
-                    cp -l "${outputtmp}" "${output}"
-                    i=$((i + 1))
-                done
-                echo "                      ➜ delete temp. target file"
-                rm "${outputtmp}"
-            else
-                destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
-                if [ $destfilecount -eq 0 ]; then
-                    output="${OUTPUTDIR}${NewName}.pdf"
+        if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
+            echo "                      ➜ move to category directories"
+            #renameCat=$( echo ${renameCat} | sed -e "s/${tagsymbol}//g" )
+            tagarray=( $renameCat )   # Tags als Array definieren
+            i=0
+            DestFolderList=""   # temp. Liste der verwendeten Zielordner um Dateiduplikate (unterschiedliche Tags, aber eine Kategorie) zu vermeiden
+            maxID=${#tagarray[*]}
+        #    for a in ${tagarray[@]}; do
+        #        echo $a
+        #    done
+            while (( i < maxID )); do
+                tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+                echo -n "                          tag directories \"${tagdir}\" exists? ➜  "
+                if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
+                    echo "OK"
                 else
-                    while [ -f "${OUTPUTDIR}${NewName} ($destfilecount).pdf" ]
+                    mkdir "${OUTPUTDIR}${tagdir}"
+                    echo "created"
+                fi
+
+                destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
+                if [ $destfilecount -eq 0 ]; then
+                    output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
+                else
+                    while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
                         do
                             destfilecount=$( expr $destfilecount + 1 )
                             echo "                          continue counting … ($destfilecount)"
                         done
-                    output="${OUTPUTDIR}${NewName} ($destfilecount).pdf"
+                    output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
                     echo "                          File name already exists! Add counter ($destfilecount)"
                 fi
-                echo "                          target file: $(basename "${output}")"
-                mv "${outputtmp}" "${output}"
+                
+                echo "                          target:   ./${tagdir}/$(basename "${output}")"
+                # prüfen, ob selbe Datei bereits einmal in diese Kategorie einsortiert wurde (unterschiedliche Tags, aber gleich Kategorie)
+                if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
+                    echo "                          same file has already been copied into category (${tagarray[$i]}) and is skipped!"
+                else
+                    cp -l "${outputtmp}" "${output}"
+                fi
+                DestFolderList="${tagarray[$i]}\n${DestFolderList}"
+                i=$((i + 1))
+            done
+            rm "${outputtmp}"
+        elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
+            echo "                      ➜ move to tag directories"
+            if [ ! -z "$tagsymbol" ]; then
+                renameTag=$( echo $renameTag | sed -e "s/${tagsymbol}//g" )
             fi
+            tagarray=( $renameTag )   # Tags als Array definieren
+            i=0
+            maxID=${#tagarray[*]}
+        #    for a in ${tagarray[@]}; do
+        #        echo $a
+        #    done
+            while (( i < maxID )); do
+                tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+                echo -n "                          tag directories \"${tagdir}\" exists? ➜  "
+                if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
+                    echo "OK"
+                else
+                    mkdir "${OUTPUTDIR}${tagdir}"
+                    echo "created"
+                fi
+
+                destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
+                if [ $destfilecount -eq 0 ]; then
+                    output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
+                else
+                    while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]
+                        do
+                            destfilecount=$( expr $destfilecount + 1 )
+                            echo "                          continue counting … ($destfilecount)"
+                        done
+                    output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
+                    echo "                          File name already exists! Add counter ($destfilecount)"
+                fi
+
+                echo "                          target:   ./${tagdir}/$(basename "${output}")"
+                cp -l "${outputtmp}" "${output}"
+                i=$((i + 1))
+            done
+            echo "                      ➜ delete temp. target file"
+            rm "${outputtmp}"
+        else
+            destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
+            if [ $destfilecount -eq 0 ]; then
+                output="${OUTPUTDIR}${NewName}.pdf"
+            else
+                while [ -f "${OUTPUTDIR}${NewName} ($destfilecount).pdf" ]
+                    do
+                        destfilecount=$( expr $destfilecount + 1 )
+                        echo "                          continue counting … ($destfilecount)"
+                    done
+                output="${OUTPUTDIR}${NewName} ($destfilecount).pdf"
+                echo "                          File name already exists! Add counter ($destfilecount)"
+            fi
+            echo "                          target file: $(basename "${output}")"
+            mv "${outputtmp}" "${output}"
         fi
         }
         rename
