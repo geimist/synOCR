@@ -19,7 +19,7 @@ echo '
     </summary></p><p>' # ab hier steht der Text, der auf- und zugeklappt werden soll.
 	
 	echo '<ol style="list-style:decimal">
-    <li>'$lang_help_QS_1_beforelink' <a href="index.cgi?page=edit" style="'$synocrred';">'$lang_page2'</a>'$lang_help_QS_1_afterlink'</li>
+    <li>'$lang_help_QS_1_beforelink' <a href="index.cgi?page=edit" style="'$synocrred';">'$lang_page2'</a> '$lang_help_QS_1_afterlink'</li>
     <p><li>'$lang_help_QS_2'<div class="tab"><br>
       '$lang_help_QS_3'<br>
       '$lang_help_QS_4_beforelink' <a href="index.cgi?page=timer" style="'$synocrred';">'$lang_page3'</a> '$lang_help_QS_4_afterlink'<br><br>
