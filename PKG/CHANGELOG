@@ -1,10 +1,9 @@
 Release Notes
 
-0.1x.0 [2020-x-x]
+0.99.0 [2020-06-20]
     IMPLEMENTATIONS:
  -  multilingual GUI (currently German, English)
-    BUGFIXES:
- -  
+ -  advanced rule management (in combination with an external YAML-file)
 
 0.17.1 [2020-06-18]
     BUGFIXES:
