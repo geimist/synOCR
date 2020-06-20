@@ -13,7 +13,6 @@
 # ---------------------------------------------------------------------------------
 #           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
 # ---------------------------------------------------------------------------------
-    synocrdomain="geimist.eu"   # 
     niceness=15                 # The priority is in the range from -20 to +19 (in integer steps), where -20 is the highest priority (=most computing power) and 19 is the lowest priority (=lowest computing power). The default priority is 0. NEGATIVE VALUES SHOULD NEVER BE DEFAULTED!
     workprofile="$1"            # the profile submitted by the start script
     LOGFILE="$2"                # current logfile / is submitted by start script
