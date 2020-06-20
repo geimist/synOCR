@@ -4,6 +4,7 @@ Release Notes
     IMPLEMENTATIONS:
  -  multilingual GUI (currently German, English)
  -  advanced rule management (in combination with an external YAML-file)
+ -  Tags are now independent of the search term (alias - in combination with an external YAML-file)
 
 0.17.1 [2020-06-18]
     BUGFIXES:
