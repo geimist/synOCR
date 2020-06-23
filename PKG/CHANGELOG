@@ -1,6 +1,6 @@
 Release Notes
 
-0.99.0 [2020-06-20]
+0.99.1 [2020-06-23]
     IMPLEMENTATIONS:
  -  multilingual GUI (currently German, English)
  -  advanced rule management (in combination with an external YAML-file)

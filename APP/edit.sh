@@ -18,6 +18,222 @@ new_profile ()
 # Check DB (ggf. erstellen / upgrade):
     DBupgradelog=$(./upgradeconfig.sh)
 
+convert2YAML () 
+{
+# In dieser Funktion wird die bestehende Tagliste in eine YAML-Datei geschrieben
+# --------------------------------------------------------------
+    # ToDo:
+    # 4. Pfad der Liste in DB SChreiben
+
+#INPUTDIR="${INPUTDIR%/}/"
+#SAMPLECONFIGFILE="${INPUTDIR}_TagConfig_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")].txt"
+
+if [ -f ${SAMPLECONFIGFILE} ]; then
+    # ${SAMPLECONFIGFILE} existiert bereits
+    return 1
+fi
+
+if [ -f "$taglist" ]; then
+    taglist=$( cat "$taglist" )
+else
+    # BackUp des Datenbankeintrags
+    echo "$taglist" > "${INPUTDIR}_BackUp_TagConfig_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")]_$(date +%s).txt"
+fi
+
+taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )	# Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
+tagarray=( $taglist2 )   # Tags in Array überführen
+
+count=1
+
+samplefilecontent="    ##############################################################################################################
+    #
+    #                        ${lang_edit_yamlsample_02}
+    #
+    #   - $lang_edit_yamlsample_03
+    #       - $lang_edit_yamlsample_04
+    #       - $lang_edit_yamlsample_05
+    #   - $lang_edit_yamlsample_06
+    #   - $lang_edit_yamlsample_07
+    #   - $lang_edit_yamlsample_08 >synOCR_YAMLRULEFILE<
+    #
+    #   - $lang_edit_yamlsample_09
+    #       > \"sampletagrulename\"
+    #           - \"sampletagrulename\" $lang_edit_yamlsample_10
+    #           - $lang_edit_yamlsample_11
+    #           - $lang_edit_yamlsample_12
+    #           - $lang_edit_yamlsample_13
+    #           - $lang_edit_yamlsample_14
+    #       > \"tagname:\"
+    #           - $lang_edit_yamlsample_15 >tagname: VALUE< (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_17
+    #           - $lang_edit_yamlsample_18 (>tagname:<)
+    #       > \"targetfolder:\"
+    #           - $lang_edit_yamlsample_19
+    #           - $lang_edit_yamlsample_15 >targetfolder: VALUE< (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_20
+    #           - $lang_edit_yamlsample_21 (/volume1/...)
+    #           - $lang_edit_yamlsample_22a
+    #             $lang_edit_yamlsample_22b
+    #           - ${lang_edit_yamlsample_18} (>targetfolder:<)
+    #       > \"condition:\"
+    #           - $lang_edit_yamlsample_24
+    #           - $lang_edit_yamlsample_15 >condition: VALUE<  (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_25 \"all\" / \"any\" / \"none\"
+    #               - \"condition: all\"  > $lang_edit_yamlsample_26
+    #               - \"condition: any\"  > $lang_edit_yamlsample_27
+    #               - \"condition: none\" > $lang_edit_yamlsample_28
+    #           - ${lang_edit_yamlsample_18} (>condition:<)
+    #       > \"subrules:\"
+    #           - $lang_edit_yamlsample_29 ($lang_edit_yamlsample_30 \"subrules:\")
+    #           - $lang_edit_yamlsample_31
+    #           - $lang_edit_yamlsample_32
+    #       > \"- searchstring:\"
+    #           - $lang_edit_yamlsample_15 >- searchstring: VALUE<
+    #             $lang_edit_yamlsample_33
+    #             ${lang_edit_yamlsample_16}
+    #           - $lang_edit_yamlsample_34
+    #           - $lang_edit_yamlsample_35
+    #       > \"searchtyp:\"
+    #           - $lang_edit_yamlsample_15 >searchtyp: VALUE<  (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_36 \"contains\", \"does not contain\",             (${lang_edit_yamlsample_37})
+    #                           \"is\", \"is not\"                              (${lang_edit_yamlsample_38})
+    #                           \"starts with\", \"does not starts with\",
+    #                           \"ends with\", \"does not ends with\",
+    #             $lang_edit_yamlsample_39, (\"contains\")
+    #       > \"isRegEx:\"
+    #           - $lang_edit_yamlsample_40
+    #           - $lang_edit_yamlsample_15 >isRegEx: VALUE<  (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_36 \"true\" / \"false\"
+    #             $lang_edit_yamlsample_39 (\"false\")
+    #       > \"source:\"
+    #           - $lang_edit_yamlsample_15 >source: VALUE<  (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_36 \"content\" / \"filename\"
+    #             $lang_edit_yamlsample_39 (\"content\")
+    #       > \"casesensitive:\"
+    #           - $lang_edit_yamlsample_15 >casesensitive: VALUE<  (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_36 \"true\" / \"false\"
+    #             $lang_edit_yamlsample_39 (\"false\")
+    #
+    #   - ${lang_edit_yamlsample_41}:
+    #       https://codebeautify.org/yaml-validator
+    #
+    ##############################################################################################################"
+
+writesamplefile() {
+
+echo "# synOCR_YAMLRULEFILE   # keep this line!
+# ${lang_edit_yamlsample_01}:
+# $SAMPLECONFIGFILE
+
+" > ${SAMPLECONFIGFILE}
+
+# Hilfetext mit fester Breite und abschließendem #:
+    echo "$samplefilecontent" | while read data
+    do
+        # Zählweise korregieren:
+        Laengeb=${#data}
+        StringOhneUmlaute=${data//[ööüßÄÜÖ]/}           # ToDo: keine Ausschlusssuche, sondern nach gültigen ASCII-Zeichen suchen und rest addieren / würde auch Sonderzeichen abdecken
+        LaengeStringOhneUmlaute=${#StringOhneUmlaute}
+        DIFF=$((Laengeb - LaengeStringOhneUmlaute))
+        len=$((110 + DIFF))
+        printf "    %-${len}s#\n" "$data" >> "${SAMPLECONFIGFILE}"
+    done
+    
+    sed -i 's/ > / ➜ /g;s/ - / • /g' "${SAMPLECONFIGFILE}"  # printf kommt mit diesen Zeichen nicht klar (Zählung stimmt nicht)
+
+echo "
+    
+# sample:
+
+# sampletagrulename1:
+#     tagname: target_tag
+#     targetfolder: \"/<path>/\"
+#     condition: all
+#     subrules:
+#     - searchstring: foundme
+#       searchtyp: contains
+#       isRegEx: false
+#       source: content
+#       casesensitive: true
+#     - searchstring: dontfoundme
+#       searchtyp: is not
+#       isRegEx: false
+#       source: content
+#       casesensitive: false
+
+#-----------------------------------------------------------
+# $lang_edit_yamlsample_42
+#-----------------------------------------------------------
+" >> ${SAMPLECONFIGFILE}
+
+}
+writesamplefile
+
+# konvertiere / schreibe die Userkonfig:
+for i in ${tagarray[@]}; do
+
+    if echo "$i" | grep -q "=" ;then
+    # bei Kombination aus Tag und Kategorie
+        if echo $(echo "$i" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
+            searchtyp=is
+        else
+            searchtyp=contains
+        fi
+        i=$(echo $i | sed -e "s/^§//g")
+        tagname=$(echo "$i" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
+        targetfolder=$(echo "$i" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
+     else
+        if echo $(echo "$i" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
+            searchtyp=is
+        else
+            searchtyp=contains
+        fi
+        i=$(echo $i | sed -e "s/^§//g")
+        tagname=$(echo "$i" | sed -e "s/%20/ /g")
+    fi
+
+# schreibe YAML:
+    echo "$(echo "${tagname}" | sed 's/[^0-9a-zA-Z#!§%&\._-]*//g')_${count}:" >> ${SAMPLECONFIGFILE}
+    echo "    tagname: ${tagname}" >> ${SAMPLECONFIGFILE}
+    echo "    targetfolder: ${targetfolder}" >> ${SAMPLECONFIGFILE}
+    echo "    condition: any" >> ${SAMPLECONFIGFILE}
+    echo "    subrules:" >> ${SAMPLECONFIGFILE}
+    echo "    - searchstring: ${tagname}" >> ${SAMPLECONFIGFILE}
+    echo "      searchtyp: ${searchtyp}" >> ${SAMPLECONFIGFILE}
+    echo "      isRegEx: false" >> ${SAMPLECONFIGFILE}
+    echo "      source: content" >> ${SAMPLECONFIGFILE}
+    echo "      casesensitive: true" >> ${SAMPLECONFIGFILE}
+
+    count=$((count + 1))
+done
+
+# Pfad zum neuen configfile in DB schreiben:
+    sSQLupdate="UPDATE config SET taglist='${SAMPLECONFIGFILE}' WHERE profile_ID='$profile_ID' "
+    sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
+
+    return 0
+}  
+
+
+# bestehende Tagliste in eine YAML-Datei konvertieren: 
+if [[ "$page" == "edit-convert2YAML" ]]; then
+        echo '<div class="Content_1Col_full">'
+
+        SAMPLECONFIGFILE="${INPUTDIR%/}/_TagConfig_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")].txt"
+        convert2YAML
+
+        if [ $? -eq 1 ]; then
+            echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_yamlsample_gui_01'
+            <br>'$lang_edit_yamlsample_gui_02'
+            <br><br>('$SAMPLECONFIGFILE')</p><br /></div>'
+        else
+            echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_yamlsample_gui_03'
+            <br><br>('$SAMPLECONFIGFILE')<br /></div>'
+        fi
+        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />'
+        echo '</div><div class="clear"></div>'
+fi
+
 
 # aktuelles Profil löschen: 
 if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile" ]]; then
@@ -27,7 +243,7 @@ if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile"
             <a href="index.cgi?page=edit-del_profile" class="red_button">'$lang_yes'</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=edit" class="button">'$lang_no'</a></p>'  >> "$stop"
     elif [[ "$page" == "edit-del_profile" ]]; then
         sqlite3 ./etc/synOCR.sqlite "DELETE FROM config WHERE profile_ID='$profile_ID';"
-        
+
     # das erste Profil der DB als nächstes aktiv schalten (sonst würde ein Profilname mit leeren Daten angezeigt)
         getprofile=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
         # getprofile (ohne GUI nach $var schreiben):
@@ -35,7 +251,7 @@ if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile"
     	decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
     	"$set_var" "./usersettings/var.txt" "getprofile" "$decode_value"
     	"$set_var" "./usersettings/var.txt" "encode_getprofile" "$encode_value"
-    
+
         sleep 1
         if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='$profile_ID' ") = "0" ] ; then
             echo '<p class="center" style="'$green';"><b>'$lang_edit_profname' <b>'$profile'</b> '$lang_edit_delfin2'.</b></p>
@@ -488,7 +704,19 @@ if [[ "$page" == "edit" ]]; then
     # Taglist
     echo '
         <p>
-        <label>'$lang_edit_set2_taglist_title'</label>'
+        <label>'$lang_edit_set2_taglist_title
+    # YAML-Konvertier-Button:
+        # (taglist verweißt auf keine externe Datei ODER verweißt auf eine externe Datei und hat max. eine Zeile) UND Eingabeverzeichnis ist ein gültiger Pfad
+        if ( [[ ! -f "$taglist" ]] || $([[ -f "$taglist" ]] && [[ $( cat "$taglist" | wc -l ) -le 1 ]]) ) && [ -d "$INPUTDIR" ] ; then
+            # href="#HELP" style="float: left;"
+            # ToDo Position korrigieren (http://jsfiddle.net/HJf8q/2/)
+            echo '<a class="helpbox" >
+            <br><br><button name="page" value="edit-convert2YAML" class="blue_button">'$lang_edit_yamlsample_button'</button>&nbsp;
+            <span>'$lang_edit_yamlsample_button_help_01'<br>
+            '$lang_edit_yamlsample_button_help_02'<br>
+            '$lang_edit_yamlsample_button_help_03'<br></span></a>' 
+        fi
+        echo '</label>'
         if [ -n "$taglist" ]; then
         #    echo '<input type="text" name="taglist" value="'$taglist'" />'
             echo '<textarea id="text" name="taglist" cols="35" rows="4">'$taglist'</textarea>'
@@ -513,7 +741,7 @@ if [[ "$page" == "edit" ]]; then
             '$lang_edit_set2_taglist_help11'<br><br></span></a>
         </p>'
 
-    # searchAll
+    # searchArea
     echo '
         <p>
         <label>'$lang_edit_set2_searchall_title'</label>

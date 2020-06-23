@@ -497,6 +497,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             fi
 #           taglist=$(cat "$taglist")
 
+#           prüfen
 
 
 
