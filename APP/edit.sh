@@ -22,11 +22,6 @@ convert2YAML ()
 {
 # In dieser Funktion wird die bestehende Tagliste in eine YAML-Datei geschrieben
 # --------------------------------------------------------------
-    # ToDo:
-    # 4. Pfad der Liste in DB SChreiben
-
-#INPUTDIR="${INPUTDIR%/}/"
-#SAMPLECONFIGFILE="${INPUTDIR}_TagConfig_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")].txt"
 
 if [ -f ${SAMPLECONFIGFILE} ]; then
     # ${SAMPLECONFIGFILE} existiert bereits
@@ -37,7 +32,7 @@ if [ -f "$taglist" ]; then
     taglist=$( cat "$taglist" )
 else
     # BackUp des Datenbankeintrags
-    echo "$taglist" > "${INPUTDIR}_BackUp_TagConfig_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")]_$(date +%s).txt"
+    echo "$taglist" > "${INPUTDIR%/}/_BackUp_taglist_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")]_$(date +%s).txt"
 fi
 
 taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )	# Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
@@ -131,10 +126,16 @@ echo "# synOCR_YAMLRULEFILE   # keep this line!
     echo "$samplefilecontent" | while read data
     do
         # Zählweise korregieren:
-        Laengeb=${#data}
-        StringOhneUmlaute=${data//[ööüßÄÜÖ]/}           # ToDo: keine Ausschlusssuche, sondern nach gültigen ASCII-Zeichen suchen und rest addieren / würde auch Sonderzeichen abdecken
-        LaengeStringOhneUmlaute=${#StringOhneUmlaute}
-        DIFF=$((Laengeb - LaengeStringOhneUmlaute))
+        # ToDo: funktioniert noch nicht zuverlässig …
+        lenRAW=${#data}
+        stringCLEAN=${data//[ööüßÄÜÖ]/}           # ToDo: keine Ausschlusssuche, sondern nach gültigen ASCII-Zeichen suchen und rest addieren / würde auch Sonderzeichen abdecken
+        lenCLEAN=${#stringCLEAN}
+
+    #    lenRAW=$( echo "$data" | wc -c)
+    #    lenCLEAN=$( echo "$data" | LC_ALL=C tr -dc '\0-\177' | wc -c)   # lenASCII
+
+        DIFF=$((lenRAW - lenCLEAN))
+        DIFF=$((DIFF / 2))
         len=$((110 + DIFF))
         printf "    %-${len}s#\n" "$data" >> "${SAMPLECONFIGFILE}"
     done
@@ -709,10 +710,11 @@ if [[ "$page" == "edit" ]]; then
         # (taglist verweißt auf keine externe Datei ODER verweißt auf eine externe Datei und hat max. eine Zeile) UND Eingabeverzeichnis ist ein gültiger Pfad
         if ( [[ ! -f "$taglist" ]] || $([[ -f "$taglist" ]] && [[ $( cat "$taglist" | wc -l ) -le 1 ]]) ) && [ -d "$INPUTDIR" ] ; then
             # href="#HELP" style="float: left;"
-            # ToDo Position korrigieren (http://jsfiddle.net/HJf8q/2/)
+            # ToDo Button-Position korrigieren (http://jsfiddle.net/HJf8q/2/)
             echo '<a class="helpbox" >
-            <br><br><button name="page" value="edit-convert2YAML" class="blue_button">'$lang_edit_yamlsample_button'</button>&nbsp;
-            <span>'$lang_edit_yamlsample_button_help_01'<br>
+            <br><br><button name="page" value="edit-convert2YAML" class="blue_button">'$lang_edit_yamlsample_button'</button>&nbsp;<span>
+            <strong>'$lang_edit_yamlsample_button_help_headline'</strong><br><br>
+            '$lang_edit_yamlsample_button_help_01'<br>
             '$lang_edit_yamlsample_button_help_02'<br>
             '$lang_edit_yamlsample_button_help_03'<br></span></a>' 
         fi
@@ -729,6 +731,7 @@ if [[ "$page" == "edit" ]]; then
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>'$lang_edit_set2_taglist_help1'<br>
             '$lang_edit_set2_taglist_help2'<br>
+            '$lang_edit_set2_taglist_help2_1'<br>
             <strong>'$lang_edit_set2_taglist_help3'</strong><br>
             '$lang_edit_set2_taglist_help4'<br>
             '$lang_edit_set2_taglist_help5'<br><br>
@@ -738,7 +741,8 @@ if [[ "$page" == "edit" ]]; then
             '$lang_edit_set2_taglist_help8'<br><br>
             '$lang_edit_set2_taglist_help9'<br>
             '$lang_edit_set2_taglist_help10'<br>
-            '$lang_edit_set2_taglist_help11'<br><br></span></a>
+            '$lang_edit_set2_taglist_help11'<br><br>
+            <strong>'$lang_edit_yamlsample_button_help_headline'</strong><br><br></span></a>
         </p>'
 
     # searchArea
