@@ -7,9 +7,9 @@
     echo "    |    ==> Installationsinfo <==    |"
     echo "    -----------------------------------"
     echo -e
-    
+
     DevChannel="Release"    # BETA
-    
+
 # ---------------------------------------------------------------------------------
 #           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
 # ---------------------------------------------------------------------------------
@@ -25,20 +25,20 @@
     else
         isAdmin=no
     fi
-    MessageTo="@administrators"	# Administrators (standard)
-    #MessageTo="$synOTR_user"	# User, welche synOTR aufgerufen hat (funktioniert natürlich nicht bei root, da root kein DSM-GUI-LogIn hat und die Message ins leere läuft)
+    MessageTo="@administrators" # Administrators (standard)
+    #MessageTo="$synOTR_user"   # User, welche synOTR aufgerufen hat (funktioniert natürlich nicht bei root, da root kein DSM-GUI-LogIn hat und die Message ins leere läuft)
 
 # Read out and change into the working directory:
 # ---------------------------------------------------------------------
-    OLDIFS=$IFS	                # Save original field separator
+    OLDIFS=$IFS                 # Save original field separator
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
 
 # Load configuration:
 # ---------------------------------------------------------------------
 
-    sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, 
-        delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, 
+    sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
+        delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
         dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol FROM config WHERE profile_ID='$workprofile' "
 
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
@@ -69,9 +69,9 @@
 # globale Werte auslesen:
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
     dockerimageupdate=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
-    
+
 # System Information:
-# --------------------------------------------------------------------- 
+# ---------------------------------------------------------------------
     PATH=$PATH:/usr/syno/synoman/webman/3rdparty/synOCR/bin/ # für yq pdfinfo
     echo "synOCR-Version:           $(get_key_value /var/packages/synOCR/INFO version)"
     machinetyp=$(uname --machine); echo "Architecture:             $machinetyp"
@@ -79,7 +79,7 @@
     read MAC </sys/class/net/eth0/address
     sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)"
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
-    echo "Device:                   $device ($sysID)"	    #  | sed "s/ds//g"
+    echo "Device:                   $device ($sysID)"       #  | sed "s/ds//g"
     echo "current Profil:           $profile"
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1")"
     echo "used image (created):     $dockercontainer ($(/usr/local/bin/docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
@@ -115,7 +115,7 @@
 # Check or create and adjust directories:
 # ---------------------------------------------------------------------
     echo "Application Directory:    ${APPDIR}"
-    
+
     # Adjust variable correction for older Konfiguration.txt and slash:
     INPUTDIR="${INPUTDIR%/}/"
     if [ -d "$INPUTDIR" ] ; then
@@ -124,10 +124,10 @@
         echo "Source directory invalid or not set!"
         exit 1
     fi
-    
+
     OUTPUTDIR="${OUTPUTDIR%/}/"
     echo "Target directory:         ${OUTPUTDIR}"
-    
+
     BACKUPDIR="${BACKUPDIR%/}/"
     if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
         echo "BackUp directory:         $BACKUPDIR"
@@ -140,7 +140,7 @@
         echo "Files are deleted immediately! / No valid directory [$BACKUPDIR]"
         backup=false
     fi
-    
+
     LOGDIR="${LOGDIR%/}/"
 
 #################################################################################################
@@ -160,19 +160,19 @@ update_dockerimage()
     if echo $dockercontainer | grep -qE "latest$" && [[ $dockerimageupdate = 1 ]] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='$dockercontainer' ") = "$check_date" ]];then
         echo -n "                      ➜ update image [$dockercontainer] ➜ "
         updatelog=$(/usr/local/bin/docker pull $dockercontainer)
-        
+
         if [ -z $(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='$dockercontainer'") ]; then
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '$dockercontainer', '$check_date' )"
         else
             sqlite3 "./etc/synOCR.sqlite" "UPDATE dockerupdate SET date_checked='$check_date' WHERE image='$dockercontainer' "
         fi
-        
+
         if echo "$updatelog" | grep -q "Image is up to date"; then
-        	echo "image is up to date"
+            echo "image is up to date"
         elif echo "$updatelog" | grep -q "Downloaded newer image"; then
             echo "updated successfully"
         fi
-        
+
         if [ $loglevel = "2" ] ; then
             echo "$updatelog" | sed -e "s/^/                          /g"
         fi
@@ -212,7 +212,7 @@ echo "$1" | awk '{
             }
         }
     }'
-}  
+}
 
 
 purge_LOG()
@@ -232,7 +232,7 @@ for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # L
     do
         # if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
         if [ $( cat "${LOGDIR}$i" | sed -n "/Funktionsaufrufe/,/synOCR ENDE/p" | wc -c ) -eq 160 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
-        #    if [ -z "$TRASHDIR" ] ; then 
+        #    if [ -z "$TRASHDIR" ] ; then
                 rm "${LOGDIR}$i"
         #    else
         #        mv "${LOGDIR}$i" "$TRASHDIR"
@@ -268,7 +268,7 @@ yaml_validate()
 #########################################################################################
 
     yamlcheck=$(yq v "${taglist}" 2>&1)
-    
+
     if [ $? != 0 ]; then
         echo "ERROR-Message: $yamlcheck"
         exit 1  # file nicht weiter verarbeitbar
@@ -287,7 +287,7 @@ yaml_validate()
     for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^condition:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
-           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"all\" OR \"any\" OR \"none\"]" 
+           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"all\" OR \"any\" OR \"none\"]"
         fi
     done
 
@@ -296,7 +296,7 @@ yaml_validate()
     for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^isRegEx:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"true\" OR \"false\"]" 
+           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"true\" OR \"false\"]"
         fi
     done
 
@@ -305,7 +305,7 @@ yaml_validate()
     for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^source:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(content|filename)$' > /dev/null  2>&1 ; then
-           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"content\" OR \"filename\"]" 
+           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"content\" OR \"filename\"]"
         fi
     done
 
@@ -314,7 +314,7 @@ yaml_validate()
     for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^searchtyp:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | sed 's/^ *//;s/ *$//' | tr -cd '[:alnum:][:blank:]' | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' > /dev/null  2>&1 ; then
-           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]" 
+           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
         fi
     done
 
@@ -323,7 +323,7 @@ yaml_validate()
     for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^casesensitive:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"true\" OR \"false\"]" 
+           echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"true\" OR \"false\"]"
         fi
     done
 }
@@ -334,14 +334,14 @@ mainrun()
 #########################################################################################
 # This function passes the files to docker / search for tags / …                        #
 #########################################################################################
-    
-IFS=$'\012'	 # corresponds to a $'\n' newline
-for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -type f) ; do #  -mmin +"$timediff" -o -name "${SearchPraefix}*.PDF" 
+
+IFS=$'\012'  # corresponds to a $'\n' newline
+for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -type f) ; do #  -mmin +"$timediff" -o -name "${SearchPraefix}*.PDF"
     IFS=$OLDIFS
 # create temporary working directory
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
     trap 'rm -rf "$work_tmp"; exit' EXIT
-    
+
     echo -e
     filename=$(basename "$input")
     title=${filename%.*}
@@ -366,7 +366,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         output="${OUTPUTDIR}${title} ($destfilecount).pdf"
         echo "                  File name already exists! Add counter ($destfilecount)"
     fi
-    
+
     outputtmp="${work_tmp}/${title}.pdf"
     echo "                  temp. target file: ${outputtmp}"
 
@@ -419,10 +419,10 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     else
         echo "                  target file (OK): ${output}"
     fi
-    
+
 # move temporary file to destination folder:
     mv "${outputtmp}" "${output}"
-    
+
 # File permissions-Log:
     if [ $loglevel = "2" ] ; then
         echo "              ➜ File permissions source file:"
@@ -445,14 +445,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         cp --attributes-only -p "$input" "$output"
         #touch --reference="$input" "$output"
     fi
-    
+
 # File permissions-Log:
     if [ $loglevel = "2" ] ; then
         echo "              ➜ File permissions target file:"
         echo -n "                  "
         ls -l "$output"
     fi
-    
+
 # suche nach Datum und Tags in Dokument:
     findDate()
     {
@@ -460,7 +460,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         searchfile="${work_tmp}/synOCR.txt"
         searchfilename="${work_tmp}/synOCR_filename.txt"    # für Suche im Dateinamen
         echo "${title}" > "${searchfilename}"
-        
+
         # Suche im gesamten Dokumente, oder nur auf der ersten Seite:
         if [ $searchAll = no ]; then
             pdftotextOpt="-l 1"
@@ -472,7 +472,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         content=$(cat "$searchfile" )   # die Standardregeln suchen in der Variablen / die erweiterten Regeln direkt in der Quelldatei
 
     # suche nach Tags:
-        tagsearch() 
+        tagsearch()
         {
         echo "              ➜ search tags and date:"
         renameTag=""
@@ -485,14 +485,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo "                no tags defined"
             return
         elif [ -f "$taglist" ]; then
-#            if echo "$taglist" | grep -q "synOCR_YAMLRULEFILE" ; then
+            sed -i $'s/\r$//' "$taglist"        # convert Dos to Unix
             if grep -q "synOCR_YAMLRULEFILE" "$taglist" ; then
-            	echo "                source for tags is yaml based tag rule file [$taglist]"
-            	type_of_rule=advanced
+                echo "                source for tags is yaml based tag rule file [$taglist]"
+                type_of_rule=advanced
                 tag_rule_content=$(yq read "$taglist" -jP 2>&1)
                 yaml_validate
             else
-            	echo "                source for tags is file [$taglist]"
+                echo "                source for tags is file [$taglist]"
                 taglist=$(cat "$taglist")
             fi
 #           taglist=$(cat "$taglist")
@@ -515,15 +515,15 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key") ; do
                 found=0
                 grepresult=0
-        
+
                 echo "                Search by tag rule: \"${tagrule}\" ➜  "
-        
+
                 condition=$(echo "$tag_rule_content" | jq -r ".${tagrule}.condition" | tr '[:upper:]' '[:lower:]')
                 if [[ $condition = null ]] ; then
                     echo "                  [value for condition must not be empty - continue]"
                     continue
                 fi
-        
+
                 searchtag=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # gefiltert wird: \ / : ?
                 targetfolder=$(echo "$tag_rule_content" | jq -r ".${tagrule}.targetfolder" )
                 if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] ; then
@@ -534,62 +534,62 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 echo "                  ➜ condition:    $condition"     # "all" OR "any" OR "none"
                 echo "                  ➜ tag:          $searchtag"
                 echo "                  ➜ destination:  $targetfolder"
-        
+
                 echo "                      [Subrule]:"
                 # subrules abarbeiten:
                 for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
                     sub_jq_value="$subtagrule"  # universeller Parametername für Funktion sub_jq
-        
+
                     VARisRegEx=$(sub_jq '.isRegEx' | tr '[:upper:]' '[:lower:]')
                     if [[ $VARisRegEx = null ]] ; then
                         echo "                  [value for isRegEx is empty - \"false\" is used]"
                         VARisRegEx=false
                     fi
-        
+
                     VARsearchstring=$(sub_jq '.searchstring')
                     if [[ $VARsearchstring = null ]] ; then
                         echo "                  [value for searchstring must not be empty - continue]"
                         continue
                     fi
-        
+
                     VARsearchtyp=$(sub_jq '.searchtyp' | tr '[:upper:]' '[:lower:]')
                     if [[ $VARsearchtyp = null ]] ; then
                         echo "                  [value for searchtyp is empty - \"contains\" is used]"
                         VARsearchtyp=contains
                     fi
-        
+
                     VARsource=$(sub_jq '.source' | tr '[:upper:]' '[:lower:]')
                     if [[ $VARsource = null ]] ; then
                         echo "                  [value for source is empty - \"content\" is used]"
                         VARsource=content
                     fi
-        
+
                     VARcasesensitive=$(sub_jq '.casesensitive' | tr '[:upper:]' '[:lower:]')
                     if [[ $VARcasesensitive = null ]] ; then
                         echo "                  [value for casesensitive is empty - \"false\" is used]"
                         VARcasesensitive=false
                     fi
-        
+
                     echo "                      >>> search for:      $VARsearchstring"
                     echo "                          isRegEx:         $VARisRegEx"
                     echo "                          searchtyp:       $VARsearchtyp"
                     echo "                          source:          $VARsource"
                     echo "                          casesensitive:   $VARcasesensitive"
-        
+
                 # Groß- Kleinschreibung ggf. ignorieren:
                     if [[ $VARcasesensitive = true ]] ;then
                         grep_opt=""
                     else
                         grep_opt="i"
                     fi
-                    
+
                 # Suchbereich definieren:
                     if [[ $VARsource = content ]] ;then
                         VARsearchfile="$searchfile"
                     else
                         VARsearchfile="${searchfilename}"
                     fi
-        
+
                 # suche … :
                     case "$VARsearchtyp" in
                         is)
@@ -685,7 +685,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                             fi
                             ;;
                     esac
-        
+
                 # Bedingung prüfen:
                     case "$condition" in
                         any)
@@ -711,7 +711,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                                 break
                             elif [[ $grepresult -eq 0 ]] ; then
                                 found=1
-                            fi 
+                            fi
                             ;;
                     esac
                 done
@@ -729,12 +729,12 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             renameTag=$(echo "$renameTag" | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed -e "s/ //g" )
         else
         # verarbeite einfach Tagregeln:
-            taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )	# Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
+            taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
             tagarray=( $taglist2 )   # Tags als Array definieren
             i=0
             maxID=${#tagarray[*]}
             echo "                          tag count:       $maxID"
-            
+
             # Schleife evtl. noch ändern …
             #    for i in ${tagarray[@]}; do
             #        echo $a
@@ -788,14 +788,14 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         dateIsFound=no
         # suche Format: dd[./-]mm[./-]yy(yy)
         founddate=$( parseRegex "$content" "\y([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
-        # INFO about \y: In other GNU software, the word-boundary operator is ‘\b’. However, that conflicts with the awk language’s definition of ‘\b’ as backspace, 
+        # INFO about \y: In other GNU software, the word-boundary operator is ‘\b’. However, that conflicts with the awk language’s definition of ‘\b’ as backspace,
         # so gawk uses a different letter. The current method of using ‘\y’ for the GNU ‘\b’ appears to be the lesser of two evils.
         # https://www.gnu.org/software/gawk/manual/html_node/GNU-Regexp-Operators.html
         if [ ! -z $founddate ]; then
             echo -n "                  check date (dd mm [yy]yy): $founddate"
             date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
             date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
-            date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
+            date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
                 date_yy="20${date_yy}"
             fi
@@ -820,7 +820,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 echo -n "                  check date ([yy]yy mm dd): $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
                 date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
-                date_yy=$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')    
+                date_yy=$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
                 if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
                     date_yy="20${date_yy}"
                 fi
@@ -845,7 +845,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 echo -n "                  check date (mm dd [yy]yy): $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
                 date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
-                date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')    
+                date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
                 if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
                     date_yy="20${date_yy}"
                 fi
@@ -865,8 +865,8 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
         date_dd_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $3}')
         date_mm_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $2}')
-        date_yy_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $1}') 
-        
+        date_yy_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $1}')
+
         if [ $dateIsFound = no ]; then
             echo "                  Date not found in OCR text - use file date:"
             date_dd=$date_dd_source
@@ -876,7 +876,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             echo "                  month:${date_mm}"
             echo "                  year: ${date_yy}"
         fi
-            
+
         # Dateidatum anpassen:
         echo -n "              ➜ Adapt file date (Source: "
 
@@ -891,7 +891,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             fi
         elif [[ "$filedate" == "now" ]]; then
             echo "NOW)"
-            #TZ=$(date +%Z) 
+            #TZ=$(date +%Z)
             touch –time=modify "$output"
         else
             echo "Source file)"
@@ -899,19 +899,19 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         fi
     }
     findDate
-    
+
 # Dateinamen zusammenstellen und umbenennen:
-    rename() 
+    rename()
     {
     # Zieldatei umbenennen:
     echo "              ➜ renaming:"
     outputtmp=${output}
-    
+
     if [ -z "$NameSyntax" ]; then
         # wenn vom User keine Umbenennungssyntax angegeben wurde, wird der Quelldateiname verwendet
         NameSyntax="§tit"
     fi
-    
+
     echo -n "                  apply renaming syntax ➜ "
     title=$(echo "${title}" | sed -f ./includes/encode.sed)             # für sed-Kompatibilität Sonderzeichen encodieren
     renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
@@ -929,7 +929,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
     NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g")
     NewName=$( echo "$NewName" | sed "s/§tit/${title}/g")
     NewName=$( echo "$NewName" | sed "s/%20/ /g" )
-    
+
     # Fallback für alte Parameter:
     NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
     NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
@@ -975,7 +975,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             fi
 
             destfilecount=$(ls -t "${subOUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
-            
+
             if [ $destfilecount -eq 0 ]; then
                 output="${subOUTPUTDIR}${NewName}.pdf"
             else
@@ -987,7 +987,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
                 output="${subOUTPUTDIR}${NewName} ($destfilecount).pdf"
                 echo "                  File name already exists! Add counter ($destfilecount)"
             fi
-            
+
             echo "                  target:   ${subOUTPUTDIR}$(basename "${output}")"
 
             # prüfen, ob selbe Datei bereits einmal in diese Kategorie einsortiert wurde (unterschiedliche Tags, aber gleich Kategorie)
@@ -1020,7 +1020,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
         tagarray=( $renameTag )   # Tags als Array definieren
         i=0
         maxID=${#tagarray[*]}
-        
+
         while (( i < maxID )); do
             tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
             echo -n "                  tag directories \"${tagdir}\" exists? ➜  "
@@ -1049,7 +1049,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
             cp -l "${outputtmp}" "${output}"
             i=$((i + 1))
         done
-        
+
         echo "              ➜ delete temp. target file"
         rm "${outputtmp}"
     else
@@ -1073,7 +1073,7 @@ for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -ty
 
 # Seiten zählen
     pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
-    
+
 # Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien): ${filename%.*}
     if [ $backup = true ]; then
         sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
