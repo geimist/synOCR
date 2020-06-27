@@ -121,7 +121,7 @@ lang_edit_set2_dockerimageupdate_yes="autoupdate (standard)"
 lang_edit_set2_dockerimageupdate_no="keep version"
 lang_edit_set2_dockerimageupdate_help1="Dockerimages with :latest-tag can be updated."
 
-lang_edit_set2_searchpref_title="OCR search prefix"
+lang_edit_set2_searchpref_title="Search pattern source file name"
 lang_edit_set2_searchpref_help1="Process only PDFs with defined prefix (e.g. &quot;SCAN_&quot;)"       # keep html-tag
 lang_edit_set2_searchpref_help2="leave blank if all documents are to be processed"
 lang_edit_set2_searchpref_help3="at the beginning inverts the search"

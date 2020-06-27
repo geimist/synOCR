@@ -105,7 +105,7 @@ lang_edit_set2_dockerimageupdate_yes="aktuell halten (standard)"
 lang_edit_set2_dockerimageupdate_no="Version beibehalten"
 lang_edit_set2_dockerimageupdate_help1="Dockerimages mit :latest-Tag können aktualisiert werden."
 
-lang_edit_set2_searchpref_title="OCR Such-Präfix"
+lang_edit_set2_searchpref_title="Suchmuster Quelldateiname"
 lang_edit_set2_searchpref_help1="Nur PDFs mit definiertem Präfix bearbeiten (z.B. &quot;SCAN_&quot;)"       # keep html-tag
 lang_edit_set2_searchpref_help2="leerlassen, wenn alle Dokumente verarbeitet werden sollen"
 lang_edit_set2_searchpref_help3="am Anfang invertiert die Suche"
