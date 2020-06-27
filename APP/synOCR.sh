@@ -72,7 +72,6 @@
 
 # System Information:
 # ---------------------------------------------------------------------
-    PATH=$PATH:/usr/syno/synoman/webman/3rdparty/synOCR/bin/ # für yq pdfinfo
     echo "synOCR-Version:           $(get_key_value /var/packages/synOCR/INFO version)"
     machinetyp=$(uname --machine); echo "Architecture:             $machinetyp"
     dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                $dsmbuild"
@@ -98,12 +97,12 @@
 # Configuration for LogLevel:
 # ---------------------------------------------------------------------
     # LOGlevel:     0 => Logging inaktiv / 1 => normal / 2 => extended
-    if [ $loglevel = "1" ] ; then
+    if [[ $loglevel = "1" ]] ; then
         echo "Loglevel:                 normal"
         cURLloglevel="-s"
         wgetloglevel="-q"
         dockerlogLeftSpace="               "
-    elif [ $loglevel = "2" ] ; then
+    elif [[ $loglevel = "2" ]] ; then
         echo "Loglevel:                 extended"
         cURLloglevel="-v"
         wgetloglevel="-v"
@@ -335,8 +334,34 @@ mainrun()
 # This function passes the files to docker / search for tags / …                        #
 #########################################################################################
 
+exclusion=false
+if echo "${SearchPraefix}" | grep -qE '^!' ; then
+    # ist der prefix / suffix ein Ausschlusskriterium?
+    exclusion=true
+    SearchPraefix=$(echo "${SearchPraefix}" | sed -e 's/^!//')
+fi
+
+if echo "${SearchPraefix}" | grep -q "\$"$ ; then
+    # is suffix
+    SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
+    if [[ $exclusion = false ]] ; then
+        files=$(find "${INPUTDIR}" -maxdepth 1 -iname "*${SearchPraefix}.pdf" -type f)
+    elif [[ $exclusion = true ]] ; then
+        files=$(find "${INPUTDIR}" -maxdepth 1 -iname "*.pdf" -type f -not -iname "*${SearchPraefix}.pdf" -type f)
+    fi
+else
+    # is prefix
+    SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
+    if [[ $exclusion = false ]] ; then
+        files=$(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -type f)
+    elif [[ $exclusion = true ]] ; then
+        files=$(find "${INPUTDIR}" -maxdepth 1 -iname "*.pdf" -type f -not -iname "${SearchPraefix}*.pdf" -type f)
+    fi
+fi
+
+
 IFS=$'\012'  # corresponds to a $'\n' newline
-for input in $(find "${INPUTDIR}" -maxdepth 1 -iname "${SearchPraefix}*.pdf" -type f) ; do #  -mmin +"$timediff" -o -name "${SearchPraefix}*.PDF"
+for input in "$files" ; do
     IFS=$OLDIFS
 # create temporary working directory
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)

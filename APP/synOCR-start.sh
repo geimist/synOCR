@@ -8,11 +8,11 @@
         callFrom=shell
     fi
     exit_status=0
-    
+
 # Arbeitsverzeichnis auslesen und hineinwechseln:
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
-    
+
 # läuft bereits eine Instanz von synOCR?
     synOCR_pid=$( /bin/pidof synOCR.sh )
     if [ ! -z "$synOCR_pid" ] ; then
@@ -27,8 +27,8 @@
         if [ $callFrom = GUI ] ; then
             echo '<p class="title">synOCR wurde gestartet ...</p><br><br><br><br>
             <center><table id="system_msg" style="width: 40%;table-align: center;">
-                <tr>   
-                    <th style="width: 20%;"><img class="imageStyle" alt="status_loading" src="images/status_loading.gif" style="float:left;"></th>   
+                <tr>
+                    <th style="width: 20%;"><img class="imageStyle" alt="status_loading" src="images/status_loading.gif" style="float:left;"></th>
                     <th style="width: 80%;"><p class="center"><span style="color: #424242;font-weight:normal;">Bitte warten, bis die Dateien<br>fertig abgearbeitet wurden.</span></p></th>
                 </tr>
             </table></center>'
@@ -39,8 +39,6 @@
     fi
 
 # Konfigurationsdatei einbinden:
-    #    CONFIG=etc/Konfiguration.txt
-    #    . ./$CONFIG
     sSQL="SELECT profile_ID, INPUTDIR, OUTPUTDIR, LOGDIR, SearchPraefix, loglevel, profile FROM config WHERE active='1' "
     sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
 
@@ -54,7 +52,7 @@
         SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $5}')
         loglevel=$(echo "$entry" | awk -F'\t' '{print $6}')
         profile=$(echo "$entry" | awk -F'\t' '{print $7}')
-    
+
     # ist das Quellverzeichnis vorhanden und ist der Pfad zulässig?
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
             if [ $callFrom = GUI ] ; then
@@ -66,7 +64,7 @@
             fi
             exit 1
         fi
-    
+
     # muss das Zielverzeichnis erstellt werden und ist der Pfad zulässig?
         if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
             mkdir -p "$OUTPUTDIR"
@@ -86,7 +84,7 @@
             fi
             exit 1
         fi
-    
+
     # Dateizähler:
         if [ ! -f ./etc/counter ] ; then
             touch ./etc/counter
@@ -107,33 +105,53 @@
         fi
 
     # nur starten (LOG erstellen), sofern es etwas zu tun gibt:
-        if [ $( ls -t "${INPUTDIR}" | egrep -oi "${SearchPraefix}.*.pdf$" | wc -l ) = 0 ] ;then
-            #if [ $callFrom = GUI ] ; then
-            #    echo '<p class="center"><span style="color: #228b22;"><b>es gibt im Profil '$profile' nichts zu tun.</b><br></span></p>'
-            #else
-            #    echo "es gibt im Profil '$profile' nichts zu tun"
-            #    #echo "Programmlauf wird beendet."
-            #fi
+        exclusion=false
+        count_inputpdf=0
+
+        if echo "${SearchPraefix}" | grep -qE '^!' ; then
+            # ist der prefix / suffix ein Ausschlusskriterium?
+            exclusion=true
+            SearchPraefix=$(echo "${SearchPraefix}" | sed -e 's/^!//')
+        fi
+
+        if echo "${SearchPraefix}" | grep -q "\$"$ ; then
+            # is suffix
+            SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
+            if [[ $exclusion = false ]] ; then
+                count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}.pdf$" | wc -l)
+            elif [[ $exclusion = true ]] ; then
+                count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l)
+            fi
+        else
+            # is prefix
+            SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
+            if [[ $exclusion = false ]] ; then
+                count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*.pdf$" | wc -l)
+            elif [[ $exclusion = true ]] ; then
+                count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | egrep -iv "^${SearchPraefix}.*.pdf$" | wc -l)
+            fi
+        fi
+
+        if [ $count_inputpdf -eq 0 ] ;then
             continue
         fi
-    
+
     # synOCR starten und ggf. Logverzeichnis prüfen und erstellen
         LOGDIR="${LOGDIR%/}/"
         LOGFILE="${LOGDIR}synOCR_$(date +%Y-%m-%d_%H-%M-%S).log"
-        # touch "$LOGFILE"
-        
+
         umask 000   # damit Files auch von anderen Usern bearbeitet werden können / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
-    
-        if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then   
+
+        if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
             ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1     # $LOGFILE wird als Parameter an synOCR übergeben, da die Datei dort ggf. bei ERRORFILES benötigt wird
-        elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then  
+        elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
             mkdir -p "$LOGDIR"
             ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1
         else
             loglevel=0
             ./synOCR.sh "$profile_ID"
         fi
-    
+
         if (( $? == 0 )); then
             echo "    -----------------------------------" >> $LOGFILE
             echo "    |       ==> synOCR ENDE <==       |" >> $LOGFILE

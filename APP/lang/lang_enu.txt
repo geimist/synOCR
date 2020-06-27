@@ -124,6 +124,8 @@ lang_edit_set2_dockerimageupdate_help1="Dockerimages with :latest-tag can be upd
 lang_edit_set2_searchpref_title="OCR search prefix"
 lang_edit_set2_searchpref_help1="Process only PDFs with defined prefix (e.g. &quot;SCAN_&quot;)"       # keep html-tag
 lang_edit_set2_searchpref_help2="leave blank if all documents are to be processed"
+lang_edit_set2_searchpref_help3="at the beginning inverts the search"
+lang_edit_set2_searchpref_help4="at the end defines the term as a suffix"
 lang_edit_set2_delsearchpref_title=""
 lang_edit_set2_delsearchpref_keep="Keep search prefix"
 lang_edit_set2_delsearchpref_delete="Remove search prefix"
@@ -378,5 +380,3 @@ lang_timer_up2="up to"
 lang_timer_all="every"
 lang_timer_at="at"
 lang_timer_everyhoure="Every houre"
-
-

@@ -35,7 +35,7 @@ else
     echo "$taglist" > "${INPUTDIR%/}/_BackUp_taglist_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")]_$(date +%s).txt"
 fi
 
-taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )	# Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
+taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )    # Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
 tagarray=( $taglist2 )   # Tags in Array überführen
 
 count=1
@@ -248,10 +248,10 @@ if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile"
     # das erste Profil der DB als nächstes aktiv schalten (sonst würde ein Profilname mit leeren Daten angezeigt)
         getprofile=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
         # getprofile (ohne GUI nach $var schreiben):
-    	encode_value=$getprofile
-    	decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
-    	"$set_var" "./usersettings/var.txt" "getprofile" "$decode_value"
-    	"$set_var" "./usersettings/var.txt" "encode_getprofile" "$encode_value"
+        encode_value=$getprofile
+        decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
+        "$set_var" "./usersettings/var.txt" "getprofile" "$decode_value"
+        "$set_var" "./usersettings/var.txt" "encode_getprofile" "$encode_value"
 
         sleep 1
         if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='$profile_ID' ") = "0" ] ; then
@@ -496,11 +496,11 @@ if [[ "$page" == "edit" ]]; then
         </p>'
 
     # Profile-ID (ohne GUI nach $var schreiben)
-    	encode_value=$profile_ID
-    	decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
-    	"$set_var" "./usersettings/var.txt" "profile_ID" "$decode_value"
-    	"$set_var" "./usersettings/var.txt" "encode_profile_ID" "$encode_value"
-	
+        encode_value=$profile_ID
+        decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
+        "$set_var" "./usersettings/var.txt" "profile_ID" "$decode_value"
+        "$set_var" "./usersettings/var.txt" "encode_profile_ID" "$encode_value"
+    
     # SOURCEDIR
     echo '
         <p>
@@ -676,7 +676,9 @@ if [[ "$page" == "edit" ]]; then
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>'$lang_edit_set2_searchpref_help1'<br>
-            '$lang_edit_set2_searchpref_help2'</span></a>
+            '$lang_edit_set2_searchpref_help2'<br>
+            <strong>!</strong> '$lang_edit_set2_searchpref_help3' ( !value )<br>
+            <strong>$</strong> '$lang_edit_set2_searchpref_help4' ( value$ )</span></a>
         </p>'
 
     # delSearchPraefix
