@@ -1,12 +1,13 @@
 Release Notes
 
-0.99.2 [2020-06-27]
+0.99.3 [2020-06-30]
     IMPLEMENTATIONS:
  -  multilingual GUI (currently German, English)
- -  advanced rule management (in combination with an external YAML-file)
+ -  advanced rule management (in combination with an external YAML-file -> write Samplefile with button in GUI)
  -  Tags are now independent of the search term (alias - in combination with an external YAML-file)
  -  a search prefix with preceding ! inverts the search ( !value )
  -  a final $ is used as search suffix ( value$ )
+ -  if the Exiftool is installed, found tags and date are written into the meta data
 
 0.17.1 [2020-06-18]
     BUGFIXES:
