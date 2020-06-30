@@ -144,23 +144,23 @@ echo "# synOCR_YAMLRULEFILE   # keep this line!
 
 echo "
 
-# sample:
+#sample:
 
-# sampletagrulename1:
-#     tagname: target_tag
-#     targetfolder: \"/<path>/\"
-#     condition: all
-#     subrules:
-#     - searchstring: foundme
-#       searchtyp: contains
-#       isRegEx: false
-#       source: content
-#       casesensitive: true
-#     - searchstring: dontfoundme
-#       searchtyp: is not
-#       isRegEx: false
-#       source: content
-#       casesensitive: false
+#sampletagrulename1:
+#    tagname: target_tag
+#    targetfolder: \"/<path>/\"
+#    condition: all
+#    subrules:
+#    - searchstring: foundme
+#      searchtyp: contains
+#      isRegEx: false
+#      source: content
+#      casesensitive: true
+#    - searchstring: dontfoundme
+#      searchtyp: is not
+#      isRegEx: false
+#      source: content
+#      casesensitive: false
 
 #-----------------------------------------------------------
 # $lang_edit_yamlsample_42

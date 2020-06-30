@@ -9,6 +9,7 @@
     echo -e
 
     DevChannel="Release"    # BETA
+    PATH=$PATH:/usr/syno/synoman/webman/3rdparty/synOCR/bin
 
 # ---------------------------------------------------------------------------------
 #           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
@@ -361,8 +362,9 @@ fi
 
 
 IFS=$'\012'  # corresponds to a $'\n' newline
-for input in "$files" ; do
+for input in ${files} ; do
     IFS=$OLDIFS
+
 # create temporary working directory
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
     trap 'rm -rf "$work_tmp"; exit' EXIT
@@ -908,19 +910,19 @@ for input in "$files" ; do
         if [[ "$filedate" == "ocr" ]]; then
             if [ $dateIsFound = no ]; then
                 echo "Source file [OCR selected but not found])"
-                touch --reference="$input" "$output"
+#                touch --reference="$input" "$output"
             else
                 echo "OCR)"
-                TZ=UTC touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
+#                TZ=UTC touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
             #   TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
             fi
         elif [[ "$filedate" == "now" ]]; then
             echo "NOW)"
             #TZ=$(date +%Z)
-            touch –time=modify "$output"
+#            touch –time=modify "$output"
         else
             echo "Source file)"
-            touch --reference="$input" "$output"
+#            touch --reference="$input" "$output"
         fi
     }
     findDate
@@ -965,6 +967,46 @@ for input in "$files" ; do
 
     echo "$NewName"
 
+# set Metadata:
+    echo -n "              ➜ edit metadata "
+    if which exiftool > /dev/null  2>&1 ; then
+        echo -n "(exiftool ok) "
+#        exiftool -overwrite_original -Title="TestTitel" -Subject="TestSub" -sep ", " -Keywords="Rechnung, Steuer" "${outputtmp}"
+
+#        exiftool -overwrite_original -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
+#       2013:04:28 09:35:16+12:00 -time:all
+#        exiftool -overwrite_original -CreationDate="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
+        exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
+        
+#        exiftool '-datetimeoriginal <MDItemFSCreationDate' -overwrite_original_in_place -P "${outputtmp}"
+#        exiftool '-datetimeoriginal <MDItemFSCreationDate' -overwrite_original_in_place -P -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
+
+    else
+        echo "ERROR - exiftool not found! Please install it over cphub.net"
+    fi
+
+# Dateidatum anpassen (nachdem das PDF durch exiftool modifiziert wurde):
+    echo -n "              ➜ Adapt file date (Source: "
+
+    if [[ "$filedate" == "ocr" ]]; then
+        if [ $dateIsFound = no ]; then
+            echo "Source file [OCR selected but not found])"
+            touch --reference="$input" "$output"
+        else
+            echo "OCR)"
+            TZ=UTC touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
+        #   TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
+        fi
+    elif [[ "$filedate" == "now" ]]; then
+        echo "NOW)"
+        #TZ=$(date +%Z)
+        touch –time=modify "$output"
+    else
+        echo "Source file)"
+        touch --reference="$input" "$output"
+    fi
+
+# Zieldateien verschieben:
     if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
         # verwende Einsortierung in Kategorieordner:
         echo "              ➜ move to category directories"
