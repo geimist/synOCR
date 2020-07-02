@@ -227,8 +227,8 @@ if [ -z $LOGmax ]; then
 fi
 
 # Delete empty logs:
-# (sollte durch Abfrage in Startskript nicht mehr benötigt werden)
-for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # Listing of all LOG files
+# (sollte durch Abfrage in Startskript nicht mehr benötigt werden / synOCR wird mit leerer Queue nicht mehr gestartet)
+for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$')                    # Listing of all LOG files
     do
         # if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
         if [ $( cat "${LOGDIR}$i" | sed -n "/Funktionsaufrufe/,/synOCR ENDE/p" | wc -c ) -eq 160 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
@@ -243,7 +243,14 @@ for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' `                   # L
 # delete surplus logs:
 count2del=$( expr $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax )
 if [ ${count2del} -ge 0 ]; then
-    for i in `ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} `
+    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} )
+        do
+            rm "${LOGDIR}$i"
+        done
+fi
+count2del=$( expr $(ls -t "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | wc -l) - $LOGmax )
+if [ ${count2del} -ge 0 ]; then
+    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} )
         do
             rm "${LOGDIR}$i"
         done
@@ -496,7 +503,13 @@ for input in ${files} ; do
         fi
 
         /bin/pdftotext -layout $pdftotextOpt "$output" "$searchfile"
+        sed -i 's/^ *//' "$searchfile"        # beginnende Leerzeichen löschen
+
         content=$(cat "$searchfile" )   # die Standardregeln suchen in der Variablen / die erweiterten Regeln direkt in der Quelldatei
+
+        if [ $loglevel = "2" ] ; then
+            cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
+        fi
 
     # suche nach Tags:
         tagsearch()
@@ -512,14 +525,18 @@ for input in ${files} ; do
             echo "                no tags defined"
             return
         elif [ -f "$taglist" ]; then
-            sed -i $'s/\r$//' "$taglist"        # convert Dos to Unix
             if grep -q "synOCR_YAMLRULEFILE" "$taglist" ; then
                 echo "                source for tags is yaml based tag rule file [$taglist]"
+                
+                cp "$taglist" "${work_tmp}/tmprulefile.txt"     # kopiere YAML-File in den TMP-Ordner, da das File in ACL-Ordnern nur fehlerhaft gelesen werden kann
+                taglist="${work_tmp}/tmprulefile.txt"
+                sed -i $'s/\r$//' "$taglist"                    # convert Dos to Unix
                 type_of_rule=advanced
                 tag_rule_content=$(yq read "$taglist" -jP 2>&1)
                 yaml_validate
             else
                 echo "                source for tags is file [$taglist]"
+                sed -i $'s/\r$//' "$taglist"                    # convert Dos to Unix
                 taglist=$(cat "$taglist")
             fi
 #           taglist=$(cat "$taglist")
@@ -556,6 +573,9 @@ for input in ${files} ; do
                 if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] ; then
                     echo "                  [no actions defined - continue]"
                     continue
+                fi
+                if [[ "$targetfolder" = null ]] ; then
+                    targetfolder=""
                 fi
 
                 echo "                  ➜ condition:    $condition"     # "all" OR "any" OR "none"
@@ -596,12 +616,13 @@ for input in ${files} ; do
                         echo "                  [value for casesensitive is empty - \"false\" is used]"
                         VARcasesensitive=false
                     fi
-
-                    echo "                      >>> search for:      $VARsearchstring"
-                    echo "                          isRegEx:         $VARisRegEx"
-                    echo "                          searchtyp:       $VARsearchtyp"
-                    echo "                          source:          $VARsource"
-                    echo "                          casesensitive:   $VARcasesensitive"
+                    if [ $loglevel = "2" ] ; then
+                        echo "                      >>> search for:      $VARsearchstring"
+                        echo "                          isRegEx:         $VARisRegEx"
+                        echo "                          searchtyp:       $VARsearchtyp"
+                        echo "                          source:          $VARsource"
+                        echo "                          casesensitive:   $VARcasesensitive"
+                    fi
 
                 # Groß- Kleinschreibung ggf. ignorieren:
                     if [[ $VARcasesensitive = true ]] ;then
@@ -712,6 +733,12 @@ for input in ${files} ; do
                             fi
                             ;;
                     esac
+
+                    if [ $loglevel = "2" ] && [ $grepresult = "1" ] ; then
+                        echo "                          ➜ Subrule matched"
+                    elif [ $loglevel = "2" ] && [ ! $grepresult = "1" ] ; then
+                        echo "                          ➜ Subrule don't matched"
+                    fi
 
                 # Bedingung prüfen:
                     case "$condition" in
@@ -1062,6 +1089,7 @@ for input in ${files} ; do
                 echo "                  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
             else
                 cp -l "${outputtmp}" "${output}"
+#               chmod 777 "${output}"   # hilft bei ACL (Dateien sind sonst ggf. gesperrt)
             fi
 
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
@@ -1072,7 +1100,7 @@ for input in ${files} ; do
         rm "${outputtmp}"
     elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
         # verwende Einsortierung in Tagordner:
-# ToDo: Tagliste für Einsortierung in Tagorder muss einen Trenner aufweisen (derzeit scheinbar nichtgegeben)
+# ToDo Check: Tagliste für Einsortierung in Tagorder muss einen Trenner aufweisen (derzeit scheinbar nichtgegeben)
 
 
 
@@ -1114,6 +1142,7 @@ for input in ${files} ; do
 
             echo "                  target:   ./${tagdir}/$(basename "${output}")"
             cp -l "${outputtmp}" "${output}"
+#           chmod 777 "${output}"   # hilft bei ACL (Dateien sind sonst ggf. gesperrt)
             i=$((i + 1))
         done
 
