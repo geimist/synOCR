@@ -133,6 +133,10 @@
         echo "BackUp directory:         $BACKUPDIR"
         backup=true
     elif echo "$BACKUPDIR" | grep -q "/volume" ; then
+        if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$BACKUPDIR" | awk -F/ '{print $3}') ; then
+            echo "BackUP folder not mounted    ➜    EXIT SCRIPT!"
+            exit 1
+        fi
         mkdir -p "$BACKUPDIR"
         echo "BackUp directory was created [$BACKUPDIR]"
         backup=true
@@ -529,10 +533,10 @@ for input in ${files} ; do
                 echo "                source for tags is yaml based tag rule file [$taglist]"
                 
                 cp "$taglist" "${work_tmp}/tmprulefile.txt"     # kopiere YAML-File in den TMP-Ordner, da das File in ACL-Ordnern nur fehlerhaft gelesen werden kann
-                taglist="${work_tmp}/tmprulefile.txt"
-                sed -i $'s/\r$//' "$taglist"                    # convert Dos to Unix
+                taglisttmp="${work_tmp}/tmprulefile.txt"
+                sed -i $'s/\r$//' "$taglisttmp"                    # convert Dos to Unix
                 type_of_rule=advanced
-                tag_rule_content=$(yq read "$taglist" -jP 2>&1)
+                tag_rule_content=$(yq read "$taglisttmp" -jP 2>&1)
                 yaml_validate
             else
                 echo "                source for tags is file [$taglist]"

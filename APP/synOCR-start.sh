@@ -67,6 +67,10 @@
 
     # muss das Zielverzeichnis erstellt werden und ist der Pfad zulässig?
         if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
+            if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$OUTPUTDIR" | awk -F/ '{print $3}') ; then
+                echo "taget folder not mounted    ➜    EXIT SCRIPT!"
+                exit 1
+            fi
             mkdir -p "$OUTPUTDIR"
             if [ $callFrom = GUI ] ; then
                 echo '
@@ -145,6 +149,10 @@
         if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
             ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1     # $LOGFILE wird als Parameter an synOCR übergeben, da die Datei dort ggf. bei ERRORFILES benötigt wird
         elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
+            if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$LOGDIR" | awk -F/ '{print $3}') ; then
+                echo "LOG folder not mounted    ➜    EXIT SCRIPT!"
+                exit 1
+            fi
             mkdir -p "$LOGDIR"
             ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1
         else
