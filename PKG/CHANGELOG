@@ -1,6 +1,6 @@
 Release Notes
 
-0.99.4 [2020-07-03]
+0.99.5 [2020-07-03]
     IMPLEMENTATIONS:
  -  multilingual GUI (currently German, English)
  -  advanced rule management (in combination with an external YAML-file -> write Samplefile with button in GUI)
@@ -9,7 +9,7 @@ Release Notes
  -  a final $ is used as search suffix ( value$ )
  -  if the Exiftool is installed, found tags and date are written into the meta data
     BUGFIXES:
- -  if a path refers to an encrypted directory, the program run is aborted
+ -  if a path refers to an (unmounted) encrypted directory, the program run is aborted
 
 0.17.1 [2020-06-18]
     BUGFIXES:

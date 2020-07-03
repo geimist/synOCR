@@ -531,10 +531,10 @@ for input in ${files} ; do
         elif [ -f "$taglist" ]; then
             if grep -q "synOCR_YAMLRULEFILE" "$taglist" ; then
                 echo "                source for tags is yaml based tag rule file [$taglist]"
-                
                 cp "$taglist" "${work_tmp}/tmprulefile.txt"     # kopiere YAML-File in den TMP-Ordner, da das File in ACL-Ordnern nur fehlerhaft gelesen werden kann
                 taglisttmp="${work_tmp}/tmprulefile.txt"
-                sed -i $'s/\r$//' "$taglisttmp"                    # convert Dos to Unix
+                sed -i $'s/\r$//' "$taglisttmp"                 # convert Dos to Unix
+# sed 's/^M$//'              # Bei bash/tcsh: Ctrl-V dann Ctrl-M
                 type_of_rule=advanced
                 tag_rule_content=$(yq read "$taglisttmp" -jP 2>&1)
                 yaml_validate
@@ -543,16 +543,6 @@ for input in ${files} ; do
                 sed -i $'s/\r$//' "$taglist"                    # convert Dos to Unix
                 taglist=$(cat "$taglist")
             fi
-#           taglist=$(cat "$taglist")
-
-#           prüfen
-
-
-
-
-
-
-
         else
             echo "                source for tags is the list from the GUI"
         fi
@@ -586,7 +576,9 @@ for input in ${files} ; do
                 echo "                  ➜ tag:          $searchtag"
                 echo "                  ➜ destination:  $targetfolder"
 
-                echo "                      [Subrule]:"
+                if [ $loglevel = "2" ] ; then
+                    echo "                      [Subrule]:"
+                fi
                 # subrules abarbeiten:
                 for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
                     sub_jq_value="$subtagrule"  # universeller Parametername für Funktion sub_jq
@@ -643,10 +635,18 @@ for input in ${files} ; do
                     fi
 
                 # suche … :
+#                if [[ $VARisRegEx = true ]] ;then
+                    # bei Regex-Suche keine zusätzliche Einschränkung via 'searchtyp'
+#                    echo "                          searchtyp:       [ignored - RegEx based]"
+#                    if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+#                        grepresult=1
+#                    fi
+#                else
                     case "$VARsearchtyp" in
                         is)
                             if [[ $VARisRegEx = true ]] ;then
-                                if grep -qwE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+#                               if grep -qwE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                                if grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
                             else
@@ -657,7 +657,8 @@ for input in ${files} ; do
                             ;;
                         "is not")
                             if [[ $VARisRegEx = true ]] ;then
-                                if ! grep -qwE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+#                               if ! grep -qwE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                                if ! grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
                             else
@@ -668,7 +669,8 @@ for input in ${files} ; do
                             ;;
                         contains)
                             if [[ $VARisRegEx = true ]] ;then
-                                if grep -qE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+#                               if grep -qE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                                if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
                             else
@@ -679,7 +681,8 @@ for input in ${files} ; do
                             ;;
                         "does not contain")
                             if [[ $VARisRegEx = true ]] ;then
-                                if ! grep -qE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+#                               if ! grep -qE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                                if ! grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
                             else
@@ -690,7 +693,8 @@ for input in ${files} ; do
                             ;;
                         "starts with")
                             if [[ $VARisRegEx = true ]] ;then
-                                if grep -qE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
+#                               if grep -qE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
+                                if grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
                             else
@@ -702,7 +706,8 @@ for input in ${files} ; do
                             ;;
                         "does not starts with")
                             if [[ $VARisRegEx = true ]] ;then
-                                if ! grep -qE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
+#                               if ! grep -qE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
+                                if ! grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
                             else
@@ -714,7 +719,8 @@ for input in ${files} ; do
                             ;;
                         "ends with")
                             if [[ $VARisRegEx = true ]] ;then
-                                if grep -qE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
+#                               if grep -qE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
+                                if grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
                             else
@@ -726,7 +732,8 @@ for input in ${files} ; do
                             ;;
                         "does not ends with")
                             if [[ $VARisRegEx = true ]] ;then
-                                if ! grep -qE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
+#                               if ! grep -qE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
+                                if ! grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
                             else
@@ -737,6 +744,7 @@ for input in ${files} ; do
                             fi
                             ;;
                     esac
+#                fi
 
                     if [ $loglevel = "2" ] && [ $grepresult = "1" ] ; then
                         echo "                          ➜ Subrule matched"
@@ -1104,18 +1112,12 @@ for input in ${files} ; do
         rm "${outputtmp}"
     elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
         # verwende Einsortierung in Tagordner:
-# ToDo Check: Tagliste für Einsortierung in Tagorder muss einen Trenner aufweisen (derzeit scheinbar nichtgegeben)
-
-
-
-
-
         echo "              ➜ move to tag directories"
 
-        if [ ! -z "$tagsymbol" ]; then
-            renameTag=$( echo $renameTag | sed -e "s/${tagsymbol}//g" )
-        fi
-
+#        if [ ! -z "$tagsymbol" ]; then
+            renameTag=$( echo $renameTag | sed -e "s/${tagsymbol}/ /g" ) #;s/[ ]*/ /g
+#        fi
+# echo "ha        lllo" | sed -e "s/  / /g"
         tagarray=( $renameTag )   # Tags als Array definieren
         i=0
         maxID=${#tagarray[*]}

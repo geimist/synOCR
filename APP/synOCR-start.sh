@@ -62,14 +62,18 @@
                 echo "! ! ! Quellverzeichnis in der Konfiguration prüfen ! ! !"
                 echo "Programmlauf wird beendet."
             fi
-            exit 1
+            continue
         fi
 
     # muss das Zielverzeichnis erstellt werden und ist der Pfad zulässig?
         if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$OUTPUTDIR" | awk -F/ '{print $3}') ; then
-                echo "taget folder not mounted    ➜    EXIT SCRIPT!"
-                exit 1
+                if [ $callFrom = GUI ] ; then
+                    echo '<p class="center"><span style="color: #BD0010;"><b>! ! ! taget folder not mounted ! ! !</b><br>EXIT SCRIPT!<br></span></p>'
+                else
+                    echo "taget folder not mounted    ➜    EXIT SCRIPT!"
+                fi
+                continue
             fi
             mkdir -p "$OUTPUTDIR"
             if [ $callFrom = GUI ] ; then
@@ -86,7 +90,7 @@
                 echo "! ! ! Zielverzeichnis in der Konfiguration prüfen ! ! !"
                 echo "Programmlauf wird beendet."
             fi
-            exit 1
+            continue
         fi
 
     # Dateizähler:
@@ -150,8 +154,12 @@
             ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1     # $LOGFILE wird als Parameter an synOCR übergeben, da die Datei dort ggf. bei ERRORFILES benötigt wird
         elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$LOGDIR" | awk -F/ '{print $3}') ; then
-                echo "LOG folder not mounted    ➜    EXIT SCRIPT!"
-                exit 1
+                if [ $callFrom = GUI ] ; then
+                    echo '<p class="center"><span style="color: #BD0010;"><b>! ! ! LOG folder not mounted ! ! !</b><br>EXIT SCRIPT!<br></span></p>'
+                else
+                    echo "LOG folder not mounted    ➜    EXIT SCRIPT!"
+                fi
+                continue
             fi
             mkdir -p "$LOGDIR"
             ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1
