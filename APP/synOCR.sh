@@ -845,6 +845,7 @@ for input in ${files} ; do
 
         renameTag=${renameTag% }
         renameCat=${renameCat% }
+        renameTag_raw="$renameTag" # unverfälscht für Tagordner / Tagordner mit Leerzeichen sonst nicht möglich
         echo "                  rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
         echo -e
         }
@@ -1010,16 +1011,7 @@ for input in ${files} ; do
     echo -n "              ➜ edit metadata "
     if which exiftool > /dev/null  2>&1 ; then
         echo -n "(exiftool ok) "
-#        exiftool -overwrite_original -Title="TestTitel" -Subject="TestSub" -sep ", " -Keywords="Rechnung, Steuer" "${outputtmp}"
-
-#        exiftool -overwrite_original -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
-#       2013:04:28 09:35:16+12:00 -time:all
-#        exiftool -overwrite_original -CreationDate="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
         exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
-        
-#        exiftool '-datetimeoriginal <MDItemFSCreationDate' -overwrite_original_in_place -P "${outputtmp}"
-#        exiftool '-datetimeoriginal <MDItemFSCreationDate' -overwrite_original_in_place -P -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
-
     else
         echo "ERROR - exiftool not found! Please install it over cphub.net"
     fi
@@ -1114,10 +1106,10 @@ for input in ${files} ; do
         # verwende Einsortierung in Tagordner:
         echo "              ➜ move to tag directories"
 
-#        if [ ! -z "$tagsymbol" ]; then
-            renameTag=$( echo $renameTag | sed -e "s/${tagsymbol}/ /g" ) #;s/[ ]*/ /g
-#        fi
-# echo "ha        lllo" | sed -e "s/  / /g"
+        if [ ! -z "$tagsymbol" ]; then
+            renameTag=$( echo $renameTag_raw | sed -e "s/${tagsymbol}/ /g" )
+        fi
+
         tagarray=( $renameTag )   # Tags als Array definieren
         i=0
         maxID=${#tagarray[*]}
