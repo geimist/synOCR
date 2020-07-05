@@ -32,7 +32,9 @@ if [ -f "$taglist" ]; then
     taglist=$( cat "$taglist" )
 else
     # BackUp des Datenbankeintrags
-    echo "$taglist" > "${INPUTDIR%/}/_BackUp_taglist_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")]_$(date +%s).txt"
+    BackUp_taglist="${INPUTDIR%/}/_BackUp_taglist_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")]_$(date +%s).txt"
+    echo "$taglist" > "${BackUp_taglist}"
+    chmod 755 "${BackUp_taglist}"
 fi
 
 taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )    # Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
@@ -207,6 +209,7 @@ for i in ${tagarray[@]}; do
 
     count=$((count + 1))
 done
+chmod 755 "${SAMPLECONFIGFILE}"
 
 # Pfad zum neuen configfile in DB schreiben:
     sSQLupdate="UPDATE config SET taglist='${SAMPLECONFIGFILE}' WHERE profile_ID='$profile_ID' "
