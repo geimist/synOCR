@@ -5,8 +5,8 @@ Release Notes
  -  multilingual GUI (currently German, English)
  -  advanced rule management (in combination with an external YAML-file -> write Samplefile with button in GUI)
  -  tags are now independent of the search term (alias - in combination with an external YAML-file)
- -  source files: a search prefix with preceding "!" inverts the search ( !value )
- -  source files: a final "$" is used as search suffix ( value$ )
+ -  source files: a search prefix with preceding "!" inverts the search in filename ( !value )
+ -  source files: a final "$" is used as search suffix in filename ( value$ )
  -  if the Exiftool is installed, found tags and date are written into the meta data
     BUGFIXES:
  -  if a path refers to an (unmounted) encrypted directory, the program run is aborted
