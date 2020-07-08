@@ -5,7 +5,7 @@ Then, you can help to translate synOCR in your language.
 Translate text only between double quotation marks.  
 It is also important that special characters remain in the same place. (e.g. \<br\> / \<b\> …)
   
-(The reference file is first German, then English)
+(The reference file is first [German](https://geimist.eu:30443/geimist/synOCR/src/branch/master/APP/lang/lang_ger.txt), then [English](https://geimist.eu:30443/geimist/synOCR/src/branch/master/APP/lang/lang_enu.txt))
 
 -----
 
