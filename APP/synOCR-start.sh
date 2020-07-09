@@ -13,8 +13,8 @@
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
 
+# Sprachvariablen laden:
     source "./includes/functions.sh"
-    # Sprachvariablen laden:
     language
 
 # läuft bereits eine Instanz von synOCR?
