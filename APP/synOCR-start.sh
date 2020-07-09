@@ -6,6 +6,9 @@
     callFrom=$1
     if [ -z $callFrom ] ; then
         callFrom=shell
+        source "/usr/syno/synoman/webman/3rdparty/synOCR/includes/functions.sh"
+        # Sprachvariablen laden:
+        language
     fi
     exit_status=0
 
@@ -17,24 +20,24 @@
     synOCR_pid=$( /bin/pidof synOCR.sh )
     if [ ! -z "$synOCR_pid" ] ; then
         if [ $callFrom = GUI ] ; then
-            echo '<p class="center"><span style="color: #BD0010;"><b>synOCR läuft bereits!</b><br>(Prozess-ID: '$synOCR_pid')</span></p>'
-            echo '<br /><p class="center"><button name="page" value="main-kill-synocr" style="color: #BD0010;">(Beenden erzwingen?)</button></p><br />'
+            echo '<p class="center"><span style="color: #BD0010;"><b>'$lang_synOCR_start_is_running'</b><br>(Prozess-ID: '$synOCR_pid')</span></p>'
+            echo '<br /><p class="center"><button name="page" value="main-kill-synocr" style="color: #BD0010;">('$lang_synOCR_start_req_kill')</button></p><br />'
         else
-            echo "synOCR läuft bereits! (Prozess-ID: ${synOCR_pid})"
+            echo "$lang_synOCR_start_is_running (Prozess-ID: ${synOCR_pid})"
         fi
         exit
     else
         if [ $callFrom = GUI ] ; then
-            echo '<p class="title">synOCR wurde gestartet ...</p><br><br><br><br>
+            echo '<p class="title">'$lang_synOCR_start_runs' ...</p><br><br><br><br>
             <center><table id="system_msg" style="width: 40%;table-align: center;">
                 <tr>
                     <th style="width: 20%;"><img class="imageStyle" alt="status_loading" src="images/status_loading.gif" style="float:left;"></th>
-                    <th style="width: 80%;"><p class="center"><span style="color: #424242;font-weight:normal;">Bitte warten, bis die Dateien<br>fertig abgearbeitet wurden.</span></p></th>
+                    <th style="width: 80%;"><p class="center"><span style="color: #424242;font-weight:normal;">'$lang_synOCR_start_wait1'</span></p></th>
                 </tr>
             </table></center>'
         else
-            echo "synOCR wurde gestartet ..."
-            echo "Bitte warten, bis die Dateien fertig abgearbeitet wurden."
+            echo "$lang_synOCR_start_runs ..."
+            echo "$lang_synOCR_start_wait2"
         fi
     fi
 
@@ -57,10 +60,10 @@
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
             if [ $callFrom = GUI ] ; then
                 echo '
-                <p class="center"><span style="color: #BD0010;"><b>! ! ! Quellverzeichnis in der Konfiguration prüfen ! ! !</b><br>Programmlauf wird beendet.<br></span></p>'
+                <p class="center"><span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_lost_input' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span></p>'
             else
-                echo "! ! ! Quellverzeichnis in der Konfiguration prüfen ! ! !"
-                echo "Programmlauf wird beendet."
+                echo "! ! ! $lang_synOCR_start_lost_input ! ! !"
+                echo "$lang_synOCR_start_abort"
             fi
             continue
         fi
@@ -68,27 +71,28 @@
     # muss das Zielverzeichnis erstellt werden und ist der Pfad zulässig?
         if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$OUTPUTDIR" | awk -F/ '{print $3}') ; then
+                # handelt es sich um einen verschlüsselten Ordner und ist dieser eingehangen?
                 if [ $callFrom = GUI ] ; then
-                    echo '<p class="center"><span style="color: #BD0010;"><b>! ! ! taget folder not mounted ! ! !</b><br>EXIT SCRIPT!<br></span></p>'
+                    echo '<p class="center"><span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_target' ! ! !</b><br>EXIT SCRIPT!<br></span></p>'
                 else
-                    echo "taget folder not mounted    ➜    EXIT SCRIPT!"
+                    echo "$lang_synOCR_start_umount_target    ➜    EXIT SCRIPT!"
                 fi
                 continue
             fi
             mkdir -p "$OUTPUTDIR"
             if [ $callFrom = GUI ] ; then
                 echo '
-                <p class="center"><span style="color: #BD0010;"><b>Zielverzeichnis wurde erstellt.</b></span></p>'
+                <p class="center"><span style="color: #BD0010;"><b>'$lang_synOCR_start_target_created'</b></span></p>'
             else
-                echo "Zielverzeichnis wurde erstellt."
+                echo "$lang_synOCR_start_target_created"
             fi
         elif [ ! -d "$OUTPUTDIR" ] || ! $(echo "$OUTPUTDIR" | grep -q "/volume") ; then
             if [ $callFrom = GUI ] ; then
                 echo '
-                <p class="center"><span style="color: #BD0010;"><b>! ! ! Zielverzeichnis in der Konfiguration prüfen ! ! !</b><br>Programmlauf wird beendet.<br></span></p>'
+                <p class="center"><span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_check_target' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span></p>'
             else
-                echo "! ! ! Zielverzeichnis in der Konfiguration prüfen ! ! !"
-                echo "Programmlauf wird beendet."
+                echo "! ! ! $lang_synOCR_start_check_target ! ! !"
+                echo "$lang_synOCR_start_abort"
             fi
             continue
         fi
@@ -99,7 +103,7 @@
             echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
             echo "ocrcount=\"0\"" >> ./etc/counter
             echo "pagecount=\"0\"" >> ./etc/counter
-            echo "                      --> counter-File wurde erstellt"
+            echo "                      --> counter-File was created"
         else
             if ! cat ./etc/counter | grep -q "pagecount" ; then
                 echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
@@ -155,9 +159,9 @@
         elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$LOGDIR" | awk -F/ '{print $3}') ; then
                 if [ $callFrom = GUI ] ; then
-                    echo '<p class="center"><span style="color: #BD0010;"><b>! ! ! LOG folder not mounted ! ! !</b><br>EXIT SCRIPT!<br></span></p>'
+                    echo '<p class="center"><span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_log' ! ! !</b><br>EXIT SCRIPT!<br></span></p>'
                 else
-                    echo "LOG folder not mounted    ➜    EXIT SCRIPT!"
+                    echo "$lang_synOCR_start_umount_log    ➜    EXIT SCRIPT!"
                 fi
                 continue
             fi
@@ -174,10 +178,10 @@
             echo "    -----------------------------------" >> $LOGFILE
         else
             echo "    -----------------------------------" >> $LOGFILE
-            echo "    |   synOCR mit Fehlern beendet!   |" >> $LOGFILE
+            echo "    |     synOCR exit with ERROR!     |" >> $LOGFILE
             echo "    -----------------------------------" >> $LOGFILE
-            echo "synOCR wurde mit Fehlern beendet!"
-            echo "weitere Informationen im LOG: $LOGFILE"
+            echo "$lang_synOCR_start_errorexit"
+            echo "$lang_synOCR_start_loginfo: $LOGFILE"
             exit_status=ERROR
         fi
     done
