@@ -27,22 +27,6 @@ lang_foot_buttondelprof="delete profile"
 lang_foot_buttondelprof_tit="deletes the current profile after confirmation prompt …"
 
 #-------------------------------------------
-# page main:
-#-------------------------------------------
-lang_main_title1="OCR on Synology DSM"
-lang_main_title2="Description"
-lang_main_dockerfailed="W A R N I N G:<br>Docker could not be found.<br>Please check if the Docker package has been installed!"
-lang_main_desc1="SynOCR provides a simple GUI for the docker container OCRmyPDF. No configuration in Docker is necessary."
-lang_main_desc2="At the moment probably not all parameters can be used in combination with OCRmyPDF, but the most important ones. Just enter the source and target folder in the configuration. Now a manual program run is already possible with the button below. The automatic program run can be set (as described in the help) either via the Scheduler or the DSM Task Scheduler."
-lang_main_buttonrun="start manual synOCR run now"
-lang_main_statshead="Status / Statistics"
-lang_main_openjobs="open jobs"
-lang_main_openfilecount="files are to be processed"
-lang_main_alldone="all done"
-lang_main_totalsince="total since"
-lang_main_pages="Pages"
-
-#-------------------------------------------
 # page settings:
 #-------------------------------------------
 lang_edit_delques_1="Should the current profile be"
@@ -268,13 +252,28 @@ lang_edit_yamlsample_41="finaly, you can check and validate your config file on"
 lang_edit_yamlsample_42="below are the automatically converted user rules:"
 lang_edit_yamlsample_button="rule file - create / convert "
 lang_edit_yamlsample_button_help_headline="The external rule file offers much more complex search patterns"
-lang_edit_yamlsample_button_help_01="- konvertiert die bestehenden Regeln ins YAML-Format"
 lang_edit_yamlsample_button_help_01="- converts the existing rules into YAML format"
 lang_edit_yamlsample_button_help_02="- the rule file is stored in the input directory"
 lang_edit_yamlsample_button_help_03="- a backup of the existing rules is created in the input directory"
 lang_edit_yamlsample_gui_01="The rule file already exists!"
 lang_edit_yamlsample_gui_02="Please delete the existing file and try again"
 lang_edit_yamlsample_gui_03="The rule file was created successfully."
+
+#-------------------------------------------
+# page main:
+#-------------------------------------------
+lang_main_title1="OCR on Synology DSM"
+lang_main_title2="Description"
+lang_main_dockerfailed="W A R N I N G:<br>Docker could not be found.<br>Please check if the Docker package has been installed!"
+lang_main_desc1="SynOCR provides a simple GUI for the docker container OCRmyPDF. No configuration in Docker is necessary."
+lang_main_desc2="At the moment probably not all parameters can be used in combination with OCRmyPDF, but the most important ones. Just enter the source and target folder in the configuration. Now a manual program run is already possible with the button below. The automatic program run can be set (as described in the help) either via the Scheduler or the DSM Task Scheduler."
+lang_main_buttonrun="start manual synOCR run now"
+lang_main_statshead="Status / Statistics"
+lang_main_openjobs="open jobs"
+lang_main_openfilecount="files are to be processed"
+lang_main_alldone="all done"
+lang_main_totalsince="total since"
+lang_main_pages="Pages"
 
 #-------------------------------------------
 # page help:
@@ -380,3 +379,21 @@ lang_timer_up2="up to"
 lang_timer_all="every"
 lang_timer_at="at"
 lang_timer_everyhoure="Every houre"
+
+#-------------------------------------------
+# script synOCR-start.sh:
+#-------------------------------------------
+lang_synOCR_start_is_running="synOCR is already running!"
+lang_synOCR_start_req_kill="Force quit?"
+lang_synOCR_start_runs="synOCR is running"
+lang_synOCR_start_wait1="Please wait until the files<br>have been processed."           # keep html-tag
+lang_synOCR_start_wait2="Please wait until the files have been processed."
+lang_synOCR_start_lost_input="Check source directory in the configuration"
+lang_synOCR_start_abort="Program run is terminated."
+lang_synOCR_start_umount_target="encrypted taget folder not mounted"
+lang_synOCR_start_check_target="Check target directory in the configuration"
+lang_synOCR_start_target_created="Target directory was created."
+lang_synOCR_start_umount_log="encrypted log folder not mounted"
+lang_synOCR_start_errorexit="synOCR was terminated with errors!"
+lang_synOCR_start_loginfo="more information in the LOG"
+
