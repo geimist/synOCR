@@ -6,15 +6,16 @@
     callFrom=$1
     if [ -z $callFrom ] ; then
         callFrom=shell
-        source "/usr/syno/synoman/webman/3rdparty/synOCR/includes/functions.sh"
-        # Sprachvariablen laden:
-        language
     fi
     exit_status=0
 
 # Arbeitsverzeichnis auslesen und hineinwechseln:
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
+
+    source "./includes/functions.sh"
+    # Sprachvariablen laden:
+    language
 
 # läuft bereits eine Instanz von synOCR?
     synOCR_pid=$( /bin/pidof synOCR.sh )
