@@ -206,6 +206,7 @@ lang_edit_set3_loglevel_2="2 (erweitert)"
 lang_edit_set3_loglevel_help1="0  => es wird keine Log-Datei erstellt"
 lang_edit_set3_loglevel_help2="1 => normales Log (standard)"
 lang_edit_set3_loglevel_help3="2 => erweitertes Log"
+
 lang_edit_yamlsample_01="Der nachstehende Pfad ist im gewünschten Profil in das Feld für die Tags einzutragen"
 lang_edit_yamlsample_02="BITTE BEACHTE DIESE ANLEITUNG"
 lang_edit_yamlsample_03="es ist sehr wichtig, die korrekten Einrückungen einzufügen"
@@ -249,8 +250,8 @@ lang_edit_yamlsample_39="wenn der Parameter fehlt, wird der Standardwert verwend
 lang_edit_yamlsample_40="definiert Suchbegriff als Text oder RegEx"
 lang_edit_yamlsample_41="abschließend kann die Konfigurationsdatei online überprüft und validiert werden"
 lang_edit_yamlsample_42="nachstehend die automatisch konvertieren Benutzerregeln:"
-lang_edit_yamlsample_button_help_headline="Die externe Regeldatei bietet wesentlich komplexere Suchmuster"
 lang_edit_yamlsample_button="Regeldatei erstellen / konvertieren"
+lang_edit_yamlsample_button_help_headline="Die externe Regeldatei bietet wesentlich komplexere Suchmuster"
 lang_edit_yamlsample_button_help_01="- konvertiert die bestehenden Regeln ins YAML-Format"
 lang_edit_yamlsample_button_help_02="- die Regeldatei wird im Input-Verzeichnis abgelegt"
 lang_edit_yamlsample_button_help_03="- von den bestehenden Regeln wird ein Backup im Input-Verzeichnis erstellt"
@@ -378,3 +379,21 @@ lang_timer_up2="bis"
 lang_timer_all="alle"
 lang_timer_at="um"
 lang_timer_everyhoure="Jede Stunde"
+
+#-------------------------------------------
+# script synOCR-start.sh:
+#-------------------------------------------
+lang_synOCR_start_is_running="synOCR läuft bereits!"
+lang_synOCR_start_req_kill="Beenden erzwingen?"
+lang_synOCR_start_runs="synOCR wurde gestartet"
+lang_synOCR_start_wait1="Bitte warten, bis die Dateien<br>fertig abgearbeitet wurden."           # keep html-tag
+lang_synOCR_start_wait2="Bitte warten, bis die Dateien fertig abgearbeitet wurden."
+lang_synOCR_start_lost_input="Quellverzeichnis in der Konfiguration prüfen"
+lang_synOCR_start_abort="Programmlauf wird beendet."
+lang_synOCR_start_umount_target="verschlüsselter Zielordner nicht eingehangen"
+lang_synOCR_start_check_target="Zielverzeichnis in der Konfiguration prüfen"
+lang_synOCR_start_target_created="Zielverzeichnis wurde erstellt."
+lang_synOCR_start_umount_log="verschlüsselter LOG-Ordner nicht eingehangen"
+lang_synOCR_start_errorexit="synOCR wurde mit Fehlern beendet!"
+lang_synOCR_start_loginfo="weitere Informationen im LOG"
+
