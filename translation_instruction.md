@@ -7,6 +7,8 @@ It is also important that special characters remain in the same place. (e.g. \<b
   
 (The reference file is first [German](https://geimist.eu:30443/geimist/synOCR/src/branch/master/APP/lang/lang_ger.txt), then [English](https://geimist.eu:30443/geimist/synOCR/src/branch/master/APP/lang/lang_enu.txt))
 
+For questions: synocr [@] geimist.eu
+
 -----
 
 **The following files are needed to translate:**
