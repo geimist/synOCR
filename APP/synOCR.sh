@@ -768,6 +768,7 @@ for input in ${files} ; do
                                 break
                             elif [[ $grepresult -eq 1 ]] ; then
                                 found=1
+                                grepresult=0
                             fi
                             ;;
                         none)
