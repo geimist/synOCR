@@ -1,5 +1,9 @@
 Release Notes
 
+1.0.1 [2020-07-15]
+    BUGFIXES:
+ -  >condition: all< was not evaluated correctly (YAML-file)
+
 1.0.0 [2020-07-13]
     IMPLEMENTATIONS:
  -  multilingual GUI (currently German, English)
