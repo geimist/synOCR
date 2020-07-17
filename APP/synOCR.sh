@@ -392,18 +392,21 @@ for input in ${files} ; do
     fi
 
 # Create destination filename (considers existing files with the same name):
-    destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${title}.*" | wc -l)
-    if [ $destfilecount -eq 0 ]; then
-        output="${OUTPUTDIR}${title}.pdf"
-    else
-        while [ -f "${OUTPUTDIR}${title} ($destfilecount).pdf" ]
-            do
-                destfilecount=$( expr $destfilecount + 1 )
-                echo "                  continue counting … ($destfilecount)"
-            done
-        output="${OUTPUTDIR}${title} ($destfilecount).pdf"
-        echo "                  File name already exists! Add counter ($destfilecount)"
-    fi
+#    destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${title}.*" | wc -l)
+#    if [ $destfilecount -eq 0 ]; then
+#        output="${OUTPUTDIR}${title}.pdf"
+#    else
+#        while [ -f "${OUTPUTDIR}${title} ($destfilecount).pdf" ]
+#            do
+#                destfilecount=$( expr $destfilecount + 1 )
+#                echo "                  continue counting … ($destfilecount)"
+#            done
+#        output="${OUTPUTDIR}${title} ($destfilecount).pdf"
+#        echo "                  File name already exists! Add counter ($destfilecount)"
+#    fi
+
+# temporäres Ausgabeziel mit Sekundenangabe für Eindeutigkeit (sonst kommt es bei fehlender Umbennungssyntax zu einer Dopplung)
+    output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
 
     outputtmp="${work_tmp}/${title}.pdf"
     echo "                  temp. target file: ${outputtmp}"
@@ -460,6 +463,7 @@ for input in ${files} ; do
 
 # move temporary file to destination folder:
     mv "${outputtmp}" "${output}"
+#output="${outputtmp}"
 
 # File permissions-Log:
     if [ $loglevel = "2" ] ; then
@@ -552,7 +556,6 @@ for input in ${files} ; do
             # tagrules auflisten:
             for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key") ; do
                 found=0
-                grepresult=0
 
                 echo "                Search by tag rule: \"${tagrule}\" ➜  "
 
@@ -581,6 +584,7 @@ for input in ${files} ; do
                 fi
                 # subrules abarbeiten:
                 for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
+                    grepresult=0
                     sub_jq_value="$subtagrule"  # universeller Parametername für Funktion sub_jq
 
                     VARisRegEx=$(sub_jq '.isRegEx' | tr '[:upper:]' '[:lower:]')
@@ -645,7 +649,6 @@ for input in ${files} ; do
                     case "$VARsearchtyp" in
                         is)
                             if [[ $VARisRegEx = true ]] ;then
-#                               if grep -qwE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                 if grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
@@ -657,7 +660,6 @@ for input in ${files} ; do
                             ;;
                         "is not")
                             if [[ $VARisRegEx = true ]] ;then
-#                               if ! grep -qwE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                 if ! grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
@@ -669,7 +671,6 @@ for input in ${files} ; do
                             ;;
                         contains)
                             if [[ $VARisRegEx = true ]] ;then
-#                               if grep -qE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                 if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
@@ -681,7 +682,6 @@ for input in ${files} ; do
                             ;;
                         "does not contain")
                             if [[ $VARisRegEx = true ]] ;then
-#                               if ! grep -qE${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                 if ! grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
@@ -693,7 +693,6 @@ for input in ${files} ; do
                             ;;
                         "starts with")
                             if [[ $VARisRegEx = true ]] ;then
-#                               if grep -qE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
                                 if grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
@@ -706,7 +705,6 @@ for input in ${files} ; do
                             ;;
                         "does not starts with")
                             if [[ $VARisRegEx = true ]] ;then
-#                               if ! grep -qE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
                                 if ! grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
@@ -719,7 +717,6 @@ for input in ${files} ; do
                             ;;
                         "ends with")
                             if [[ $VARisRegEx = true ]] ;then
-#                               if grep -qE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
                                 if grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
@@ -732,7 +729,6 @@ for input in ${files} ; do
                             ;;
                         "does not ends with")
                             if [[ $VARisRegEx = true ]] ;then
-#                               if ! grep -qE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
                                 if ! grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
                                     grepresult=1
                                 fi
@@ -768,7 +764,6 @@ for input in ${files} ; do
                                 break
                             elif [[ $grepresult -eq 1 ]] ; then
                                 found=1
-                                grepresult=0
                             fi
                             ;;
                         none)
@@ -1094,7 +1089,6 @@ for input in ${files} ; do
                 echo "                  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
             else
                 cp -l "${outputtmp}" "${output}"
-#               chmod 777 "${output}"   # hilft bei ACL (Dateien sind sonst ggf. gesperrt)
             fi
 
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
