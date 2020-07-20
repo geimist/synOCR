@@ -79,6 +79,8 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
 		<div class="Content_1Col_full">
             <br><br><p style="text-align:center"> <span style="color:#BD0010;font-weight:bold;font-size:1.1em; ">'$lang_main_title1'</span> </p>'
 
+echo "detected language: ${lang}"
+
 # check Docker:
     if ! $(/usr/local/bin/docker --version | grep -q "version") ; then
         echo '<p class="center" style="'$synotrred';">'§lang_main_dockerfailed'<br /><br /></p>'
