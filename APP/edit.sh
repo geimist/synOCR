@@ -25,6 +25,7 @@ convert2YAML ()
 
 if [ -f ${SAMPLECONFIGFILE} ]; then
     # ${SAMPLECONFIGFILE} existiert bereits
+    echo "${SAMPLECONFIGFILE} already exists"
     return 1
 fi
 
@@ -32,6 +33,7 @@ if [ -f "$taglist" ]; then
     taglist=$( cat "$taglist" )
 else
     # BackUp des Datenbankeintrags
+    echo "➜ BackUp the database entry of the tag list"
     BackUp_taglist="${INPUTDIR%/}/_BackUp_taglist_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")]_$(date +%s).txt"
     echo "$taglist" > "${BackUp_taglist}"
     chmod 755 "${BackUp_taglist}"
@@ -125,6 +127,7 @@ echo "# synOCR_YAMLRULEFILE   # keep this line!
 " > ${SAMPLECONFIGFILE}
 
 # Hilfetext mit fester Breite und abschließendem #:
+    echo "➜ write description"
     echo "$samplefilecontent" | while read data
     do
         # Zählweise korregieren:
@@ -144,6 +147,7 @@ echo "# synOCR_YAMLRULEFILE   # keep this line!
 
     sed -i 's/ > / ➜ /g;s/ - / • /g' "${SAMPLECONFIGFILE}"  # printf kommt mit diesen Zeichen nicht klar (Zählung stimmt nicht)
 
+echo "➜ write sample entry"
 echo "
 
 #sample:
@@ -173,6 +177,7 @@ echo "
 writesamplefile
 
 # konvertiere / schreibe die Userkonfig:
+echo "➜ convert / write the userconfig"
 for i in ${tagarray[@]}; do
 
     if echo "$i" | grep -q "=" ;then
@@ -208,10 +213,12 @@ for i in ${tagarray[@]}; do
     echo "      casesensitive: true" >> ${SAMPLECONFIGFILE}
 
     count=$((count + 1))
+    echo "    - rule No. $count"
 done
 chmod 755 "${SAMPLECONFIGFILE}"
 
 # Pfad zum neuen configfile in DB schreiben:
+    echo "➜ Write path to the new configfile in DB"
     sSQLupdate="UPDATE config SET taglist='${SAMPLECONFIGFILE}' WHERE profile_ID='$profile_ID' "
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
 
@@ -224,7 +231,14 @@ if [[ "$page" == "edit-convert2YAML" ]]; then
         echo '<div class="Content_1Col_full">'
 
         SAMPLECONFIGFILE="${INPUTDIR%/}/_TagConfig_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")].txt"
-        convert2YAML
+        SAMPLECONFIGLOGFILE="${SAMPLECONFIGFILE}_$(date +%s)_convert.log"
+
+        if [ $loglevel = "2" ] ; then
+            convert2YAML > "${SAMPLECONFIGLOGFILE}"
+            chmod 755 "${SAMPLECONFIGLOGFILE}"
+        else
+            convert2YAML > /dev/null  2>&1 
+        fi
 
         if [ $? -eq 1 ]; then
             echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_yamlsample_gui_01'
