@@ -481,6 +481,7 @@ for input in ${files} ; do
     if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
         echo "(use ACL)"
         synoacltool -copy "$input" "$output"
+        synoacltool -enforce-inherit "${output}"
         #touch --reference="$input" "$output"
     else
         echo "(use standard linux permissions)"
@@ -1089,6 +1090,7 @@ for input in ${files} ; do
                 echo "                  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
             else
                 cp -l "${outputtmp}" "${output}"
+                synoacltool -enforce-inherit "${output}"
             fi
 
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
@@ -1136,6 +1138,7 @@ for input in ${files} ; do
             echo "                  target:   ./${tagdir}/$(basename "${output}")"
             cp -l "${outputtmp}" "${output}"
 #           chmod 777 "${output}"   # hilft bei ACL (Dateien sind sonst ggf. gesperrt)
+            synoacltool -enforce-inherit "${output}"
             i=$((i + 1))
         done
 
