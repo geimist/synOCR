@@ -1069,7 +1069,14 @@ for input in ${files} ; do
             if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
                 echo "                  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
             else
-                cp -l "${outputtmp}" "${output}"
+                if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
+                    echo "                  do not set a hard link when copying across volumes"
+                    cp "${outputtmp}" "${output}"   # keinen Hardlink setzen, wenn volumeübergreifend kopiert wird
+                else
+                    echo "                  set a hard link"
+                    cp -l "${outputtmp}" "${output}"
+                fi
+
 #                synoacltool -enforce-inherit "${output}"
                 cp --attributes-only -p "${outputtmp}" "${output}" # "${input}"
             fi
@@ -1117,7 +1124,15 @@ for input in ${files} ; do
             fi
 
             echo "                  target:   ./${tagdir}/$(basename "${output}")"
-            cp -l "${outputtmp}" "${output}"
+
+            if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
+                echo "                  do not set a hard link when copying across volumes"
+                cp "${outputtmp}" "${output}"   # keinen Hardlink setzen, wenn volumeübergreifend kopiert wird
+            else
+                echo "                  set a hard link"
+                cp -l "${outputtmp}" "${output}"
+            fi
+
 #            synoacltool -enforce-inherit "${output}"
             cp --attributes-only -p "${outputtmp}" "${output}"  # "${input}"
             i=$((i + 1))
