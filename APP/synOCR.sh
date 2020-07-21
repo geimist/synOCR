@@ -478,16 +478,16 @@ for input in ${files} ; do
 # Transmitting file attributes:
     # ( ➜ Date adjustment moved to the date function)
     echo -n "              ➜ transfer the file permissions and owners "
-    if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
-        echo "(use ACL)"
-        synoacltool -copy "$input" "$output"
-        synoacltool -enforce-inherit "${output}"
+#    if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
+#        echo "(use ACL)"
+#        synoacltool -copy "$input" "$output"
+#        synoacltool -enforce-inherit "${output}"
         #touch --reference="$input" "$output"
-    else
-        echo "(use standard linux permissions)"
+#    else
+#        echo "(use standard linux permissions)"
         cp --attributes-only -p "$input" "$output"
         #touch --reference="$input" "$output"
-    fi
+#    fi
 
 # File permissions-Log:
     if [ $loglevel = "2" ] ; then
@@ -941,26 +941,6 @@ for input in ${files} ; do
             echo "                  year: ${date_yy}"
         fi
 
-        # Dateidatum anpassen:
-        echo -n "              ➜ Adapt file date (Source: "
-
-        if [[ "$filedate" == "ocr" ]]; then
-            if [ $dateIsFound = no ]; then
-                echo "Source file [OCR selected but not found])"
-#                touch --reference="$input" "$output"
-            else
-                echo "OCR)"
-#                TZ=UTC touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
-            #   TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
-            fi
-        elif [[ "$filedate" == "now" ]]; then
-            echo "NOW)"
-            #TZ=$(date +%Z)
-#            touch –time=modify "$output"
-        else
-            echo "Source file)"
-#            touch --reference="$input" "$output"
-        fi
     }
     findDate
 
@@ -1090,7 +1070,8 @@ for input in ${files} ; do
                 echo "                  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
             else
                 cp -l "${outputtmp}" "${output}"
-                synoacltool -enforce-inherit "${output}"
+#                synoacltool -enforce-inherit "${output}"
+                cp --attributes-only -p "${outputtmp}" "${output}" # "${input}"
             fi
 
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
@@ -1137,8 +1118,8 @@ for input in ${files} ; do
 
             echo "                  target:   ./${tagdir}/$(basename "${output}")"
             cp -l "${outputtmp}" "${output}"
-#           chmod 777 "${output}"   # hilft bei ACL (Dateien sind sonst ggf. gesperrt)
-            synoacltool -enforce-inherit "${output}"
+#            synoacltool -enforce-inherit "${output}"
+            cp --attributes-only -p "${outputtmp}" "${output}"  # "${input}"
             i=$((i + 1))
         done
 
