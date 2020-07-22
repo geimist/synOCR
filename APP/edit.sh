@@ -171,7 +171,7 @@ echo "
 #-----------------------------------------------------------
 # $lang_edit_yamlsample_42
 #-----------------------------------------------------------
-" >> ${SAMPLECONFIGFILE}
+" >> "${SAMPLECONFIGFILE}"
 
 }
 writesamplefile
@@ -201,16 +201,16 @@ for i in ${tagarray[@]}; do
     fi
 
 # schreibe YAML:
-    echo "$(echo "${tagname}" | sed 's/[^0-9a-zA-Z#!§%&\._-]*//g')_${count}:" >> ${SAMPLECONFIGFILE}
-    echo "    tagname: ${tagname}" >> ${SAMPLECONFIGFILE}
-    echo "    targetfolder: ${targetfolder}" >> ${SAMPLECONFIGFILE}
-    echo "    condition: any" >> ${SAMPLECONFIGFILE}
-    echo "    subrules:" >> ${SAMPLECONFIGFILE}
-    echo "    - searchstring: ${tagname}" >> ${SAMPLECONFIGFILE}
-    echo "      searchtyp: ${searchtyp}" >> ${SAMPLECONFIGFILE}
-    echo "      isRegEx: false" >> ${SAMPLECONFIGFILE}
-    echo "      source: content" >> ${SAMPLECONFIGFILE}
-    echo "      casesensitive: true" >> ${SAMPLECONFIGFILE}
+    echo "$(echo "${tagname}" | sed 's/[^0-9a-zA-Z#!§%&\._-]*//g')_${count}:" >> "${SAMPLECONFIGFILE}"
+    echo "    tagname: ${tagname}" >> "${SAMPLECONFIGFILE}"
+    echo "    targetfolder: ${targetfolder}" >> "${SAMPLECONFIGFILE}"
+    echo "    condition: any" >> "${SAMPLECONFIGFILE}"
+    echo "    subrules:" >> "${SAMPLECONFIGFILE}"
+    echo "    - searchstring: ${tagname}" >> "${SAMPLECONFIGFILE}"
+    echo "      searchtyp: ${searchtyp}" >> "${SAMPLECONFIGFILE}"
+    echo "      isRegEx: false" >> "${SAMPLECONFIGFILE}"
+    echo "      source: content" >> "${SAMPLECONFIGFILE}"
+    echo "      casesensitive: true" >> "${SAMPLECONFIGFILE}"
 
     count=$((count + 1))
     echo "    - rule No. $count"
