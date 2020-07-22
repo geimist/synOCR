@@ -5,7 +5,6 @@ Release Notes
  -  >condition: all< was not evaluated correctly (YAML-file)
  -  unnecessary counter supplement of the target file, if no renaming syntax was specified
  -  YAML-Samplefile was not created correctly if there were spaces in the path
- -  
  -  File permission of the target file adjusted (now only the standard linux permissions are transferred)
 
 1.0.0 [2020-07-13]
