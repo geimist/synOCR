@@ -478,16 +478,14 @@ for input in ${files} ; do
 # Transmitting file attributes:
     # ( ➜ Date adjustment moved to the date function)
     echo -n "              ➜ transfer the file permissions and owners "
-#    if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
-#        echo "(use ACL)"
-#        synoacltool -copy "$input" "$output"
+    if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
+        echo "(use ACL)"
+        synoacltool -copy "$input" "$output"
 #        synoacltool -enforce-inherit "${output}"
-        #touch --reference="$input" "$output"
-#    else
-#        echo "(use standard linux permissions)"
+    else
+        echo "(use standard linux permissions)"
         cp --attributes-only -p "$input" "$output"
-        #touch --reference="$input" "$output"
-#    fi
+    fi
 
 # File permissions-Log:
     if [ $loglevel = "2" ] ; then
@@ -1077,8 +1075,8 @@ for input in ${files} ; do
                     cp -l "${outputtmp}" "${output}"
                 fi
 
-#                synoacltool -enforce-inherit "${output}"
-                cp --attributes-only -p "${outputtmp}" "${output}" # "${input}"
+                cp --attributes-only -p "${outputtmp}" "${output}"
+                synoacltool -enforce-inherit "${output}"
             fi
 
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
@@ -1133,8 +1131,9 @@ for input in ${files} ; do
                 cp -l "${outputtmp}" "${output}"
             fi
 
-#            synoacltool -enforce-inherit "${output}"
-            cp --attributes-only -p "${outputtmp}" "${output}"  # "${input}"
+            cp --attributes-only -p "${outputtmp}" "${output}"
+            synoacltool -enforce-inherit "${output}"
+
             i=$((i + 1))
         done
 
