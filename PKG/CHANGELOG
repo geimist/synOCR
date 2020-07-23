@@ -3,7 +3,7 @@ Release Notes
 1.0.2 [2020-07-23]
     BUGFIXES:
  -  file date could not be set to source
- -  if no destination folder was defined in the YAML-File, the destination file was lost
+ -  if no destination folder was defined in all fulfilled rules (YAML file), the destination file was lost
 
 1.0.1 [2020-07-22]
     BUGFIXES:
