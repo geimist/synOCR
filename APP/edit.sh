@@ -878,7 +878,7 @@ if [[ "$page" == "edit" ]]; then
             echo '<option value="ocr">'$lang_edit_set2_filedate_ocr'</option>'
         fi
         if [[ "$filedate" == "source" ]]; then
-            echo '<option value="soucre" selected>'$lang_edit_set2_filedate_source'</option>'
+            echo '<option value="source" selected>'$lang_edit_set2_filedate_source'</option>'
         else
             echo '<option value="source">'$lang_edit_set2_filedate_source'</option>'
         fi
