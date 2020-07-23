@@ -1,5 +1,10 @@
 Release Notes
 
+1.0.1.1 [2020-07-23]
+    BUGFIXES:
+ -  file date could not be set to source
+ -  
+
 1.0.1 [2020-07-22]
     BUGFIXES:
  -  >condition: all< was not evaluated correctly (YAML-file)
