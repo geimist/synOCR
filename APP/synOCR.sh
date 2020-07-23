@@ -839,7 +839,7 @@ for input in ${files} ; do
         fi
 
         renameTag=${renameTag% }
-        renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')
+        renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')    # entferne führende und abschließende Leerzeichen, bzw. alle Leerzeichen, wenn kein Zielordner definiert wurde
         renameTag_raw="$renameTag" # unverfälscht für Tagordner / Tagordner mit Leerzeichen sonst nicht möglich
         echo "                  rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
         echo -e
