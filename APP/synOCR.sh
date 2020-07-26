@@ -1076,7 +1076,7 @@ for input in ${files} ; do
                 fi
 
                 cp --attributes-only -p "${outputtmp}" "${output}"
-                synoacltool -enforce-inherit "${output}"
+#               synoacltool -enforce-inherit "${output}"
             fi
 
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
@@ -1132,7 +1132,7 @@ for input in ${files} ; do
             fi
 
             cp --attributes-only -p "${outputtmp}" "${output}"
-            synoacltool -enforce-inherit "${output}"
+#           synoacltool -enforce-inherit "${output}"
 
             i=$((i + 1))
         done
