@@ -1,9 +1,10 @@
 Release Notes
 
-1.0.2 [2020-07-23]
+1.0.2 [2020-08-18]
     BUGFIXES:
  -  file date could not be set to source
  -  if no destination folder was defined in all fulfilled rules (YAML file), the destination file was lost
+ -  File permission of the target file adjusted (666)
 
 1.0.1 [2020-07-22]
     BUGFIXES:
