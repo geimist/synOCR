@@ -4,14 +4,14 @@ Release Notes
     BUGFIXES:
  -  file date could not be set to source
  -  if no destination folder was defined in all fulfilled rules (YAML file), the destination file was lost
- -  File permission of the target file adjusted (666)
+ -  file permission of the target file adjusted (666)
 
 1.0.1 [2020-07-22]
     BUGFIXES:
  -  >condition: all< was not evaluated correctly (YAML-file)
  -  unnecessary counter supplement of the target file, if no renaming syntax was specified
  -  YAML-Samplefile was not created correctly if there were spaces in the path
- -  File permission of the target file adjusted
+ -  file permission of the target file adjusted
 
 1.0.0 [2020-07-13]
     IMPLEMENTATIONS:
