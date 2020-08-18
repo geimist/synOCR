@@ -391,23 +391,6 @@ for input in ${files} ; do
         title=$( echo "${title}" | sed s/${SearchPraefix}//I )
     fi
 
-# Create destination filename (considers existing files with the same name):
-#    destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${title}.*" | wc -l)
-#    if [ $destfilecount -eq 0 ]; then
-#        output="${OUTPUTDIR}${title}.pdf"
-#    else
-#        while [ -f "${OUTPUTDIR}${title} ($destfilecount).pdf" ]
-#            do
-#                destfilecount=$( expr $destfilecount + 1 )
-#                echo "                  continue counting … ($destfilecount)"
-#            done
-#        output="${OUTPUTDIR}${title} ($destfilecount).pdf"
-#        echo "                  File name already exists! Add counter ($destfilecount)"
-#    fi
-
-# temporäres Ausgabeziel mit Sekundenangabe für Eindeutigkeit (sonst kommt es bei fehlender Umbennungssyntax zu einer Dopplung)
-    output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
-
     outputtmp="${work_tmp}/${title}.pdf"
     echo "                  temp. target file: ${outputtmp}"
 
@@ -417,6 +400,8 @@ for input in ${files} ; do
         # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
         cat "$input" | /usr/local/bin/docker run --name synOCR --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
     }
+
+
     sleep 1
     dockerlog=$(OCRmyPDF 2>&1)
     sleep 1
@@ -461,38 +446,33 @@ for input in ${files} ; do
         echo "                  target file (OK): ${output}"
     fi
 
+
+# temporäres Ausgabeziel mit Sekundenangabe für Eindeutigkeit (sonst kommt es bei fehlender Umbennungssyntax zu einer Dopplung)
+    output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
 # move temporary file to destination folder:
     mv "${outputtmp}" "${output}"
-#output="${outputtmp}"
 
-# File permissions-Log:
+# source file permissions-Log:
     if [ $loglevel = "2" ] ; then
         echo "              ➜ File permissions source file:"
         echo -n "                  "
         ls -l "$input"
-        echo "              ➜ File permissions target file:"
-        echo -n "                  "
-        ls -l "$output"
+#        echo "              ➜ File permissions target file:"
+#        echo -n "                  "
+#        ls -l "$output"
     fi
+
 
 # Transmitting file attributes:
-    # ( ➜ Date adjustment moved to the date function)
-    echo -n "              ➜ transfer the file permissions and owners "
-    if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
-        echo "(use ACL)"
-        synoacltool -copy "$input" "$output"
+#    echo -n "              ➜ transfer the file permissions and owners "
+#    if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
+#        echo "(use ACL)"
+#        synoacltool -copy "$input" "$output"
 #        synoacltool -enforce-inherit "${output}"
-    else
-        echo "(use standard linux permissions)"
-        cp --attributes-only -p "$input" "$output"
-    fi
-
-# File permissions-Log:
-    if [ $loglevel = "2" ] ; then
-        echo "              ➜ File permissions target file:"
-        echo -n "                  "
-        ls -l "$output"
-    fi
+#    else
+#        echo "(use standard linux permissions)"
+#        cp --attributes-only -p "$input" "$output"
+#    fi
 
 # suche nach Datum und Tags in Dokument:
     findDate()
@@ -1074,9 +1054,15 @@ for input in ${files} ; do
                     echo "                  set a hard link"
                     cp -l "${outputtmp}" "${output}"
                 fi
-
-                cp --attributes-only -p "${outputtmp}" "${output}"
 #               synoacltool -enforce-inherit "${output}"
+                cp --attributes-only -p "${input}" "${output}"
+                chmod 777 "${output}"
+
+                # File permissions-Log:
+                if [ $loglevel = "2" ] ; then
+                    echo "              ➜ File permissions target file:"
+                    echo "                  $(ls -l "$output")"
+                fi
             fi
 
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
@@ -1131,8 +1117,15 @@ for input in ${files} ; do
                 cp -l "${outputtmp}" "${output}"
             fi
 
-            cp --attributes-only -p "${outputtmp}" "${output}"
 #           synoacltool -enforce-inherit "${output}"
+            cp --attributes-only -p "${input}" "${output}"
+            chmod 777 "${output}"
+
+            # File permissions-Log:
+            if [ $loglevel = "2" ] ; then
+                echo "              ➜ File permissions target file:"
+                echo "                  $(ls -l "$output")"
+            fi
 
             i=$((i + 1))
         done
@@ -1154,6 +1147,14 @@ for input in ${files} ; do
         fi
         echo "                  target file: $(basename "${output}")"
         mv "${outputtmp}" "${output}"
+        cp --attributes-only -p "${input}" "${output}"
+        chmod 777 "${output}"
+
+        # File permissions-Log:
+        if [ $loglevel = "2" ] ; then
+            echo "              ➜ File permissions target file:"
+            echo "                  $(ls -l "$output")"
+        fi
     fi
     }
     rename
