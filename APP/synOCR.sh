@@ -457,22 +457,7 @@ for input in ${files} ; do
         echo "              ➜ File permissions source file:"
         echo -n "                  "
         ls -l "$input"
-#        echo "              ➜ File permissions target file:"
-#        echo -n "                  "
-#        ls -l "$output"
     fi
-
-
-# Transmitting file attributes:
-#    echo -n "              ➜ transfer the file permissions and owners "
-#    if echo $( synoacltool -get "$input" ) | grep -q is_support_ACL ; then
-#        echo "(use ACL)"
-#        synoacltool -copy "$input" "$output"
-#        synoacltool -enforce-inherit "${output}"
-#    else
-#        echo "(use standard linux permissions)"
-#        cp --attributes-only -p "$input" "$output"
-#    fi
 
 # suche nach Datum und Tags in Dokument:
     findDate()
@@ -1054,9 +1039,10 @@ for input in ${files} ; do
                     echo "                  set a hard link"
                     cp -l "${outputtmp}" "${output}"
                 fi
-#               synoacltool -enforce-inherit "${output}"
+
                 cp --attributes-only -p "${input}" "${output}"
-                chmod 777 "${output}"
+                chmod 666 "${output}"
+                synoacltool -enforce-inherit "${output}"
 
                 # File permissions-Log:
                 if [ $loglevel = "2" ] ; then
@@ -1117,9 +1103,9 @@ for input in ${files} ; do
                 cp -l "${outputtmp}" "${output}"
             fi
 
-#           synoacltool -enforce-inherit "${output}"
             cp --attributes-only -p "${input}" "${output}"
-            chmod 777 "${output}"
+            chmod 666 "${output}"
+            synoacltool -enforce-inherit "${output}"
 
             # File permissions-Log:
             if [ $loglevel = "2" ] ; then
@@ -1147,8 +1133,10 @@ for input in ${files} ; do
         fi
         echo "                  target file: $(basename "${output}")"
         mv "${outputtmp}" "${output}"
+        
         cp --attributes-only -p "${input}" "${output}"
-        chmod 777 "${output}"
+        chmod 666 "${output}"
+        synoacltool -enforce-inherit "${output}"
 
         # File permissions-Log:
         if [ $loglevel = "2" ] ; then
