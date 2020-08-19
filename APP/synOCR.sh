@@ -340,6 +340,37 @@ yaml_validate()
 }
 
 
+adjust_date ()
+{
+#########################################################################################
+# This function adjusts the date of the target file                                     #
+#########################################################################################
+
+
+# Dateidatum anpassen (nachdem das PDF durch exiftool modifiziert wurde):
+    echo -n "              ➜ Adapt file date (Source: "
+
+    if [[ "$filedate" == "ocr" ]]; then
+        if [ $dateIsFound = no ]; then
+            echo "Source file [OCR selected but not found])"
+            touch --reference="$input" "$output"
+        else
+            echo "OCR)"
+            TZ=UTC touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
+        #   TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
+        fi
+    elif [[ "$filedate" == "now" ]]; then
+        echo "NOW)"
+        #TZ=$(date +%Z)
+        touch –time=modify "$output"
+    else
+        echo "Source file)"
+        touch --reference="$input" "$output"
+    fi
+
+}
+
+
 mainrun()
 {
 #########################################################################################
@@ -956,27 +987,6 @@ for input in ${files} ; do
         echo "ERROR - exiftool not found! Please install it over cphub.net"
     fi
 
-# Dateidatum anpassen (nachdem das PDF durch exiftool modifiziert wurde):
-    echo -n "              ➜ Adapt file date (Source: "
-
-    if [[ "$filedate" == "ocr" ]]; then
-        if [ $dateIsFound = no ]; then
-            echo "Source file [OCR selected but not found])"
-            touch --reference="$input" "$output"
-        else
-            echo "OCR)"
-            TZ=UTC touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
-        #   TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
-        fi
-    elif [[ "$filedate" == "now" ]]; then
-        echo "NOW)"
-        #TZ=$(date +%Z)
-        touch –time=modify "$output"
-    else
-        echo "Source file)"
-        touch --reference="$input" "$output"
-    fi
-
 # Zieldateien verschieben:
     if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
         # verwende Einsortierung in Kategorieordner:
@@ -1041,8 +1051,9 @@ for input in ${files} ; do
                 fi
 
                 cp --attributes-only -p "${input}" "${output}"
-                chmod 666 "${output}"
+                chmod 660 "${output}"
                 synoacltool -enforce-inherit "${output}"
+                adjust_date
 
                 # File permissions-Log:
                 if [ $loglevel = "2" ] ; then
@@ -1104,8 +1115,9 @@ for input in ${files} ; do
             fi
 
             cp --attributes-only -p "${input}" "${output}"
-            chmod 666 "${output}"
+            chmod 660 "${output}"
             synoacltool -enforce-inherit "${output}"
+            adjust_date
 
             # File permissions-Log:
             if [ $loglevel = "2" ] ; then
@@ -1135,8 +1147,9 @@ for input in ${files} ; do
         mv "${outputtmp}" "${output}"
         
         cp --attributes-only -p "${input}" "${output}"
-        chmod 666 "${output}"
+        chmod 660 "${output}"
         synoacltool -enforce-inherit "${output}"
+        adjust_date
 
         # File permissions-Log:
         if [ $loglevel = "2" ] ; then
