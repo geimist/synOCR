@@ -346,8 +346,6 @@ adjust_date ()
 # This function adjusts the date of the target file                                     #
 #########################################################################################
 
-
-# Dateidatum anpassen (nachdem das PDF durch exiftool modifiziert wurde):
     echo -n "              ➜ Adapt file date (Source: "
 
     if [[ "$filedate" == "ocr" ]]; then
