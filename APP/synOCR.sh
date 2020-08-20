@@ -267,9 +267,10 @@ sub_jq()
 #########################################################################################
 # This function extract yaml-values                                                     #
 #########################################################################################
-    # https://starkandwayne.com/blog/bash-for-loop-over-json-array-using-jq/
-    echo "${sub_jq_value}" | base64 -i --decode | jq -r ${1}
-    }
+
+# https://starkandwayne.com/blog/bash-for-loop-over-json-array-using-jq/
+echo "${sub_jq_value}" | base64 -i --decode | jq -r ${1}
+}
 
 
 yaml_validate()
@@ -340,12 +341,18 @@ yaml_validate()
 }
 
 
-adjust_date ()
+adjust_attributes ()
 {
 #########################################################################################
-# This function adjusts the date of the target file                                     #
+# This function adjusts the attributes of the target file                               #
 #########################################################################################
 
+# Dateirechte anpassen;
+    cp --attributes-only -p "${input}" "${output}"
+    chmod 664 "${output}"
+    synoacltool -enforce-inherit "${output}"
+
+# Dateidatum anpassen:
     echo -n "              ➜ Adapt file date (Source: "
 
     if [[ "$filedate" == "ocr" ]]; then
@@ -366,6 +373,11 @@ adjust_date ()
         touch --reference="$input" "$output"
     fi
 
+# File permissions-Log:
+    if [ $loglevel = "2" ] ; then
+        echo "              ➜ File permissions target file:"
+        echo "                  $(ls -l "$output")"
+    fi
 }
 
 
@@ -1048,16 +1060,7 @@ for input in ${files} ; do
                     cp -l "${outputtmp}" "${output}"
                 fi
 
-                cp --attributes-only -p "${input}" "${output}"
-                chmod 660 "${output}"
-                synoacltool -enforce-inherit "${output}"
-                adjust_date
-
-                # File permissions-Log:
-                if [ $loglevel = "2" ] ; then
-                    echo "              ➜ File permissions target file:"
-                    echo "                  $(ls -l "$output")"
-                fi
+                adjust_attributes
             fi
 
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
@@ -1112,16 +1115,7 @@ for input in ${files} ; do
                 cp -l "${outputtmp}" "${output}"
             fi
 
-            cp --attributes-only -p "${input}" "${output}"
-            chmod 660 "${output}"
-            synoacltool -enforce-inherit "${output}"
-            adjust_date
-
-            # File permissions-Log:
-            if [ $loglevel = "2" ] ; then
-                echo "              ➜ File permissions target file:"
-                echo "                  $(ls -l "$output")"
-            fi
+            adjust_attributes
 
             i=$((i + 1))
         done
@@ -1143,17 +1137,9 @@ for input in ${files} ; do
         fi
         echo "                  target file: $(basename "${output}")"
         mv "${outputtmp}" "${output}"
-        
-        cp --attributes-only -p "${input}" "${output}"
-        chmod 660 "${output}"
-        synoacltool -enforce-inherit "${output}"
-        adjust_date
 
-        # File permissions-Log:
-        if [ $loglevel = "2" ] ; then
-            echo "              ➜ File permissions target file:"
-            echo "                  $(ls -l "$output")"
-        fi
+        adjust_attributes
+
     fi
     }
     rename
