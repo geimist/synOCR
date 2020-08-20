@@ -4,7 +4,7 @@ Release Notes
     BUGFIXES:
  -  file date could not be set to source
  -  if no destination folder was defined in all fulfilled rules (YAML file), the destination file was lost
- -  file permission of the target file adjusted (660 and ACL-inheritance)
+ -  file permission of the target file adjusted (664 and ACL-inheritance)
 
 1.0.1 [2020-07-22]
     BUGFIXES:
