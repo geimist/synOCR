@@ -109,6 +109,13 @@
         wgetloglevel="-v"
         dockerlogLeftSpace="                  "
         ocropt="$ocropt -v2"
+    elif [[ $loglevel = "3" ]] ; then
+        set +x
+        echo "Loglevel:                 verbose"
+        cURLloglevel="-v"
+        wgetloglevel="-v"
+        dockerlogLeftSpace="                  "
+        ocropt="$ocropt -v2"
     fi
 
 
