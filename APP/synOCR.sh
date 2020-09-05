@@ -388,7 +388,7 @@ adjust_attributes ()
     elif [[ "$filedate" == "now" ]]; then
         echo "NOW)"
         #TZ=$(date +%Z)
-        touch –time=modify "$output"
+        touch --time=modify "$output"
     else
         echo "Source file)"
         touch --reference="$input" "$output"
