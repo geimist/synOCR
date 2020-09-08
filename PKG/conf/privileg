@@ -1,0 +1,17 @@
+{
+  "defaults":{
+    "run-as": "root"
+  },
+  "ctrl-script":[{
+    "action": "<action>",
+    "run-as": "root"
+  }],
+  "executable": [{
+    "relpath": "<relpath>",
+    "run-as": "root"
+  }],
+  "tool": [{
+    "relpath": "<relpath>",
+    "permission": "<mode>"
+  }]
+}
