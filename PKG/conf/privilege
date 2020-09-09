@@ -2,6 +2,8 @@
  "defaults":{
         "run-as": "package"
  },
+ "username": "synocr",
+ "groupname": "synocr",
  "ctrl-script": [{
          "action": "preinst",
          "run-as": "root"
