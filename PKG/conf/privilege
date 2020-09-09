@@ -1,6 +1,6 @@
 {
  "defaults":{
-        "run-as": "root"
+        "run-as": "package"
  },
  "ctrl-script": [{
          "action": "preinst",
