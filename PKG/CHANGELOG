@@ -5,6 +5,7 @@ Release Notes
 1.0.3 [2020-xx-xx]
     BUGFIXES:
  -  tagsymbol with spaces don't work
+ -  fallback, if hard links are not createable
  -  minor bugfixes
 
 1.0.2 [2020-08-22]
