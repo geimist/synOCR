@@ -87,6 +87,7 @@
     echo "replace search prefix:    $delSearchPraefix"
     echo "renaming syntax:          $NameSyntax"
     echo "Symbol for tag marking:   ${tagsymbol}"
+    tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "source for filedate:      ${filedate}"
     echo -n "Docker Test:              "
     if /usr/local/bin/docker --version | grep -q "version"  ; then
