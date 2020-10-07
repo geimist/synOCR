@@ -1079,9 +1079,10 @@ for input in ${files} ; do
                     cp "${outputtmp}" "${output}"   # keinen Hardlink setzen, wenn volumeübergreifend kopiert wird
                 else
                     echo "                  set a hard link"
-                    cp -l "${outputtmp}" "${output}"
+                    commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
                     # check: - creating hard link don't fails / - target file is valid (not empty)
                     if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
+                        echo "                  $commandlog"
                         echo "                  Creating a hard link failed! A file copy is used."
                         cp -f "${outputtmp}" "${output}"
                     fi
@@ -1139,9 +1140,10 @@ for input in ${files} ; do
                 cp "${outputtmp}" "${output}"   # keinen Hardlink setzen, wenn volumeübergreifend kopiert wird
             else
                 echo "                  set a hard link"
-                cp -l "${outputtmp}" "${output}"
+                commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
                 # check: - creating hard link don't fails / - target file is valid (not empty)
                 if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
+                    echo "                  $commandlog"
                     echo "                  Creating a hard link failed! A file copy is used."
                     cp -f "${outputtmp}" "${output}"
                 fi
