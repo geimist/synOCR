@@ -226,6 +226,8 @@ sec_to_time()
 
 parseRegex ()
 {
+# veraltet - ersetzt durch egrep -o
+
 # This function returns the substring described by a regular expression
 # Call: parseRegex "string" "regex"
 # https://stackoverflow.com/questions/5536018/how-to-print-matched-regex-pattern-using-awk
@@ -877,10 +879,15 @@ for input in ${files} ; do
     # suche nach Datum:
         dateIsFound=no
         # suche Format: dd[./-]mm[./-]yy(yy)
-        founddate=$( parseRegex "$content" "\y([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
+        # alte Version mit awk:
+        #founddate=$( parseRegex "$content" "\y([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
         # INFO about \y: In other GNU software, the word-boundary operator is ‘\b’. However, that conflicts with the awk language’s definition of ‘\b’ as backspace,
         # so gawk uses a different letter. The current method of using ‘\y’ for the GNU ‘\b’ appears to be the lesser of two evils.
         # https://www.gnu.org/software/gawk/manual/html_node/GNU-Regexp-Operators.html
+
+        # https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-904944
+        founddate=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
+
         if [ ! -z $founddate ]; then
             echo -n "                  check date (dd mm [yy]yy): $founddate"
             date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
@@ -905,7 +912,8 @@ for input in ${files} ; do
 
         # suche Format: yy(yy)[./-]mm[./-]dd
         if [ $dateIsFound = no ]; then
-            founddate=$( parseRegex "$content" "\y(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\y" | head -n1 )
+            # founddate=$( parseRegex "$content" "\y(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\y" | head -n1 )
+            founddate=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head -n1 )
             if [ ! -z $founddate ]; then
                 echo -n "                  check date ([yy]yy mm dd): $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
@@ -930,7 +938,8 @@ for input in ${files} ; do
 
         # suche Format: mm[./-]dd[./-]yy(yy) amerikanisch
         if [ $dateIsFound = no ]; then
-            founddate=$( parseRegex "$content" "\y([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
+            #founddate=$( parseRegex "$content" "\y([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
+            founddate=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
             if [ ! -z $founddate ]; then
                 echo -n "                  check date (mm dd [yy]yy): $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
