@@ -886,7 +886,7 @@ for input in ${files} ; do
         # https://www.gnu.org/software/gawk/manual/html_node/GNU-Regexp-Operators.html
 
         # https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-904944
-        founddate=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
+        founddate=$( egrep -o "\s([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
 
         if [ ! -z $founddate ]; then
             echo -n "                  check date (dd mm [yy]yy): $founddate"
@@ -913,7 +913,7 @@ for input in ${files} ; do
         # suche Format: yy(yy)[./-]mm[./-]dd
         if [ $dateIsFound = no ]; then
             # founddate=$( parseRegex "$content" "\y(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\y" | head -n1 )
-            founddate=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head -n1 )
+            founddate=$( egrep -o "\s(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head -n1 )
             if [ ! -z $founddate ]; then
                 echo -n "                  check date ([yy]yy mm dd): $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
@@ -939,7 +939,7 @@ for input in ${files} ; do
         # suche Format: mm[./-]dd[./-]yy(yy) amerikanisch
         if [ $dateIsFound = no ]; then
             #founddate=$( parseRegex "$content" "\y([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\y" | head -n1 )
-            founddate=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
+            founddate=$( egrep -o "\s([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
             if [ ! -z $founddate ]; then
                 echo -n "                  check date (mm dd [yy]yy): $founddate"
                 date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
