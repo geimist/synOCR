@@ -894,8 +894,13 @@ for input in ${files} ; do
             date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
             date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
-                date_yy="20${date_yy}"
+                if [ $date_yy -gt $(date +%y) ]; then
+                    date_yy="19${date_yy}"
+                else
+                    date_yy="20${date_yy}"
+                fi
             fi
+
             date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
 
             if [ $? -eq 0 ]; then
@@ -920,7 +925,11 @@ for input in ${files} ; do
                 date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
                 date_yy=$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
                 if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
-                    date_yy="20${date_yy}"
+                    if [ $date_yy -gt $(date +%y) ]; then
+                        date_yy="19${date_yy}"
+                    else
+                        date_yy="20${date_yy}"
+                    fi
                 fi
                 date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                 if [ $? -eq 0 ]; then
@@ -946,7 +955,11 @@ for input in ${files} ; do
                 date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
                 date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
                 if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
-                    date_yy="20${date_yy}"
+                    if [ $date_yy -gt $(date +%y) ]; then
+                        date_yy="19${date_yy}"
+                    else
+                        date_yy="20${date_yy}"
+                    fi
                 fi
                 date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
                 if [ $? -eq 0 ]; then
