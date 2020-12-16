@@ -112,7 +112,7 @@
         ocropt="$ocropt -v2"
     elif [[ $loglevel = "3" ]] ; then
         set +x
-        echo "Loglevel:                 verbose"
+        echo "Loglevel:                 debug"
         cURLloglevel="-v"
         wgetloglevel="-v"
         dockerlogLeftSpace="                  "
@@ -164,7 +164,10 @@
 #################################################################################################
 
 
-set -eE -o functrace
+if [ $loglevel = "3" ] ; then
+    set -eE -o functrace
+fi
+
 
 failure()
 {
