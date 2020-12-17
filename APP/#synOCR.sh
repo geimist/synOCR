@@ -105,12 +105,6 @@
         wgetloglevel="-q"
         dockerlogLeftSpace="               "
     elif [[ $loglevel = "2" ]] ; then
-        echo "Loglevel:                 extended"
-        cURLloglevel="-v"
-        wgetloglevel="-v"
-        dockerlogLeftSpace="                  "
-        ocropt="$ocropt -v2"
-    elif [[ $loglevel = "3" ]] ; then
         echo "Loglevel:                 debug (script can be aborted in case of an error!)"
         # set +x
         set -eE -o functrace
