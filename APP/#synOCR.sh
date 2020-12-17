@@ -111,8 +111,9 @@
         dockerlogLeftSpace="                  "
         ocropt="$ocropt -v2"
     elif [[ $loglevel = "3" ]] ; then
-        set +x
-        echo "Loglevel:                 debug"
+        echo "Loglevel:                 debug (script can be aborted in case of an error!)"
+        # set +x
+        set -eE -o functrace
         cURLloglevel="-v"
         wgetloglevel="-v"
         dockerlogLeftSpace="                  "
@@ -162,11 +163,6 @@
 #       |_______________________________________________________________________________|       #
 #                                                                                               #
 #################################################################################################
-
-
-if [ $loglevel = "3" ] ; then
-    set -eE -o functrace
-fi
 
 
 failure()
