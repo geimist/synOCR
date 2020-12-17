@@ -202,10 +202,10 @@ lang_edit_set3_dsmbeepnotify_help1="Ein kurzer Piep, sobald ein PDF fertig bearb
 lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
 lang_edit_set3_loglevel_off="0 (aus)"
 lang_edit_set3_loglevel_1="1 (standard)"
-lang_edit_set3_loglevel_2="2 (erweitert)"
+lang_edit_set3_loglevel_2="2 (debug mode)"
 lang_edit_set3_loglevel_help1="0  => es wird keine Log-Datei erstellt"
 lang_edit_set3_loglevel_help2="1 => normales Log (standard)"
-lang_edit_set3_loglevel_help3="2 => erweitertes Log"
+lang_edit_set3_loglevel_help3="2 => debuging Log"
 
 lang_edit_yamlsample_01="Der nachstehende Pfad ist im gewünschten Profil in das Feld für die Tags einzutragen"
 lang_edit_yamlsample_02="BITTE BEACHTE DIESE ANLEITUNG"
