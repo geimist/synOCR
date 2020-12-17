@@ -4,7 +4,7 @@
 ###################################################################################
 
     echo "    -----------------------------------"
-    echo "    |    ==> Installationsinfo <==    |"
+    echo "    |    ==> installation info <==    |"
     echo "    -----------------------------------"
     echo -e
 
@@ -18,7 +18,7 @@
     workprofile="$1"            # the profile submitted by the start script
     LOGFILE="$2"                # current logfile / is submitted by start script
 
-# an welchen User/Gruppe soll die DSM-Benachrichtigung gesendet werden :
+# to which user/group the DSM notification should be sent:
 # ---------------------------------------------------------------------
     synOCR_user=$(whoami); echo "synOCR-user:              $synOCR_user"
     if cat /etc/group | grep administrators | grep -q "$synOCR_user"; then
@@ -26,16 +26,16 @@
     else
         isAdmin=no
     fi
-    MessageTo="@administrators" # Administrators (standard)
-    #MessageTo="$synOTR_user"   # User, welche synOTR aufgerufen hat (funktioniert natürlich nicht bei root, da root kein DSM-GUI-LogIn hat und die Message ins leere läuft)
+    MessageTo="@administrators" # administrators (standard)
+    #MessageTo="$synOTR_user"   # user who called synOCR (of course this does not work for root, because root has no DSM-GUI-LogIn and the message is empty)
 
-# Read out and change into the working directory:
+# read out and change into the working directory:
 # ---------------------------------------------------------------------
     OLDIFS=$IFS                 # Save original field separator
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
 
-# Load configuration:
+# load configuration:
 # ---------------------------------------------------------------------
 
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
@@ -67,13 +67,13 @@
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
 
-# globale Werte auslesen:
+# read global values:
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
     dockerimageupdate=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
 
 # System Information:
 # ---------------------------------------------------------------------
-    echo "synOCR-Version:           $(get_key_value /var/packages/synOCR/INFO version)"
+    echo "synOCR-version:           $(get_key_value /var/packages/synOCR/INFO version)"
     machinetyp=$(uname --machine); echo "Architecture:             $machinetyp"
     dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                $dsmbuild"
     read MAC </sys/class/net/eth0/address
@@ -98,7 +98,7 @@
 
 # Configuration for LogLevel:
 # ---------------------------------------------------------------------
-    # LOGlevel:     0 => Logging inaktiv / 1 => normal / 2 => extended
+    # LOGlevel:     0 ➜ logging disable / 1 ➜ normal / 2 ➜ debug
     if [[ $loglevel = "1" ]] ; then
         echo "Loglevel:                 normal"
         cURLloglevel="-s"
