@@ -9,7 +9,7 @@
     echo -e
 
     DevChannel="Release"    # BETA
-    set -E -o functrace    # for function failure()
+    set -E -o functrace     # for function failure()
     PATH=$PATH:/usr/syno/synoman/webman/3rdparty/synOCR/bin
 
 # ---------------------------------------------------------------------------------
