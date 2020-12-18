@@ -107,7 +107,7 @@
     elif [[ $loglevel = "2" ]] ; then
         echo "Loglevel:                 debug (script can be aborted in case of an error!)"
         # set +x
-        set -eE -o functrace
+        set -eE -o functrace    # for function failure()
         cURLloglevel="-v"
         wgetloglevel="-v"
         dockerlogLeftSpace="                  "
