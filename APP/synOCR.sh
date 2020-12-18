@@ -9,6 +9,7 @@
     echo -e
 
     DevChannel="Release"    # BETA
+    set -eE -o functrace    # for function failure()
     PATH=$PATH:/usr/syno/synoman/webman/3rdparty/synOCR/bin
 
 # ---------------------------------------------------------------------------------
@@ -105,9 +106,8 @@
         wgetloglevel="-q"
         dockerlogLeftSpace="               "
     elif [[ $loglevel = "2" ]] ; then
-        echo "Loglevel:                 debug (script can be aborted in case of an error!)"
-        # set +x
-        set -eE -o functrace    # for function failure()
+        echo "Loglevel:                 debug"
+        set -x
         cURLloglevel="-v"
         wgetloglevel="-v"
         dockerlogLeftSpace="                  "
@@ -166,7 +166,7 @@ failure()
     # https://unix.stackexchange.com/questions/462156/how-do-i-find-the-line-number-in-bash-when-an-error-occured
     local lineno=$1
     local msg=$2
-    echo "Failed at $lineno: $msg"
+    echo "! ! ! ERROR at line $lineno: $msg"
 }
 trap 'failure ${LINENO} "$BASH_COMMAND"' ERR
 
