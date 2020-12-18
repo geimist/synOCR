@@ -69,6 +69,7 @@
 # ---------------------------------------------------------------------
     if [[ "$page" == "main-kill-synocr" ]]; then
     	killall synOCR.sh
+        /usr/local/bin/docker stop -t 0 synOCR > /dev/null  2>&1
     	echo '<meta http-equiv="refresh" content="0; URL=index.cgi?page=main">'
     fi
 
