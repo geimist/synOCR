@@ -166,7 +166,7 @@ failure()
     # https://unix.stackexchange.com/questions/462156/how-do-i-find-the-line-number-in-bash-when-an-error-occured
     local lineno=$1
     local msg=$2
-    echo "(INFO) ! ERROR at line $lineno: $msg"
+    echo "ERROR at line $lineno: $msg"
 }
 trap 'failure ${LINENO} "$BASH_COMMAND"' ERR
 
@@ -243,21 +243,17 @@ for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$')                    # 
     done
 
 # delete surplus logs:
-logcount=$(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l)
-count2del=$( expr $logcount - $LOGmax )
+count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax ))
 if [ ${count2del} -ge 0 ]; then
-    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} )
-        do
-            rm "${LOGDIR}$i"
-        done
+    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} ) ; do
+        rm "${LOGDIR}$i"
+    done
 fi
-searchfilecount=$(ls -t "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | wc -l)
-count2del=$( expr $searchfilecount - $LOGmax )
+count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | wc -l) - $LOGmax ))
 if [ ${count2del} -ge 0 ]; then
-    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} )
-        do
-            rm "${LOGDIR}$i"
-        done
+    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} ) ; do
+        rm "${LOGDIR}$i"
+    done
 fi
 }
 
@@ -1218,13 +1214,11 @@ for input in ${files} ; do
     fi
 
 # Dateizähler:
-    pagecount=$(get_key_value ./etc/counter pagecount)
-    ocrcount=$(get_key_value ./etc/counter ocrcount)
-    synosetkeyvalue ./etc/counter pagecount $(expr $pagecount + $pagecount_latest)
-    synosetkeyvalue ./etc/counter ocrcount $(expr $ocrcount + 1)
-    echo "                  INFO: (runtime last file: $(sec_to_time $(expr $(date +%s)-${date_start}) ) (pagecount: $pagecount_latest) | all: $(get_key_value ./etc/counter ocrcount) PDFs / $(get_key_value ./etc/counter pagecount) Pages processed up to now)"
+    synosetkeyvalue ./etc/counter pagecount $(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
+    synosetkeyvalue ./etc/counter ocrcount $(( $(get_key_value ./etc/counter ocrcount) + 1))
+    echo "                  INFO: (runtime last file: $(sec_to_time $(( $(date +%s) - ${date_start} ))) (pagecount: $pagecount_latest) | all: $(get_key_value ./etc/counter ocrcount) PDFs / $(get_key_value ./etc/counter pagecount) Pages processed up to now)"
 # temporäres Arbeitsverzeichnis löschen:
-    echo "                  delete tmp-files …"
+    echo "              ➜ delete tmp-files …"
     rm -rf "$work_tmp"
 done
 }
