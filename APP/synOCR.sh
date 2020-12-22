@@ -465,7 +465,7 @@ for input in ${files} ; do
             else
                 while [ -f "${INPUTDIR}ERRORFILES/${filename%.*} ($destfilecount).pdf" ]
                     do
-                        destfilecount=$( expr $destfilecount + 1 )
+                        destfilecount=$(( $destfilecount + 1 ))
                         echo "                                  continue counting … ($destfilecount)"
                     done
                 output="${INPUTDIR}ERRORFILES/${filename%.*} ($destfilecount).pdf"
@@ -1047,7 +1047,7 @@ for input in ${files} ; do
             else
                 while [ -f "${subOUTPUTDIR}${NewName} ($destfilecount).pdf" ]
                     do
-                        destfilecount=$( expr $destfilecount + 1 )
+                        destfilecount=$(( $destfilecount + 1 ))
                         echo "                  continue counting … ($destfilecount)"
                     done
                 output="${subOUTPUTDIR}${NewName} ($destfilecount).pdf"
@@ -1112,7 +1112,7 @@ for input in ${files} ; do
                 output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
             else
                 while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]; do
-                    destfilecount=$( expr $destfilecount + 1 )
+                    destfilecount=$(( $destfilecount + 1 ))
                     echo "                  continue counting … ($destfilecount)"
                 done
                 output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
@@ -1148,7 +1148,7 @@ for input in ${files} ; do
             output="${OUTPUTDIR}${NewName}.pdf"
         else
             while [ -f "${OUTPUTDIR}${NewName} ($destfilecount).pdf" ]; do
-                destfilecount=$( expr $destfilecount + 1 )
+                destfilecount=$(( $destfilecount + 1 ))
                 echo "                  continue counting … ($destfilecount)"
             done
 
@@ -1175,7 +1175,7 @@ for input in ${files} ; do
             echo "              ➜ move source file to: ${BACKUPDIR}${filename}"
         else
             while [ -f "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf" ]; do
-                sourcefilecount=$( expr $sourcefilecount + 1 )
+                sourcefilecount=$(( $sourcefilecount + 1 ))
                 echo "                  continue counting … ($sourcefilecount)"
             done
             mv "$input" "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"

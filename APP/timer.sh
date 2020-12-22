@@ -254,7 +254,7 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 					else
 						echo '<option value="'$set_hour'" '${disable_time:+disabled}'>'$show_hour'</option>'
 					fi
-					set_hour=`expr $set_hour + 1`
+					set_hour=$(( $set_hour + 1 ))
 				done
 				echo '
 					</select>&nbsp;&nbsp;:
@@ -268,7 +268,7 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 					else
 						echo '<option value="'$set_minute'" '${disable_time:+disabled}'>'$show_minute'</option>'
 					fi
-					set_minute=`expr $set_minute + 1`
+					set_minute=$(( $set_minute + 1 ))
 	  		done
 	  		
 			echo '</select></p>'
@@ -302,7 +302,7 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 						else
 							echo '<option value="'$set_frequency'" '${disable_frequenz:+disabled}'>'$lang_timer_all' '$set_frequency' '$lang_timer_houres'</option>'
 						fi
-						set_frequency=`expr $set_frequency + 1`
+						set_frequency=$(( $set_frequency + 1 ))
 					done
 					echo '</select>'
 				fi
@@ -321,7 +321,7 @@ timer_scriptname="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
 					else
 						echo '<option value="'$set_hour'" >'$show_hour'</option>'
 					fi
-					set_hour=`expr $set_hour + $timer_frequenz`
+					set_hour=$(( $set_hour + $timer_frequenz ))
 				done
 				show_minute=$(echo "$timer_minute" | sed 's#\(^[0-9]$\)#0\1#g')
 				echo '

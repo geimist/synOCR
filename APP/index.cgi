@@ -77,8 +77,8 @@ fi
 
 mainpage=${page%%-*}
 site=${page##*-}
-sitemore=$(expr $site + 1)
-siteless=$(expr $site - 1)
+sitemore=$(( $site + 1 ))
+siteless=$(( $site - 1 ))
 
 if [[ "$mainpage" == "start" ]]; then
     [ -f "$var" ] && rm "$var"

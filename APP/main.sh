@@ -40,17 +40,17 @@
             # is suffix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             if [[ $exclusion = false ]] ; then
-                count_inputpdf=$( expr $(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}.pdf$" | wc -l) + $count_inputpdf )
+                count_inputpdf=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}.pdf$" | wc -l) + $count_inputpdf ))
             elif [[ $exclusion = true ]] ; then
-                count_inputpdf=$( expr $(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l) + $count_inputpdf )
+                count_inputpdf=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l) + $count_inputpdf ))
             fi
         else
             # is prefix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             if [[ $exclusion = false ]] ; then
-                count_inputpdf=$( expr $(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf )
+                count_inputpdf=$(( $(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf ))
             elif [[ $exclusion = true ]] ; then
-                count_inputpdf=$( expr $(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | egrep -iv "^${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf )
+                count_inputpdf=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | egrep -iv "^${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf ))
             fi
         fi
     done
