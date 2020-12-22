@@ -2,10 +2,12 @@ Release Notes
 
 ! ! ! ATTENTION ! ! ! The current version dosn't run at DSM 7.0
 
-1.0.3 [2020-xx-xx]
+1.0.3 [2021-xx-xx]
     BUGFIXES:
  -  tagsymbol with spaces don't work
  -  copy file, if hard links are not createable
+ -  it is no longer calculated with expr
+ -  'force quiet' (GUI) now also terminates the Docker container synOCR
  -  minor bugfixes
 
 1.0.2 [2020-08-22]
