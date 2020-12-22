@@ -4,6 +4,7 @@ Release Notes
 
 1.0.3 [2021-xx-xx]
     BUGFIXES:
+ -  improved date search (thanks to DeeKay1)
  -  tagsymbol with spaces don't work
  -  copy file, if hard links are not createable
  -  it is no longer calculated with expr
