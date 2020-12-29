@@ -107,7 +107,7 @@
         dockerlogLeftSpace="               "
     elif [[ $loglevel = "2" ]] ; then
         echo "Loglevel:                 debug"
-        set -x
+        # set -x
         cURLloglevel="-v"
         wgetloglevel="-v"
         dockerlogLeftSpace="                  "
