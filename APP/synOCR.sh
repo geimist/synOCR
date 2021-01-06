@@ -413,6 +413,15 @@ IFS=$'\012'  # corresponds to a $'\n' newline
 for input in ${files} ; do
     IFS=$OLDIFS
 
+# Seiten zählen
+    pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
+# file count total:  
+    pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
+    ocrcount_new=$(( $(get_key_value ./etc/counter ocrcount) + 1))
+# file count profile:
+    pagecount_ID_new=$(( $(get_key_value ./etc/counter pagecount_ID${profile_ID}) + $pagecount_latest))
+    ocrcount_ID_new=$(( $(get_key_value ./etc/counter ocrcount_ID${profile_ID}) + 1))
+
 # create temporary working directory
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
     trap 'rm -rf "$work_tmp"; exit' EXIT
@@ -942,6 +951,9 @@ for input in ${files} ; do
         date_dd_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $3}')
         date_mm_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $2}')
         date_yy_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $1}')
+        date_houre_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $1}')
+        date_min_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $2}')
+        date_sek_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $3}')
 
         if [ $dateIsFound = no ]; then
             echo "                  Date not found in OCR text - use file date:"
@@ -976,9 +988,22 @@ for input in ${files} ; do
     NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
     NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
     NewName=$( echo "$NewName" | sed "s/§ysource/${date_yy_source}/g" )
+    NewName=$( echo "$NewName" | sed "s/§hhsource/${date_houre_source}/g" )
+    NewName=$( echo "$NewName" | sed "s/§mmsource/${date_min_source}/g" )
+    NewName=$( echo "$NewName" | sed "s/§sssource/${date_sek_source}/g" )
+
     NewName=$( echo "$NewName" | sed "s/§dnow/$(date +%d)/g" )
     NewName=$( echo "$NewName" | sed "s/§mnow/$(date +%m)/g" )
     NewName=$( echo "$NewName" | sed "s/§ynow/$(date +%Y)/g" )
+    NewName=$( echo "$NewName" | sed "s/§hhnow/$(date +%H)/g" )
+    NewName=$( echo "$NewName" | sed "s/§mmnow/$(date +%M)/g" )
+    NewName=$( echo "$NewName" | sed "s/§ssnow/$(date +%S)/g" )
+
+    NewName=$( echo "$NewName" | sed "s/§pagecounttotal/${pagecount_new}/g" )
+    NewName=$( echo "$NewName" | sed "s/§filecounttotal/${ocrcount_new}/g" )
+    NewName=$( echo "$NewName" | sed "s/§pagecountprofile/${pagecount_ID_new}/g" )
+    NewName=$( echo "$NewName" | sed "s/§filecountprofile/${ocrcount_ID_new}/g" )
+
     NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
     NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
     NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
@@ -1162,10 +1187,8 @@ for input in ${files} ; do
 
     fi
     }
-    rename
 
-# Seiten zählen
-    pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
+    rename
 
 # Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien): ${filename%.*}
     if [ $backup = true ]; then
@@ -1213,10 +1236,19 @@ for input in ${files} ; do
         echo "                  INFO: (PushBullet-TOKEN not set)"
     fi
 
-# Dateizähler:
-    synosetkeyvalue ./etc/counter pagecount $(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
-    synosetkeyvalue ./etc/counter ocrcount $(( $(get_key_value ./etc/counter ocrcount) + 1))
-    echo "                  INFO: (runtime last file: $(sec_to_time $(( $(date +%s) - ${date_start} ))) (pagecount: $pagecount_latest) | all: $(get_key_value ./etc/counter ocrcount) PDFs / $(get_key_value ./etc/counter pagecount) Pages processed up to now)"
+# update file count total: ${pagecount_ID_new} ${ocrcount_ID_new} ${pagecount_new} ${ocrcount_new}
+    synosetkeyvalue ./etc/counter pagecount ${pagecount_new}
+    synosetkeyvalue ./etc/counter ocrcount ${ocrcount_new}
+# update file count profile:
+    synosetkeyvalue ./etc/counter pagecount_ID${profile_ID} ${pagecount_ID_new}
+    synosetkeyvalue ./etc/counter ocrcount_ID${profile_ID} ${ocrcount_ID_new}
+
+    echo "              Stats:"
+    echo "                  ➜ runtime last file:    $(sec_to_time $(( $(date +%s) - ${date_start} )))"
+    echo "                  ➜ pagecount last file:  $pagecount_latest"
+    echo "                  ➜ file count profile :  (profile $profile) - ${ocrcount_ID_new} PDF's / ${pagecount_ID_new} Pages processed up to now"
+    echo "                  ➜ file count total:     ${ocrcount_new} PDF's / ${pagecount_new} Pages processed up to now"
+
 # temporäres Arbeitsverzeichnis löschen:
     echo "              ➜ delete tmp-files …"
     rm -rf "$work_tmp"
