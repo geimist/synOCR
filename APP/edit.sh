@@ -210,7 +210,7 @@ for i in ${tagarray[@]}; do
     echo "      searchtyp: ${searchtyp}" >> "${SAMPLECONFIGFILE}"
     echo "      isRegEx: false" >> "${SAMPLECONFIGFILE}"
     echo "      source: content" >> "${SAMPLECONFIGFILE}"
-    echo "      casesensitive: true" >> "${SAMPLECONFIGFILE}"
+    echo "      casesensitive: false" >> "${SAMPLECONFIGFILE}"
 
     count=$((count + 1))
     echo "    - rule No. $count"
