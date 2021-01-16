@@ -304,7 +304,7 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
                                     moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol
                                     ) VALUES (
                                     '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix',
-                                    '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify',
+                                    '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify',
                                     '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol' )"
                 sqlite3 ./etc/synOCR.sqlite "$sSQL"
 
@@ -389,11 +389,11 @@ if [[ "$page" == "edit" ]]; then
     if [ -z "$getprofile" ] ; then
         sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol FROM config WHERE profile_ID='1' "
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern FROM config WHERE profile_ID='1' "
     else
         sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol FROM config WHERE profile_ID='$getprofile' "
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern FROM config WHERE profile_ID='$getprofile' "
     fi
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -422,6 +422,7 @@ if [[ "$page" == "edit" ]]; then
         active=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
         filedate=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
         tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
+        documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
 
     # globale Werte auslesen:
         dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
@@ -721,6 +722,21 @@ if [[ "$page" == "edit" ]]; then
             '$lang_edit_set2_delsearchpref_help2'</span></a>
         </p>'
 
+# Document split pattern
+    echo '
+        <p>
+        <label>'$lang_edit_set2_documentSplitPattern_title'</label>'
+        if [ -n "$documentSplitPattern" ]; then
+            echo '<input type="text" name="documentSplitPattern" value="'$documentSplitPattern'" />'
+        else
+            echo '<input type="text" name="documentSplitPattern" value="" />'
+        fi
+    echo '
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>'$lang_edit_set2_documentSplitPattern_help1'</span></a>
+        </p>'
+    
     # Taglist
     echo '
         <p>

@@ -41,7 +41,7 @@
 
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol FROM config WHERE profile_ID='$workprofile' "
+        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern FROM config WHERE profile_ID='$workprofile' "
 
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -67,6 +67,7 @@
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
+    documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
 
 # read global values:
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
@@ -89,6 +90,7 @@
     echo "renaming syntax:          $NameSyntax"
     echo "Symbol for tag marking:   ${tagsymbol}"
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
+    echo "Document split pattern:   ${documentSplitPattern}"
     echo "source for filedate:      ${filedate}"
     echo -n "Docker Test:              "
     if /usr/local/bin/docker --version | grep -q "version"  ; then
@@ -408,6 +410,57 @@ else
     fi
 fi
 
+#document split handling
+if [ -n "${documentSplitPattern}" ]; then
+
+    filesWithSplittedParts=()
+
+    IFS=$'\012'  # corresponds to a $'\n' newline
+    numberSplitPages=0
+    for input in ${files} ; do
+        filename=$(basename "$input")
+        echo "Searching for document split pattern in document $filename"
+
+        #count pages containing document split pattern
+        pages=()
+        while IFS= read -r line; do
+            pages+=( "$line" )
+        done < <( pdftotext $input - | grep -F -o -e $'\f' -e $documentSplitPattern | awk 'BEGIN{page=1} /\f/{++page;next} 1{printf "%d\n", page, $0;}' )
+        numberSplitPages=${#pages[@]}
+        echo "$numberSplitPages split pages detected in file $filename"
+
+        #split document
+        if (( $numberSplitPages > 0 )); then
+            let currentPart=$numberSplitPages+1
+            fileNoExtension="${filename%%.*}"
+            extension="${filename#*.}"
+            lastPage="z"
+            for (( idx=${#pages[@]}-1 ; idx>=0 ; idx-- )) ; do
+                partFileName="$fileNoExtension-$currentPart.$extension"
+                let firstPage=${pages[idx]}+1
+                echo "splitting pdf: pages $firstPage-$lastPage into $partFileName"
+                /usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr $dockercontainer $filename --pages . $firstPage-$lastPage -- $partFileName
+                let currentPart=$currentPart-1
+                let lastPage=${pages[idx]}-1
+                filesWithSplittedParts+=($INPUTDIR/$partFileName)
+            done
+            firstPage=1
+            partFileName="$fileNoExtension-$currentPart.$extension"
+            echo "splitting pdf: pages $firstPage-$lastPage into $partFileName"
+            /usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr  $dockercontainer $filename --pages . $firstPage-$lastPage -- $partFileName
+            filesWithSplittedParts+=($INPUTDIR/$partFileName)
+            rm -f $input
+        else
+            filesWithSplittedParts+=($input)
+        fi
+    done
+    # adapt existing files variable to use splitted documents
+    files="";
+    for fis2 in ${filesWithSplittedParts[@]} ; do
+        files=$files$'\n'$fis2
+    done
+    echo "document split processing finished"
+fi
 
 IFS=$'\012'  # corresponds to a $'\n' newline
 for input in ${files} ; do

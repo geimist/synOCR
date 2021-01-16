@@ -116,6 +116,9 @@ lang_edit_set2_delsearchpref_delete="Suchmuster entfernen"
 lang_edit_set2_delsearchpref_help1="Soll der Suchausdruck im Anschluss entfernt werden?"
 lang_edit_set2_delsearchpref_help2="(hilfreich, sofern der Quellordner auch gleichzeitig der Zielordner ist)"
 
+lang_edit_set2_documentSplitPattern_title="Suchmuster Dokumententrenner"
+lang_edit_set2_documentSplitPattern_help1="Hier kann ein Muster definiert werden um ein großes Dokument automatisiert in Teildokumente zu splitten. Das Quelldokument wird an den Seiten auf denen das angegebene Suchmuster gefunden wurde getrennt."
+
 lang_edit_set2_taglist_title="zu suchende Tags"
 lang_edit_set2_taglist_help1="Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung."
 lang_edit_set2_taglist_help2="Einzelne Tags werdendurch Semikolon getrennt."

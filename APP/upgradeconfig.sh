@@ -111,6 +111,25 @@ error=0
         fi
     fi
 
+# DB-Update von v3 auf v4:
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1") -eq 3 ] ; then
+    	# DB-Parameter hinzufügen:
+            # documentSplitPattern:
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"documentSplitPattern\" varchar"
+            # Prüfen:
+            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q documentSplitPattern ) ; then
+                log="$log ➜ die DB-Spalte konnte nicht erstellt werden (documentSplitPattern)"
+                error=1
+            fi
+            
+        if [[ "$error" == "0" ]]; then
+            # DB-Version anheben:
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET DB_Version='4', timestamp=(datetime('now','localtime')) WHERE rowid=1"
+            log="$log
+            DB-Upgrade successfully processed (v3 ➜ v4)"
+        fi
+    fi
+
 echo "$log"
 
 exit 0
