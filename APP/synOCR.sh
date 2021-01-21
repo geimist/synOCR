@@ -798,7 +798,8 @@ for input in ${files} ; do
 
             done
             # Tags einmalig machen:
-            renameTag=$(echo "$renameTag" | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed -e "s/ //g" )
+        #   renameTag=$(echo "$renameTag" | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed -e "s/ //g" )
+            renameTag=$(echo "$renameTag" | tr ' ' '\n' | uniq | tr '\n' ' ' | sed -e "s/ //g" )
         else
         # verarbeite einfach Tagregeln:
             taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
