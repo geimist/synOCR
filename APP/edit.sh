@@ -824,6 +824,7 @@ if [[ "$page" == "edit" ]]; then
         else
             echo '<input type="text" name="NameSyntax" value="" />'
         fi
+
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
@@ -833,14 +834,24 @@ if [[ "$page" == "edit" ]]; then
             <b>§docr</b> ('$lang_edit_set2_renamesyntax_help4')<br>
             <b>§mocr</b> ('$lang_edit_set2_renamesyntax_help5')<br>
             <b>§yocr</b> ('$lang_edit_set2_renamesyntax_help6')<br>
+            <b>§ssnow</b> ('$lang_edit_set2_renamesyntax_help22')<br>
+            <b>§mmnow</b> ('$lang_edit_set2_renamesyntax_help23')<br>
+            <b>§hhnow</b> ('$lang_edit_set2_renamesyntax_help24')<br>
             <b>§dnow</b> ('$lang_edit_set2_renamesyntax_help7')<br>
             <b>§mnow</b> ('$lang_edit_set2_renamesyntax_help8')<br>
             <b>§ynow</b> ('$lang_edit_set2_renamesyntax_help9')<br>
+            <b>§sssource</b> ('$lang_edit_set2_renamesyntax_help25')<br>
+            <b>§mmsource</b> ('$lang_edit_set2_renamesyntax_help26')<br>
+            <b>§hhsource</b> ('$lang_edit_set2_renamesyntax_help27')<br>
             <b>§dsource</b> ('$lang_edit_set2_renamesyntax_help10')<br>
             <b>§msource</b> ('$lang_edit_set2_renamesyntax_help11')<br>
             <b>§ysource</b> ('$lang_edit_set2_renamesyntax_help12')<br>
             <b>§tag</b> ('$lang_edit_set2_renamesyntax_help13')<br>
-            <b>§tit</b> ('$lang_edit_set2_renamesyntax_help14')<br><br>
+            <b>§tit</b> ('$lang_edit_set2_renamesyntax_help14')<br>
+            <b>§pagecounttotal</b> ('$lang_edit_set2_renamesyntax_help18')<br>
+            <b>§filecounttotal</b> ('$lang_edit_set2_renamesyntax_help19')<br>
+            <b>§pagecountprofile</b> ('$lang_edit_set2_renamesyntax_help20')<br>
+            <b>§filecountprofile</b> ('$lang_edit_set2_renamesyntax_help21')<br><br>
             >><b>§yocr-§mocr-§docr_§tag_§tit</b><< '$lang_edit_set2_renamesyntax_help15'<br>
             '$lang_edit_set2_renamesyntax_help16' >><b>2018-12-09_#Rechnung_00376.pdf</b><<<br>
             <br>'$lang_edit_set2_renamesyntax_help17'<br><br><br><br><br></span></a>
