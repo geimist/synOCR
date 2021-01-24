@@ -901,6 +901,22 @@ if [[ "$page" == "edit" ]]; then
             '$lang_edit_set2_filedate_help2'</span></a>
         </p>'
 
+    # ignored dates: (current not implemented)
+#    echo '
+#        <p>
+#        <label>'$lang_edit_set2_ignoreddates_title':</label>'
+#        if [ -n "$ignoreddates" ]; then
+#            echo '<input type="text" name="ignoreddates" value="'$ignoreddates'" />'
+#        else
+#            echo '<input type="text" name="ignoreddates" value="" />'
+#        fi
+#    echo '
+#        <a class="helpbox" href="#HELP">
+#            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+#            <span>'$lang_edit_set2_ignoreddates_help1'<br>
+#            '$lang_edit_set2_ignoreddates_help2'<br></span></a>
+#        </p>'
+
     echo '
     </details>
         </fieldset>
