@@ -65,7 +65,13 @@ samplefilecontent="    #########################################################
     #       > \"tagname:\"
     #           - $lang_edit_yamlsample_15 >tagname: VALUE< (${lang_edit_yamlsample_16})
     #           - $lang_edit_yamlsample_17
+    #           - $lang_edit_yamlsample_17a
     #           - $lang_edit_yamlsample_18 (>tagname:<)
+    #       > \"tagname_RegEx:\"
+    #           - $lang_edit_yamlsample_15 >tagname_RegEx: RegEx< (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_17
+    #           - $lang_edit_yamlsample_17b
+    #           - $lang_edit_yamlsample_18 (>tagname_RegEx:<)
     #       > \"targetfolder:\"
     #           - $lang_edit_yamlsample_19
     #           - $lang_edit_yamlsample_15 >targetfolder: VALUE< (${lang_edit_yamlsample_16})
