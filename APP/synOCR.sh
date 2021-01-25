@@ -454,13 +454,16 @@ for input in ${files} ; do
     outputtmp="${work_tmp}/${title}.pdf"
     echo "                  temp. target file: ${outputtmp}"
 
+    if [ $loglevel = "2" ] ; then
+        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+    fi
+
 # OCRmyPDF:
     OCRmyPDF()
     {
         # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
         cat "$input" | /usr/local/bin/docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
     }
-
 
     sleep 1
     dockerlog=$(OCRmyPDF 2>&1)
@@ -471,6 +474,10 @@ for input in ${files} ; do
     echo "$dockerlog" | sed -e "s/^/${dockerlogLeftSpace}/g"
     echo "              ← OCRmyPDF-LOG-END"
     echo -e
+
+    if [ $loglevel = "2" ] ; then
+        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+    fi
 
 # check if target file is valid (not empty), otherwise continue / defective source files are moved to ERROR including LOG:
     if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
@@ -581,7 +588,11 @@ for input in ${files} ; do
             for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key") ; do
                 found=0
 
-                echo "                Search by tag rule: \"${tagrule}\" ➜  "
+                if [ $loglevel = "2" ] ; then
+                    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+                fi
+
+                echo "                search by tag rule: \"${tagrule}\" ➜  "
 
                 condition=$(echo "$tag_rule_content" | jq -r ".${tagrule}.condition" | tr '[:upper:]' '[:lower:]')
                 if [[ $condition = null ]] ; then
@@ -591,6 +602,7 @@ for input in ${files} ; do
 
                 searchtag=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
                 targetfolder=$(echo "$tag_rule_content" | jq -r ".${tagrule}.targetfolder" )
+                tagname_RegEx=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname_RegEx" )
                 if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] ; then
                     echo "                  [no actions defined - continue]"
                     continue
@@ -599,9 +611,12 @@ for input in ${files} ; do
                     targetfolder=""
                 fi
 
-                echo "                  ➜ condition:    $condition"     # "all" OR "any" OR "none"
-                echo "                  ➜ tag:          $searchtag"
-                echo "                  ➜ destination:  $targetfolder"
+                echo "                  ➜ condition:        $condition"     # "all" OR "any" OR "none"
+                echo "                  ➜ tag:              $searchtag"
+                echo "                  ➜ destination:      $targetfolder"
+                if [[ "$tagname_RegEx" != null ]] ; then
+                    echo "                  ➜ RegEx for tag:    $tagname_RegEx" # searchtag
+                fi
 
                 if [ $loglevel = "2" ] ; then
                     echo "                      [Subrule]:"
@@ -803,7 +818,21 @@ for input in ${files} ; do
                 done
 
                 if [[ $found -eq 1 ]] ; then
-                    echo "                          >>> Rule is satisfied" ; echo -e
+                    echo "                          >>> Rule is satisfied"
+
+                    if [[ "$tagname_RegEx" != null ]] ; then
+                        echo -n "                              ➜ search RegEx for tag ➜ " # searchtag
+
+                        tagname_RegEx_result=$( egrep -o "$tagname_RegEx" <<< "$content" | head -n1 )
+                        if [[ ! -z "$tagname_RegEx_result" ]] ; then
+                            searchtag=$(echo "$tagname_RegEx_result" | sed 's%\/\|\\\|\:\|\?%_%g') # filtered: \ / : ?
+                            echo "$searchtag"
+                        else
+                            echo "RegEx not found (fallback to $searchtag)"
+                        fi
+                        echo -e
+                    fi
+
                     renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # with temporary space separator to finally check tags for uniqueness
                     renameCat="$(echo "${targetfolder}" | sed -e "s/ /%20/g") ${renameCat}"
                 else
@@ -827,6 +856,11 @@ for input in ${files} ; do
             #        echo $a
             #    done
             while (( i < maxID )); do
+
+                if [ $loglevel = "2" ] ; then
+                    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+                fi
+
                 if echo "${tagarray[$i]}" | grep -q "=" ;then
                 # for combination of tag and category
                     if echo $(echo "${tagarray[$i]}" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
@@ -877,6 +911,10 @@ for input in ${files} ; do
         # search format: dd[./-]mm[./-]yy(yy)
         # https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-904944
         founddate=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
+
+        if [ $loglevel = "2" ] ; then
+            echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+        fi
 
         if [ ! -z $founddate ]; then
             echo -n "                  check date (dd mm [yy]yy): $founddate"
@@ -986,6 +1024,11 @@ for input in ${files} ; do
 # compose and rename file names:
     rename()
     {
+
+    if [ $loglevel = "2" ] ; then
+        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+    fi
+
     # rename target file:
     echo "              ➜ renaming:"
     outputtmp=${output}
@@ -1036,6 +1079,10 @@ for input in ${files} ; do
 
     echo "$NewName"
 
+    if [ $loglevel = "2" ] ; then
+        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+    fi
+
 # set metadata:
     echo -n "              ➜ edit metadata "
     if which exiftool > /dev/null  2>&1 ; then
@@ -1043,6 +1090,10 @@ for input in ${files} ; do
         exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
     else
         echo "ERROR - exiftool not found! Please install it over cphub.net"
+    fi
+
+    if [ $loglevel = "2" ] ; then
+        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
     fi
 
 # move target files:
