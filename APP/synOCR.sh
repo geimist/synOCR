@@ -821,8 +821,7 @@ for input in ${files} ; do
                     echo "                          >>> Rule is satisfied"
 
                     if [[ "$tagname_RegEx" != null ]] ; then
-                        echo -n "                              ➜ search RegEx for tag ➜ " # searchtag
-
+                        echo -n "                              ➜ search RegEx for tag ➜ "
                         tagname_RegEx_result=$( egrep -o "$tagname_RegEx" <<< "$content" | head -n1 )
                         if [[ ! -z "$tagname_RegEx_result" ]] ; then
                             searchtag=$(echo "$tagname_RegEx_result" | sed 's%\/\|\\\|\:\|\?%_%g') # filtered: \ / : ?
@@ -841,7 +840,6 @@ for input in ${files} ; do
 
             done
             # make tags unique:
-        #   renameTag=$(echo "$renameTag" | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed -e "s/ //g" )
             renameTag=$(echo "$renameTag" | tr ' ' '\n' | uniq | tr '\n' ' ' | sed -e "s/ //g" )
         else
         # process simple tag rules:
