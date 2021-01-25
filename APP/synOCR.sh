@@ -229,7 +229,7 @@ if [ -z $LOGmax ]; then
 fi
 
 # Delete empty logs:
-# (sollte durch Abfrage in Startskript nicht mehr benötigt werden / synOCR wird mit leerer Queue nicht mehr gestartet)
+# (sshould no longer be needed by query in start script / synOCR will not be started with empty queue)
 for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$')                    # Listing of all LOG files
     do
         # if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
@@ -275,24 +275,39 @@ yaml_validate()
 # This function validate the integrity of yaml-file                                     #
 #########################################################################################
 
+    echo "                validate the integrity of yaml-file:"
     yamlcheck=$(yq v "${taglist}" 2>&1)
 
     if [ $? != 0 ]; then
         echo "ERROR-Message: $yamlcheck"
-        exit 1  # file nicht weiter verarbeitbar
-        # ToDo: Durchlauf abbrechen, damit Quelldatei erhalten bleibt / evtl. nach Errorfiles verschieben? (eher nicht)
+        exit 1  # file not further processable
+        # ToDo: cancel run to preserve PDF source file / possibly move to Errorfiles? (rather not)
     fi
 
-# prüfe Eindeutigkeit der Elternknoten:
-    if [ $(cat "${taglist}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l ) -ge 1 ] ; then # teste auf Anzahl der Duplikatzeilen
+# check & adjust the rule names (only numbers and letters / no number at the beginning):
+    rulenames=$(cat "${taglisttmp}" | egrep -v '^[[:space:]]|^#|^$' | egrep ':[[:space:]]?$')
+    for i in ${rulenames} ; do
+        i2=$(echo "${i}" | sed -e 's/[^a-zA-Z0-9_:]/_/g')    # replace all nonconfom chars / only latin letters!
+        if echo "${i2}" | egrep -q '^[^a-zA-Z]' ; then
+            i2="_${i2}"   # currently it is not checked if there are duplicates of the rule name due to the adjustment
+        fi
+
+        if [[ "${i}" != "${i2}" ]] ; then
+            echo "                rule name ${i2} was adjusted"
+            sed -i "s/${i}/${i2}/" "${taglisttmp}"
+        fi
+    done
+
+# check uniqueness of parent nodes:
+    if [ $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l ) -ge 1 ] ; then # teste auf Anzahl der Duplikatzeilen
         echo "main keywords are not unique!"
-        echo "dublicats are: $(cat "${taglist}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d)"
+        echo "dublicats are: $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d)"
     fi
 
 # check parameter validity:
     # check, if value of condition is "all" OR "any" OR "none":
     IFS=$'\012'
-    for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^condition:") ; do
+    for i in $(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^condition:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
            echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"all\" OR \"any\" OR \"none\"]"
@@ -301,7 +316,7 @@ yaml_validate()
 
     # check, if value of isRegEx is "true" OR "false":
     IFS=$'\012'
-    for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^isRegEx:") ; do
+    for i in $(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^isRegEx:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
            echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"true\" OR \"false\"]"
@@ -310,7 +325,7 @@ yaml_validate()
 
     # check, if value of source is "content" OR "filename":
     IFS=$'\012'
-    for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^source:") ; do
+    for i in $(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^source:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(content|filename)$' > /dev/null  2>&1 ; then
            echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"content\" OR \"filename\"]"
@@ -319,7 +334,7 @@ yaml_validate()
 
     # check of corect value of searchtyp:
     IFS=$'\012'
-    for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^searchtyp:") ; do
+    for i in $(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^searchtyp:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | sed 's/^ *//;s/ *$//' | tr -cd '[:alnum:][:blank:]' | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' > /dev/null  2>&1 ; then
            echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
@@ -328,12 +343,13 @@ yaml_validate()
 
     # check, if value of casesensitive is "true" OR "false":
     IFS=$'\012'
-    for i in $(cat "${taglist}" | sed 's/^ *//;s/ *$//' | grep -n "^casesensitive:") ; do
+    for i in $(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^casesensitive:") ; do
         IFS=$OLDIFS
         if ! echo "$i" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
            echo "syntax error in row $(echo $i | awk -F: '{print $1}') [value must be only \"true\" OR \"false\"]"
         fi
     done
+    echo -e
 }
 
 
@@ -385,7 +401,7 @@ mainrun()
 
 exclusion=false
 if echo "${SearchPraefix}" | grep -qE '^!' ; then
-    # ist der prefix / suffix ein Ausschlusskriterium?
+    # is the prefix / suffix an exclusion criteria?
     exclusion=true
     SearchPraefix=$(echo "${SearchPraefix}" | sed -e 's/^!//')
 fi
@@ -413,12 +429,10 @@ IFS=$'\012'  # corresponds to a $'\n' newline
 for input in ${files} ; do
     IFS=$OLDIFS
 
-# Seiten zählen
+# count pages / files:
     pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
-# file count total:  
     pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
     ocrcount_new=$(( $(get_key_value ./etc/counter ocrcount) + 1))
-# file count profile:
     pagecount_ID_new=$(( $(get_key_value ./etc/counter pagecount_ID${profile_ID}) + $pagecount_latest))
     ocrcount_ID_new=$(( $(get_key_value ./etc/counter ocrcount_ID${profile_ID}) + 1))
 
@@ -493,7 +507,7 @@ for input in ${files} ; do
     fi
 
 
-# temporäres Ausgabeziel mit Sekundenangabe für Eindeutigkeit (sonst kommt es bei fehlender Umbennungssyntax zu einer Dopplung)
+# temporary output destination with seconds for uniqueness (otherwise there will be duplication if renaming syntax is missing)
     output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
 # move temporary file to destination folder:
     mv "${outputtmp}" "${output}"
@@ -505,15 +519,15 @@ for input in ${files} ; do
         ls -l "$input"
     fi
 
-# suche nach Datum und Tags in Dokument:
+# search by date and tags in document:
     findDate()
     {
-    # Text exrahieren
+    # exact text
         searchfile="${work_tmp}/synOCR.txt"
-        searchfilename="${work_tmp}/synOCR_filename.txt"    # für Suche im Dateinamen
+        searchfilename="${work_tmp}/synOCR_filename.txt"    # for search in file name
         echo "${title}" > "${searchfilename}"
 
-        # Suche im gesamten Dokumente, oder nur auf der ersten Seite:
+        # Search in the whole documents, or only on the first page?:
         if [ $searchAll = no ]; then
             pdftotextOpt="-l 1"
         else
@@ -521,23 +535,23 @@ for input in ${files} ; do
         fi
 
         /bin/pdftotext -layout $pdftotextOpt "$output" "$searchfile"
-        sed -i 's/^ *//' "$searchfile"        # beginnende Leerzeichen löschen
+        sed -i 's/^ *//' "$searchfile"        # delete beginning blanks
 
-        content=$(cat "$searchfile" )   # die Standardregeln suchen in der Variablen / die erweiterten Regeln direkt in der Quelldatei
+        content=$(cat "$searchfile" )   # the standard rules search in the variable / the extended rules directly in the source file
 
         if [ $loglevel = "2" ] ; then
             cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
         fi
 
-    # suche nach Tags:
+    # search by tags:
         tagsearch()
         {
         echo "              ➜ search tags and date:"
         renameTag=""
         renameCat=""
 
-    # handelt es sich ggf. um ein externes Textfile für die tags oder um eine YAML-Regeldatei?:
-        type_of_rule=standard   # Standardregeln oder erweiterte Regeln (YAML-File)
+    # is it an external text file for the tags or a YAML rules file?
+        type_of_rule=standard   # standard rules or advanced rules (YAML file)
 
         if [ -z "$taglist" ]; then
             echo "                no tags defined"
@@ -545,16 +559,16 @@ for input in ${files} ; do
         elif [ -f "$taglist" ]; then
             if grep -q "synOCR_YAMLRULEFILE" "$taglist" ; then
                 echo "                source for tags is yaml based tag rule file [$taglist]"
-                cp "$taglist" "${work_tmp}/tmprulefile.txt"     # kopiere YAML-File in den TMP-Ordner, da das File in ACL-Ordnern nur fehlerhaft gelesen werden kann
+                cp "$taglist" "${work_tmp}/tmprulefile.txt"     # copy YAML file into the TMP folder, because the file can only be read incorrectly in ACL folders
                 taglisttmp="${work_tmp}/tmprulefile.txt"
-                sed -i $'s/\r$//' "$taglisttmp"                 # convert Dos to Unix
-# sed 's/^M$//'              # Bei bash/tcsh: Ctrl-V dann Ctrl-M
+                sed -i $'s/\r$//' "$taglisttmp"                 # convert DOS to Unix
+# sed 's/^M$//'              # with bash/tcsh: Ctrl-V then Ctrl-M
                 type_of_rule=advanced
-                tag_rule_content=$(yq read "$taglisttmp" -jP 2>&1)
                 yaml_validate
+                tag_rule_content=$(yq read "$taglisttmp" -jP 2>&1)
             else
                 echo "                source for tags is file [$taglist]"
-                sed -i $'s/\r$//' "$taglist"                    # convert Dos to Unix
+                sed -i $'s/\r$//' "$taglist"                    # convert DOS to Unix
                 taglist=$(cat "$taglist")
             fi
         else
@@ -562,8 +576,8 @@ for input in ${files} ; do
         fi
 
         if [ $type_of_rule = advanced ]; then
-        # verarbeite komplexe Tagregeln:
-            # tagrules auflisten:
+        # process complex tag rules:
+            # list tagrules:
             for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key") ; do
                 found=0
 
@@ -575,7 +589,7 @@ for input in ${files} ; do
                     continue
                 fi
 
-                searchtag=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # gefiltert wird: \ / : ?
+                searchtag=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
                 targetfolder=$(echo "$tag_rule_content" | jq -r ".${tagrule}.targetfolder" )
                 if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] ; then
                     echo "                  [no actions defined - continue]"
@@ -592,10 +606,10 @@ for input in ${files} ; do
                 if [ $loglevel = "2" ] ; then
                     echo "                      [Subrule]:"
                 fi
-                # subrules abarbeiten:
+                # execute subrules:
                 for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
                     grepresult=0
-                    sub_jq_value="$subtagrule"  # universeller Parametername für Funktion sub_jq
+                    sub_jq_value="$subtagrule"  # universal parameter name for function sub_jq
 
                     VARisRegEx=$(sub_jq '.isRegEx' | tr '[:upper:]' '[:lower:]')
                     if [[ $VARisRegEx = null ]] ; then
@@ -634,23 +648,23 @@ for input in ${files} ; do
                         echo "                          casesensitive:   $VARcasesensitive"
                     fi
 
-                # Groß- Kleinschreibung ggf. ignorieren:
+                # Ignore upper and lower case if necessary:
                     if [[ $VARcasesensitive = true ]] ;then
                         grep_opt=""
                     else
                         grep_opt="i"
                     fi
 
-                # Suchbereich definieren:
+                # define search area:
                     if [[ $VARsource = content ]] ;then
                         VARsearchfile="$searchfile"
                     else
                         VARsearchfile="${searchfilename}"
                     fi
 
-                # suche … :
+                # search … :
 #                if [[ $VARisRegEx = true ]] ;then
-                    # bei Regex-Suche keine zusätzliche Einschränkung via 'searchtyp'
+                    # no additional restriction via 'searchtyp' for regex search
 #                    echo "                          searchtyp:       [ignored - RegEx based]"
 #                    if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
 #                        grepresult=1
@@ -707,7 +721,7 @@ for input in ${files} ; do
                                     grepresult=1
                                 fi
                             else
-                                tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporäre Trefferliste mit RegEx
+                                tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporary hit list with RegEx
                                 if echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
                                     grepresult=1
                                 fi
@@ -719,7 +733,7 @@ for input in ${files} ; do
                                     grepresult=1
                                 fi
                             else
-                                tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporäre Trefferliste mit RegEx
+                                tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporary hit list with RegEx
                                 if ! echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
                                     grepresult=1
                                 fi
@@ -731,7 +745,7 @@ for input in ${files} ; do
                                     grepresult=1
                                 fi
                             else
-                                tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporäre Trefferliste mit RegEx
+                                tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporary hit list with RegEx
                                 if echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
                                     grepresult=1
                                 fi
@@ -743,7 +757,7 @@ for input in ${files} ; do
                                     grepresult=1
                                 fi
                             else
-                                tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporäre Trefferliste mit RegEx
+                                tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporary hit list with RegEx
                                 if ! echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
                                     grepresult=1
                                 fi
@@ -758,18 +772,18 @@ for input in ${files} ; do
                         echo "                          ➜ Subrule don't matched"
                     fi
 
-                # Bedingung prüfen:
+                # Check condition:
                     case "$condition" in
                         any)
                             if [[ $grepresult -eq 1 ]] ; then
-                                # beim 1. Fund Suche abbrechen
+                                # cancel search when 1st found
                                 found=1
                                 break
                             fi
                             ;;
                         all)
                             if [[ $grepresult -eq 0 ]] ; then
-                                # beim 1. Negativsuchlauf Suche abbrechen
+                                # Cancel search during 1st negative search run
                                 found=0
                                 break
                             elif [[ $grepresult -eq 1 ]] ; then
@@ -778,8 +792,8 @@ for input in ${files} ; do
                             ;;
                         none)
                             if [[ $grepresult -eq 1 ]] ; then
-                                # beim 1. Fund Suche abbrechen
-                                found=0 # null, da Bedingung nicht erfüllt
+                                # cancel search when 1st found
+                                found=0 # null, because condition not met
                                 break
                             elif [[ $grepresult -eq 0 ]] ; then
                                 found=1
@@ -790,33 +804,33 @@ for input in ${files} ; do
 
                 if [[ $found -eq 1 ]] ; then
                     echo "                          >>> Rule is satisfied" ; echo -e
-                    renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # mit temp. leerzeichen-Trenner, um Tags abschließend auf Einmaligkeit zu prüfen
+                    renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # with temporary space separator to finally check tags for uniqueness
                     renameCat="$(echo "${targetfolder}" | sed -e "s/ /%20/g") ${renameCat}"
                 else
                     echo "                          >>> Rule is not satisfied" ; echo -e
                 fi
 
             done
-            # Tags einmalig machen:
+            # make tags unique:
         #   renameTag=$(echo "$renameTag" | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed -e "s/ //g" )
             renameTag=$(echo "$renameTag" | tr ' ' '\n' | uniq | tr '\n' ' ' | sed -e "s/ //g" )
         else
-        # verarbeite einfach Tagregeln:
-            taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
-            tagarray=( $taglist2 )   # Tags als Array definieren
+        # process simple tag rules:
+            taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # encode spaces in tags and convert semicolons to spaces (for array)
+            tagarray=( $taglist2 )   # define tags as array
             i=0
             maxID=${#tagarray[*]}
             echo "                          tag count:       $maxID"
 
-            # Schleife evtl. noch ändern …
+            # possibly change loop …
             #    for i in ${tagarray[@]}; do
             #        echo $a
             #    done
             while (( i < maxID )); do
                 if echo "${tagarray[$i]}" | grep -q "=" ;then
-                # bei Kombination aus Tag und Kategorie
+                # for combination of tag and category
                     if echo $(echo "${tagarray[$i]}" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
-                       grep_opt="-qiw" # Tag alleinstehend finden
+                       grep_opt="-qiw" # find single tag
                     else
                         grep_opt="-qi"
                     fi
@@ -833,7 +847,7 @@ for input in ${files} ; do
                     fi
                 else
                     if echo $(echo ${tagarray[$i]} | sed -e "s/%20/ /g") | grep -q  "^§" ;then
-                        grep_opt="-qiw" # Tag alleinstehend finden
+                        grep_opt="-qiw" # find single tag
                     else
                         grep_opt="-qi"
                     fi
@@ -851,16 +865,16 @@ for input in ${files} ; do
         fi
 
         renameTag=${renameTag% }
-        renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')    # entferne führende und abschließende Leerzeichen, bzw. alle Leerzeichen, wenn kein Zielordner definiert wurde
-        renameTag_raw="$renameTag" # unverfälscht für Tagordner / Tagordner mit Leerzeichen sonst nicht möglich
+        renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')    # remove starting and ending spaces, or all spaces if no destination folder is defined
+        renameTag_raw="$renameTag" # unmodified for tag folder / tag folder with spaces otherwise not possible
         echo "                  rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
         echo -e
         }
         tagsearch
 
-    # suche nach Datum:
+    # search by date:
         dateIsFound=no
-        # suche Format: dd[./-]mm[./-]yy(yy)
+        # search format: dd[./-]mm[./-]yy(yy)
         # https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-904944
         founddate=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
 
@@ -891,7 +905,7 @@ for input in ${files} ; do
             founddate=""
         fi
 
-        # suche Format: yy(yy)[./-]mm[./-]dd
+        # search format: yy(yy)[./-]mm[./-]dd
         if [ $dateIsFound = no ]; then
             founddate=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head -n1 )
             if [ ! -z $founddate ]; then
@@ -920,7 +934,7 @@ for input in ${files} ; do
             fi
         fi
 
-        # suche Format: mm[./-]dd[./-]yy(yy) amerikanisch
+        # search format: mm[./-]dd[./-]yy(yy) amerikanisch
         if [ $dateIsFound = no ]; then
             founddate=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
             if [ ! -z $founddate ]; then
@@ -969,20 +983,20 @@ for input in ${files} ; do
     }
     findDate
 
-# Dateinamen zusammenstellen und umbenennen:
+# compose and rename file names:
     rename()
     {
-    # Zieldatei umbenennen:
+    # rename target file:
     echo "              ➜ renaming:"
     outputtmp=${output}
 
     if [ -z "$NameSyntax" ]; then
-        # wenn vom User keine Umbenennungssyntax angegeben wurde, wird der Quelldateiname verwendet
+        # if no renaming syntax was specified by the user, the source filename will be used
         NameSyntax="§tit"
     fi
 
     echo -n "                  apply renaming syntax ➜ "
-    title=$(echo "${title}" | sed -f ./includes/encode.sed)             # für sed-Kompatibilität Sonderzeichen encodieren
+    title=$(echo "${title}" | sed -f ./includes/encode.sed)             # encode special characters for sed compatibility
     renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
 
     NewName="$NameSyntax"
@@ -1017,12 +1031,12 @@ for input in ${files} ; do
     NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
     NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
 
-    NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # Sonderzeichen decodieren
+    NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # decode special characters
     renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
 
     echo "$NewName"
 
-# set Metadata:
+# set metadata:
     echo -n "              ➜ edit metadata "
     if which exiftool > /dev/null  2>&1 ; then
         echo -n "(exiftool ok) "
@@ -1031,13 +1045,13 @@ for input in ${files} ; do
         echo "ERROR - exiftool not found! Please install it over cphub.net"
     fi
 
-# Zieldateien verschieben:
+# move target files:
     if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
-        # verwende Einsortierung in Kategorieordner:
+        # use sorting in category folder:
         echo "              ➜ move to category directories"
-        tagarray=( $renameCat )   # Zielordner als Array definieren
+        tagarray=( $renameCat )   # define target folder as array
         i=0
-        DestFolderList=""   # temp. Liste der verwendeten Zielordner um Dateiduplikate (unterschiedliche Tags, aber eine Kategorie) zu vermeiden
+        DestFolderList=""   # temp. list of used destination folders to avoid file duplicates (different tags, but one category)
         maxID=${#tagarray[*]}
 
         while (( i < maxID )); do
@@ -1054,7 +1068,7 @@ for input in ${files} ; do
                     echo "created [absolute path]"
                 fi
             else
-                # ist Pfad nicht absolut, dann entferne Sonderzeichen
+                # if path is not absolute, then remove special characters
                 # tagdir=$(echo ${tagdir} | sed 's%\/\|\\\|\:\|\?%_%g' ) # gefiltert wird: \ / : ?
 
                 subOUTPUTDIR="${OUTPUTDIR}${tagdir%/}/"
@@ -1082,13 +1096,13 @@ for input in ${files} ; do
 
             echo "                  target:   ${subOUTPUTDIR}$(basename "${output}")"
 
-            # prüfen, ob selbe Datei bereits einmal in diese Kategorie einsortiert wurde (unterschiedliche Tags, aber gleich Kategorie)
+            # check if the same file has already been sorted into this category (different tags, but same category)
             if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
                 echo "                  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
             else
                 if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
                     echo "                  do not set a hard link when copying across volumes"
-                    cp "${outputtmp}" "${output}"   # keinen Hardlink setzen, wenn volumeübergreifend kopiert wird
+                    cp "${outputtmp}" "${output}"   # do not set a hardlink when copying across volumes
                 else
                     echo "                  set a hard link"
                     commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
@@ -1110,14 +1124,14 @@ for input in ${files} ; do
 
         rm "${outputtmp}"
     elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
-        # verwende Einsortierung in Tagordner:
+        # use sorting in tag folder:
         echo "              ➜ move to tag directories"
 
         if [ ! -z "$tagsymbol" ]; then
             renameTag=$( echo $renameTag_raw | sed -e "s/${tagsymbol}/ /g" )
         fi
 
-        tagarray=( $renameTag )   # Tags als Array definieren
+        tagarray=( $renameTag )   # define tags as array
         i=0
         maxID=${#tagarray[*]}
 
@@ -1149,7 +1163,7 @@ for input in ${files} ; do
 
             if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
                 echo "                  do not set a hard link when copying across volumes"
-                cp "${outputtmp}" "${output}"   # keinen Hardlink setzen, wenn volumeübergreifend kopiert wird
+                cp "${outputtmp}" "${output}"   # do not set a hardlink when copying across volumes
             else
                 echo "                  set a hard link"
                 commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
@@ -1191,7 +1205,7 @@ for input in ${files} ; do
 
     rename
 
-# Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien): ${filename%.*}
+# delete / save source file (takes into account existing files with the same name): ${filename%.*}
     if [ $backup = true ]; then
         sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
         if [ $sourcefilecount -eq 0 ]; then
@@ -1210,8 +1224,8 @@ for input in ${files} ; do
         echo "              ➜ delete source file"
     fi
 
-# ToDo: hier sollte die automatische Spracheinstellung mit eingebaut werden:
-    # Benachrichtigung:
+# ToDo: the automatic language setting should be included here:
+    # Notification:
     if [ $dsmtextnotify = "on" ] ; then
         sleep 1
         synodsmnotify $MessageTo "synOCR" "Datei [$(basename "${output}")] ist fertig"
@@ -1229,7 +1243,7 @@ for input in ${files} ; do
         if [ $loglevel = "2" ] ; then
             echo "                  PushBullet-LOG:"
             echo "$PB_LOG" | sed -e "s/^/               /g"
-        elif echo "$PB_LOG" | grep -q "error"; then # für Loglevel 1 nur Errorausgabe
+        elif echo "$PB_LOG" | grep -q "error"; then # for log level 1 only error output
             echo -n "                  PushBullet-Error: "
             echo "$PB_LOG" | jq -r '.error_code'
         fi
@@ -1250,7 +1264,7 @@ for input in ${files} ; do
     echo "                  ➜ file count profile :  (profile $profile) - ${ocrcount_ID_new} PDF's / ${pagecount_ID_new} Pages processed up to now"
     echo "                  ➜ file count total:     ${ocrcount_new} PDF's / ${pagecount_new} Pages processed up to now"
 
-# temporäres Arbeitsverzeichnis löschen:
+# delete temporary working directory:
     echo "              ➜ delete tmp-files …"
     rm -rf "$work_tmp"
 done
@@ -1258,7 +1272,7 @@ done
 
 #        _______________________________________________________________________________
 #       |                                                                               |
-#       |                               AUFRUF DER FUNKTIONEN                           |
+#       |                                 RUN THE FUNCTIONS                             |
 #       |_______________________________________________________________________________|
 
     echo -e; echo -e
