@@ -1087,7 +1087,7 @@ for input in ${files} ; do
         echo -n "(exiftool ok) "
         exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
     else
-        echo "ERROR - exiftool not found! Please install it over cphub.net"
+        echo "FAILED! - exiftool not found! Please install it over cphub.net if you need it"
     fi
 
     if [ $loglevel = "2" ] ; then
