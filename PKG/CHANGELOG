@@ -5,6 +5,7 @@ Release Notes
 1.1.0 [2021-xx-xx]
     IMPLEMENTATIONS:
  -  added the option to define the tag name via RegEx (Parameter tagname_RegEx in YAML file)
+ -  added a counter for processed pages and files per profile
  -  added additional renaming parameters:
     §hhsource §mmsource §sssource §hhnow §mmnow §ssnow §pagecounttotal §filecounttotal §pagecountprofile §filecountprofile
     BUGFIXES:
