@@ -1159,6 +1159,11 @@ for input in ${files} ; do
                     if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
                         echo "                  $commandlog"
                         echo "                  Creating a hard link failed! A file copy is used."
+                        if [ $loglevel = "2" ] ; then
+                            echo "                list of mounted volumes:"
+                            df -h --output=source,target | sed -e "s/^/                      /g"
+                            echo -e
+                        fi
                         cp -f "${outputtmp}" "${output}"
                     fi
                 fi
@@ -1220,6 +1225,11 @@ for input in ${files} ; do
                 if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
                     echo "                  $commandlog"
                     echo "                  Creating a hard link failed! A file copy is used."
+                    if [ $loglevel = "2" ] ; then
+                        echo "                list of mounted volumes:"
+                        df -h --output=source,target | sed -e "s/^/                      /g"
+                        echo -e
+                    fi
                     cp -f "${outputtmp}" "${output}"
                 fi
             fi
