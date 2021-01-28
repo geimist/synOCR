@@ -21,7 +21,10 @@ else
     dir=$(echo /volume*/@appstore/synOCR) || exit
     get_var=$(which get_key_value) || exit
     set_var=$(which synosetkeyvalue) || exit
-    usersettings="$dir/usersettings"
+    usersettings="$dir/usersettings"    # ToDo: move to "$dir/etc"
+    if [ ! -d "$usersettings" ]; then
+        mkdir "$usersettings"
+    fi
     var="$dir/usersettings/var.txt"
 
 #    var="$usersettings/var.txt"
