@@ -134,8 +134,8 @@ lang_edit_set2_taglist_help10="In this case the absolute path must be entered he
 lang_edit_set2_taglist_help11="(e.g. /volume1/ocr/taglist.txt)"
 
 lang_edit_set2_searchall_title="Search range for tags"
-lang_edit_set2_searchall_1page="Range: first page only"
-lang_edit_set2_searchall_all="Range: entire document"
+lang_edit_set2_searchall_1page="first page only"
+lang_edit_set2_searchall_all="entire document"
 lang_edit_set2_searchall_help1="In which range should be searched for tags?"
 lang_edit_set2_searchall_help2="Standard is only on the first page. The larger the search area, the more false positives there are (especially date)."
 
@@ -143,8 +143,7 @@ lang_edit_set2_moveTaggedFiles_title="Using tag subdirectories"
 lang_edit_set2_moveTaggedFiles_targetdir="keep in the target folder"
 lang_edit_set2_moveTaggedFiles_useCatDir="Sort target PDF into category folder"
 lang_edit_set2_moveTaggedFiles_useTagDir="Sort target PDF into tag folder"
-lang_edit_set2_moveTaggedFiles_help1="Should tag subdirectories or category folders be used?"
-lang_edit_set2_moveTaggedFiles_help2="Hardlinks are set if several tags apply."
+lang_edit_set2_moveTaggedFiles_help1="Should tag subdirectories or category folders / rule-defined folders be used? If multiple tags apply, hard links are set."
 
 lang_edit_set2_renamesyntax_title="OCR Rename-Syntax"
 lang_edit_set2_renamesyntax_help1="Rename finished PDFs with a specific syntax."
@@ -185,6 +184,9 @@ lang_edit_set2_filedate_ocr="Use found OCR date"
 lang_edit_set2_filedate_source="Use date of source file"
 lang_edit_set2_filedate_help1="How should the date of the target file be adjusted?"
 lang_edit_set2_filedate_help2="If OCR date is selected but none is found, the date of the source file is used."
+
+lang_edit_set2_ignoredDate_title="Ignore dates"
+lang_edit_set2_ignoredDate_help1="Specified dates will be ignored during the search. More than one date can be specified. It is important to specify the correct format:"
 
 lang_edit_set3_title="DSM notification and other settings"
 
