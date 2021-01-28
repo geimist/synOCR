@@ -835,8 +835,7 @@ if [[ "$page" == "edit" ]]; then
         </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_moveTaggedFiles_help1'<br>
-            '$lang_edit_set2_moveTaggedFiles_help2'</span></a>
+            <span>'$lang_edit_set2_moveTaggedFiles_help1'</span></a>
         </p>'
 
     # OCR Rename-Syntax
@@ -884,7 +883,7 @@ if [[ "$page" == "edit" ]]; then
     # Tagkennzeichnung
     echo '
         <p>
-        <label>'$lang_edit_set2_tagsymbol_title':</label>'
+        <label>'$lang_edit_set2_tagsymbol_title'</label>'
         if [ -n "$tagsymbol" ]; then
             echo '<input type="text" name="tagsymbol" value="'$tagsymbol'" />'
         else
@@ -900,7 +899,7 @@ if [[ "$page" == "edit" ]]; then
     # Filedate
     echo '
         <p>
-        <label>'$lang_edit_set2_filedate_title':</label>
+        <label>'$lang_edit_set2_filedate_title'</label>
         <select name="filedate">'
         if [[ "$filedate" == "now" ]]; then
             echo '<option value="now" selected>'$lang_edit_set2_filedate_now'</option>'
@@ -928,8 +927,8 @@ if [[ "$page" == "edit" ]]; then
     # ignoredDate:
     echo '
         <p>
-        <label>'$lang_edit_set2_ignoreddates_title':</label>'
-        if [ -n "$ignoreddates" ]; then
+        <label>'$lang_edit_set2_ignoredDate_title'</label>'
+        if [ -n "$ignoredDate" ]; then
             echo '<input type="text" name="ignoredDate" value="'$ignoredDate'" />'
         else
             echo '<input type="text" name="ignoredDate" value="" />'
@@ -937,8 +936,8 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_ignoreddates_help1'<br>
-            '$lang_edit_set2_ignoreddates_help2'<br></span></a>
+            <span>'$lang_edit_set2_ignoredDate_help1'<br><br>
+            <b>'$lang_edit_set2_ignoredDate_help2'</b><br></span></a>
         </p>'
 
     echo '
