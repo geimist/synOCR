@@ -130,12 +130,12 @@ error=0
                 error=1
             fi
 
-            # ignored_date:
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"ignored_date\" varchar DEFAULT ('2021-02-29;2020-11-31')"
+            # ignoredDate:
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31')"
             # check:
-            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q ignored_date ) ; then
+            if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q ignoredDate ) ; then
                 log="$log 
-                ➜ the DB column could not be created (ignored_date)"
+                ➜ the DB column could not be created (ignoredDate)"
                 error=1
             fi
 

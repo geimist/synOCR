@@ -41,7 +41,7 @@
 
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern FROM config WHERE profile_ID='$workprofile' "
+        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate FROM config WHERE profile_ID='$workprofile' "
 
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -68,6 +68,7 @@
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
     documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
+    ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
 
 # read global values:
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
@@ -92,6 +93,7 @@
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "Document split pattern:   ${documentSplitPattern}"
     echo "source for filedate:      ${filedate}"
+    echo "ignored dates by search:  ${ignoredDate}"
     echo -n "Docker Test:              "
     if /usr/local/bin/docker --version | grep -q "version"  ; then
         echo "OK"
@@ -734,7 +736,7 @@ if [[ ! -z $founddatestr ]]; then
 
         date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
         if [ $? -eq 0 ]; then
-            if grep -q "${date_yy}-${date_mm}-${date_dd}" <<< "$ignored_date" ; then
+            if grep -q "${date_yy}-${date_mm}-${date_dd}" <<< "$ignoredDate" ; then
                 echo "                  Date ${date_yy}-${date_mm}-${date_dd} is on ignore list. Skipping this date."
                 continue
             else
@@ -1130,12 +1132,12 @@ if [ -n "${documentSplitPattern}" ]; then
         work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
         trap 'rm -rf "$work_tmp"; exit' EXIT
         outputtmp="${work_tmp}/${filename}"
+
+        echo "              ➜ Searching for document split pattern in document $filename"
+
     # OCRmyPDF:
-        OCRmyPDF()
-        {
-            # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
-            cat "$input" | /usr/local/bin/docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
-        }
+        echo "              temporary OCR to be able to recognize separator sheets:"
+        OCRmyPDF
 
         sleep 1
         dockerlog=$(OCRmyPDF 2>&1)
@@ -1147,15 +1149,13 @@ if [ -n "${documentSplitPattern}" ]; then
         echo "              ← OCRmyPDF-LOG-END"
         echo -e
 
-        echo "Searching for document split pattern in document $filename"
-
         # count pages containing document split pattern
         pages=()
         while IFS= read -r line; do
             pages+=( "$line" )
         done < <( pdftotext "$outputtmp" - | grep -F -o -e $'\f' -e $documentSplitPattern | awk 'BEGIN{page=1} /\f/{++page;next} 1{printf "%d\n", page, $0;}' )
         numberSplitPages=${#pages[@]}
-        echo "$numberSplitPages split pages detected in file $filename"
+        echo "                $numberSplitPages split pages detected in file $filename"
 
         # split document
         if (( $numberSplitPages > 0 )); then
@@ -1166,7 +1166,7 @@ if [ -n "${documentSplitPattern}" ]; then
             for (( idx=${#pages[@]}-1 ; idx>=0 ; idx-- )) ; do
                 partFileName="$fileNoExtension-$currentPart.$extension"
                 let firstPage=${pages[idx]}+1
-                echo "splitting pdf: pages $firstPage-$lastPage into $partFileName"
+                echo "                splitting pdf: pages $firstPage-$lastPage into $partFileName"
                 /usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr $dockercontainer $filename --pages . $firstPage-$lastPage -- $partFileName
                 let currentPart=$currentPart-1
                 let lastPage=${pages[idx]}-1
@@ -1174,7 +1174,7 @@ if [ -n "${documentSplitPattern}" ]; then
             done
             firstPage=1
             partFileName="$fileNoExtension-$currentPart.$extension"
-            echo "splitting pdf: pages $firstPage-$lastPage into $partFileName"
+            echo "                splitting pdf: pages $firstPage-$lastPage into $partFileName"
             /usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr  $dockercontainer $filename --pages . $firstPage-$lastPage -- $partFileName
             filesWithSplittedParts+=($INPUTDIR/$partFileName)
 
@@ -1207,7 +1207,7 @@ if [ -n "${documentSplitPattern}" ]; then
     for fis2 in ${filesWithSplittedParts[@]} ; do
         files=$files$'\n'$fis2
     done
-    echo "document split processing finished"
+    echo "                document split processing finished"
 fi
 
 IFS=$'\012'  # corresponds to a $'\n' newline
@@ -1332,9 +1332,6 @@ for input in ${files} ; do
 
 # search by date:
     dateIsFound=no
-
-ignored_date="1981-10-16;2020-12-10"
-
     findDate 1
 
     date_dd_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $3}')

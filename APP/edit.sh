@@ -206,7 +206,7 @@ for i in ${tagarray[@]}; do
         tagname=$(echo "$i" | sed -e "s/%20/ /g")
     fi
 
-# schreibe YAML:
+# write YAML:
     echo "$(echo "${tagname}" | sed 's/[^0-9a-zA-Z#!§%&\._-]*//g')_${count}:" >> "${SAMPLECONFIGFILE}"
     echo "    tagname: ${tagname}" >> "${SAMPLECONFIGFILE}"
     echo "    targetfolder: ${targetfolder}" >> "${SAMPLECONFIGFILE}"
@@ -223,7 +223,7 @@ for i in ${tagarray[@]}; do
 done
 chmod 755 "${SAMPLECONFIGFILE}"
 
-# Pfad zum neuen configfile in DB schreiben:
+# Write path to new configfile in DB:
     echo "➜ Write path to the new configfile in DB"
     sSQLupdate="UPDATE config SET taglist='${SAMPLECONFIGFILE}' WHERE profile_ID='$profile_ID' "
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
@@ -232,7 +232,7 @@ chmod 755 "${SAMPLECONFIGFILE}"
 }
 
 
-# bestehende Tagliste in eine YAML-Datei konvertieren:
+# convert existing tag list to YAML file:
 if [[ "$page" == "edit-convert2YAML" ]]; then
         echo '<div class="Content_1Col_full">'
 
@@ -259,7 +259,7 @@ if [[ "$page" == "edit-convert2YAML" ]]; then
 fi
 
 
-# aktuelles Profil löschen:
+# Delete current profile:
 if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile" ]]; then
     if [[ "$page" == "edit-del_profile-query" ]]; then
         echo '<p class="center" style="'$synotrred';">
@@ -268,9 +268,9 @@ if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile"
     elif [[ "$page" == "edit-del_profile" ]]; then
         sqlite3 ./etc/synOCR.sqlite "DELETE FROM config WHERE profile_ID='$profile_ID';"
 
-    # das erste Profil der DB als nächstes aktiv schalten (sonst würde ein Profilname mit leeren Daten angezeigt)
+    # make the first profile of the DB active next (otherwise a profile name with empty data would be displayed)
         getprofile=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
-        # getprofile (ohne GUI nach $var schreiben):
+        # getprofile (write to $var without GUI):
         encode_value=$getprofile
         decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
         "$set_var" "./usersettings/var.txt" "getprofile" "$decode_value"
@@ -288,7 +288,7 @@ if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile"
 fi
 
 
-# Profil duplizieren:
+# Duplicate profile:
 if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile" ]]; then
     if [[ "$page" == "edit-dup-profile-query" ]]; then
         echo '<div class="Content_1Col_full">'
@@ -306,12 +306,12 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
         if [ ! -z "$new_profile_value" ] ; then
             sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
             if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
-                sSQL="INSERT INTO config ( profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll,
-                                    moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol
+                sSQL="INSERT INTO config ( profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll,
+                                    moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate
                                     ) VALUES (
                                     '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix',
                                     '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify',
-                                    '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol' )"
+                                    '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate' )"
                 sqlite3 ./etc/synOCR.sqlite "$sSQL"
 
                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
@@ -334,7 +334,7 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
 fi
 
 
-# neues Profil erstellen:
+# create new profile:
 if [[ "$page" == "edit-new_profile-query" ]] || [[ "$page" == "edit-new_profile" ]]; then
     if [[ "$page" == "edit-new_profile-query" ]]; then
         echo '<div class="Content_1Col_full">'
@@ -372,15 +372,15 @@ if [[ "$page" == "edit-new_profile-query" ]] || [[ "$page" == "edit-new_profile"
 fi
 
 
-# Datensatz in DB schreiben:
+# Write record to DB:
 if [[ "$page" == "edit-save" ]]; then
     sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR',
         LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll',
         moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$ocropt', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN',
-        dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol' WHERE profile_ID='$profile_ID' "
+        dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol', documentSplitPattern='$documentSplitPattern', ignoredDate='$ignoredDate' WHERE profile_ID='$profile_ID' "
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
 
-    # globale Änderung in Tabelle system schreiben:
+    # write global change to table system:
     sqlite3 ./etc/synOCR.sqlite "UPDATE system SET dockerimageupdate='$dockerimageupdate' WHERE rowid=1 "
 
     echo '<div class="Content_1Col_full">'
@@ -391,19 +391,19 @@ fi
 
 
 if [[ "$page" == "edit" ]]; then
-    # Dateiinhalt einlesen für Variablenverwertung
+    # Read file contents for variable utilization
     if [ -z "$getprofile" ] ; then
         sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern FROM config WHERE profile_ID='1' "
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, ignoredDate FROM config WHERE profile_ID='1' "
     else
         sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern FROM config WHERE profile_ID='$getprofile' "
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, ignoredDate FROM config WHERE profile_ID='$getprofile' "
     fi
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
-    # Datensatzfelder separieren:
+    # Separate record fields:
         profile_ID=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
         timestamp=$(echo "$sqlerg" | awk -F'\t' '{print $2}')
         profile=$(echo "$sqlerg" | awk -F'\t' '{print $3}')
@@ -429,8 +429,10 @@ if [[ "$page" == "edit" ]]; then
         filedate=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
         tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
         documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
+        ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $26}')
 
-    # globale Werte auslesen:
+
+    # read global values:
         dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
 
     echo '
@@ -447,7 +449,7 @@ if [[ "$page" == "edit" ]]; then
             echo "<p>'$lang_edit_dbupdate': $DBupgradelog </p>"
         fi
 
-# Profilauswahl:
+# Profile selection:
     sSQL="SELECT profile_ID, profile FROM config "
     sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
     echo '<p>
@@ -470,9 +472,9 @@ if [[ "$page" == "edit" ]]; then
 
     echo '</select><button name="page" value="edit" class="blue_button" style="float:right;">'$lang_buttonchange'</button>&nbsp;'
 
-    # -> Abschnitt Allgemein
+    # -> General section
 
-# Aufklappbar:
+# Expandable:
     echo '<fieldset>
     <hr style="border-style: dashed; size: 1px;">
     <br />
@@ -480,9 +482,9 @@ if [[ "$page" == "edit" ]]; then
     <summary>
         <span class="detailsitem">'$lang_edit_set1_title'</span>
     </summary></p>
-    <p>' #ab hier steht der Text, der auf- und zugeklappt werden soll.
+    <p>' # from here is the text to be expanded and collapsed.
 
-    # Profilname
+    # Profil name
     echo '
         <p>
         <label>'$lang_edit_profname'</label>'
@@ -495,7 +497,7 @@ if [[ "$page" == "edit" ]]; then
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>'$lang_edit_set1_profilename_help'</span></a></p>'
 
-    # Profil aktiviert?
+    # Profile activated?
     echo '
         <p>
         <label>'$lang_edit_set1_profile_activ_title'</label>
@@ -519,7 +521,7 @@ if [[ "$page" == "edit" ]]; then
             '$lang_edit_set1_profile_activ_help2'</span></a>
         </p>'
 
-    # Profile-ID (ohne GUI nach $var schreiben)
+    # profile ID (write to $var without GUI)
         encode_value=$profile_ID
         decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
         "$set_var" "./usersettings/var.txt" "profile_ID" "$decode_value"
@@ -597,7 +599,7 @@ if [[ "$page" == "edit" ]]; then
     </p>'
 
 
-    # -> Abschnitt OCR:
+    # -> OCR section:
     echo '<fieldset>
     <hr style="border-style: dashed; size: 1px;">
     <br />
@@ -627,16 +629,16 @@ if [[ "$page" == "edit" ]]; then
             -d&nbsp;&nbsp;'$lang_edit_set2_ocropt_help6'<br></span></a>
         </p>'
 
-    # dockercontainer
+    # docker container
     echo '
         <p>
         <label>'$lang_edit_set2_dockerimage_title'</label>
         <select name="dockercontainer">'
 
-        # Lokale ocrmypdf-Images:
+        # local ocrmypdf images:
         imagelist=($(/usr/local/bin/docker images | sort | awk '/ocrmypdf/ && !/<none>/ {print $1 ":" $2}'))
 
-        # auf Standardimages prüfen und ggf. hinzufügen:
+        # check for default images and add if necessary:
         if ! $(echo "${imagelist[@]}" | grep -q "jbarlow83/ocrmypdf:latest" ) ; then
             imagelist+=("jbarlow83/ocrmypdf:latest")
         fi
@@ -747,11 +749,11 @@ if [[ "$page" == "edit" ]]; then
     echo '
         <p>
         <label>'$lang_edit_set2_taglist_title
-    # YAML-Konvertier-Button:
-        # (taglist verweißt auf keine externe Datei ODER verweißt auf eine externe Datei und hat max. eine Zeile) UND Eingabeverzeichnis ist ein gültiger Pfad
+    # YAML convert button:
+        # ("taglist" does not refer to an external file OR refers to an external file and has max. one line) AND input directory is a valid path
         if ( [[ ! -f "$taglist" ]] || $([[ -f "$taglist" ]] && [[ $( cat "$taglist" | wc -l ) -le 1 ]]) ) && [ -d "$INPUTDIR" ] ; then
             # href="#HELP" style="float: left;"
-            # ToDo Button-Position korrigieren (http://jsfiddle.net/HJf8q/2/)
+            # ToDo: correct button position (http://jsfiddle.net/HJf8q/2/)
             echo '<a class="helpbox" >
             <br><br><button name="page" value="edit-convert2YAML" class="blue_button">'$lang_edit_yamlsample_button'</button>&nbsp;<span>
             <strong>'$lang_edit_yamlsample_button_help_headline'</strong><br><br>
@@ -923,28 +925,28 @@ if [[ "$page" == "edit" ]]; then
             '$lang_edit_set2_filedate_help2'</span></a>
         </p>'
 
-    # ignored dates: (current not implemented)
-#    echo '
-#        <p>
-#        <label>'$lang_edit_set2_ignoreddates_title':</label>'
-#        if [ -n "$ignoreddates" ]; then
-#            echo '<input type="text" name="ignoreddates" value="'$ignoreddates'" />'
-#        else
-#            echo '<input type="text" name="ignoreddates" value="" />'
-#        fi
-#    echo '
-#        <a class="helpbox" href="#HELP">
-#            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-#            <span>'$lang_edit_set2_ignoreddates_help1'<br>
-#            '$lang_edit_set2_ignoreddates_help2'<br></span></a>
-#        </p>'
+    # ignoredDate:
+    echo '
+        <p>
+        <label>'$lang_edit_set2_ignoreddates_title':</label>'
+        if [ -n "$ignoreddates" ]; then
+            echo '<input type="text" name="ignoredDate" value="'$ignoredDate'" />'
+        else
+            echo '<input type="text" name="ignoredDate" value="" />'
+        fi
+    echo '
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>'$lang_edit_set2_ignoreddates_help1'<br>
+            '$lang_edit_set2_ignoreddates_help2'<br></span></a>
+        </p>'
 
     echo '
     </details>
         </fieldset>
     </p>'
 
-    # -> Abschnitt DSM-Benachrichtigung und sonstige Einstellungen
+    # -> Section DSM notification and other settings
     echo '<fieldset>
     <hr style="border-style: dashed; size: 1px;">
     <br />
@@ -1009,7 +1011,7 @@ if [[ "$page" == "edit" ]]; then
             <br>'$lang_edit_set3_MessageTo_help3'
         </span></a></p>'
 
-    # PushBullet-Token
+    # PushBullet token
     echo '
         <p>
         <label>'$lang_edit_set3_PBTOKEN_title'</label>'
