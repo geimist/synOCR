@@ -41,7 +41,7 @@
 
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol FROM config WHERE profile_ID='$workprofile' "
+        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern FROM config WHERE profile_ID='$workprofile' "
 
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -67,6 +67,7 @@
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
+    documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
 
 # read global values:
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
@@ -89,6 +90,7 @@
     echo "renaming syntax:          $NameSyntax"
     echo "Symbol for tag marking:   ${tagsymbol}"
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
+    echo "Document split pattern:   ${documentSplitPattern}"
     echo "source for filedate:      ${filedate}"
     echo -n "Docker Test:              "
     if /usr/local/bin/docker --version | grep -q "version"  ; then
@@ -1114,6 +1116,99 @@ else
     fi
 fi
 
+#document split handling
+if [ -n "${documentSplitPattern}" ]; then
+
+    filesWithSplittedParts=()
+
+    IFS=$'\012'  # corresponds to a $'\n' newline
+    numberSplitPages=0
+    for input in ${files} ; do
+        filename=$(basename "$input")
+
+    # create temporary working directory
+        work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
+        trap 'rm -rf "$work_tmp"; exit' EXIT
+        outputtmp="${work_tmp}/${filename}"
+    # OCRmyPDF:
+        OCRmyPDF()
+        {
+            # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
+            cat "$input" | /usr/local/bin/docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
+        }
+
+        sleep 1
+        dockerlog=$(OCRmyPDF 2>&1)
+        sleep 1
+
+        echo -e
+        echo "              ➜ OCRmyPDF-LOG:"
+        echo "$dockerlog" | sed -e "s/^/${dockerlogLeftSpace}/g"
+        echo "              ← OCRmyPDF-LOG-END"
+        echo -e
+
+        echo "Searching for document split pattern in document $filename"
+
+        # count pages containing document split pattern
+        pages=()
+        while IFS= read -r line; do
+            pages+=( "$line" )
+        done < <( pdftotext "$outputtmp" - | grep -F -o -e $'\f' -e $documentSplitPattern | awk 'BEGIN{page=1} /\f/{++page;next} 1{printf "%d\n", page, $0;}' )
+        numberSplitPages=${#pages[@]}
+        echo "$numberSplitPages split pages detected in file $filename"
+
+        # split document
+        if (( $numberSplitPages > 0 )); then
+            let currentPart=$numberSplitPages+1
+            fileNoExtension="${filename%%.*}"
+            extension="${filename#*.}"
+            lastPage="z"
+            for (( idx=${#pages[@]}-1 ; idx>=0 ; idx-- )) ; do
+                partFileName="$fileNoExtension-$currentPart.$extension"
+                let firstPage=${pages[idx]}+1
+                echo "splitting pdf: pages $firstPage-$lastPage into $partFileName"
+                /usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr $dockercontainer $filename --pages . $firstPage-$lastPage -- $partFileName
+                let currentPart=$currentPart-1
+                let lastPage=${pages[idx]}-1
+                filesWithSplittedParts+=($INPUTDIR/$partFileName)
+            done
+            firstPage=1
+            partFileName="$fileNoExtension-$currentPart.$extension"
+            echo "splitting pdf: pages $firstPage-$lastPage into $partFileName"
+            /usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr  $dockercontainer $filename --pages . $firstPage-$lastPage -- $partFileName
+            filesWithSplittedParts+=($INPUTDIR/$partFileName)
+
+        # delete / save source file (takes into account existing files with the same name): ${filename%.*}
+            if [ $backup = true ]; then
+                sourceFileCount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
+                if [ $sourceFileCount -eq 0 ]; then
+                    mv "$input" "${BACKUPDIR}${filename}"
+                    echo "              ➜ move source file to: ${BACKUPDIR}${filename}"
+                else
+                    while [ -f "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf" ]; do
+                        sourcefilecount=$(( $sourceFileCount + 1 ))
+                        echo "                  continue counting … ($sourceFileCount)"
+                    done
+                    mv "$input" "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
+                    echo "              ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
+                fi
+            else
+                rm -f "$input"
+                echo "              ➜ delete source file"
+            fi
+        else
+            filesWithSplittedParts+=($input)
+        fi
+        rm -rf "$work_tmp"
+    done
+
+    # adapt existing files variable to use splitted documents
+    files="";
+    for fis2 in ${filesWithSplittedParts[@]} ; do
+        files=$files$'\n'$fis2
+    done
+    echo "document split processing finished"
+fi
 
 IFS=$'\012'  # corresponds to a $'\n' newline
 for input in ${files} ; do
