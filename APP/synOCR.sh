@@ -419,17 +419,39 @@ if [ -n "${documentSplitPattern}" ]; then
     numberSplitPages=0
     for input in ${files} ; do
         filename=$(basename "$input")
+
+    # create temporary working directory
+        work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
+        trap 'rm -rf "$work_tmp"; exit' EXIT
+        outputtmp="${work_tmp}/${filename}"
+    # OCRmyPDF:
+        OCRmyPDF()
+        {
+            # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
+            cat "$input" | /usr/local/bin/docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
+        }
+
+        sleep 1
+        dockerlog=$(OCRmyPDF 2>&1)
+        sleep 1
+
+        echo -e
+        echo "              ➜ OCRmyPDF-LOG:"
+        echo "$dockerlog" | sed -e "s/^/${dockerlogLeftSpace}/g"
+        echo "              ← OCRmyPDF-LOG-END"
+        echo -e
+
         echo "Searching for document split pattern in document $filename"
 
-        #count pages containing document split pattern
+        # count pages containing document split pattern
         pages=()
         while IFS= read -r line; do
             pages+=( "$line" )
-        done < <( pdftotext $input - | grep -F -o -e $'\f' -e $documentSplitPattern | awk 'BEGIN{page=1} /\f/{++page;next} 1{printf "%d\n", page, $0;}' )
+        done < <( pdftotext "$outputtmp" - | grep -F -o -e $'\f' -e $documentSplitPattern | awk 'BEGIN{page=1} /\f/{++page;next} 1{printf "%d\n", page, $0;}' )
         numberSplitPages=${#pages[@]}
         echo "$numberSplitPages split pages detected in file $filename"
 
-        #split document
+        # split document
         if (( $numberSplitPages > 0 )); then
             let currentPart=$numberSplitPages+1
             fileNoExtension="${filename%%.*}"
@@ -449,11 +471,31 @@ if [ -n "${documentSplitPattern}" ]; then
             echo "splitting pdf: pages $firstPage-$lastPage into $partFileName"
             /usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr  $dockercontainer $filename --pages . $firstPage-$lastPage -- $partFileName
             filesWithSplittedParts+=($INPUTDIR/$partFileName)
-            rm -f $input
+
+        # delete / save source file (takes into account existing files with the same name): ${filename%.*}
+            if [ $backup = true ]; then
+                sourceFileCount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
+                if [ $sourceFileCount -eq 0 ]; then
+                    mv "$input" "${BACKUPDIR}${filename}"
+                    echo "              ➜ move source file to: ${BACKUPDIR}${filename}"
+                else
+                    while [ -f "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf" ]; do
+                        sourcefilecount=$(( $sourceFileCount + 1 ))
+                        echo "                  continue counting … ($sourceFileCount)"
+                    done
+                    mv "$input" "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
+                    echo "              ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
+                fi
+            else
+                rm -f "$input"
+                echo "              ➜ delete source file"
+            fi
         else
             filesWithSplittedParts+=($input)
         fi
+        rm -rf "$work_tmp"
     done
+
     # adapt existing files variable to use splitted documents
     files="";
     for fis2 in ${filesWithSplittedParts[@]} ; do
@@ -1243,22 +1285,22 @@ for input in ${files} ; do
 
     rename
 
-# Quelldatei löschen / sichern (berücksichtigt gleichnamige vorhandene Dateien): ${filename%.*}
+# delete / save source file (takes into account existing files with the same name): ${filename%.*}
     if [ $backup = true ]; then
-        sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
-        if [ $sourcefilecount -eq 0 ]; then
+        sourceFileCount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
+        if [ $sourceFileCount -eq 0 ]; then
             mv "$input" "${BACKUPDIR}${filename}"
             echo "              ➜ move source file to: ${BACKUPDIR}${filename}"
         else
-            while [ -f "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf" ]; do
-                sourcefilecount=$(( $sourcefilecount + 1 ))
-                echo "                  continue counting … ($sourcefilecount)"
+            while [ -f "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf" ]; do
+                sourcefilecount=$(( $sourceFileCount + 1 ))
+                echo "                  continue counting … ($sourceFileCount)"
             done
-            mv "$input" "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
-            echo "              ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
+            mv "$input" "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
+            echo "              ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
         fi
     else
-        rm "$input"
+        rm -f "$input"
         echo "              ➜ delete source file"
     fi
 
