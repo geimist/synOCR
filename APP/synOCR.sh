@@ -198,6 +198,7 @@ update_dockerimage()
     fi
 }
 
+
 sec_to_time()
 {
 # this function converts a second value to hh:mm:ss
@@ -217,43 +218,365 @@ sec_to_time()
 }
 
 
-purge_LOG()
+OCRmyPDF()
 {
-#########################################################################################
-# This function cleans up older log files                                               #
-#########################################################################################
+    # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
+    cat "$input" | /usr/local/bin/docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
+}
 
-if [ -z $LOGmax ]; then
-    echo "purge_LOG deactivated"
+
+tagsearch()
+{
+echo "              ➜ search tags and date:"
+renameTag=""
+renameCat=""
+
+# is it an external text file for the tags or a YAML rules file?
+type_of_rule=standard   # standard rules or advanced rules (YAML file)
+
+if [ -z "$taglist" ]; then
+    echo "                no tags defined"
     return
+elif [ -f "$taglist" ]; then
+    if grep -q "synOCR_YAMLRULEFILE" "$taglist" ; then
+        echo "                source for tags is yaml based tag rule file [$taglist]"
+        cp "$taglist" "${work_tmp}/tmprulefile.txt"     # copy YAML file into the TMP folder, because the file can only be read incorrectly in ACL folders
+        taglisttmp="${work_tmp}/tmprulefile.txt"
+        sed -i $'s/\r$//' "$taglisttmp"                 # convert DOS to Unix
+# sed 's/^M$//'              # with bash/tcsh: Ctrl-V then Ctrl-M
+        type_of_rule=advanced
+        yaml_validate
+        tag_rule_content=$(yq read "$taglisttmp" -jP 2>&1)
+    else
+        echo "                source for tags is file [$taglist]"
+        sed -i $'s/\r$//' "$taglist"                    # convert DOS to Unix
+        taglist=$(cat "$taglist")
+    fi
+else
+    echo "                source for tags is the list from the GUI"
 fi
 
-# Delete empty logs:
-# (sshould no longer be needed by query in start script / synOCR will not be started with empty queue)
-for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$')                    # Listing of all LOG files
-    do
-        # if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
-        if [ $( cat "${LOGDIR}$i" | sed -n "/Funktionsaufrufe/,/synOCR ENDE/p" | wc -c ) -eq 160 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
-        #    if [ -z "$TRASHDIR" ] ; then
-                rm "${LOGDIR}$i"
-        #    else
-        #        mv "${LOGDIR}$i" "$TRASHDIR"
-        #    fi
+if [ $type_of_rule = advanced ]; then
+# process complex tag rules:
+    # list tagrules:
+    for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key") ; do
+        found=0
+
+        if [ $loglevel = "2" ] ; then
+            echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
         fi
-    done
 
-# delete surplus logs:
-count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax ))
-if [ ${count2del} -ge 0 ]; then
-    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} ) ; do
-        rm "${LOGDIR}$i"
+        echo "                search by tag rule: \"${tagrule}\" ➜  "
+
+        condition=$(echo "$tag_rule_content" | jq -r ".${tagrule}.condition" | tr '[:upper:]' '[:lower:]')
+        if [[ $condition = null ]] ; then
+            echo "                  [value for condition must not be empty - continue]"
+            continue
+        fi
+
+        searchtag=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
+        targetfolder=$(echo "$tag_rule_content" | jq -r ".${tagrule}.targetfolder" )
+        tagname_RegEx=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname_RegEx" )
+        if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] ; then
+            echo "                  [no actions defined - continue]"
+            continue
+        fi
+        if [[ "$targetfolder" = null ]] ; then
+            targetfolder=""
+        fi
+
+        echo "                  ➜ condition:        $condition"     # "all" OR "any" OR "none"
+        echo "                  ➜ tag:              $searchtag"
+        echo "                  ➜ destination:      $targetfolder"
+        if [[ "$tagname_RegEx" != null ]] ; then
+            echo "                  ➜ RegEx for tag:    $tagname_RegEx" # searchtag
+        fi
+
+        if [ $loglevel = "2" ] ; then
+            echo "                      [Subrule]:"
+        fi
+        # execute subrules:
+        for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
+            grepresult=0
+            sub_jq_value="$subtagrule"  # universal parameter name for function sub_jq
+
+            VARisRegEx=$(sub_jq '.isRegEx' | tr '[:upper:]' '[:lower:]')
+            if [[ $VARisRegEx = null ]] ; then
+                echo "                  [value for isRegEx is empty - \"false\" is used]"
+                VARisRegEx=false
+            fi
+
+            VARsearchstring=$(sub_jq '.searchstring')
+            if [[ $VARsearchstring = null ]] ; then
+                echo "                  [value for searchstring must not be empty - continue]"
+                continue
+            fi
+
+            VARsearchtyp=$(sub_jq '.searchtyp' | tr '[:upper:]' '[:lower:]')
+            if [[ $VARsearchtyp = null ]] ; then
+                echo "                  [value for searchtyp is empty - \"contains\" is used]"
+                VARsearchtyp=contains
+            fi
+
+            VARsource=$(sub_jq '.source' | tr '[:upper:]' '[:lower:]')
+            if [[ $VARsource = null ]] ; then
+                echo "                  [value for source is empty - \"content\" is used]"
+                VARsource=content
+            fi
+
+            VARcasesensitive=$(sub_jq '.casesensitive' | tr '[:upper:]' '[:lower:]')
+            if [[ $VARcasesensitive = null ]] ; then
+                echo "                  [value for casesensitive is empty - \"false\" is used]"
+                VARcasesensitive=false
+            fi
+            if [ $loglevel = "2" ] ; then
+                echo "                      >>> search for:      $VARsearchstring"
+                echo "                          isRegEx:         $VARisRegEx"
+                echo "                          searchtyp:       $VARsearchtyp"
+                echo "                          source:          $VARsource"
+                echo "                          casesensitive:   $VARcasesensitive"
+            fi
+
+        # Ignore upper and lower case if necessary:
+            if [[ $VARcasesensitive = true ]] ;then
+                grep_opt=""
+            else
+                grep_opt="i"
+            fi
+
+        # define search area:
+            if [[ $VARsource = content ]] ;then
+                VARsearchfile="$searchfile"
+            else
+                VARsearchfile="${searchfilename}"
+            fi
+
+        # search … :
+#                if [[ $VARisRegEx = true ]] ;then
+            # no additional restriction via 'searchtyp' for regex search
+#                    echo "                          searchtyp:       [ignored - RegEx based]"
+#                    if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+#                        grepresult=1
+#                    fi
+#                else
+            case "$VARsearchtyp" in
+                is)
+                    if [[ $VARisRegEx = true ]] ;then
+                        if grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    else
+                        if grep -qwF${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    fi
+                    ;;
+                "is not")
+                    if [[ $VARisRegEx = true ]] ;then
+                        if ! grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    else
+                        if ! grep -qwF${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    fi
+                    ;;
+                contains)
+                    if [[ $VARisRegEx = true ]] ;then
+                        if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    else
+                        if grep -qF${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    fi
+                    ;;
+                "does not contain")
+                    if [[ $VARisRegEx = true ]] ;then
+                        if ! grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    else
+                        if ! grep -qF${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    fi
+                    ;;
+                "starts with")
+                    if [[ $VARisRegEx = true ]] ;then
+                        if grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    else
+                        tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporary hit list with RegEx
+                        if echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
+                            grepresult=1
+                        fi
+                    fi
+                    ;;
+                "does not starts with")
+                    if [[ $VARisRegEx = true ]] ;then
+                        if ! grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    else
+                        tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporary hit list with RegEx
+                        if ! echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
+                            grepresult=1
+                        fi
+                    fi
+                    ;;
+                "ends with")
+                    if [[ $VARisRegEx = true ]] ;then
+                        if grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    else
+                        tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporary hit list with RegEx
+                        if echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
+                            grepresult=1
+                        fi
+                    fi
+                    ;;
+                "does not ends with")
+                    if [[ $VARisRegEx = true ]] ;then
+                        if ! grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
+                            grepresult=1
+                        fi
+                    else
+                        tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporary hit list with RegEx
+                        if ! echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
+                            grepresult=1
+                        fi
+                    fi
+                    ;;
+            esac
+#                fi
+
+            if [ $loglevel = "2" ] && [ $grepresult = "1" ] ; then
+                echo "                          ➜ Subrule matched"
+            elif [ $loglevel = "2" ] && [ ! $grepresult = "1" ] ; then
+                echo "                          ➜ Subrule don't matched"
+            fi
+
+        # Check condition:
+            case "$condition" in
+                any)
+                    if [[ $grepresult -eq 1 ]] ; then
+                        # cancel search when 1st found
+                        found=1
+                        break
+                    fi
+                    ;;
+                all)
+                    if [[ $grepresult -eq 0 ]] ; then
+                        # Cancel search during 1st negative search run
+                        found=0
+                        break
+                    elif [[ $grepresult -eq 1 ]] ; then
+                        found=1
+                    fi
+                    ;;
+                none)
+                    if [[ $grepresult -eq 1 ]] ; then
+                        # cancel search when 1st found
+                        found=0 # null, because condition not met
+                        break
+                    elif [[ $grepresult -eq 0 ]] ; then
+                        found=1
+                    fi
+                    ;;
+            esac
+        done
+
+        if [[ $found -eq 1 ]] ; then
+            echo "                          >>> Rule is satisfied" ; echo -e
+
+            if [[ "$tagname_RegEx" != null ]] ; then
+                echo -n "                              ➜ search RegEx for tag ➜ "
+                tagname_RegEx_result=$( egrep -o "$tagname_RegEx" <<< "$content" | head -n1 )
+                if [[ ! -z "$tagname_RegEx_result" ]] ; then
+                    searchtag=$(echo "$tagname_RegEx_result" | sed 's%\/\|\\\|\:\|\?%_%g') # filtered: \ / : ?
+                    echo "$searchtag"
+                else
+                    echo "RegEx not found (fallback to $searchtag)"
+                fi
+                echo -e
+            fi
+
+            renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # with temporary space separator to finally check tags for uniqueness
+            renameCat="$(echo "${targetfolder}" | sed -e "s/ /%20/g") ${renameCat}"
+        else
+            echo "                          >>> Rule is not satisfied" ; echo -e
+        fi
+
+    done
+    # make tags unique:
+    renameTag=$(echo "$renameTag" | tr ' ' '\n' | uniq | tr '\n' ' ' | sed -e "s/ //g" )
+else
+# process simple tag rules:
+    taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # encode spaces in tags and convert semicolons to spaces (for array)
+    tagarray=( $taglist2 )   # define tags as array
+    i=0
+    maxID=${#tagarray[*]}
+    echo "                          tag count:       $maxID"
+
+    # possibly change loop …
+    #    for i in ${tagarray[@]}; do
+    #        echo $a
+    #    done
+    while (( i < maxID )); do
+
+        if [ $loglevel = "2" ] ; then
+            echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+        fi
+
+        if echo "${tagarray[$i]}" | grep -q "=" ;then
+        # for combination of tag and category
+            if echo $(echo "${tagarray[$i]}" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
+               grep_opt="-qiw" # find single tag
+            else
+                grep_opt="-qi"
+            fi
+            tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
+            searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
+            categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
+            echo -n "                  Search by tag:   \"${searchtag}\" ➜  "
+            if grep $grep_opt "${searchtag}" "$searchfile" ;then
+                echo "OK (Cat: \"${categorietag}\")"
+                renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g")${renameTag}"
+                renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
+            else
+                echo "-"
+            fi
+        else
+            if echo $(echo ${tagarray[$i]} | sed -e "s/%20/ /g") | grep -q  "^§" ;then
+                grep_opt="-qiw" # find single tag
+            else
+                grep_opt="-qi"
+            fi
+            tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
+            echo -n "                  Search by tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
+            if grep $grep_opt "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g" | sed -e "s/^§//g")" "$searchfile" ;then
+                echo "OK"
+                renameTag="${tagsymbol}${tagarray[$i]}${renameTag}"
+            else
+                echo "-"
+            fi
+        fi
+        i=$((i + 1))
     done
 fi
-count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | wc -l) - $LOGmax ))
-if [ ${count2del} -ge 0 ]; then
-    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} ) ; do
-        rm "${LOGDIR}$i"
-    done
+
+renameTag=${renameTag% }
+renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')    # remove starting and ending spaces, or all spaces if no destination folder is defined
+renameTag_raw="$renameTag" # unmodified for tag folder / tag folder with spaces otherwise not possible
+echo "                  rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
+echo -e
+if [ $loglevel = "2" ] ; then
+    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
 fi
 }
 
@@ -353,7 +676,90 @@ yaml_validate()
 }
 
 
-adjust_attributes ()
+findDate()
+{
+# by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
+
+format=$1 # 1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy
+#echo "format: $format"
+echo "                  Using date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
+founddatestr=""
+if [ $format -eq 1 ]; then
+    # search by format: dd[./-]mm[./-]yy(yy)
+    founddatestr=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+elif [ $format -eq 2 ]; then
+    # search by format: yy(yy)[./-]mm[./-]dd
+    founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
+elif  [ $format -eq 3 ]; then
+    # search by format: mm[./-]dd[./-]yy(yy) amerikanisch
+    founddatestr=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+fi
+
+if [[ ! -z $founddatestr ]]; then
+    readarray -t founddates <<<"$founddatestr"
+    cntDatesFound=${#founddates[@]}
+    echo "                  Dates found: ${cntDatesFound}"
+
+    for currentFoundDate in "${founddates[@]}" ; do
+        if [ $format -eq 1 ]; then
+            echo "                  check date (dd mm [yy]yy): $currentFoundDate"
+            date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
+            date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}') )))
+            date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
+        elif [ $format -eq 2 ]; then
+            echo "                  check date ([yy]yy mm dd): $currentFoundDate"
+            date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
+            date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}') )))
+            date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
+        elif  [ $format -eq 3 ]; then
+            echo "                  check date (mm dd [yy]yy): $currentFoundDate"
+            date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
+            date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $1}') )))
+            date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
+        fi
+
+        currentCentury=$(($(date +%y) - 1))
+        lastCentury="$(($currentCentury-1))"
+#        echo "                  currentCentury: ${currentCentury}"
+        if [ $(echo $date_yy | wc -c) -eq 3 ]; then
+            if [ $date_yy -gt $currentCentury ]; then
+                date_yy="${lastCentury}${date_yy}"
+                echo "                  Date is most probably in the last century. Setting year to ${date_yy}"
+            else
+                date_yy="${currentCentury}${date_yy}"
+            fi
+        fi
+
+        date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+        if [ $? -eq 0 ]; then
+            if grep -q "${date_yy}-${date_mm}-${date_dd}" <<< "$ignored_date" ; then
+                echo "                  Date ${date_yy}-${date_mm}-${date_dd} is on ignore list. Skipping this date."
+                continue
+            else
+                echo "                  ➜ valid"
+                echo "                      day:  ${date_dd}"
+                echo "                      month:${date_mm}"
+                echo "                      year: ${date_yy}"
+                dateIsFound=yes
+                break
+            fi
+        else
+            echo "                  ➜ invalid format"
+        fi
+    done
+fi
+    
+if [[ $dateIsFound = no ]]; then
+    if [ $format -eq 1 ]; then
+        findDateByFormat 2
+    elif [ $format -eq 2 ]; then
+        findDateByFormat 3
+    fi
+fi
+}
+
+
+adjust_attributes()
 {
 #########################################################################################
 # This function adjusts the attributes of the target file                               #
@@ -390,6 +796,290 @@ adjust_attributes ()
         echo "              ➜ File permissions target file:"
         echo "                  $(ls -l "$output")"
     fi
+}
+
+
+rename()
+{
+
+if [ $loglevel = "2" ] ; then
+    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+fi
+
+# rename target file:
+echo "              ➜ renaming:"
+outputtmp=${output}
+
+if [ -z "$NameSyntax" ]; then
+    # if no renaming syntax was specified by the user, the source filename will be used
+    NameSyntax="§tit"
+fi
+
+echo -n "                  apply renaming syntax ➜ "
+title=$(echo "${title}" | sed -f ./includes/encode.sed)             # encode special characters for sed compatibility
+renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
+
+NewName="$NameSyntax"
+NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
+NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
+NewName=$( echo "$NewName" | sed "s/§ysource/${date_yy_source}/g" )
+NewName=$( echo "$NewName" | sed "s/§hhsource/${date_houre_source}/g" )
+NewName=$( echo "$NewName" | sed "s/§mmsource/${date_min_source}/g" )
+NewName=$( echo "$NewName" | sed "s/§sssource/${date_sek_source}/g" )
+
+NewName=$( echo "$NewName" | sed "s/§dnow/$(date +%d)/g" )
+NewName=$( echo "$NewName" | sed "s/§mnow/$(date +%m)/g" )
+NewName=$( echo "$NewName" | sed "s/§ynow/$(date +%Y)/g" )
+NewName=$( echo "$NewName" | sed "s/§hhnow/$(date +%H)/g" )
+NewName=$( echo "$NewName" | sed "s/§mmnow/$(date +%M)/g" )
+NewName=$( echo "$NewName" | sed "s/§ssnow/$(date +%S)/g" )
+
+NewName=$( echo "$NewName" | sed "s/§pagecounttotal/${pagecount_new}/g" )
+NewName=$( echo "$NewName" | sed "s/§filecounttotal/${ocrcount_new}/g" )
+NewName=$( echo "$NewName" | sed "s/§pagecountprofile/${pagecount_ID_new}/g" )
+NewName=$( echo "$NewName" | sed "s/§filecountprofile/${ocrcount_ID_new}/g" )
+
+NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
+NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
+NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
+NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g")
+NewName=$( echo "$NewName" | sed "s/§tit/${title}/g")
+NewName=$( echo "$NewName" | sed "s/%20/ /g" )
+
+# Fallback für alte Parameter:
+NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
+NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
+NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
+
+NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # decode special characters
+renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
+
+echo "$NewName"
+
+if [ $loglevel = "2" ] ; then
+    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+fi
+
+# set metadata:
+echo -n "              ➜ edit metadata "
+if which exiftool > /dev/null  2>&1 ; then
+    echo -n "(exiftool ok) "
+    exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
+else
+    echo "FAILED! - exiftool not found! Please install it over cphub.net if you need it"
+fi
+
+if [ $loglevel = "2" ] ; then
+    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+fi
+
+# move target files:
+if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
+    # use sorting in category folder:
+    echo "              ➜ move to category directories"
+    tagarray=( $renameCat )   # define target folder as array
+    i=0
+    DestFolderList=""   # temp. list of used destination folders to avoid file duplicates (different tags, but one category)
+    maxID=${#tagarray[*]}
+
+    while (( i < maxID )); do
+        tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+
+        echo -n "                  tag directories \"${tagdir}\" exists? ➜  "
+
+        if echo "${tagdir}"| grep -q "^/volume*" ; then
+            subOUTPUTDIR="${tagdir%/}/"
+            if [ -d "${subOUTPUTDIR}" ] ;then
+                echo "OK [absolute path]"
+            else
+                mkdir -p "${subOUTPUTDIR}"
+                echo "created [absolute path]"
+            fi
+        else
+            # if path is not absolute, then remove special characters
+            # tagdir=$(echo ${tagdir} | sed 's%\/\|\\\|\:\|\?%_%g' ) # gefiltert wird: \ / : ?
+
+            subOUTPUTDIR="${OUTPUTDIR}${tagdir%/}/"
+            if [ -d "${subOUTPUTDIR}" ] ;then
+                echo "OK [subfolder target dir]"
+            else
+                mkdir -p "${subOUTPUTDIR}"
+                echo "created [subfolder target dir]"
+            fi
+        fi
+
+        destfilecount=$(ls -t "${subOUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
+
+        if [ $destfilecount -eq 0 ]; then
+            output="${subOUTPUTDIR}${NewName}.pdf"
+        else
+            while [ -f "${subOUTPUTDIR}${NewName} ($destfilecount).pdf" ]
+                do
+                    destfilecount=$(( $destfilecount + 1 ))
+                    echo "                  continue counting … ($destfilecount)"
+                done
+            output="${subOUTPUTDIR}${NewName} ($destfilecount).pdf"
+            echo "                  File name already exists! Add counter ($destfilecount)"
+        fi
+
+        echo "                  target:   ${subOUTPUTDIR}$(basename "${output}")"
+
+        # check if the same file has already been sorted into this category (different tags, but same category)
+        if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
+            echo "                  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
+        else
+            if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
+                echo "                  do not set a hard link when copying across volumes"
+                cp "${outputtmp}" "${output}"   # do not set a hardlink when copying across volumes
+            else
+                echo "                  set a hard link"
+                commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
+                # check: - creating hard link don't fails / - target file is valid (not empty)
+                if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
+                    echo "                  $commandlog"
+                    echo "                  Creating a hard link failed! A file copy is used."
+                    if [ $loglevel = "2" ] ; then
+                        echo "                list of mounted volumes:"
+                        df -h --output=source,target | sed -e "s/^/                      /g"
+                        echo -e
+                    fi
+                    cp -f "${outputtmp}" "${output}"
+                fi
+            fi
+
+            adjust_attributes
+        fi
+
+        DestFolderList="${tagarray[$i]}\n${DestFolderList}"
+        i=$((i + 1))
+        echo -e
+    done
+
+    rm "${outputtmp}"
+elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
+    # use sorting in tag folder:
+    echo "              ➜ move to tag directories"
+
+    if [ ! -z "$tagsymbol" ]; then
+        renameTag=$( echo $renameTag_raw | sed -e "s/${tagsymbol}/ /g" )
+    fi
+
+    tagarray=( $renameTag )   # define tags as array
+    i=0
+    maxID=${#tagarray[*]}
+
+    while (( i < maxID )); do
+        tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+        echo -n "                  tag directories \"${tagdir}\" exists? ➜  "
+
+        if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
+            echo "OK"
+        else
+            mkdir "${OUTPUTDIR}${tagdir}"
+            echo "created"
+        fi
+
+        destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
+
+        if [ $destfilecount -eq 0 ]; then
+            output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
+        else
+            while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]; do
+                destfilecount=$(( $destfilecount + 1 ))
+                echo "                  continue counting … ($destfilecount)"
+            done
+            output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
+            echo "                  File name already exists! Add counter ($destfilecount)"
+        fi
+
+        echo "                  target:   ./${tagdir}/$(basename "${output}")"
+
+        if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
+            echo "                  do not set a hard link when copying across volumes"
+            cp "${outputtmp}" "${output}"   # do not set a hardlink when copying across volumes
+        else
+            echo "                  set a hard link"
+            commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
+            # check: - creating hard link don't fails / - target file is valid (not empty)
+            if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
+                echo "                  $commandlog"
+                echo "                  Creating a hard link failed! A file copy is used."
+                if [ $loglevel = "2" ] ; then
+                    echo "                list of mounted volumes:"
+                    df -h --output=source,target | sed -e "s/^/                      /g"
+                    echo -e
+                fi
+                cp -f "${outputtmp}" "${output}"
+            fi
+        fi
+
+        adjust_attributes
+
+        i=$((i + 1))
+    done
+
+    echo "              ➜ delete temp. target file"
+    rm "${outputtmp}"
+else
+    destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
+    if [ $destfilecount -eq 0 ]; then
+        output="${OUTPUTDIR}${NewName}.pdf"
+    else
+        while [ -f "${OUTPUTDIR}${NewName} ($destfilecount).pdf" ]; do
+            destfilecount=$(( $destfilecount + 1 ))
+            echo "                  continue counting … ($destfilecount)"
+        done
+
+        output="${OUTPUTDIR}${NewName} ($destfilecount).pdf"
+        echo "                  File name already exists! Add counter ($destfilecount)"
+    fi
+    echo "                  target file: $(basename "${output}")"
+    mv "${outputtmp}" "${output}"
+
+    adjust_attributes
+
+fi
+}
+
+
+purge_LOG()
+{
+#########################################################################################
+# This function cleans up older log files                                               #
+#########################################################################################
+
+if [ -z $LOGmax ]; then
+    echo "purge_LOG deactivated"
+    return
+fi
+
+# Delete empty logs:
+# (sshould no longer be needed by query in start script / synOCR will not be started with empty queue)
+for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$')                    # Listing of all LOG files
+    do
+        # if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
+        if [ $( cat "${LOGDIR}$i" | sed -n "/Funktionsaufrufe/,/synOCR ENDE/p" | wc -c ) -eq 160 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
+        #    if [ -z "$TRASHDIR" ] ; then
+                rm "${LOGDIR}$i"
+        #    else
+        #        mv "${LOGDIR}$i" "$TRASHDIR"
+        #    fi
+        fi
+    done
+
+# delete surplus logs:
+count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax ))
+if [ ${count2del} -ge 0 ]; then
+    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} ) ; do
+        rm "${LOGDIR}$i"
+    done
+fi
+count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | wc -l) - $LOGmax ))
+if [ ${count2del} -ge 0 ]; then
+    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} ) ; do
+        rm "${LOGDIR}$i"
+    done
+fi
 }
 
 
@@ -459,12 +1149,6 @@ for input in ${files} ; do
     fi
 
 # OCRmyPDF:
-    OCRmyPDF()
-    {
-        # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
-        cat "$input" | /usr/local/bin/docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
-    }
-
     sleep 1
     dockerlog=$(OCRmyPDF 2>&1)
     sleep 1
@@ -516,6 +1200,7 @@ for input in ${files} ; do
 
 # temporary output destination with seconds for uniqueness (otherwise there will be duplication if renaming syntax is missing)
     output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
+
 # move temporary file to destination folder:
     mv "${outputtmp}" "${output}"
 
@@ -526,760 +1211,73 @@ for input in ${files} ; do
         ls -l "$input"
     fi
 
-# search by date and tags in document:
-    findDate()
-    {
-    # exact text
-        searchfile="${work_tmp}/synOCR.txt"
-        searchfilename="${work_tmp}/synOCR_filename.txt"    # for search in file name
-        echo "${title}" > "${searchfilename}"
+# exact text
+    searchfile="${work_tmp}/synOCR.txt"
+    searchfilename="${work_tmp}/synOCR_filename.txt"    # for search in file name
+    echo "${title}" > "${searchfilename}"
 
-        # Search in the whole documents, or only on the first page?:
-        if [ $searchAll = no ]; then
-            pdftotextOpt="-l 1"
-        else
-            pdftotextOpt=""
-        fi
-
-        /bin/pdftotext -layout $pdftotextOpt "$output" "$searchfile"
-        sed -i 's/^ *//' "$searchfile"        # delete beginning blanks
-
-        content=$(cat "$searchfile" )   # the standard rules search in the variable / the extended rules directly in the source file
-
-        if [ $loglevel = "2" ] ; then
-            cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
-        fi
-
-    # search by tags:
-        tagsearch()
-        {
-        echo "              ➜ search tags and date:"
-        renameTag=""
-        renameCat=""
-
-    # is it an external text file for the tags or a YAML rules file?
-        type_of_rule=standard   # standard rules or advanced rules (YAML file)
-
-        if [ -z "$taglist" ]; then
-            echo "                no tags defined"
-            return
-        elif [ -f "$taglist" ]; then
-            if grep -q "synOCR_YAMLRULEFILE" "$taglist" ; then
-                echo "                source for tags is yaml based tag rule file [$taglist]"
-                cp "$taglist" "${work_tmp}/tmprulefile.txt"     # copy YAML file into the TMP folder, because the file can only be read incorrectly in ACL folders
-                taglisttmp="${work_tmp}/tmprulefile.txt"
-                sed -i $'s/\r$//' "$taglisttmp"                 # convert DOS to Unix
-# sed 's/^M$//'              # with bash/tcsh: Ctrl-V then Ctrl-M
-                type_of_rule=advanced
-                yaml_validate
-                tag_rule_content=$(yq read "$taglisttmp" -jP 2>&1)
-            else
-                echo "                source for tags is file [$taglist]"
-                sed -i $'s/\r$//' "$taglist"                    # convert DOS to Unix
-                taglist=$(cat "$taglist")
-            fi
-        else
-            echo "                source for tags is the list from the GUI"
-        fi
-
-        if [ $type_of_rule = advanced ]; then
-        # process complex tag rules:
-            # list tagrules:
-            for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key") ; do
-                found=0
-
-                if [ $loglevel = "2" ] ; then
-                    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-                fi
-
-                echo "                search by tag rule: \"${tagrule}\" ➜  "
-
-                condition=$(echo "$tag_rule_content" | jq -r ".${tagrule}.condition" | tr '[:upper:]' '[:lower:]')
-                if [[ $condition = null ]] ; then
-                    echo "                  [value for condition must not be empty - continue]"
-                    continue
-                fi
-
-                searchtag=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
-                targetfolder=$(echo "$tag_rule_content" | jq -r ".${tagrule}.targetfolder" )
-                tagname_RegEx=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname_RegEx" )
-                if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] ; then
-                    echo "                  [no actions defined - continue]"
-                    continue
-                fi
-                if [[ "$targetfolder" = null ]] ; then
-                    targetfolder=""
-                fi
-
-                echo "                  ➜ condition:        $condition"     # "all" OR "any" OR "none"
-                echo "                  ➜ tag:              $searchtag"
-                echo "                  ➜ destination:      $targetfolder"
-                if [[ "$tagname_RegEx" != null ]] ; then
-                    echo "                  ➜ RegEx for tag:    $tagname_RegEx" # searchtag
-                fi
-
-                if [ $loglevel = "2" ] ; then
-                    echo "                      [Subrule]:"
-                fi
-                # execute subrules:
-                for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
-                    grepresult=0
-                    sub_jq_value="$subtagrule"  # universal parameter name for function sub_jq
-
-                    VARisRegEx=$(sub_jq '.isRegEx' | tr '[:upper:]' '[:lower:]')
-                    if [[ $VARisRegEx = null ]] ; then
-                        echo "                  [value for isRegEx is empty - \"false\" is used]"
-                        VARisRegEx=false
-                    fi
-
-                    VARsearchstring=$(sub_jq '.searchstring')
-                    if [[ $VARsearchstring = null ]] ; then
-                        echo "                  [value for searchstring must not be empty - continue]"
-                        continue
-                    fi
-
-                    VARsearchtyp=$(sub_jq '.searchtyp' | tr '[:upper:]' '[:lower:]')
-                    if [[ $VARsearchtyp = null ]] ; then
-                        echo "                  [value for searchtyp is empty - \"contains\" is used]"
-                        VARsearchtyp=contains
-                    fi
-
-                    VARsource=$(sub_jq '.source' | tr '[:upper:]' '[:lower:]')
-                    if [[ $VARsource = null ]] ; then
-                        echo "                  [value for source is empty - \"content\" is used]"
-                        VARsource=content
-                    fi
-
-                    VARcasesensitive=$(sub_jq '.casesensitive' | tr '[:upper:]' '[:lower:]')
-                    if [[ $VARcasesensitive = null ]] ; then
-                        echo "                  [value for casesensitive is empty - \"false\" is used]"
-                        VARcasesensitive=false
-                    fi
-                    if [ $loglevel = "2" ] ; then
-                        echo "                      >>> search for:      $VARsearchstring"
-                        echo "                          isRegEx:         $VARisRegEx"
-                        echo "                          searchtyp:       $VARsearchtyp"
-                        echo "                          source:          $VARsource"
-                        echo "                          casesensitive:   $VARcasesensitive"
-                    fi
-
-                # Ignore upper and lower case if necessary:
-                    if [[ $VARcasesensitive = true ]] ;then
-                        grep_opt=""
-                    else
-                        grep_opt="i"
-                    fi
-
-                # define search area:
-                    if [[ $VARsource = content ]] ;then
-                        VARsearchfile="$searchfile"
-                    else
-                        VARsearchfile="${searchfilename}"
-                    fi
-
-                # search … :
-#                if [[ $VARisRegEx = true ]] ;then
-                    # no additional restriction via 'searchtyp' for regex search
-#                    echo "                          searchtyp:       [ignored - RegEx based]"
-#                    if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
-#                        grepresult=1
-#                    fi
-#                else
-                    case "$VARsearchtyp" in
-                        is)
-                            if [[ $VARisRegEx = true ]] ;then
-                                if grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            else
-                                if grep -qwF${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            fi
-                            ;;
-                        "is not")
-                            if [[ $VARisRegEx = true ]] ;then
-                                if ! grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            else
-                                if ! grep -qwF${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            fi
-                            ;;
-                        contains)
-                            if [[ $VARisRegEx = true ]] ;then
-                                if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            else
-                                if grep -qF${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            fi
-                            ;;
-                        "does not contain")
-                            if [[ $VARisRegEx = true ]] ;then
-                                if ! grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            else
-                                if ! grep -qF${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            fi
-                            ;;
-                        "starts with")
-                            if [[ $VARisRegEx = true ]] ;then
-                                if grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            else
-                                tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporary hit list with RegEx
-                                if echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
-                                    grepresult=1
-                                fi
-                            fi
-                            ;;
-                        "does not starts with")
-                            if [[ $VARisRegEx = true ]] ;then
-                                if ! grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            else
-                                tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporary hit list with RegEx
-                                if ! echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
-                                    grepresult=1
-                                fi
-                            fi
-                            ;;
-                        "ends with")
-                            if [[ $VARisRegEx = true ]] ;then
-                                if grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            else
-                                tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporary hit list with RegEx
-                                if echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
-                                    grepresult=1
-                                fi
-                            fi
-                            ;;
-                        "does not ends with")
-                            if [[ $VARisRegEx = true ]] ;then
-                                if ! grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
-                                    grepresult=1
-                                fi
-                            else
-                                tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporary hit list with RegEx
-                                if ! echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
-                                    grepresult=1
-                                fi
-                            fi
-                            ;;
-                    esac
-#                fi
-
-                    if [ $loglevel = "2" ] && [ $grepresult = "1" ] ; then
-                        echo "                          ➜ Subrule matched"
-                    elif [ $loglevel = "2" ] && [ ! $grepresult = "1" ] ; then
-                        echo "                          ➜ Subrule don't matched"
-                    fi
-
-                # Check condition:
-                    case "$condition" in
-                        any)
-                            if [[ $grepresult -eq 1 ]] ; then
-                                # cancel search when 1st found
-                                found=1
-                                break
-                            fi
-                            ;;
-                        all)
-                            if [[ $grepresult -eq 0 ]] ; then
-                                # Cancel search during 1st negative search run
-                                found=0
-                                break
-                            elif [[ $grepresult -eq 1 ]] ; then
-                                found=1
-                            fi
-                            ;;
-                        none)
-                            if [[ $grepresult -eq 1 ]] ; then
-                                # cancel search when 1st found
-                                found=0 # null, because condition not met
-                                break
-                            elif [[ $grepresult -eq 0 ]] ; then
-                                found=1
-                            fi
-                            ;;
-                    esac
-                done
-
-                if [[ $found -eq 1 ]] ; then
-                    echo "                          >>> Rule is satisfied"
-
-                    if [[ "$tagname_RegEx" != null ]] ; then
-                        echo -n "                              ➜ search RegEx for tag ➜ "
-                        tagname_RegEx_result=$( egrep -o "$tagname_RegEx" <<< "$content" | head -n1 )
-                        if [[ ! -z "$tagname_RegEx_result" ]] ; then
-                            searchtag=$(echo "$tagname_RegEx_result" | sed 's%\/\|\\\|\:\|\?%_%g') # filtered: \ / : ?
-                            echo "$searchtag"
-                        else
-                            echo "RegEx not found (fallback to $searchtag)"
-                        fi
-                        echo -e
-                    fi
-
-                    renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # with temporary space separator to finally check tags for uniqueness
-                    renameCat="$(echo "${targetfolder}" | sed -e "s/ /%20/g") ${renameCat}"
-                else
-                    echo "                          >>> Rule is not satisfied" ; echo -e
-                fi
-
-            done
-            # make tags unique:
-            renameTag=$(echo "$renameTag" | tr ' ' '\n' | uniq | tr '\n' ' ' | sed -e "s/ //g" )
-        else
-        # process simple tag rules:
-            taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # encode spaces in tags and convert semicolons to spaces (for array)
-            tagarray=( $taglist2 )   # define tags as array
-            i=0
-            maxID=${#tagarray[*]}
-            echo "                          tag count:       $maxID"
-
-            # possibly change loop …
-            #    for i in ${tagarray[@]}; do
-            #        echo $a
-            #    done
-            while (( i < maxID )); do
-
-                if [ $loglevel = "2" ] ; then
-                    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-                fi
-
-                if echo "${tagarray[$i]}" | grep -q "=" ;then
-                # for combination of tag and category
-                    if echo $(echo "${tagarray[$i]}" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
-                       grep_opt="-qiw" # find single tag
-                    else
-                        grep_opt="-qi"
-                    fi
-                    tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
-                    searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
-                    categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
-                    echo -n "                  Search by tag:   \"${searchtag}\" ➜  "
-                    if grep $grep_opt "${searchtag}" "$searchfile" ;then
-                        echo "OK (Cat: \"${categorietag}\")"
-                        renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g")${renameTag}"
-                        renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
-                    else
-                        echo "-"
-                    fi
-                else
-                    if echo $(echo ${tagarray[$i]} | sed -e "s/%20/ /g") | grep -q  "^§" ;then
-                        grep_opt="-qiw" # find single tag
-                    else
-                        grep_opt="-qi"
-                    fi
-                    tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
-                    echo -n "                  Search by tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
-                    if grep $grep_opt "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g" | sed -e "s/^§//g")" "$searchfile" ;then
-                        echo "OK"
-                        renameTag="${tagsymbol}${tagarray[$i]}${renameTag}"
-                    else
-                        echo "-"
-                    fi
-                fi
-                i=$((i + 1))
-            done
-        fi
-
-        renameTag=${renameTag% }
-        renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')    # remove starting and ending spaces, or all spaces if no destination folder is defined
-        renameTag_raw="$renameTag" # unmodified for tag folder / tag folder with spaces otherwise not possible
-        echo "                  rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
-        echo -e
-        }
-        tagsearch
-
-    # search by date:
-        dateIsFound=no
-        # search format: dd[./-]mm[./-]yy(yy)
-        # https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-904944
-        founddate=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
-
-        if [ $loglevel = "2" ] ; then
-            echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-        fi
-
-        if [ ! -z $founddate ]; then
-            echo -n "                  check date (dd mm [yy]yy): $founddate"
-            date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
-            date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
-            date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
-            if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
-                if [ $date_yy -gt $(date +%y) ]; then
-                    date_yy="19${date_yy}"
-                else
-                    date_yy="20${date_yy}"
-                fi
-            fi
-
-            date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
-
-            if [ $? -eq 0 ]; then
-                echo " ➜ valid"
-                echo "                  day:  ${date_dd}"
-                echo "                  month:${date_mm}"
-                echo "                  year: ${date_yy}"
-                dateIsFound=yes
-            else
-                echo " ➜ invalid format"
-            fi
-            founddate=""
-        fi
-
-        # search format: yy(yy)[./-]mm[./-]dd
-        if [ $dateIsFound = no ]; then
-            founddate=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head -n1 )
-            if [ ! -z $founddate ]; then
-                echo -n "                  check date ([yy]yy mm dd): $founddate"
-                date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
-                date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}') )))
-                date_yy=$(echo $founddate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
-                if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
-                    if [ $date_yy -gt $(date +%y) ]; then
-                        date_yy="19${date_yy}"
-                    else
-                        date_yy="20${date_yy}"
-                    fi
-                fi
-                date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
-                if [ $? -eq 0 ]; then
-                    echo " ➜ valid"
-                    echo "                  day:  ${date_dd}"
-                    echo "                  month:${date_mm}"
-                    echo "                  year: ${date_yy}"
-                    dateIsFound=yes
-                else
-                    echo " ➜ invalid format"
-                fi
-                founddate=""
-            fi
-        fi
-
-        # search format: mm[./-]dd[./-]yy(yy) amerikanisch
-        if [ $dateIsFound = no ]; then
-            founddate=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head -n1 )
-            if [ ! -z $founddate ]; then
-                echo -n "                  check date (mm dd [yy]yy): $founddate"
-                date_dd=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
-                date_mm=$(printf '%02d' $(( 10#$(echo $founddate | awk -F'[./-]' '{print $1}') )))
-                date_yy=$(echo $founddate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
-                if [ $(echo $date_yy | wc -c) -eq 3 ] ; then
-                    if [ $date_yy -gt $(date +%y) ]; then
-                        date_yy="19${date_yy}"
-                    else
-                        date_yy="20${date_yy}"
-                    fi
-                fi
-                date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
-                if [ $? -eq 0 ]; then
-                    echo " ➜ valid"
-                    echo "                  day:  ${date_dd}"
-                    echo "                  month:${date_mm}"
-                    echo "                  year: ${date_yy}"
-                    dateIsFound=yes
-                else
-                    echo " ➜ invalid format"
-                fi
-                founddate=""
-            fi
-        fi
-
-        date_dd_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $3}')
-        date_mm_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $2}')
-        date_yy_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $1}')
-        date_houre_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $1}')
-        date_min_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $2}')
-        date_sek_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $3}')
-
-        if [ $dateIsFound = no ]; then
-            echo "                  Date not found in OCR text - use file date:"
-            date_dd=$date_dd_source
-            date_mm=$date_mm_source
-            date_yy=$date_yy_source
-            echo "                  day:  ${date_dd}"
-            echo "                  month:${date_mm}"
-            echo "                  year: ${date_yy}"
-        fi
-
-    }
-    findDate
-
-# compose and rename file names:
-    rename()
-    {
-
-    if [ $loglevel = "2" ] ; then
-        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-    fi
-
-    # rename target file:
-    echo "              ➜ renaming:"
-    outputtmp=${output}
-
-    if [ -z "$NameSyntax" ]; then
-        # if no renaming syntax was specified by the user, the source filename will be used
-        NameSyntax="§tit"
-    fi
-
-    echo -n "                  apply renaming syntax ➜ "
-    title=$(echo "${title}" | sed -f ./includes/encode.sed)             # encode special characters for sed compatibility
-    renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
-
-    NewName="$NameSyntax"
-    NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
-    NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
-    NewName=$( echo "$NewName" | sed "s/§ysource/${date_yy_source}/g" )
-    NewName=$( echo "$NewName" | sed "s/§hhsource/${date_houre_source}/g" )
-    NewName=$( echo "$NewName" | sed "s/§mmsource/${date_min_source}/g" )
-    NewName=$( echo "$NewName" | sed "s/§sssource/${date_sek_source}/g" )
-
-    NewName=$( echo "$NewName" | sed "s/§dnow/$(date +%d)/g" )
-    NewName=$( echo "$NewName" | sed "s/§mnow/$(date +%m)/g" )
-    NewName=$( echo "$NewName" | sed "s/§ynow/$(date +%Y)/g" )
-    NewName=$( echo "$NewName" | sed "s/§hhnow/$(date +%H)/g" )
-    NewName=$( echo "$NewName" | sed "s/§mmnow/$(date +%M)/g" )
-    NewName=$( echo "$NewName" | sed "s/§ssnow/$(date +%S)/g" )
-
-    NewName=$( echo "$NewName" | sed "s/§pagecounttotal/${pagecount_new}/g" )
-    NewName=$( echo "$NewName" | sed "s/§filecounttotal/${ocrcount_new}/g" )
-    NewName=$( echo "$NewName" | sed "s/§pagecountprofile/${pagecount_ID_new}/g" )
-    NewName=$( echo "$NewName" | sed "s/§filecountprofile/${ocrcount_ID_new}/g" )
-
-    NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
-    NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
-    NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
-    NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g")
-    NewName=$( echo "$NewName" | sed "s/§tit/${title}/g")
-    NewName=$( echo "$NewName" | sed "s/%20/ /g" )
-
-    # Fallback für alte Parameter:
-    NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
-    NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
-    NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
-
-    NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # decode special characters
-    renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
-
-    echo "$NewName"
-
-    if [ $loglevel = "2" ] ; then
-        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-    fi
-
-# set metadata:
-    echo -n "              ➜ edit metadata "
-    if which exiftool > /dev/null  2>&1 ; then
-        echo -n "(exiftool ok) "
-        exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
+# Search in the whole documents, or only on the first page?:
+    if [ $searchAll = no ]; then
+        pdftotextOpt="-l 1"
     else
-        echo "FAILED! - exiftool not found! Please install it over cphub.net if you need it"
+        pdftotextOpt=""
     fi
+
+    /bin/pdftotext -layout $pdftotextOpt "$output" "$searchfile"
+    sed -i 's/^ *//' "$searchfile"        # delete beginning blanks
+
+    content=$(cat "$searchfile" )   # the standard rules search in the variable / the extended rules directly in the source file
 
     if [ $loglevel = "2" ] ; then
-        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
+        cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
     fi
 
-# move target files:
-    if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
-        # use sorting in category folder:
-        echo "              ➜ move to category directories"
-        tagarray=( $renameCat )   # define target folder as array
-        i=0
-        DestFolderList=""   # temp. list of used destination folders to avoid file duplicates (different tags, but one category)
-        maxID=${#tagarray[*]}
+# search by tags:
+    tagsearch
 
-        while (( i < maxID )); do
-            tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+# search by date:
+    dateIsFound=no
 
-            echo -n "                  tag directories \"${tagdir}\" exists? ➜  "
+ignored_date="1981-10-16;2020-12-10"
 
-            if echo "${tagdir}"| grep -q "^/volume*" ; then
-                subOUTPUTDIR="${tagdir%/}/"
-                if [ -d "${subOUTPUTDIR}" ] ;then
-                    echo "OK [absolute path]"
-                else
-                    mkdir -p "${subOUTPUTDIR}"
-                    echo "created [absolute path]"
-                fi
-            else
-                # if path is not absolute, then remove special characters
-                # tagdir=$(echo ${tagdir} | sed 's%\/\|\\\|\:\|\?%_%g' ) # gefiltert wird: \ / : ?
+    findDate 1
 
-                subOUTPUTDIR="${OUTPUTDIR}${tagdir%/}/"
-                if [ -d "${subOUTPUTDIR}" ] ;then
-                    echo "OK [subfolder target dir]"
-                else
-                    mkdir -p "${subOUTPUTDIR}"
-                    echo "created [subfolder target dir]"
-                fi
-            fi
+    date_dd_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $3}')
+    date_mm_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $2}')
+    date_yy_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $1}')
+    date_houre_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $1}')
+    date_min_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $2}')
+    date_sek_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $3}')
 
-            destfilecount=$(ls -t "${subOUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
-
-            if [ $destfilecount -eq 0 ]; then
-                output="${subOUTPUTDIR}${NewName}.pdf"
-            else
-                while [ -f "${subOUTPUTDIR}${NewName} ($destfilecount).pdf" ]
-                    do
-                        destfilecount=$(( $destfilecount + 1 ))
-                        echo "                  continue counting … ($destfilecount)"
-                    done
-                output="${subOUTPUTDIR}${NewName} ($destfilecount).pdf"
-                echo "                  File name already exists! Add counter ($destfilecount)"
-            fi
-
-            echo "                  target:   ${subOUTPUTDIR}$(basename "${output}")"
-
-            # check if the same file has already been sorted into this category (different tags, but same category)
-            if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
-                echo "                  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
-            else
-                if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
-                    echo "                  do not set a hard link when copying across volumes"
-                    cp "${outputtmp}" "${output}"   # do not set a hardlink when copying across volumes
-                else
-                    echo "                  set a hard link"
-                    commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
-                    # check: - creating hard link don't fails / - target file is valid (not empty)
-                    if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
-                        echo "                  $commandlog"
-                        echo "                  Creating a hard link failed! A file copy is used."
-                        if [ $loglevel = "2" ] ; then
-                            echo "                list of mounted volumes:"
-                            df -h --output=source,target | sed -e "s/^/                      /g"
-                            echo -e
-                        fi
-                        cp -f "${outputtmp}" "${output}"
-                    fi
-                fi
-
-                adjust_attributes
-            fi
-
-            DestFolderList="${tagarray[$i]}\n${DestFolderList}"
-            i=$((i + 1))
-            echo -e
-        done
-
-        rm "${outputtmp}"
-    elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
-        # use sorting in tag folder:
-        echo "              ➜ move to tag directories"
-
-        if [ ! -z "$tagsymbol" ]; then
-            renameTag=$( echo $renameTag_raw | sed -e "s/${tagsymbol}/ /g" )
-        fi
-
-        tagarray=( $renameTag )   # define tags as array
-        i=0
-        maxID=${#tagarray[*]}
-
-        while (( i < maxID )); do
-            tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-            echo -n "                  tag directories \"${tagdir}\" exists? ➜  "
-
-            if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
-                echo "OK"
-            else
-                mkdir "${OUTPUTDIR}${tagdir}"
-                echo "created"
-            fi
-
-            destfilecount=$(ls -t "${OUTPUTDIR}${tagdir}" | grep -o "^${NewName}.*" | wc -l)
-
-            if [ $destfilecount -eq 0 ]; then
-                output="${OUTPUTDIR}${tagdir}/${NewName}.pdf"
-            else
-                while [ -f "${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf" ]; do
-                    destfilecount=$(( $destfilecount + 1 ))
-                    echo "                  continue counting … ($destfilecount)"
-                done
-                output="${OUTPUTDIR}${tagdir}/${NewName} ($destfilecount).pdf"
-                echo "                  File name already exists! Add counter ($destfilecount)"
-            fi
-
-            echo "                  target:   ./${tagdir}/$(basename "${output}")"
-
-            if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
-                echo "                  do not set a hard link when copying across volumes"
-                cp "${outputtmp}" "${output}"   # do not set a hardlink when copying across volumes
-            else
-                echo "                  set a hard link"
-                commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
-                # check: - creating hard link don't fails / - target file is valid (not empty)
-                if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
-                    echo "                  $commandlog"
-                    echo "                  Creating a hard link failed! A file copy is used."
-                    if [ $loglevel = "2" ] ; then
-                        echo "                list of mounted volumes:"
-                        df -h --output=source,target | sed -e "s/^/                      /g"
-                        echo -e
-                    fi
-                    cp -f "${outputtmp}" "${output}"
-                fi
-            fi
-
-            adjust_attributes
-
-            i=$((i + 1))
-        done
-
-        echo "              ➜ delete temp. target file"
-        rm "${outputtmp}"
-    else
-        destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
-        if [ $destfilecount -eq 0 ]; then
-            output="${OUTPUTDIR}${NewName}.pdf"
-        else
-            while [ -f "${OUTPUTDIR}${NewName} ($destfilecount).pdf" ]; do
-                destfilecount=$(( $destfilecount + 1 ))
-                echo "                  continue counting … ($destfilecount)"
-            done
-
-            output="${OUTPUTDIR}${NewName} ($destfilecount).pdf"
-            echo "                  File name already exists! Add counter ($destfilecount)"
-        fi
-        echo "                  target file: $(basename "${output}")"
-        mv "${outputtmp}" "${output}"
-
-        adjust_attributes
-
+    if [ $dateIsFound = no ]; then
+        echo "                  Date not found in OCR text - use file date:"
+        date_dd=$date_dd_source
+        date_mm=$date_mm_source
+        date_yy=$date_yy_source
+        echo "                  day:  ${date_dd}"
+        echo "                  month:${date_mm}"
+        echo "                  year: ${date_yy}"
     fi
-    }
 
+# compose and rename file names / move to target:
     rename
 
 # delete / save source file (takes into account existing files with the same name): ${filename%.*}
     if [ $backup = true ]; then
-        sourcefilecount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
-        if [ $sourcefilecount -eq 0 ]; then
+        sourceFileCount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
+        if [ $sourceFileCount -eq 0 ]; then
             mv "$input" "${BACKUPDIR}${filename}"
             echo "              ➜ move source file to: ${BACKUPDIR}${filename}"
         else
-            while [ -f "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf" ]; do
-                sourcefilecount=$(( $sourcefilecount + 1 ))
-                echo "                  continue counting … ($sourcefilecount)"
+            while [ -f "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf" ]; do
+                sourcefilecount=$(( $sourceFileCount + 1 ))
+                echo "                  continue counting … ($sourceFileCount)"
             done
-            mv "$input" "${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
-            echo "              ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourcefilecount).pdf"
+            mv "$input" "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
+            echo "              ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
         fi
     else
-        rm "$input"
+        rm -f "$input"
         echo "              ➜ delete source file"
     fi
 
@@ -1287,7 +1285,7 @@ for input in ${files} ; do
     # Notification:
     if [ $dsmtextnotify = "on" ] ; then
         sleep 1
-        synodsmnotify $MessageTo "synOCR" "Datei [$(basename "${output}")] ist fertig"
+        synodsmnotify $MessageTo "synOCR" "File [$(basename "${output}")] is processed"
         sleep 1
     fi
 
@@ -1317,12 +1315,14 @@ for input in ${files} ; do
     synosetkeyvalue ./etc/counter pagecount_ID${profile_ID} ${pagecount_ID_new}
     synosetkeyvalue ./etc/counter ocrcount_ID${profile_ID} ${ocrcount_ID_new}
 
+    echo -e
     echo "              Stats:"
     echo "                  ➜ runtime last file:    $(sec_to_time $(( $(date +%s) - ${date_start} )))"
     echo "                  ➜ pagecount last file:  $pagecount_latest"
     echo "                  ➜ file count profile :  (profile $profile) - ${ocrcount_ID_new} PDF's / ${pagecount_ID_new} Pages processed up to now"
     echo "                  ➜ file count total:     ${ocrcount_new} PDF's / ${pagecount_new} Pages processed up to now"
-
+    echo -e
+    
 # delete temporary working directory:
     echo "              ➜ delete tmp-files …"
     rm -rf "$work_tmp"
