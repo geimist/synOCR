@@ -413,4 +413,3 @@ lang_synOCR_start_target_created="Target directory was created."
 lang_synOCR_start_umount_log="encrypted log folder not mounted"
 lang_synOCR_start_errorexit="synOCR was terminated with errors!"
 lang_synOCR_start_loginfo="more information in the LOG"
-
