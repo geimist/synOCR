@@ -755,9 +755,9 @@ fi
     
 if [[ $dateIsFound = no ]]; then
     if [ $format -eq 1 ]; then
-        findDateByFormat 2
+        findDate 2
     elif [ $format -eq 2 ]; then
-        findDateByFormat 3
+        findDate 3
     fi
 fi
 }
@@ -1118,14 +1118,15 @@ else
     fi
 fi
 
+
 #document split handling
 if [ -n "${documentSplitPattern}" ]; then
-
     filesWithSplittedParts=()
 
     IFS=$'\012'  # corresponds to a $'\n' newline
     numberSplitPages=0
     for input in ${files} ; do
+        IFS=$OLDIFS
         filename=$(basename "$input")
 
     # create temporary working directory
@@ -1136,12 +1137,10 @@ if [ -n "${documentSplitPattern}" ]; then
         echo "              ➜ Searching for document split pattern in document $filename"
 
     # OCRmyPDF:
-        echo "              temporary OCR to be able to recognize separator sheets:"
-        OCRmyPDF
+        echo "                  temporary OCR to be able to recognize separator sheets:"
 
-        sleep 1
         dockerlog=$(OCRmyPDF 2>&1)
-        sleep 1
+        sleep 5
 
         echo -e
         echo "              ➜ OCRmyPDF-LOG:"
@@ -1153,7 +1152,7 @@ if [ -n "${documentSplitPattern}" ]; then
         pages=()
         while IFS= read -r line; do
             pages+=( "$line" )
-        done < <( pdftotext "$outputtmp" - | grep -F -o -e $'\f' -e $documentSplitPattern | awk 'BEGIN{page=1} /\f/{++page;next} 1{printf "%d\n", page, $0;}' )
+        done <<< $( pdftotext "$outputtmp" - | grep -F -o -e $'\f' -e "$documentSplitPattern" | awk 'BEGIN{page=1} /\f/{++page;next} 1{printf "%d\n", page, $0;}' )
         numberSplitPages=${#pages[@]}
         echo "                $numberSplitPages split pages detected in file $filename"
 
@@ -1167,7 +1166,8 @@ if [ -n "${documentSplitPattern}" ]; then
                 partFileName="$fileNoExtension-$currentPart.$extension"
                 let firstPage=${pages[idx]}+1
                 echo "                splitting pdf: pages $firstPage-$lastPage into $partFileName"
-                /usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr $dockercontainer $filename --pages . $firstPage-$lastPage -- $partFileName
+                dockerlog=$(/usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr $dockercontainer "$filename" --pages . $firstPage-$lastPage -- "$partFileName")
+                echo "$dockerlog" | sed -e "s/^/${dockerlogLeftSpace}/g"
                 let currentPart=$currentPart-1
                 let lastPage=${pages[idx]}-1
                 filesWithSplittedParts+=($INPUTDIR/$partFileName)
@@ -1175,7 +1175,8 @@ if [ -n "${documentSplitPattern}" ]; then
             firstPage=1
             partFileName="$fileNoExtension-$currentPart.$extension"
             echo "                splitting pdf: pages $firstPage-$lastPage into $partFileName"
-            /usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr  $dockercontainer $filename --pages . $firstPage-$lastPage -- $partFileName
+            dockerlog=$(/usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr  $dockercontainer "$filename" --pages . $firstPage-$lastPage -- "$partFileName")
+            echo "$dockerlog" | sed -e "s/^/${dockerlogLeftSpace}/g"
             filesWithSplittedParts+=($INPUTDIR/$partFileName)
 
         # delete / save source file (takes into account existing files with the same name): ${filename%.*}
