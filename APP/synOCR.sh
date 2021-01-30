@@ -1128,6 +1128,7 @@ if [ -n "${documentSplitPattern}" ]; then
         filesWithSplittedParts=()
         numberSplitPages=0
         filename=$(basename "$input")
+        echo -n "PREPROCESSING:➜ $filename"
 
     # create temporary working directory
         work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
@@ -1194,8 +1195,8 @@ if [ -n "${documentSplitPattern}" ]; then
                     echo "              ➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
                 fi
             else
-                rm -f "$input"
                 echo "              ➜ delete source file"
+                rm -f "$input"
             fi
         else
             filesWithSplittedParts+=($input)
@@ -1203,17 +1204,8 @@ if [ -n "${documentSplitPattern}" ]; then
         rm -rf "$work_tmp"
     done
 
-    # adapt existing files variable to use splitted documents
-
-# ToDo: das Hinzufügen von gesplitteten Dokumenten muss anders organisiert werden
-#   > $files darf nicht innerhalb der Schleife zurrückgesetz werden, sondern darf nur angepasst werden
-#   auch vor der Schleife darf $files nicht zurückgesetz werden, damit ungesplittete Dokumente in der Variablen verbleiben
-#   Vorschlag: gesplitteter Quelldateiname aus $files via sed entfernen
-
-    files=$(echo "$files" | sed -e 's~${input}~~g') # ToDo: noch testen!
-
-#    files=""
-    for fis2 in ${filesWithSplittedParts[@]} ; do
+    files=""
+    for fis2 in "${filesWithSplittedParts[@]}" ; do
         files=$files$'\n'$fis2
     done
     echo "                document split processing finished"
