@@ -1121,12 +1121,12 @@ fi
 
 #document split handling
 if [ -n "${documentSplitPattern}" ]; then
-    filesWithSplittedParts=()
-
     IFS=$'\012'  # corresponds to a $'\n' newline
-    numberSplitPages=0
     for input in ${files} ; do
         IFS=$OLDIFS
+
+        filesWithSplittedParts=()
+        numberSplitPages=0
         filename=$(basename "$input")
 
     # create temporary working directory
@@ -1204,7 +1204,15 @@ if [ -n "${documentSplitPattern}" ]; then
     done
 
     # adapt existing files variable to use splitted documents
-    files="";
+
+# ToDo: das Hinzufügen von gesplitteten Dokumenten muss anders organisiert werden
+#   > $files darf nicht innerhalb der Schleife zurrückgesetz werden, sondern darf nur angepasst werden
+#   auch vor der Schleife darf $files nicht zurückgesetz werden, damit ungesplittete Dokumente in der Variablen verbleiben
+#   Vorschlag: gesplitteter Quelldateiname aus $files via sed entfernen
+
+    files=$(echo "$files" | sed -e 's~${input}~~g') # ToDo: noch testen!
+
+#    files=""
     for fis2 in ${filesWithSplittedParts[@]} ; do
         files=$files$'\n'$fis2
     done
