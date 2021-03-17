@@ -84,7 +84,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
 
 # check Docker:
     if ! $(/usr/local/bin/docker --version | grep -q "version") ; then
-        echo '<p class="center" style="'$synotrred';">'§lang_main_dockerfailed'<br /><br /></p>'
+        echo '<p class="center" style="'$synotrred';">'$lang_main_dockerfailed'<br /><br /></p>'
         echo '<div class="image-right"> </div>
             <img class="imageStyle"
             src="images/status_error@geimist.svg"
