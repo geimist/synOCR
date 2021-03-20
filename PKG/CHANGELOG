@@ -8,6 +8,7 @@ Release Notes
  -  added a counter for processed pages and files per profile
  -  added additional renaming parameters:
     §hhsource §mmsource §sssource §hhnow §mmnow §ssnow §pagecounttotal §filecounttotal §pagecountprofile §filecountprofile
+ -  adjustment for different Docker installations.
     BUGFIXES:
  -  improved date search (thanks to DeeKay1)
  -  tagsymbol with spaces don't work
