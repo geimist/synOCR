@@ -1217,24 +1217,15 @@ for input in ${files} ; do
 # count pages / files:
     if [ $(which pdfinfo) ]; then
         pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
-        echo "pdfinfo gefunden"
-        echo "path:   $(which pdfinfo)"
     else
         pagecount_latest=0
-        echo "pdfinfo nicht gefunden"
+        echo "                ERROR - pdfinfo found"
     fi
-echo "pagecount_latest  $pagecount_latest"
-echo "pagecount         $(get_key_value ./etc/counter pagecount)"
-
 
     pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
     ocrcount_new=$(( $(get_key_value ./etc/counter ocrcount) + 1))
     pagecount_ID_new=$(( $(get_key_value ./etc/counter pagecount_ID${profile_ID}) + $pagecount_latest))
     ocrcount_ID_new=$(( $(get_key_value ./etc/counter ocrcount_ID${profile_ID}) + 1))
-
-echo "ocrcount_new      $ocrcount_new"
-echo "pagecount_ID_new  $pagecount_ID_new"
-echo "ocrcount_ID_new   $ocrcount_ID_new"
 
 # create temporary working directory
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
