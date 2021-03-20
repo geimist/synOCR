@@ -1,7 +1,13 @@
 #!/bin/bash
 # /usr/syno/synoman/webman/3rdparty/synOCR/index.cgi
 
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
+# adjust PATH:
+machinetyp=$(uname --machine)
+if [ $machinetyp = "x86_64" ]; then
+    PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
+elif [ $machinetyp = "aarch64" ]; then
+    PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
+fi
 
 # Zugangsberechtigungen des DSM überprüfen (Syno-Token)
 login=$(php -f /volume*/@appstore/synOCR/includes/token.php) || exit
