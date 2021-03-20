@@ -4,7 +4,7 @@
 OLDIFS=$IFS
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
-
+PATH=$PATH:/usr/local/bin:/opt/usr/bin
 
 new_profile ()
 {
@@ -636,7 +636,7 @@ if [[ "$page" == "edit" ]]; then
         <select name="dockercontainer">'
 
         # local ocrmypdf images:
-        imagelist=($(/usr/local/bin/docker images | sort | awk '/ocrmypdf/ && !/<none>/ {print $1 ":" $2}'))
+        imagelist=($(docker images | sort | awk '/ocrmypdf/ && !/<none>/ {print $1 ":" $2}'))
 
         # check for default images and add if necessary:
         if ! $(echo "${imagelist[@]}" | grep -q "jbarlow83/ocrmypdf:latest" ) ; then
