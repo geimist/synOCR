@@ -1,6 +1,8 @@
 #!/bin/bash
 # /volume1/system/MOUNT_volume1/@appstore/synOCR/main.sh
 
+PATH=$PATH:/usr/local/bin:/opt/usr/bin
+
 # Dateizähler:
 # ---------------------------------------------------------------------
     count_inputpdf=0
@@ -69,7 +71,7 @@
 # ---------------------------------------------------------------------
     if [[ "$page" == "main-kill-synocr" ]]; then
     	killall synOCR.sh
-        /usr/local/bin/docker stop -t 0 synOCR > /dev/null  2>&1
+        docker stop -t 0 synOCR > /dev/null  2>&1
     	echo '<meta http-equiv="refresh" content="0; URL=index.cgi?page=main">'
     fi
 
@@ -83,7 +85,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
 # echo "detected language: ${lang}"
 
 # check Docker:
-    if ! $(/usr/local/bin/docker --version | grep -q "version") ; then
+    if ! $(docker --version | grep -q "version") ; then
         echo '<p class="center" style="'$synotrred';">'$lang_main_dockerfailed'<br /><br /></p>'
         echo '<div class="image-right"> </div>
             <img class="imageStyle"
