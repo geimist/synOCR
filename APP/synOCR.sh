@@ -10,7 +10,7 @@
 
     DevChannel="Release"    # BETA
     set -E -o functrace     # for function failure()
-    PATH=$PATH:/usr/syno/synoman/webman/3rdparty/synOCR/bin
+    PATH=$PATH:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
 
 # ---------------------------------------------------------------------------------
 #           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
@@ -85,7 +85,7 @@
     echo "Device:                   $device ($sysID)"       #  | sed "s/ds//g"
     echo "current Profil:           $profile"
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1")"
-    echo "used image (created):     $dockercontainer ($(/usr/local/bin/docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
+    echo "used image (created):     $dockercontainer ($(docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
     echo "used ocr-parameter:       $ocropt"
     echo "replace search prefix:    $delSearchPraefix"
     echo "renaming syntax:          $NameSyntax"
@@ -95,7 +95,7 @@
     echo "source for filedate:      ${filedate}"
     echo "ignored dates by search:  ${ignoredDate}"
     echo -n "Docker Test:              "
-    if /usr/local/bin/docker --version | grep -q "version"  ; then
+    if docker --version | grep -q "version"  ; then
         echo "OK"
     else
         echo "WARNING: Docker could not be found. Please check if the Docker package has been installed!"
@@ -182,7 +182,7 @@ update_dockerimage()
     check_date=$(date +%Y-%m-%d)
     if echo $dockercontainer | grep -qE "latest$" && [[ $dockerimageupdate = 1 ]] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='$dockercontainer' ") = "$check_date" ]];then
         echo -n "                      ➜ update image [$dockercontainer] ➜ "
-        updatelog=$(/usr/local/bin/docker pull $dockercontainer)
+        updatelog=$(docker pull $dockercontainer)
 
         if [ -z $(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='$dockercontainer'") ]; then
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '$dockercontainer', '$check_date' )"
@@ -225,7 +225,7 @@ sec_to_time()
 OCRmyPDF()
 {
     # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
-    cat "$input" | /usr/local/bin/docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
+    cat "$input" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
 }
 
 
@@ -1167,7 +1167,7 @@ if [ -n "${documentSplitPattern}" ]; then
                 partFileName="$fileNoExtension-$currentPart.$extension"
                 let firstPage=${pages[idx]}+1
                 echo "                splitting pdf: pages $firstPage-$lastPage into $partFileName"
-                dockerlog=$(/usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr $dockercontainer "$filename" --pages . $firstPage-$lastPage -- "$partFileName")
+                dockerlog=$(docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr $dockercontainer "$filename" --pages . $firstPage-$lastPage -- "$partFileName")
                 echo "$dockerlog" | sed -e "s/^/${dockerlogLeftSpace}/g"
                 let currentPart=$currentPart-1
                 let lastPage=${pages[idx]}-1
@@ -1176,7 +1176,7 @@ if [ -n "${documentSplitPattern}" ]; then
             firstPage=1
             partFileName="$fileNoExtension-$currentPart.$extension"
             echo "                splitting pdf: pages $firstPage-$lastPage into $partFileName"
-            dockerlog=$(/usr/local/bin/docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr  $dockercontainer "$filename" --pages . $firstPage-$lastPage -- "$partFileName")
+            dockerlog=$(docker run --rm -i --log-driver=none --mount type=bind,source="${INPUTDIR}",target=/tmp/synocr -w /tmp/synocr --entrypoint /bin/qpdf -a stdin -a stdout -a stderr  $dockercontainer "$filename" --pages . $firstPage-$lastPage -- "$partFileName")
             echo "$dockerlog" | sed -e "s/^/${dockerlogLeftSpace}/g"
             filesWithSplittedParts+=($INPUTDIR/$partFileName)
 
