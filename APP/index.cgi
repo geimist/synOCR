@@ -9,7 +9,7 @@ elif [ $machinetyp = "aarch64" ]; then
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
 fi
 
-# Zugangsberechtigungen des DSM überprüfen (Syno-Token)
+# Check access authorizations of the DSM (Syno-Token)
 login=$(php -f /volume*/@appstore/synOCR/includes/token.php) || exit
 login_user=$(echo $login | sed "s/.*user: //;s/ admin:.*//") || exit
 login_admin=$(echo $login | sed -e 's/.*admin: //') || exit
@@ -19,11 +19,11 @@ if [ -n "$login" ]; then
     fi
 fi
 
-# Script beenden wenn Zugang nicht gewährt
+# Exit script if access not granted
 if [ -z "$access" ]; then
     exit
 else
-    # Benutzerordner initiieren
+    # Initiate user folder
     dir=$(echo /volume*/@appstore/synOCR) || exit
     get_var=$(which get_key_value) || exit
     set_var=$(which synosetkeyvalue) || exit
@@ -47,17 +47,17 @@ else
     grey1="color: #53657D"
     grey2="color: #374355"
 
-    # Konfiguration laden:
+    # Load configuration:
 #    source $dir/app/etc/Konfiguration.txt
 
-    # MAC-Adresse auslesen (um DEV-Seiten zu verstecken)
+    # read MAC-adress (only to hide DEV pages)
     read MAC </sys/class/net/eth0/address
     sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
 fi
 
 source $dir/includes/functions.sh
 
-# Sprachvariablen laden:
+# Load language variables:
     language
 
 if [ -z "$backifs" ]; then
@@ -70,7 +70,7 @@ set -- $QUERY_STRING
 IFS='
 '
 
-# Umgebungsparameter initiieren
+# Initiate environment parameters:
 for i in "$@"; do
     IFS="$backifs"
     variable=${i%%=*}
@@ -96,14 +96,14 @@ if [[ "$mainpage" == "start" ]]; then
     mainpage="main"
 fi
 
-# Layout - Startseite definieren
+# Layout - Define Home Page:
 if [ -z "$page" ]; then
     mainpage="main"
 fi
 
 "$set_var" "$var" "page" ""
 
-# Layout - Grundgerüst öffnen inkl. Navigation -
+# Layout - Open basic framework incl. navigation -
 echo "Content-type: text/html"
 echo
 echo '
@@ -130,7 +130,7 @@ echo '
     <div id="navleftinbox">
     <ul class="li_blank">'
 
-#   alte main-Page:
+#   old main-Page:
     if [[ "$mainpage" == "main" ]]; then
         echo '
         <li><a class="navitemselc" href="index.cgi?page=main"><img class="svg" src="images/home_white@geimist.svg" height="25" width="25"/>'$lang_page1'</a></li>'
@@ -178,7 +178,7 @@ echo '
 <p style="padding: 15px;">
 <div class="clear"></div>'
 
-# Layout - Dynamischer Seitenaustausch
+# Layout - Dynamic page exchange:
 echo '
     <form action="index.cgi" method="get" autocomplete="on">'
 
@@ -193,7 +193,7 @@ echo '
         fi
     fi
 
-# Fehlerausgabe
+# Error output:
 if [ -f "$usersettings/stop2.txt" ]; then
 #<div id="Content_1Col">
     echo '
@@ -226,7 +226,7 @@ if [ -f "footer.sh" ] && [ ! -f "$stop" ]; then
     . ./footer.sh
 fi
 
-# Layout - Grundgerüst schließen -
+# Layout - Close base frame -
 echo '
     </form>
     </div>
