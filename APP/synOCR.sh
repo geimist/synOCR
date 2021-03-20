@@ -1223,7 +1223,11 @@ for input in ${files} ; do
     IFS=$OLDIFS
 
 # count pages / files:
-    pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
+    if [ $(which pdfinfo) ]; then
+        pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
+    else
+        pagecount_latest=0
+    fi
     pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
     ocrcount_new=$(( $(get_key_value ./etc/counter ocrcount) + 1))
     pagecount_ID_new=$(( $(get_key_value ./etc/counter pagecount_ID${profile_ID}) + $pagecount_latest))
