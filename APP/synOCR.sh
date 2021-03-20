@@ -11,14 +11,6 @@
     DevChannel="Release"    # BETA
     set -E -o functrace     # for function failure()
 
-    # adjust PATH:
-    machinetyp=$(uname --machine)
-    if [ $machinetyp = "x86_64" ]; then
-        PATH=$PATH:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
-    elif [ $machinetyp = "aarch64" ]; then
-        PATH=$PATH:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
-    fi
-
 # ---------------------------------------------------------------------------------
 #           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
 # ---------------------------------------------------------------------------------
