@@ -1226,6 +1226,7 @@ for input in ${files} ; do
     if [ $(which pdfinfo) ]; then
         pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
         echo "pdfinfo gefunden"
+        echo "path:   $(which pdfinfo)"
     else
         pagecount_latest=0
         echo "pdfinfo nicht gefunden"
