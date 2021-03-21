@@ -1,5 +1,6 @@
 #!/bin/bash
-# /volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/multidir_workflow.sh
+# ./recursive_inputdir_workflow.sh
+# Tutorial: https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-879535
 
 SOURCEPARENTDIR=""
 SYNOCR_INPUT=""
