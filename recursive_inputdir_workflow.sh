@@ -1,6 +1,7 @@
 #!/bin/bash
 # ./recursive_inputdir_workflow.sh
 # Tutorial: https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-879535
+# Dieses Skript hilft dabei, einmalig OCR auf eine hirachische Verzeichnisstrucktur mit PDF-Dateien anzuwenden
 
 SOURCEPARENTDIR=""
 SYNOCR_INPUT=""
