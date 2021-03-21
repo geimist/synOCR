@@ -1,23 +1,30 @@
 #!/bin/sh
 # /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
-# wechselt in synOCR-Verzeichnis und startet synOCR mit bzw. ohne LOG (je nach Konfiguration)
+# changes to synOCR directory and starts synOCR with or without LOG (depending on configuration)
 
-# wurde das Skript von der GUI aufgerufen (Aufruf mit Parameter "GUI")?
+# was the script called from the GUI (call with parameter "GUI")?
     callFrom=$1
     if [ -z $callFrom ] ; then
         callFrom=shell
+        # adjust PATH:
+        machinetyp=$(uname --machine)
+        if [ $machinetyp = "x86_64" ]; then
+            PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
+        elif [ $machinetyp = "aarch64" ]; then
+            PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
+        fi
     fi
     exit_status=0
 
-# Arbeitsverzeichnis auslesen und hineinwechseln:
+# Read working directory and change into it:
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
 
-# Sprachvariablen laden:
+# Load language variables:
     source "./includes/functions.sh"
     language
 
-# läuft bereits eine Instanz von synOCR?
+# is an instance of synOCR already running?
     synOCR_pid=$( /bin/pidof synOCR.sh )
     if [ ! -z "$synOCR_pid" ] ; then
         if [ $callFrom = GUI ] ; then
@@ -42,7 +49,7 @@
         fi
     fi
 
-# Konfigurationsdatei einbinden:
+# load configuration:
     sSQL="SELECT profile_ID, INPUTDIR, OUTPUTDIR, LOGDIR, SearchPraefix, loglevel, profile FROM config WHERE active='1' "
     sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
 
@@ -57,7 +64,7 @@
         loglevel=$(echo "$entry" | awk -F'\t' '{print $6}')
         profile=$(echo "$entry" | awk -F'\t' '{print $7}')
 
-    # ist das Quellverzeichnis vorhanden und ist der Pfad zulässig?
+    # is the source directory present and is the path valid?
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
             if [ $callFrom = GUI ] ; then
                 echo '
@@ -69,10 +76,10 @@
             continue
         fi
 
-    # muss das Zielverzeichnis erstellt werden und ist der Pfad zulässig?
+    # must the target directory be created and is the path allowed?
         if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$OUTPUTDIR" | awk -F/ '{print $3}') ; then
-                # handelt es sich um einen verschlüsselten Ordner und ist dieser eingehangen?
+                # is it an encrypted folder and is it mounted?
                 if [ $callFrom = GUI ] ; then
                     echo '<p class="center"><span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_target' ! ! !</b><br>EXIT SCRIPT!<br></span></p>'
                 else
@@ -98,7 +105,7 @@
             continue
         fi
 
-    # Dateizähler:
+    # File counter:
         if [ ! -f ./etc/counter ] ; then
             touch ./etc/counter
             echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
@@ -117,12 +124,12 @@
             #fi
         fi
 
-    # nur starten (LOG erstellen), sofern es etwas zu tun gibt:
+    # only start (create LOG) if there is something to do:
         exclusion=false
         count_inputpdf=0
 
         if echo "${SearchPraefix}" | grep -qE '^!' ; then
-            # ist der prefix / suffix ein Ausschlusskriterium?
+            # is the prefix / suffix an exclusion criterion?
             exclusion=true
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e 's/^!//')
         fi
@@ -149,14 +156,14 @@
             continue
         fi
 
-    # synOCR starten und ggf. Logverzeichnis prüfen und erstellen
+    # start synOCR and check and create log directory if necessary
         LOGDIR="${LOGDIR%/}/"
         LOGFILE="${LOGDIR}synOCR_$(date +%Y-%m-%d_%H-%M-%S).log"
 
-        umask 000   # damit Files auch von anderen Usern bearbeitet werden können / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
+        umask 000   # so that files can also be edited by other users / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
         if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
-            ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1     # $LOGFILE wird als Parameter an synOCR übergeben, da die Datei dort ggf. bei ERRORFILES benötigt wird
+            ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1     # $LOGFILE is passed as a parameter to synOCR, since the file may be needed there for ERRORFILES
         elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$LOGDIR" | awk -F/ '{print $3}') ; then
                 if [ $callFrom = GUI ] ; then
