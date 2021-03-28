@@ -2,13 +2,13 @@ Release Notes
 
 ! ! ! ATTENTION ! ! ! The current version dosn't run at DSM 7.0
 
-1.1.0 [2021-xx-xx]
+1.1.0 [2021-03-xx]
     IMPLEMENTATIONS:
  -  added the option to define the tag name via RegEx (Parameter tagname_RegEx in YAML file)
- -  added a counter for processed pages and files per profile
+ -  added a counter for processed pages and files per profile (x86_64 only)
  -  added additional renaming parameters:
     §hhsource §mmsource §sssource §hhnow §mmnow §ssnow §pagecounttotal §filecounttotal §pagecountprofile §filecountprofile
- -  adjustment for different Docker installations (aarch64 - statistics work only limited).
+ -  support for CPU aarch64 (statistics work only limited).
     BUGFIXES:
  -  improved date search (thanks to DeeKay1)
  -  tagsymbol with spaces don't work
