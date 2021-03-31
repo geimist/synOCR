@@ -731,19 +731,19 @@ if [[ "$page" == "edit" ]]; then
         </p>'
 
     # Document split pattern
-#    echo '
-#        <p>
-#        <label>'$lang_edit_set2_documentSplitPattern_title'</label>'
-#        if [ -n "$documentSplitPattern" ]; then
-#            echo '<input type="text" name="documentSplitPattern" value="'$documentSplitPattern'" />'
-#        else
-#            echo '<input type="text" name="documentSplitPattern" value="" />'
-#        fi
-#    echo '
-#        <a class="helpbox" href="#HELP">
-#            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-#            <span>'$lang_edit_set2_documentSplitPattern_help1'</span></a>
-#        </p>'
+    echo '
+        <p>
+        <label>'$lang_edit_set2_documentSplitPattern_title'</label>'
+        if [ -n "$documentSplitPattern" ]; then
+            echo '<input type="text" name="documentSplitPattern" value="'$documentSplitPattern'" />'
+        else
+            echo '<input type="text" name="documentSplitPattern" value="" />'
+        fi
+    echo '
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>'$lang_edit_set2_documentSplitPattern_help1'</span></a>
+        </p>'
     
     # Taglist
     echo '
