@@ -186,7 +186,7 @@ lang_edit_set2_filedate_help1="Wie soll das Datum der Zieldatei angepasst werden
 lang_edit_set2_filedate_help2="Ist OCR-Datum gewählt, wird aber keins gefunden, so wird das Datum der Quelldatei verwendet."
 
 lang_edit_set2_ignoredDate_title="Daten ignorieren"
-lang_edit_set2_ignoredDate_help1="Angegebene Daten werden bei der Suche ignoriert. Es können mehrere Daten angegeben werden. Wichtig ist die richtige Formatangabe:"
+lang_edit_set2_ignoredDate_help1="Angegebene Daten werden bei der Suche ignoriert. Es können mehrere Daten angegeben werden (getrennt durch Leerzeichen). Wichtig ist die richtige Formatangabe: YYY-MM-DD (z.B. 2021-02-29 2021-04-31)"
 
 lang_edit_set3_title="DSM-Benachrichtigung und sonstige Einstellungen"
 
