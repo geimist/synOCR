@@ -66,8 +66,7 @@
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
-# Separator page feature disabled, because not ready yet (also row 94 / ):
-#   documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
+    documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
     ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
 
 # read global values:
@@ -91,7 +90,7 @@
     echo "renaming syntax:          $NameSyntax"
     echo "Symbol for tag marking:   ${tagsymbol}"
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
- #  echo "Document split pattern:   ${documentSplitPattern}"
+    echo "Document split pattern:   ${documentSplitPattern}"
     echo "source for filedate:      ${filedate}"
     echo "ignored dates by search:  ${ignoredDate}"
     echo -n "Docker Test:              "
