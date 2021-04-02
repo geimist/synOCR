@@ -4,7 +4,8 @@
 
 # was the script called from the GUI (call with parameter "GUI")?
     callFrom=$1
-    if [ -z $callFrom ] ; then
+    if [[ ! $callFrom = GUI ]] ; then
+#   if [ -z $callFrom ] ; then
         callFrom=shell
         # adjust PATH:
         machinetyp=$(uname --machine)
