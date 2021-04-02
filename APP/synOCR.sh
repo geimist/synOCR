@@ -93,6 +93,8 @@
     echo "Document split pattern:   ${documentSplitPattern}"
     echo "source for filedate:      ${filedate}"
     echo "ignored dates by search:  ${ignoredDate}"
+    [ $loglevel = "2" ] && \
+    echo "PATH-Variable:            $PATH"
     echo -n "Docker Test:              "
     if docker --version | grep -q "version"  ; then
         echo "OK"
