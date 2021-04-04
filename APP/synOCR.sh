@@ -724,15 +724,12 @@ if [[ ! -z $founddatestr ]]; then
             date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
         fi
 
-        currentCentury=$(($(date +%y) - 1))
-        lastCentury="$(($currentCentury-1))"
-#        echo "                  currentCentury: ${currentCentury}"
-        if [ $(echo $date_yy | wc -c) -eq 3 ]; then
-            if [ $date_yy -gt $currentCentury ]; then
-                date_yy="${lastCentury}${date_yy}"
+        if [ $(echo -n $date_yy | wc -m) -eq 2 ]; then
+            if [ $date_yy -gt $(date +%y) ]; then
+                date_yy="$(($(date +%C) - 1))${date_yy}"
                 echo "                  Date is most probably in the last century. Setting year to ${date_yy}"
             else
-                date_yy="${currentCentury}${date_yy}"
+                date_yy="$(date +%C)${date_yy}"
             fi
         fi
 
