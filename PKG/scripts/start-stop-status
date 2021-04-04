@@ -1,8 +1,21 @@
 #!/bin/sh
 LOG="/var/packages/${SYNOPKG_PKGNAME}/log"
+
 case $1 in
-start) date +'%c started' >> $LOG ;;
-stop)  date +'%c stopped' >> $LOG ;;
-status)	if tail -1 $LOG |grep started; then exit 0; else exit 1; fi ;;
-log) echo "$LOG" ;;
+    start)
+        date +'%c started' >> $LOG
+        ;;
+    stop)
+        date +'%c stopped' >> $LOG
+        ;;
+    status)	
+        if tail -1 $LOG | grep started; then 
+            exit 0
+        else 
+            exit 1
+        fi 
+        ;;
+    log) 
+        echo "$LOG" 
+        ;;
 esac
