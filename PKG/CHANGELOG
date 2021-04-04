@@ -2,11 +2,9 @@ Release Notes
 
 ! ! ! ATTENTION ! ! ! The current version dosn't run at DSM 7.0
 
-1.1.1 [2021-xx-xx]
+1.1.1 [2021-04-xx]
     BUGFIXES:
- -  file date could not be set to source
- -  if no destination folder was defined in all fulfilled rules (YAML file), the destination file was lost
- -  file permission of the target file adjusted (664 and ACL-inheritance)
+ -  fixed century check
 
 1.1.0 [2021-03-31]
     IMPLEMENTATIONS:
