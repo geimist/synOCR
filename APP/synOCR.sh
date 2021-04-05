@@ -1187,7 +1187,7 @@ if [ -n "${documentSplitPattern}" ]; then
                     echo "              ➜ move source file to: ${BACKUPDIR}${filename}"
                 else
                     while [ -f "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf" ]; do
-                        sourcefilecount=$(( $sourceFileCount + 1 ))
+                        sourceFileCount=$(( $sourceFileCount + 1 ))
                         echo "                  continue counting … ($sourceFileCount)"
                     done
                     mv "$input" "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
@@ -1368,7 +1368,7 @@ for input in ${files} ; do
             echo "              ➜ move source file to: ${BACKUPDIR}${filename}"
         else
             while [ -f "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf" ]; do
-                sourcefilecount=$(( $sourceFileCount + 1 ))
+                sourceFileCount=$(( $sourceFileCount + 1 ))
                 echo "                  continue counting … ($sourceFileCount)"
             done
             mv "$input" "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
