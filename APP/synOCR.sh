@@ -267,9 +267,7 @@ if [ $type_of_rule = advanced ]; then
     for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key") ; do
         found=0
 
-        if [ $loglevel = "2" ] ; then
-            echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-        fi
+        [ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
         echo "                search by tag rule: \"${tagrule}\" ➜  "
 
@@ -534,9 +532,7 @@ else
     #    done
     while (( i < maxID )); do
 
-        if [ $loglevel = "2" ] ; then
-            echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-        fi
+        [ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
         if echo "${tagarray[$i]}" | grep -q "=" ;then
         # for combination of tag and category
@@ -804,9 +800,7 @@ adjust_attributes()
 rename()
 {
 
-if [ $loglevel = "2" ] ; then
-    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-fi
+[ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # rename target file:
 echo "              ➜ renaming:"
@@ -858,9 +852,7 @@ renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
 
 echo "$NewName"
 
-if [ $loglevel = "2" ] ; then
-    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-fi
+[ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # set metadata:
 echo -n "              ➜ edit metadata "
@@ -871,9 +863,7 @@ else
     echo "FAILED! - exiftool not found! Please install it over cphub.net if you need it"
 fi
 
-if [ $loglevel = "2" ] ; then
-    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-fi
+[ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # move target files:
 if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
@@ -1246,9 +1236,7 @@ for input in ${files} ; do
     outputtmp="${work_tmp}/${title}.pdf"
     echo "                  temp. target file: ${outputtmp}"
 
-    if [ $loglevel = "2" ] ; then
-        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-    fi
+    [ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # OCRmyPDF:
     sleep 1
@@ -1261,9 +1249,7 @@ for input in ${files} ; do
     echo "              ← OCRmyPDF-LOG-END"
     echo -e
 
-    if [ $loglevel = "2" ] ; then
-        echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-    fi
+    [ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # check if target file is valid (not empty), otherwise continue / defective source files are moved to ERROR including LOG:
     if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
