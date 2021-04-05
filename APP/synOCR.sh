@@ -723,6 +723,7 @@ if [[ ! -z $founddatestr ]]; then
             date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
         fi
 
+    # check century:
         if [ $(echo -n $date_yy | wc -m) -eq 2 ]; then
             if [ $date_yy -gt $(date +%y) ]; then
                 date_yy="$(($(date +%C) - 1))${date_yy}"
