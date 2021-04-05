@@ -579,10 +579,9 @@ renameTag=${renameTag% }
 renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')    # remove starting and ending spaces, or all spaces if no destination folder is defined
 renameTag_raw="$renameTag" # unmodified for tag folder / tag folder with spaces otherwise not possible
 echo "                  rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
+
 echo -e
-if [ $loglevel = "2" ] ; then
-    echo "                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]"; echo -e
-fi
+[ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 }
 
 
@@ -965,6 +964,8 @@ elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
 
     if [ ! -z "$tagsymbol" ]; then
         renameTag=$( echo $renameTag_raw | sed -e "s/${tagsymbol}/ /g" )
+    else
+        renameTag="$renameTag_raw"
     fi
 
     tagarray=( $renameTag )   # define tags as array
