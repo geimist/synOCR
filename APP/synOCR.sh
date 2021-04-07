@@ -1222,6 +1222,14 @@ for input in ${files} ; do
         echo "                ERROR - pdfinfo found"
     fi
 
+
+
+
+echo "read stored count:       $(get_key_value ./etc/counter pagecount)"
+echo "pagecount_latest:        $pagecount_latest"
+
+
+
     pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
     ocrcount_new=$(( $(get_key_value ./etc/counter ocrcount) + 1))
     pagecount_ID_new=$(( $(get_key_value ./etc/counter pagecount_ID${profile_ID}) + $pagecount_latest))
