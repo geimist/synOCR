@@ -1224,11 +1224,18 @@ for input in ${files} ; do
 
 
 echo ">>>>>>>>>>>>> D E B U G >>>>>>>>>>>>>>>>"
+echo "PATH                                          $PATH"
+echo "which pdfinfo:                                $(which pdfinfo)"
+echo "pdfinfo ${input}"
+pdfinfo "${input}"
 echo "cat ./etc/counter"
 cat ./etc/counter
 echo -e
 echo "get_key_value ./etc/counter pagecount:        $(get_key_value ./etc/counter pagecount)"
 echo "pagecount_latest:                             $pagecount_latest"
+
+[ -z $pagecount_latest ] && pagecount_latest=0 && echo "Pagecount auf 0 gesetzt"
+
 echo "<<<<<<<<<<<<< D E B U G <<<<<<<<<<<<<<<<"
 echo -e
 
