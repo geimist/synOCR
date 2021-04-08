@@ -1215,26 +1215,28 @@ for input in ${files} ; do
     IFS=$OLDIFS
 
 # count pages / files:
-    if [ $(which pdfinfo) ]; then
-        pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
+    if [ $(which exiftool) ]; then
+    #   pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
+        pagecount_latest=$(exiftool -"*Count*" "${input}" 2>/dev/null | awk -F' ' '{print $NF}')
     else
         pagecount_latest=0
-        echo "                ERROR - pdfinfo found"
+    #   echo "                ERROR - pdfinfo found"
+        echo "                ERROR - exiftool found / pagecount=0"
     fi
 
 
 echo ">>>>>>>>>>>>> D E B U G >>>>>>>>>>>>>>>>"
-echo "PATH                                          $PATH"
-echo "which pdfinfo:                                $(which pdfinfo)"
-echo "pdfinfo ${input}"
-pdfinfo "${input}"
-echo "cat ./etc/counter"
-cat ./etc/counter
-echo -e
+#echo "PATH                                          $PATH"
+#echo "which pdfinfo:                                $(which pdfinfo)"
+#echo "pdfinfo ${input}"
+#pdfinfo "${input}"
+#echo "cat ./etc/counter"
+#cat ./etc/counter
+#echo -e
 echo "get_key_value ./etc/counter pagecount:        $(get_key_value ./etc/counter pagecount)"
 echo "pagecount_latest:                             $pagecount_latest"
 
-[ -z $pagecount_latest ] && pagecount_latest=0 && echo "Pagecount auf 0 gesetzt"
+#[ -z $pagecount_latest ] && pagecount_latest=0 && echo "Pagecount auf 0 gesetzt"
 
 echo "<<<<<<<<<<<<< D E B U G <<<<<<<<<<<<<<<<"
 echo -e
