@@ -1223,11 +1223,14 @@ for input in ${files} ; do
     fi
 
 
-
-
-echo "read stored count:       $(get_key_value ./etc/counter pagecount)"
-echo "pagecount_latest:        $pagecount_latest"
-
+echo ">>>>>>>>>>>>> D E B U G >>>>>>>>>>>>>>>>"
+echo "cat ./etc/counter"
+cat ./etc/counter
+echo -e
+echo "get_key_value ./etc/counter pagecount:        $(get_key_value ./etc/counter pagecount)"
+echo "pagecount_latest:                             $pagecount_latest"
+echo "<<<<<<<<<<<<< D E B U G <<<<<<<<<<<<<<<<"
+echo -e
 
 
     pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
