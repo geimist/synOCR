@@ -1208,10 +1208,13 @@ for input in ${files} ; do
 # count pages / files:
     if [ $(which pdfinfo) ]; then
         pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
-    else
-        pagecount_latest=0
-        echo "                ERROR - pdfinfo found"
+        [[ $loglevel = "2" ]] && echo "                (pages counted with pdfinfo)"
+    elif [ $(which exiftool) ]; then
+        pagecount_latest=$(exiftool -"*Count*" "${input}" 2>/dev/null | awk -F' ' '{print $NF}')
+        [[ $loglevel = "2" ]] && echo "                (pages counted with exiftool)"
     fi
+
+    [ -z $pagecount_latest ] && pagecount_latest=0 && echo "                ERROR - with pdfinfo / exiftool - \$pagecount was set to 0"
 
     pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
     ocrcount_new=$(( $(get_key_value ./etc/counter ocrcount) + 1))
