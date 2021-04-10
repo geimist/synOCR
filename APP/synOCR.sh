@@ -1082,7 +1082,7 @@ mainrun()
 #########################################################################################
 # This function passes the files to docker / search for tags / …                        #
 #########################################################################################
-"
+
 exclusion=false
 if echo "${SearchPraefix}" | grep -qE '^!' ; then
     # is the prefix / suffix an exclusion criteria?
