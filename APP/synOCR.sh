@@ -1082,7 +1082,7 @@ mainrun()
 #########################################################################################
 # This function passes the files to docker / search for tags / …                        #
 #########################################################################################
-
+"
 exclusion=false
 if echo "${SearchPraefix}" | grep -qE '^!' ; then
     # is the prefix / suffix an exclusion criteria?
@@ -1108,8 +1108,10 @@ else
     fi
 fi
 
+# make special characters visible if necessary
+    [[ $loglevel = "2" ]] && printf "                  show files in INPUT with transcoded special characters\n\n" && ls "${INPUTDIR}" | sed -ne 'l'
 
-#document split handling
+# document split handling
 if [ -n "${documentSplitPattern}" ]; then
     IFS=$'\012'  # corresponds to a $'\n' newline
     for input in ${files} ; do
