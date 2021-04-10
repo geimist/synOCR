@@ -1117,6 +1117,8 @@ else
     fi
 fi
 
+# make special characters visible if necessary
+    [[ $loglevel = "2" ]] && printf "                  show files in INPUT with transcoded special characters\n\n" && ls "${INPUTDIR}" | sed -ne 'l'
 
 #document split handling
 if [ -n "${documentSplitPattern}" ]; then
