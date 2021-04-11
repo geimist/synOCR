@@ -11,6 +11,17 @@
     DevChannel="Release"    # BETA
     set -E -o functrace     # for function failure()
 
+    failure()
+    {
+    # this function show error line
+    # --------------------------------------------------------------
+        # https://unix.stackexchange.com/questions/462156/how-do-i-find-the-line-number-in-bash-when-an-error-occured
+        local lineno=$1
+        local msg=$2
+        echo "ERROR at line $lineno: $msg"
+    }
+    trap 'failure ${LINENO} "$BASH_COMMAND"' ERR
+
 # ---------------------------------------------------------------------------------
 #           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
 # ---------------------------------------------------------------------------------
@@ -162,18 +173,6 @@
 #       |_______________________________________________________________________________|       #
 #                                                                                               #
 #################################################################################################
-
-
-failure()
-{
-# this function show error line
-# --------------------------------------------------------------
-    # https://unix.stackexchange.com/questions/462156/how-do-i-find-the-line-number-in-bash-when-an-error-occured
-    local lineno=$1
-    local msg=$2
-    echo "ERROR at line $lineno: $msg"
-}
-trap 'failure ${LINENO} "$BASH_COMMAND"' ERR
 
 
 update_dockerimage()
