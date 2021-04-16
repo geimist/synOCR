@@ -60,7 +60,7 @@ docker_run () {
         } | bash
     
         # erstelle neues Image:
-            docker commit --change='ENTRYPOINT ["/usr/local/bin/ocrmypdf"]' DEVpolyglot geimist/ocrmypdf-polyglot:${BuildVersion##*v}
+            docker commit --change='ENTRYPOINT ["/usr/local/bin/ocrmypdf"]' DEVpolyglot ${docker_hub_user}/ocrmypdf-polyglot:${BuildVersion##*v}
             docker rm DEVpolyglot
 }
 
@@ -106,7 +106,7 @@ docker_build () {
 
     # baue Image:
         echo "    baue Image ..."
-        docker build -f $dockerfile -t geimist/ocrmypdf-polyglot:${BuildVersion##*v} .
+        docker build -f $dockerfile -t ${docker_hub_user}/ocrmypdf-polyglot:${BuildVersion##*v} .
 
     # temporäres Arbeitsverzeichnis löschen:
         rm -rf "$work_tmp"
@@ -115,9 +115,9 @@ docker_build () {
 # lade neues Image in DockerHub:
 docker_push () {
     echo "   LogIn DockerHub ..."
-    echo "$docker_hub_pw" | docker login --username "$docker_hub_user" --password-stdin
+    echo "$docker_hub_pw" | docker login --username "${docker_hub_user}" --password-stdin
     echo "    push Image ..."
-    docker push geimist/ocrmypdf-polyglot:${BuildVersion##*v}
+    docker push ${docker_hub_user}/ocrmypdf-polyglot:${BuildVersion##*v}
 }
 
 # purge images:
