@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
 #   2021-04-17                                                                  #
-#   v1.0.0                                                                      #
+#   v1.0.1                                                                      #
 #   © 2021 by geimist                                                           #
 #                                                                               #
 #   This script check for new jbarlow83/OCRmyPDF-imgage and adds                #
@@ -11,6 +11,7 @@
 
 
 # https://www.scalyr.com/blog/create-docker-image/
+# /volume1/homes/admin/script/DEV_ocrmypdf-polyglot_BUILD.sh
 
 
 docker_hub_user="<user>"
@@ -20,6 +21,7 @@ use_apt_cacher=1
 apt_cache_dir="/volume1/system/CACHE_apt-cacher-ng"
 
 # --------------------------------------------------------------
+
 FILEPATH="$0"
 execute=0
 date_start=$(date +%s)
@@ -27,9 +29,9 @@ date_start=$(date +%s)
 # Timestamp update :latest:
     stored_latest_last_updated="2021-04-16T08:25:35.854736Z"
 # Timestamp update newst tag:
-    stored_tag_last_updated="2021-04-14T08:27:58.336929Z"
+    stored_tag_last_updated="2021-04-16T21:14:42.30895Z"
 # newst tag:
-    stored_tag_newest="v12.0.0b2"
+    stored_tag_newest="v12.0.0b3"
 
 sec_to_time() 
 {
@@ -49,10 +51,9 @@ sec_to_time()
     printf "%s%02d:%02d:%02d" "$sign" $hours $minutes $seconds
 }
 
-# Variante 1 - veraltet::
+# variant 1 -  (active upgrade) deprecated:
 docker_run () {
-    # Variante 1 (aktive Erweiterung):
-    # start einen tmp Container / installiere alle Sprachen: 
+    # start a tmp container / install all languages: 
         { echo "docker run -i --entrypoint bash --name DEVpolyglot jbarlow83/ocrmypdf:$BuildVersion"
           echo "apt-get update && apt-get install -y apt-transport-https"
           echo "apt-get install -y tesseract-ocr-all"
@@ -64,66 +65,69 @@ docker_run () {
             docker rm DEVpolyglot
 }
 
-# Variante 2 (mit Dockerfile):
+# variant 2 (with dockerfile - settings of the source image are persisted):
 docker_build () {
-    # Variante 2 (mit Dockerfile - Einstellungen des Quellimages bleiben erhalten):
-    # temporäres Verzeichnis erstellen:
-        printf "\n    erstelle Dockerfile ..."
+    # create temporary directory:
+        printf "\n ---> erstelle Dockerfile ..."
         work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
-        trap 'rm -rf "$work_tmp"; exit' EXIT
+        trap 'rm -rf "$work_tmp";/usr/local/bin/docker container stop apt-cacher-ng; exit' EXIT
         dockerfile=$work_tmp/dockerfile
         
-    # erstelle Dockerfile:
+    # create dockerfile:
         echo "FROM jbarlow83/ocrmypdf:$BuildVersion" > $dockerfile
-#       echo "RUN apt-get update && apt-get install -y apt-transport-https" >> $dockerfile
 
-        # soll apt-cacher-ng genutzt werden?:
+        # should apt-cacher-ng be used?:
         if [ $use_apt_cacher = 1 ] ; then
-            echo -n "                      ➜ nutze apt-cacher-ng ..."
-            if ! /usr/local/bin/docker container ls -a | grep -q "apt-cacher-ng" ; then
+            printf "\n                      ➜ use apt-cacher-ng ..."
+            if /usr/local/bin/docker container ls -a | grep -q "apt-cacher-ng" ; then
                 echo "(is running)"
             else
                 echo "(started)"
                 # https://registry.hub.docker.com/r/sameersbn/apt-cacher-ng/
-                /usr/local/bin/docker run --name apt-cacher-ng --init -d -rm \
+                /usr/local/bin/docker run --name apt-cacher-ng --init -d --rm \
                     --publish 3142:3142 \
                     --volume "${apt_cache_dir}":/var/cache/apt-cacher-ng \
                     sameersbn/apt-cacher-ng:latest
 
-    #            until [ "`docker inspect -f {{.State.Running}} apt-cacher-ng`"=="true" ]; do
-    #                sleep 0.1;
-    #            done
+                count=0
+                until [ "$(docker inspect -f {{.State.Running}} apt-cacher-ng  2>/dev/null)" = "true" ] ; do
+                    sleep 0.1;
+                    count=$(($count + 1))
+                    # check 60 seconds for start of apt-cacher-ng
+                    [ $count = 600 ] && echo "                        ERROR! start of apt-cacher-ng failed!" && use_apt_cacher=0 && break
+                done
             fi
-            echo "RUN echo 'Acquire::HTTP::Proxy \"http://172.17.0.1:3142\";' >> /etc/apt/apt.conf.d/01proxy && echo 'Acquire::HTTPS::Proxy \"false\";' >> /etc/apt/apt.conf.d/01proxy" >> $dockerfile
+            [ $use_apt_cacher = 1 ] && echo "RUN echo 'Acquire::HTTP::Proxy \"http://172.17.0.1:3142\";' >> /etc/apt/apt.conf.d/01proxy && echo 'Acquire::HTTPS::Proxy \"false\";' >> /etc/apt/apt.conf.d/01proxy" >> $dockerfile
         fi
 
-        echo "RUN apt-get update" >> $dockerfile
+#        echo "RUN apt-get update" >> $dockerfile
+        echo "RUN apt-get update && apt-get install -y apt-transport-https" >> $dockerfile
         echo "RUN apt-get install -y tesseract-ocr-all" >> $dockerfile
 
-    # hole aktuelles Image:
-        echo "    hole aktuelles Image [jbarlow83/ocrmypdf:$BuildVersion] ..."
+    # pull current image:
+        printf "\n ---> hole aktuelles Image [jbarlow83/ocrmypdf:$BuildVersion] ...\n"
         docker pull "jbarlow83/ocrmypdf:$BuildVersion"
 
-    # baue Image:
-        echo "    baue Image ..."
+    # build image:
+        printf "\n ---> baue Image ...\n"
         docker build -f $dockerfile -t ${docker_hub_user}/ocrmypdf-polyglot:${BuildVersion##*v} .
 
-    # temporäres Arbeitsverzeichnis löschen:
+    # delete temp. workdir:
         rm -rf "$work_tmp"
 }
 
-# lade neues Image in DockerHub:
+# push new image to docker hub:
 docker_push () {
-    echo "   LogIn DockerHub ..."
-    echo "$docker_hub_pw" | docker login --username "${docker_hub_user}" --password-stdin
-    echo "    push Image ..."
+    printf "\n ---> LogIn DockerHub ...\n"
+    echo "$docker_hub_pw" | docker login --username "$docker_hub_user" --password-stdin
+    printf "\n ---> push Image ...\n"
     docker push ${docker_hub_user}/ocrmypdf-polyglot:${BuildVersion##*v}
 }
 
 # purge images:
 purge_images (){
 # stop apt-cache:
-    [ $use_apt_cacher = 1 ] && printf "\n    clean up images:\n" && /usr/local/bin/docker container stop apt-cacher-ng
+    [ $use_apt_cacher = 1 ] && printf "\n ---> clean up images:\n" && /usr/local/bin/docker container stop apt-cacher-ng
 # step 1:
     /usr/local/bin/docker image prune -f
 # step 2:
@@ -142,12 +146,12 @@ if [ -z $1 ] ; then
     tag_newest=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r ".results[].name" | egrep "v[[:digit:]]" | sort -r | head -n1)
     tag_last_updated=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r '.results[] | select(.name=="'${tag_newest}'") | .last_updated')
 
-    echo -n "check for new tag     ➜ "
+    echo -n " ---> check for new tag     ➜ "
     if [[ "$tag_last_updated" != "$stored_tag_last_updated" ]] && [ -n "$tag_last_updated" ]; then
         execute=1
         echo "new release found:"
-        echo "    last release:       $stored_latest_last_updated ($stored_tag_newest)"
-        echo "    current release:    $tag_last_updated ($tag_newest)"
+        echo "     ---> last release:       $stored_latest_last_updated ($stored_tag_newest)"
+        echo "     ---> current release:    $tag_last_updated ($tag_newest)"
 
         BuildVersion=$tag_newest
         docker_build
@@ -159,11 +163,11 @@ if [ -z $1 ] ; then
                 synosetkeyvalue $FILEPATH stored_tag_newest "$tag_newest"
                 echo 2 > /dev/ttyS1 #short beep
             else
-                echo "    ! exit with error (docker_push)"
+                echo "     ---> ! exit with error (docker_push)"
                 exit 1
             fi
         else
-            echo "    ! exit with error (docker_build)"
+            echo "     ---> ! exit with error (docker_build)"
             exit 1
         fi
     else
@@ -174,12 +178,12 @@ if [ -z $1 ] ; then
 #   latest_last_updated=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/?page=1&page_size=1&ordering=last_updated" | jq -r ".results[0].last_updated")
     latest_last_updated=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r '.results[] | select(.name=="latest") | .last_updated')
 
-    echo -n "check for tag: latest ➜ "
+    echo -n " ---> check for tag: latest ➜ "
     if [[ "$latest_last_updated" != "$stored_latest_last_updated" ]] && [ -n "$latest_last_updated" ]; then
         execute=1
         echo "new release found:"
-        echo "    last release:       $stored_latest_last_updated"
-        echo "    current release:    $latest_last_updated"
+        echo "     ---> last release:       $stored_latest_last_updated"
+        echo "     ---> current release:    $latest_last_updated"
 
         BuildVersion=latest
         docker_build
@@ -190,11 +194,11 @@ if [ -z $1 ] ; then
                 synosetkeyvalue $FILEPATH stored_latest_last_updated "$latest_last_updated"
                 echo 2 > /dev/ttyS1 #short beep
             else
-                echo "    ! exit with error (docker_push)"
+                echo "     ---> ! exit with error (docker_push)"
                 exit 1
             fi
         else
-            echo "    ! exit with error (docker_build)"
+            echo "     ---> ! exit with error (docker_build)"
             exit 1
         fi
     else
@@ -204,42 +208,42 @@ elif [ $1 = latest ] ; then
     execute=1
 
     BuildVersion=latest
-    echo "BuildVersion: $BuildVersion"
+    printf "\n ---> BuildVersion: $BuildVersion"
     docker_build
     if [ $? = 0 ]; then
         docker_push
         if [ $? = 0 ]; then
             echo 2 > /dev/ttyS1 #short beep
         else
-            echo "    ! exit with error (docker_push)"
+            echo "     ---> ! exit with error (docker_push)"
             exit 1
         fi
     else
-        echo "    ! exit with error (docker_build)"
+        echo "     ---> ! exit with error (docker_build)"
         exit 1
     fi
 else
     execute=1
 
     BuildVersion=$1
-    echo "BuildVersion: $BuildVersion"
+    printf "\n ---> BuildVersion: $BuildVersion"
     docker_build
     if [ $? = 0 ]; then
         docker_push
         if [ $? = 0 ]; then
             echo 2 > /dev/ttyS1 #short beep
         else
-            echo "    ! exit with error (docker_push)"
+            echo "     ---> ! exit with error (docker_push)"
             exit 1
         fi
     else
-        echo "    ! exit with error (docker_build)"
+        echo "     ---> ! exit with error (docker_build)"
         exit 1
     fi
 fi
 
 if [[ $proxy_state_enabled = no ]] ; then
-    echo "    stop proxy ...    "
+    printf "\n ---> stop proxy ...    "
     "/volume1/homes/admin/script/_funktionen/set-proxy.sh" -d  > /dev/null  2>&1
 fi
 
@@ -248,7 +252,7 @@ if [[ $execute = 1 ]] ; then
     purge_images
 fi
 
-# Delete empty logs:
+# delete empty logs:
 LOGDIR="/volume1/system/@Logfiles/OCRmyPDF-polyglot_BUILD/"
 for i in $(ls -tr "${LOGDIR}" | egrep -o '^OCRmyPDF-polyglot_BUILD.*.log$'); do
     if [ $( cat "${LOGDIR}$i" | wc -l ) -lt 5 ] ; then
@@ -256,6 +260,7 @@ for i in $(ls -tr "${LOGDIR}" | egrep -o '^OCRmyPDF-polyglot_BUILD.*.log$'); do
     fi
 done
 
-echo "duration:             ➜ $(sec_to_time $(expr $(date +%s)-${date_start}))"
+printf "\n ---> duration:             ➜ $(sec_to_time $(expr $(date +%s)-${date_start}))"
 
 exit
+
