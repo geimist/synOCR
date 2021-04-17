@@ -51,7 +51,7 @@ sec_to_time()
     printf "%s%02d:%02d:%02d" "$sign" $hours $minutes $seconds
 }
 
-# variant 1 -  (active upgrade) deprecated:
+# variant 1 -  (active upgrade - deprecated):
 docker_run () {
     # start a tmp container / install all languages: 
         { echo "docker run -i --entrypoint bash --name DEVpolyglot jbarlow83/ocrmypdf:$BuildVersion"
@@ -60,7 +60,7 @@ docker_run () {
           echo "exit"
         } | bash
     
-        # erstelle neues Image:
+        # create new image:
             docker commit --change='ENTRYPOINT ["/usr/local/bin/ocrmypdf"]' DEVpolyglot ${docker_hub_user}/ocrmypdf-polyglot:${BuildVersion##*v}
             docker rm DEVpolyglot
 }
@@ -138,7 +138,7 @@ purge_images (){
 
 
 if [ -z $1 ] ; then
-    echo "Buildversion:         ➜ auto"
+    printf "\n ---> Buildversion:         ➜ auto\n"
 
     # check for new tag:
 #   tag_last_updated=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/?page=2&page_size=1&ordering=last_updated" | jq -r ".results[0].last_updated")
