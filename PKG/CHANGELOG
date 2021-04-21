@@ -2,6 +2,11 @@ Release Notes
 
 ! ! ! ATTENTION ! ! ! The current version dosn't run at DSM 7.0
 
+1.1.2 [2021-04-21]
+    BUGFIXES:
+ -  An error when the page counter could not be calculated.
+ -  counter for processed pages at aarch64 possible, if Exiftool are installed
+
 1.1.1 [2021-04-05]
     BUGFIXES:
  -  fixed century check
