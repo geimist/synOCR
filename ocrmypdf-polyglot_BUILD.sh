@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#   2021-04-17                                                                  #
-#   v1.0.1                                                                      #
+#   2021-04-22                                                                  #
+#   v1.0.2                                                                      #
 #   © 2021 by geimist                                                           #
 #                                                                               #
 #   This script check for new jbarlow83/OCRmyPDF-imgage and adds                #
@@ -27,11 +27,11 @@ execute=0
 date_start=$(date +%s)
 
 # Timestamp update :latest:
-    stored_latest_last_updated="2021-04-16T08:25:35.854736Z"
+    stored_latest_last_updated="2021-04-22T07:14:44.252812Z"
 # Timestamp update newst tag:
-    stored_tag_last_updated="2021-04-16T21:14:42.30895Z"
+    stored_tag_last_updated="2021-04-22T08:06:49.330058Z"
 # newst tag:
-    stored_tag_newest="v12.0.0b3"
+    stored_tag_newest="v12.0.0b4"
 
 sec_to_time() 
 {
@@ -70,7 +70,7 @@ docker_build () {
     # create temporary directory:
         printf "\n ---> erstelle Dockerfile ..."
         work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
-        trap 'rm -rf "$work_tmp";/usr/local/bin/docker container stop apt-cacher-ng; exit' EXIT
+        trap 'rm -rf "$work_tmp";grep -q "apt-cacher-ng" <<< "$(/usr/local/bin/docker container ls -a)"; [ $? = 0 ] && /usr/local/bin/docker container stop apt-cacher-ng; exit' EXIT
         dockerfile=$work_tmp/dockerfile
         
     # create dockerfile:
@@ -141,9 +141,7 @@ if [ -z $1 ] ; then
     printf "\n ---> Buildversion:         ➜ auto\n"
 
     # check for new tag:
-#   tag_last_updated=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/?page=2&page_size=1&ordering=last_updated" | jq -r ".results[0].last_updated")
-#   tag_newest=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/?page=2&page_size=1&ordering=last_updated" | jq -r ".results[0].name")
-    tag_newest=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r ".results[].name" | egrep "v[[:digit:]]" | sort -r | head -n1)
+    tag_newest=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r ".results[].name" | egrep "v[[:digit:]]" | head -n1)
     tag_last_updated=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r '.results[] | select(.name=="'${tag_newest}'") | .last_updated')
 
     echo -n " ---> check for new tag     ➜ "
@@ -175,7 +173,6 @@ if [ -z $1 ] ; then
     fi
 
     # get current releases:
-#   latest_last_updated=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/?page=1&page_size=1&ordering=last_updated" | jq -r ".results[0].last_updated")
     latest_last_updated=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r '.results[] | select(.name=="latest") | .last_updated')
 
     echo -n " ---> check for tag: latest ➜ "
@@ -260,7 +257,7 @@ for i in $(ls -tr "${LOGDIR}" | egrep -o '^OCRmyPDF-polyglot_BUILD.*.log$'); do
     fi
 done
 
-printf "\n ---> duration:             ➜ $(sec_to_time $(expr $(date +%s)-${date_start}))"
+printf "\n ---> duration:             ➜ $(sec_to_time $(expr $(date +%s)-${date_start}))\n"
 
 exit
 
