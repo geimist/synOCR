@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#   2021-04-22                                                                  #
-#   v1.0.2                                                                      #
+#   2021-04-227                                                                 #
+#   v1.0.3                                                                      #
 #   © 2021 by geimist                                                           #
 #                                                                               #
 #   This script check for new jbarlow83/OCRmyPDF-imgage and adds                #
@@ -141,7 +141,15 @@ if [ -z $1 ] ; then
     printf "\n ---> Buildversion:         ➜ auto\n"
 
     # check for new tag:
-    tag_newest=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r ".results[].name" | egrep "v[[:digit:]]" | head -n1)
+    tag_newest=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r ".results[].name" | egrep "v[[:digit:]]" ) #| sort -r | head -n1)
+
+    # workarround, damit Betareleases korrekt sortiert werden können (z.B. v12.0.0b4 vs. v12.0.0)
+    for i in $tag_newest; do
+        # https://qastack.com.de/unix/398819/padding-trailing-whitespaces-in-a-string-with-another-character
+        tag_newest_tmp=$(printf "$(sed -r ':loop; s/ (z*)$/\1z/; t loop' <<< "$(printf '%-10s\n' "$i" )")\n$tag_newest_tmp")
+    done
+    tag_newest=$(echo "$tag_newest_tmp" | sort -rV | head -n1 | sed 's/z*$//')
+
     tag_last_updated=$(curl -s "https://hub.docker.com/v2/repositories/jbarlow83/ocrmypdf/tags/" | jq -r '.results[] | select(.name=="'${tag_newest}'") | .last_updated')
 
     echo -n " ---> check for new tag     ➜ "
