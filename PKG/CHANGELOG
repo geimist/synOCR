@@ -5,6 +5,7 @@ Release Notes
 1.1.2 [2021-04-21]
     BUGFIXES:
  -  an error when the page counter could not be calculated.
+    IMPROVEMENT:
  -  counter for processed pages at aarch64 are now possible if Exiftool is installed
 
 1.1.1 [2021-04-05]
