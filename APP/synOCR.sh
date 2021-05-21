@@ -621,7 +621,7 @@ yaml_validate()
     done
 
 # check uniqueness of parent nodes:
-    if [ $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l ) -ge 1 ] ; then # teste auf Anzahl der Duplikatzeilen
+    if [ $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l ) -ge 1 ] ; then # check for the number of duplicate lines
         echo "main keywords are not unique!"
         echo "dublicats are: $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d)"
     fi
