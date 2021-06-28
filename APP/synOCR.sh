@@ -1217,10 +1217,15 @@ for input in ${files} ; do
 
     [ -z $pagecount_latest ] && pagecount_latest=0 && echo "                ERROR - with pdfinfo / exiftool - \$pagecount was set to 0"
 
-    pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
-    ocrcount_new=$(( $(get_key_value ./etc/counter ocrcount) + 1))
-    pagecount_ID_new=$(( $(get_key_value ./etc/counter pagecount_ID${profile_ID}) + $pagecount_latest))
-    ocrcount_ID_new=$(( $(get_key_value ./etc/counter ocrcount_ID${profile_ID}) + 1))
+#   pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
+#   ocrcount_new=$(( $(get_key_value ./etc/counter ocrcount) + 1))
+#   pagecount_ID_new=$(( $(get_key_value ./etc/counter pagecount_ID${profile_ID}) + $pagecount_latest))
+#   ocrcount_ID_new=$(( $(get_key_value ./etc/counter ocrcount_ID${profile_ID}) + 1))
+
+    pagecount_new=$(( $(grep "^pagecount=" ./etc/counter | awk '-F=' '{print $2}' | sed -e 's/"//g') + $pagecount_latest))
+    ocrcount_new=$(( $(grep "^ocrcount=" ./etc/counter | awk '-F=' '{print $2}' | sed -e 's/"//g') + 1))
+    pagecount_ID_new=$(( $(grep "^pagecount_ID${profile_ID}" ./etc/counter | awk '-F=' '{print $2}' | sed -e 's/"//g') + $pagecount_latest))
+    ocrcount_ID_new=$(( $(grep "^ocrcount_ID${profile_ID}" ./etc/counter | awk '-F=' '{print $2}' | sed -e 's/"//g') + 1))
 
 # create temporary working directory
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
