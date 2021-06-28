@@ -147,10 +147,10 @@ else
     <li><a class="navitem" href="index.cgi?page=edit"><img class="svg" src="images/settings_grey3@geimist.svg" height="25" width="25"/>'$lang_page2'</a></li>'
 fi
 
-if [[ "$mainpage" == "timer" ]]; then
+if [[ "$mainpage" == "timer" ]] && [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
     echo '
     <li><a class="navitemselc" href="index.cgi?page=timer"><img class="svg" src="images/calendar_white@geimist.svg" height="25" width="25"/>'$lang_page3'</a></li>'
-else
+elif [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
     echo '
     <li><a class="navitem" href="index.cgi?page=timer"><img class="svg" src="images/calendar_grey3@geimist.svg" height="25" width="25"/>'$lang_page3'</a></li>'
 fi
@@ -162,13 +162,6 @@ else
     echo '
     <li><a class="navitem" href="index.cgi?page=help"><img class="svg" src="images/help_grey3@geimist.svg" height="25" width="25"/>'$lang_page4'</a></li>'
 fi
-
-#   alte status.sh:
-#    if [[ "$mainpage" == "status" ]] ; then
-#        echo '<li><a class="navitemselc" href="index.cgi?page=status"><img class="svg" src="images/status_white@geimist.svg" height="25" width="25"/>Status</a></li>'
-#    else
-#        echo '<li><a class="navitem" href="index.cgi?page=status"><img class="svg" src="images/status_grey3@geimist.svg" height="25" width="25"/>Status</a></li>'
-#    fi
 
 echo '</ul>
     </div>
