@@ -5,7 +5,6 @@
 # was the script called from the GUI (call with parameter "GUI")?
     callFrom=$1
     if [[ ! $callFrom = GUI ]] ; then
-#   if [ -z $callFrom ] ; then
         callFrom=shell
         # adjust PATH:
         machinetyp=$(uname --machine)
@@ -13,6 +12,24 @@
             PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
         elif [ $machinetyp = "aarch64" ]; then
             PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
+        fi
+
+    # set docker and admin permission to user synOCR for DSM7 and above
+        if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
+            if ! cat /etc/group | grep ^administrators | grep -q synOCR ; then
+                echo "added user synOCR to group administrators ..."
+                sed -i "/^administrators:/ s/$/,synOCR/" /etc/group
+            fi
+    
+            if ! cat /etc/group | grep -q docker ; then
+                echo "create group docker ..."
+                synogroup --add docker
+                chown root:docker /var/run/docker.sock
+                synogroup --member docker synOCR
+            elif ! cat /etc/group | grep ^docker | grep -q synOCR ; then
+                echo "added user synOCR to group docker ..."
+                sed -i "/^docker:/ s/$/,synOCR/" /etc/group
+            fi
         fi
     fi
     exit_status=0
