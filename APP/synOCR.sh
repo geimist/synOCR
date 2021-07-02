@@ -86,7 +86,8 @@
 
 # System Information:
 # ---------------------------------------------------------------------
-    echo "synOCR-version:           $(get_key_value /var/packages/synOCR/INFO version)"
+#   echo "synOCR-version:           $(get_key_value /var/packages/synOCR/INFO version)"
+    echo "synOCR-version:           $(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')"
     machinetyp=$(uname --machine); echo "Architecture:             $machinetyp"
     dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                $dsmbuild"
     read MAC </sys/class/net/eth0/address
@@ -104,7 +105,7 @@
     echo "Document split pattern:   ${documentSplitPattern}"
     echo "source for filedate:      ${filedate}"
     echo "ignored dates by search:  ${ignoredDate}"
-    [ $loglevel = "2" ] && \
+    [[ $loglevel = "2" ]] && \
     echo "PATH-Variable:            $PATH"
     echo -n "Docker Test:              "
     if docker --version | grep -q "version"  ; then
@@ -196,7 +197,7 @@ update_dockerimage()
             echo "updated successfully"
         fi
 
-        if [ $loglevel = "2" ] ; then
+        if [[ $loglevel = "2" ]] ; then
             echo "$updatelog" | sed -e "s/^/                          /g"
         fi
     fi
@@ -266,7 +267,7 @@ if [ $type_of_rule = advanced ]; then
     for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key") ; do
         found=0
 
-        [ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+        [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
         echo "                search by tag rule: \"${tagrule}\" ➜  "
 
@@ -294,9 +295,7 @@ if [ $type_of_rule = advanced ]; then
             echo "                  ➜ RegEx for tag:    $tagname_RegEx" # searchtag
         fi
 
-        if [ $loglevel = "2" ] ; then
-            echo "                      [Subrule]:"
-        fi
+        [[ $loglevel = "2" ]] && echo "                      [Subrule]:"
         # execute subrules:
         for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
             grepresult=0
@@ -331,7 +330,7 @@ if [ $type_of_rule = advanced ]; then
                 echo "                  [value for casesensitive is empty - \"false\" is used]"
                 VARcasesensitive=false
             fi
-            if [ $loglevel = "2" ] ; then
+            if [[ $loglevel = "2" ]] ; then
                 echo "                      >>> search for:      $VARsearchstring"
                 echo "                          isRegEx:         $VARisRegEx"
                 echo "                          searchtyp:       $VARsearchtyp"
@@ -457,11 +456,8 @@ if [ $type_of_rule = advanced ]; then
             esac
 #                fi
 
-            if [ $loglevel = "2" ] && [ $grepresult = "1" ] ; then
-                echo "                          ➜ Subrule matched"
-            elif [ $loglevel = "2" ] && [ ! $grepresult = "1" ] ; then
-                echo "                          ➜ Subrule don't matched"
-            fi
+            [[ $loglevel = "2" ]] && [ $grepresult = "1" ] && echo "                          ➜ Subrule matched"
+            [[ $loglevel = "2" ]] && [ ! $grepresult = "1" ] && echo "                          ➜ Subrule don't matched"
 
         # Check condition:
             case "$condition" in
@@ -531,7 +527,7 @@ else
     #    done
     while (( i < maxID )); do
 
-        [ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+        [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
         if echo "${tagarray[$i]}" | grep -q "=" ;then
         # for combination of tag and category
@@ -573,10 +569,14 @@ fi
 renameTag=${renameTag% }
 renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')    # remove starting and ending spaces, or all spaces if no destination folder is defined
 renameTag_raw="$renameTag" # unmodified for tag folder / tag folder with spaces otherwise not possible
-echo "                  rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
+echo "                rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
 
 echo -e
-[ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+
+if [[ $loglevel = "2" ]] ; then
+    printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+fi
+
 }
 
 
@@ -789,7 +789,7 @@ adjust_attributes()
     fi
 
 # File permissions-Log:
-    if [ $loglevel = "2" ] ; then
+    if [[ $loglevel = "2" ]] ; then
         echo "              ➜ File permissions target file:"
         echo "                  $(ls -l "$output")"
     fi
@@ -799,7 +799,7 @@ adjust_attributes()
 rename()
 {
 
-[ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+[[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # rename target file:
 echo "              ➜ renaming:"
@@ -851,7 +851,7 @@ renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
 
 echo "$NewName"
 
-[ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+[[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # set metadata:
 echo -n "              ➜ edit metadata "
@@ -862,7 +862,7 @@ else
     echo "FAILED! - exiftool not found! Please install it over cphub.net if you need it"
 fi
 
-[ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+[[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # move target files:
 if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
@@ -929,7 +929,7 @@ if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
                 if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
                     echo "                  $commandlog"
                     echo "                  Creating a hard link failed! A file copy is used."
-                    if [ $loglevel = "2" ] ; then
+                    if [[ $loglevel = "2" ]] ; then
                         echo "                list of mounted volumes:"
                         df -h --output=source,target | sed -e "s/^/                      /g"
                         echo -e
@@ -997,7 +997,7 @@ elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
             if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
                 echo "                  $commandlog"
                 echo "                  Creating a hard link failed! A file copy is used."
-                if [ $loglevel = "2" ] ; then
+                if [[ $loglevel = "2" ]] ; then
                     echo "                list of mounted volumes:"
                     df -h --output=source,target | sed -e "s/^/                      /g"
                     echo -e
@@ -1245,7 +1245,7 @@ for input in ${files} ; do
     outputtmp="${work_tmp}/${title}.pdf"
     echo "                  temp. target file: ${outputtmp}"
 
-    [ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # OCRmyPDF:
     sleep 1
@@ -1258,7 +1258,7 @@ for input in ${files} ; do
     echo "              ← OCRmyPDF-LOG-END"
     echo -e
 
-    [ $loglevel = "2" ] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # check if target file is valid (not empty), otherwise continue / defective source files are moved to ERROR including LOG:
     if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
@@ -1302,7 +1302,7 @@ for input in ${files} ; do
     mv "${outputtmp}" "${output}"
 
 # source file permissions-Log:
-    if [ $loglevel = "2" ] ; then
+    if [[ $loglevel = "2" ]] ; then
         echo "              ➜ File permissions source file:"
         echo -n "                  "
         ls -l "$input"
@@ -1325,9 +1325,7 @@ for input in ${files} ; do
 
     content=$(cat "$searchfile" )   # the standard rules search in the variable / the extended rules directly in the source file
 
-    if [ $loglevel = "2" ] ; then
-        cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
-    fi
+    [[ $loglevel = "2" ]] && cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
 
 # search by tags:
     tagsearch
@@ -1379,19 +1377,20 @@ for input in ${files} ; do
     # Notification:
     if [ $dsmtextnotify = "on" ] ; then
         sleep 1
-        synodsmnotify $MessageTo "synOCR" "File [$(basename "${output}")] is processed"
+        echo "                  INFO: (notification dosn't work at DSM7 without i18n …)"
+        #$MessageTo "synOCR" "File [$(basename "${output}")] is processed"
         sleep 1
     fi
 
     if [ $dsmbeepnotify = "on" ] ; then
         sleep 1
-        echo 2 > /dev/ttyS1 #short beep
+        echo 2 > /dev/ttyS1 > /dev/null #short beep
         sleep 1
     fi
 
     if [ ! -z $PBTOKEN ] ; then
         PB_LOG=$(curl $cURLloglevel --header "Access-Token:${PBTOKEN}" https://api.pushbullet.com/v2/pushes -d type=note -d title="synOCR" -d body="Datei [$(basename "${output}")] ist fertig.")
-        if [ $loglevel = "2" ] ; then
+        if [[ $loglevel = "2" ]] ; then
             echo "                  PushBullet-LOG:"
             echo "$PB_LOG" | sed -e "s/^/               /g"
         elif echo "$PB_LOG" | grep -q "error"; then # for log level 1 only error output
