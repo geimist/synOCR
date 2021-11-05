@@ -1,0 +1,3 @@
+PKG_NOINSTALL_ERROR_PART1="Your device"
+PKG_NOINSTALL_ERROR_PART2="with CPU architecture"
+PKG_NOINSTALL_ERROR_PART3="is not supported by synOCR because the required Docker package cannot be installed (x86_64 only)"

@@ -110,7 +110,7 @@ docker_build () {
 
     # build image:
         printf "\n ---> baue Image ...\n"
-        docker build -f $dockerfile -t ${docker_hub_user}/ocrmypdf-polyglot:${BuildVersion##*v} .
+        docker build --force-rm -f $dockerfile -t ${docker_hub_user}/ocrmypdf-polyglot:${BuildVersion##*v} .
 
     # delete temp. workdir:
         rm -rf "$work_tmp"

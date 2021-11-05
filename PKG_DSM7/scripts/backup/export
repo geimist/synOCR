@@ -1,0 +1,18 @@
+. /usr/syno/bin/jsoncmd
+
+DDUCONF="/usr/syno/synoman/webman/3rdparty/synOCR/etc"
+
+EXPPATH=$(jget "${SYNOPKG_BKP_INPUT}" ".temp_path")
+if [ $? -ne 0 ]; then
+    jerr "Failed to get export path"
+    exit 1
+fi
+
+if [ -d "${DDUCONF}" ]; then
+    /bin/cp -rf ${DDUCONF}/* ${EXPPATH}
+fi
+
+jout_begin
+joutstr "app_data_version" "1.0"
+jout_end
+exit 0

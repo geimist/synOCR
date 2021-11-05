@@ -1,0 +1,20 @@
+{
+    ".url": {
+        "SYNO.SDS.ThirdParty.App.synOCR": {
+            "type": "legacy",
+            "title": "synOCR",
+            "desc": "synOCR",
+            "allUsers": false,
+            "allowMultiInstance": false,
+            "grantPrivilege": "all",
+            "advanceGrantPrivilege": true,
+            "configablePrivilege": true,
+            "icon": "images/synOCR_{0}.png",
+            "appWindow": "SYNO.SDS.ThirdParty.App.synOCR",
+            "texts": "texts",
+            "width": 992,
+            "height": 560,
+            "url": "/webman/3rdparty/synOCR/index.cgi"
+        }
+    }
+}

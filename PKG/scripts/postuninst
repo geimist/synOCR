@@ -1,3 +1,0 @@
-#!/bin/sh
-rm -f /usr/syno/synoman/webman/3rdparty/synOCR
-exit 0

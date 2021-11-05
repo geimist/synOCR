@@ -1,0 +1,2 @@
+#!/bin/sh
+/var/packages/synOCR/scripts/start-stop-status "$@"

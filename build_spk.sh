@@ -1,150 +1,192 @@
 #!/bin/bash
-#----------------------------------------------------------------------------------------
-# Scriptaufruf:
-#----------------------------------------------------------------------------------------
-# erstellt das SPK aus dem aktuellen master-branch vom Server:
-# sh ./build_spk.sh
 #
-# erstellt das SPK aus dem als Parameter übergebenen Release vom Server:
-# sh ./build_spk.sh 4.0.7
-#
-#----------------------------------------------------------------------------------------
-# Ordnerstruktur:
-#----------------------------------------------------------------------------------------
-# ./APP --> Arbeitsumgebung (erstellen/editieren/verschieben)
-# ./PKG  --> Archivordner zum Aufbau des SPK (Startscripte etc.)
-#
-
-set -euo pipefail
-IFS=$'\n\t'
-
-build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
-
-function finish {
-	git worktree remove --force "$build_tmp"
-	rm -rf "$build_tmp"
-}
-trap finish EXIT
-
 #######
-
 project="synOCR"
-
 #######
+#----------------------------------------------------------------------------------------
+# Folder structure:
+#----------------------------------------------------------------------------------------
+# ./APP --> Working environment
+# ./PKG  --> Archive folder for building the SPK (start scripts etc.)
+#
+#buildversion=
+# git fetch --all;git reset --hard origin/DSM_unibuild;git checkout DSM_unibuild
 
-if ! [ -x "$(command -v git)" ]; then
-	echo 'Error: git is not installed.' >&2
-	exit 1
-fi
-
-if ! [ -x "$(command -v fakeroot)" ]; then
-    if [ $(whoami) != "root" ]; then
-        echo "WARNUNG: fakeroot ist nicht installiert und du bist auch nicht root!" >&2
-        exit 1
-    else
-    	FAKEROOT=""
-    fi
-else
-	FAKEROOT=$(command -v fakeroot)
-fi
-
-# Arbeitsverzeichnis auslesen und hineinwechseln:
+# Usage info
 # ---------------------------------------------------------------------
-# shellcheck disable=SC2086
-APPDIR=$(cd "$(dirname $0)";pwd)
-cd "${APPDIR}"
+show_help () {
+cat << EOF
+Without arguments, the script creates the SPK from the current master-branch from the server for DSM7.
 
-git pull	# aktualisieren
+Usage:      ./${0##*/} -v=<synOCR-Version> --dsm=<target DSM-Version>
+Example:    ./${0##*/} -v=1.2.0 --dsm=7
 
-buildversion=${1:-latest}
-taggedversions=$(git tag)
+    -v= --version=          specifies which synOCR version is to be built
+        --DSM=              specifies for which DSM version is to be built
 
-echo " - INFO: Erstelle den temporären Buildordner und kopiere Sourcen hinein ..."
+    -h  --help              display this help and exit
 
-git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
-pushd "$build_tmp"
-#set_spk_version="latest-$(date +%s)-$(git log -1 --format="%h")"
-set_spk_version="$(git branch --show-current)_latest_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
+EOF
+exit 1
+}
 
-if echo "$taggedversions" | egrep -q "$buildversion"; then
-	echo "git checkout zu $buildversion"
-	git checkout "$buildversion"
-	set_spk_version="$buildversion"
-else
-	echo "ACHTUNG: Die gewünschte Version wurde im Repository nicht gefunden!"
-	echo "Die $(git rev-parse --abbrev-ref HEAD)-branch wird verwendet!"
-fi
 
-# fallback to old app dir
-if [ -d "$build_tmp"/Build ]; then
-	APP=Build
-else
-	APP=APP
-fi
+# read arguments:
+# ---------------------------------------------------------------------
+    for i in "$@" ; do
+        case $i in
+            -dsm=*|--dsm=*|-DSM=*|--DSM=*)
+            # ToDo: Test, ob Zahl - derzeit 6 oder 7
+            TargetDSM="${i#*=}"
+            shift
+            ;;
+            -v=*|--version=*)
+            buildversion="${i#*=}"
+            shift
+            ;;
+            -h|--help)
+            show_help
+            ;;
+            *)
+            printf "ERROR - unknown argument ($1)!\n\n"
+            show_help
+            ;;
+        esac
+    done
 
-# fallback to old pkg dir
-if [ -d "$build_tmp"/Pack ]; then
-	PKG=Pack
-else
-	PKG=PKG
-fi
+    [ -z $buildversion ] && echo "wrong or empty value for synOCR version - set to \"latest\"" && buildversion="latest"
+    [[ ! $TargetDSM = 6 ]] && [[ ! $TargetDSM = 7 ]] && echo "wrong or empty value for target DSM version - set to 7" && TargetDSM=7
 
-build_version=$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
-#set_spk_version=$build_version
+    echo "requested synOCR version: $buildversion"
+    echo "target DSM version:       $TargetDSM"
 
-echo " - INFO: Es wird foldende Version geladen und gebaut: $set_spk_version - BUILD-Version (INFO-File): $build_version"
+# preparation:
+# ---------------------------------------------------------------------
+    set -euo pipefail
+    IFS=$'\n\t'
 
-# Ausführung: Erstellen des SPK
-echo ""
-echo "-----------------------------------------------------------------------------------"
-echo "   SPK wird erstellt..."
-echo "-----------------------------------------------------------------------------------"
+    build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
+
+    function finish {
+        git worktree remove --force "$build_tmp"
+        rm -rf "$build_tmp"
+    }
+    trap finish EXIT
+
+    if ! [ -x "$(command -v git)" ]; then
+        echo 'Error: git is not installed.' >&2
+        exit 1
+    fi
+
+    if ! [ -x "$(command -v fakeroot)" ]; then
+        if [ $(whoami) != "root" ]; then
+            echo "ERROR: fakeroot are not installed and you are not root!" >&2
+            exit 1
+        else
+            FAKEROOT=""
+        fi
+    else
+        FAKEROOT=$(command -v fakeroot)
+    fi
+
+# read working directory and change into it:
+# ---------------------------------------------------------------------
+    APPDIR=$(cd "$(dirname $0)";pwd)
+    cd "${APPDIR}"
+
+    git pull
+
+#   buildversion=${1:-latest}
+    taggedversions=$(git tag)
+
+printf "\n-----------------------------------------------------------------------------------\n"
+printf " - INFO: Create the temporary build folder and copy sources into it ..."
+printf "\n-----------------------------------------------------------------------------------\n\n"
+
+    git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
+    pushd "$build_tmp"
+    #set_spk_version="latest-$(date +%s)-$(git log -1 --format="%h")"
+    set_spk_version="$(git branch --show-current)_latest_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
+
+    if echo "$taggedversions" | egrep -q "$buildversion"; then
+        echo "git checkout zu $buildversion"
+        git checkout "$buildversion"
+        set_spk_version="$buildversion"
+    else
+        echo "ATTENTION: The requested version was not found in the repository!"
+        echo "The $(git rev-parse --abbrev-ref HEAD)-branch will be used!"
+    fi
+
+printf "\n - INFO: collect the DSM specific files:\n"
+    if [ $TargetDSM -eq 7 ]; then
+        PKG=PKG_DSM7
+        mv $build_tmp/APP/ui/config_DSM7 $build_tmp/APP/ui/config
+        rm -f $build_tmp/APP/ui/config_DSM6
+        mv $build_tmp/APP/ui/images_DSM7 $build_tmp/APP/ui/images
+        rm -rf $build_tmp/APP/ui/images_DSM6
+        sed -i 's/VERSION_DSM/VERSION_DSM7/' "$build_tmp/APP/ui/synOCR-start.sh"
+    else
+        PKG=PKG_DSM6
+        mv $build_tmp/APP/ui/config_DSM6 $build_tmp/APP/ui/config
+        rm -f $build_tmp/APP/ui/config_DSM7
+        mv $build_tmp/APP/ui/images_DSM6 $build_tmp/APP/ui/images
+        rm -rf $build_tmp/APP/ui/images_DSM7
+        sed -i 's/VERSION_DSM/VERSION_DSM6/' "$build_tmp/APP/ui/synOCR-start.sh"
+    fi
+
+    build_version=$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
+
+printf "\n-----------------------------------------------------------------------------------\n"
+printf "   SPK will be created ..."
+printf "\n-----------------------------------------------------------------------------------\n\n"
+    printf "\n - INFO: The following version is loaded and built:\n"
+    echo "    $set_spk_version - BUILD-Version (INFO-File): $build_version"
 
 # Falls versteckter Ordners /.helptoc vorhanden, diesen nach /helptoc umbenennen
-if test -d "${build_tmp}/.helptoc"; then
-	echo ""
-	echo " - INFO: Versteckter Ordner /.helptoc wurde lokalisiert und nach /helptoc umbenannt"
-	mv "${build_tmp}/.helptoc" "${build_tmp}/helptoc"
-fi
+printf "\n - INFO: handle .helptoc files ...\n"
+    if test -d "${build_tmp}/.helptoc"; then
+        echo ""
+        echo " - INFO: Versteckter Ordner /.helptoc wurde lokalisiert und nach /helptoc umbenannt"
+        mv "${build_tmp}/.helptoc" "${build_tmp}/helptoc"
+    fi
 
-# Rechte anpassen
-	echo ""
-	echo " - INFO: Dateirechte anpassen ..."
-	for i in $(find "${build_tmp}/APP/" -type f)
-        do
-        #    echo "ändere APP: $i"
-            chmod 755 "$i"
-            chown root:root "$i"
-        done
-	
-	for i in $(find "${build_tmp}/PKG/" -type f)
-        do
-        #    echo "ändere PKG: $i"
-            chmod 755 "$i"
-            chown root:root "$i"
-        done
+printf "\n - INFO: create empty dirs ...\n"
+    [ ! -d "${build_tmp}/APP/cfg" ] && echo "    create dir ${build_tmp}/APP/cfg" && mkdir "${build_tmp}/APP/cfg"
+    [ ! -d "${build_tmp}/APP/log" ] && echo "    create dir ${build_tmp}/APP/log" && mkdir "${build_tmp}/APP/log"
+    [ ! -d "${build_tmp}/APP/ui/etc" ] && echo "    create dir ${build_tmp}/APP/ui/etc" && mkdir "${build_tmp}/APP/ui/etc"
+    [ ! -d "${build_tmp}/APP/ui/usersettings" ] && echo "    create dir ${build_tmp}/APP/ui/usersettings" && mkdir "${build_tmp}/APP/ui/usersettings"
 
-# Packen und Ablegen der aktuellen Installation in den entsprechenden /Pack - Ordner
-echo ""
-echo " - INFO: Das Archiv package.tgz wird erstellt..."
+printf "\n - INFO: adjust permissions ...\n"
+    chmod -R 755 "${build_tmp}/APP/"
+    chmod -R 755 "${build_tmp}/$PKG/"
 
-$FAKEROOT tar -C "${build_tmp}"/"$APP" -czf "${build_tmp}"/"$PKG"/package.tgz .
+# Packing and dropping the current installation into the appropriate /Pack folder
+    printf "\n - INFO: The archive package.tgz will be created ...\n"
 
-# Wechsel in den Ablageort von package.tgz bezüglich Aufbau des SPK's
-cd "${build_tmp}"/"$PKG"
+    $FAKEROOT tar -C "${build_tmp}/APP" -czf "${build_tmp}/$PKG"/package.tgz .
 
-# Erstellen des eigentlichen SPK's
-echo ""
-echo " - INFO: Das SPK wird erstellt..."
-$FAKEROOT tar -cf "${project}"_"$set_spk_version".spk *
-cp -f "${project}"_"$set_spk_version".spk "${APPDIR}"
+# Change to the storage location of package.tgz regarding the structure of the SPKs
+    cd "${build_tmp}/${PKG}"
 
-echo ""
-echo "-----------------------------------------------------------------------------------"
-echo "   Das SPK wurde erstellt und befindet sich unter..."
-echo "-----------------------------------------------------------------------------------"
-echo ""
-echo "   ${APPDIR}/${project}_$set_spk_version.spk"
-echo ""
+# Creating the final SPK
+    printf "\n - INFO: the SPK will be created ...\n"
+    TargetName="${project}_DSM${TargetDSM}_${set_spk_version}.spk"
+    $FAKEROOT tar -cf "$TargetName" *
+    cp -f "$TargetName" "${APPDIR}"
+
+    printf "\n-----------------------------------------------------------------------------------\n"
+    echo "   The SPK was created and can be found at:"
+    printf "\n-----------------------------------------------------------------------------------\n\n"
+
+    printf "   ${APPDIR}/$TargetName\n"
 
 exit 0
+
+
+
+
+
+
+
+
+

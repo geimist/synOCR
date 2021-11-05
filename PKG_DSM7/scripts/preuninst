@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Script Environment Variables
+# -------------------------------------------------------------------------------------
+# SYNOPKG_PKGNAME               =   Package identify which is defined in INFO
+# SYNOPKG_PKGVER                =   Package version which is defined in INFO
+# SYNOPKG_PKGDEST               =   Package destination path
+#                                   /volume[x]/@appstore/[Package Name]
+# SYNOPKG_TEMP_UPGRADE_FOLDER   =   Temporary upgrade folder
+#                                   /volume1/@tmp/synopkg.tmp/[Package Name]
+# -------------------------------------------------------------------------------------
+
+
+# Important Paths, soft links and variables
+# -------------------------------------------------------------------------------------
+# DSM WebGUI folder
+# /usr/syno/synoman/webman/3rdparty/[Package Name] -> /var/packages/[Package Name]/target
+WEBGUI_FOLDER="/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}"
+
+# Soft link
+# /var/packages/[Package Name]/target -> /volume1/@appstore/[Package Name]
+PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
+
+# Timestamp - Formatting the Timestamp to terminate log entries
+TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
+# -------------------------------------------------------------------------------------
+
+
+# Action...
+# -------------------------------------------------------------------------------------
+
+if [ "$pkgwizard_remove_cronjob" != "true" ]; then
+	exit 0
+fi
+
+# delete Cronjob for synOTR
+    sed -i "/synOCR-start.sh/d" "/etc/crontab"
+
+exit 0

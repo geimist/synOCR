@@ -1,0 +1,18 @@
+. /usr/syno/bin/jsoncmd
+
+DDUCONF="/usr/syno/synoman/webman/3rdparty/synOCR/etc"
+
+IMPPATH=$(jget "${SYNOPKG_BKP_INPUT}" ".temp_path")
+if [ $? -ne 0 ]; then
+    jerr "Failed to get import path"
+    exit 1
+fi
+
+if [ -d "${IMPPATH}" ]; then
+    /bin/cp -rf ${IMPPATH}/* ${DDUCONF}
+fi
+
+jout_begin
+joutstr "app_data_version" "1.0"
+jout_end
+exit 0

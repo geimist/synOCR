@@ -1,0 +1,66 @@
+#!/bin/sh
+
+# Script Environment Variables
+# -------------------------------------------------------------------------------------
+# SYNOPKG_PKGNAME               =   Package identify which is defined in INFO
+# SYNOPKG_PKGVER                =   Package version which is defined in INFO
+# SYNOPKG_PKGDEST               =   Package destination path
+#                                   /volume[x]/@appstore/[Package Name]
+# SYNOPKG_TEMP_UPGRADE_FOLDER   =   Temporary upgrade folder
+#                                   /volume1/@tmp/synopkg.tmp/[Package Name]
+# -------------------------------------------------------------------------------------
+
+
+# Important Paths, soft links and variables
+# -------------------------------------------------------------------------------------
+# DSM WebGUI folder
+# /usr/syno/synoman/webman/3rdparty/[Package Name] -> /var/packages/[Package Name]/target
+#WEBGUI_FOLDER="/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}"
+if [ -d "${SYNOPKG_PKGDEST}/etc" ]; then
+    WEBGUI_FOLDER="${SYNOPKG_PKGDEST}"
+elif [ -d "${SYNOPKG_PKGDEST}/ui/etc" ]; then
+    WEBGUI_FOLDER="${SYNOPKG_PKGDEST}/ui"
+fi
+
+# Soft link
+# /var/packages/[Package Name]/target -> /volume1/@appstore/[Package Name]
+PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
+
+# Timestamp - Formatting the Timestamp to terminate log entries
+TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
+# -------------------------------------------------------------------------------------
+
+
+# Action...
+# -------------------------------------------------------------------------------------
+if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}" ]; then
+    cp -rf ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc/* ${WEBGUI_FOLDER}/etc
+    chmod -R 755 ${WEBGUI_FOLDER}/etc
+    echo "${TIMESTAMP} - Restore the SQLite database from ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc to ${WEBGUI_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
+
+    echo "restored source files:"  >>/tmp/${SYNOPKG_PKGNAME}.history
+    ls -la ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc  >>/tmp/${SYNOPKG_PKGNAME}.history
+
+    echo "restored target files:"  >>/tmp/${SYNOPKG_PKGNAME}.history
+    ls -la ${WEBGUI_FOLDER}/etc  >>/tmp/${SYNOPKG_PKGNAME}.history
+
+    [ -f {WEBGUI_FOLDER}/etc/placeholder ] && rm -f {WEBGUI_FOLDER}/etc/placeholder && echo "delete {WEBGUI_FOLDER}/etc/placeholder"  >>/tmp/${SYNOPKG_PKGNAME}.history
+
+    # Konfiguration um neue Variablen ergänzen
+    echo "${TIMESTAMP} - Add new variables to configuration file (upgradeconfig.sh)" >>/tmp/${SYNOPKG_PKGNAME}.history
+    ${WEBGUI_FOLDER}/upgradeconfig.sh >>/tmp/${SYNOPKG_PKGNAME}.history
+else
+    echo "${TIMESTAMP} - Restore of SQLite database failed!" >>/tmp/synOCR.upgrade
+fi
+
+echo "${TIMESTAMP} - Package update completed." >>/tmp/${SYNOPKG_PKGNAME}.history
+printf "------------------------------------------------------------------------------------------------------------------------------------------\n\n" >>/tmp/${SYNOPKG_PKGNAME}.history
+
+exit 0
+
+#if [ -d "/tmp/synOCR" ] && [ -d "/usr/syno/synoman/webman/3rdparty/synOCR" ]; then
+#    cp -rf /tmp/synOCR/* /usr/syno/synoman/webman/3rdparty/synOCR/etc
+    
+    # Konfiguration um neue Variablen ergänzen:
+#    /usr/syno/synoman/webman/3rdparty/synOCR/upgradeconfig.sh
+#fi
