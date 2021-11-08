@@ -13,20 +13,20 @@ For questions: synocr [@] geimist.eu
 
 **The following files are needed to translate:**
 
-Mainfile for GUI:
+File 1 - mainfile for GUI (most important):
 - .[/APP/ui/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/APP/ui/lang)lang_\<language\_code\>.txt
 
-other files for Packetmanagement:   
-- .[/PKG_DSM6/scripts/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/scripts/lang)**\<language_code\>**
-- .[/PKG_DSM6/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/WIZARD_UIFILES)uninstall\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
-- .[/PKG_DSM6/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/WIZARD_UIFILES)upgrade\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
-- .[/PKG_DSM6/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/INFO) (➜ only Parameter **"description"** !)
+other files for packetmanagement:   
+- File 2: .[/PKG_DSM6/scripts/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/scripts/lang)**\<language_code\>**
+- File 3: .[/PKG_DSM6/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/WIZARD_UIFILES)uninstall\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
+- File 4: .[/PKG_DSM6/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/WIZARD_UIFILES)upgrade\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
+- File 5: .[/PKG_DSM6/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/INFO) (➜ only Parameter **"description"** !)
     - description_\<language\_code\>="\<translated description\>"   
 
-- .[/PKG_DSM7/scripts/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/scripts/lang)**\<language_code\>**
-- .[/PKG_DSM7/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/WIZARD_UIFILES)uninstall\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
-- .[/PKG_DSM7/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/WIZARD_UIFILES)upgrade\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
-- .[/PKG_DSM7/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/INFO) (➜ only Parameter **"description"** !)
+- File 6: .[/PKG_DSM7/scripts/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/scripts/lang)**\<language_code\>**
+- File 7: .[/PKG_DSM7/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/WIZARD_UIFILES)uninstall\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
+- File 8: .[/PKG_DSM7/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/WIZARD_UIFILES)upgrade\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
+- File 9: .[/PKG_DSM7/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/INFO) (➜ only Parameter **"description"** !)
     - description_\<language\_code\>="\<translated description\>"   
   
   
