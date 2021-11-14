@@ -8,23 +8,22 @@ PATH=$PATH:/usr/local/bin:/opt/usr/bin
 
 new_profile ()
 {
-# In dieser Funktion wird ein neuer Profildatensatz in die DB geschrieben
-# Aufruf: new_profile "Profilname"
+# In this function a new profile record is written to the DB
+# Call: new_profile "profile name"
 # --------------------------------------------------------------
     sqliteinfo=$(sqlite3 ./etc/synOCR.sqlite "INSERT INTO config ( profile ) VALUES ( '$1' )")
 }
 
 
-# Check DB (ggf. erstellen / upgrade):
+# Check DB (create if necessary / upgrade):
     DBupgradelog=$(./upgradeconfig.sh)
 
 convert2YAML ()
 {
-# In dieser Funktion wird die bestehende Tagliste in eine YAML-Datei geschrieben
+# In this function the existing tag list is written to a YAML file
 # --------------------------------------------------------------
 
 if [ -f ${SAMPLECONFIGFILE} ]; then
-    # ${SAMPLECONFIGFILE} existiert bereits
     echo "${SAMPLECONFIGFILE} already exists"
     return 1
 fi
@@ -32,15 +31,15 @@ fi
 if [ -f "$taglist" ]; then
     taglist=$( cat "$taglist" )
 else
-    # BackUp des Datenbankeintrags
+    # BackUp of the database entry
     echo "➜ BackUp the database entry of the tag list"
     BackUp_taglist="${INPUTDIR%/}/_BackUp_taglist_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")]_$(date +%s).txt"
     echo "$taglist" > "${BackUp_taglist}"
     chmod 755 "${BackUp_taglist}"
 fi
 
-taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )    # Leerzeichen in tags codieren und Semikola zu Leerzeichen (für Array) konvertieren
-tagarray=( $taglist2 )   # Tags in Array überführen
+taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )    # encode spaces in tags and convert semicolons to spaces (for array)
+tagarray=( $taglist2 )   # Transfer tags to array
 
 count=1
 
@@ -132,11 +131,11 @@ echo "# synOCR_YAMLRULEFILE   # keep this line!
 
 " > ${SAMPLECONFIGFILE}
 
-# Hilfetext mit fester Breite und abschließendem #:
+# Help text with fixed width and closing #:
     echo "➜ write description"
     echo "$samplefilecontent" | while read data
     do
-        # Zählweise korregieren:
+        # Correct counting:
         # ToDo: funktioniert noch nicht zuverlässig …
         lenRAW=${#data}
         stringCLEAN=${data//[ööüßÄÜÖ]/}           # ToDo: keine Ausschlusssuche, sondern nach gültigen ASCII-Zeichen suchen und rest addieren / würde auch Sonderzeichen abdecken
@@ -183,12 +182,12 @@ echo "
 }
 writesamplefile
 
-# konvertiere / schreibe die Userkonfig:
+# convert / write the user config:
 echo "➜ convert / write the userconfig"
 for i in ${tagarray[@]}; do
 
     if echo "$i" | grep -q "=" ;then
-    # bei Kombination aus Tag und Kategorie
+    # for combination of tag and category
         if echo $(echo "$i" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
             searchtyp=is
         else
