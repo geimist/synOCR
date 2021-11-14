@@ -6,7 +6,8 @@ DSM6.x version you can found at cphub.net
 
 known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted 
-    and possibly not mounted does not work when running the program via the GUI. 
+    and possibly not mounted does not work when running the program via the GUI
+    (due to the known rights restrictions)
 
 1.3.0 [2021-xx-xx]
     BUGFIXES:
