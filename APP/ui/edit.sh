@@ -273,7 +273,7 @@ if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile"
         getprofile=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
         # getprofile (write to $var without GUI):
         encode_value=$getprofile
-        decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
+        decode_value=$(urldecode "$encode_value")
         "$set_var" "./usersettings/var.txt" "getprofile" "$decode_value"
         "$set_var" "./usersettings/var.txt" "encode_getprofile" "$encode_value"
 
@@ -524,7 +524,7 @@ if [[ "$page" == "edit" ]]; then
 
     # profile ID (write to $var without GUI)
         encode_value=$profile_ID
-        decode_value=$(echo "$encode_value" | sed -f ./includes/decode.sed)
+        decode_value=$(urldecode "$encode_value")
         "$set_var" "./usersettings/var.txt" "profile_ID" "$decode_value"
         "$set_var" "./usersettings/var.txt" "encode_profile_ID" "$encode_value"
     
