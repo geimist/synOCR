@@ -12,7 +12,7 @@ known issues / limitations:
     BUGFIXES:
  -  Creating the required user group 'docker' was not possible if a similarly named group already existed.
  -  …
- -  Minorbugfixes (thx to tommes)
+ -  minor bugfixes (thx to tommes)
     IMPROVEMENT:
  -  Handling of special characters improved
     IMPLEMENTATIONS:
