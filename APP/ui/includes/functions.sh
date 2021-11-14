@@ -1,4 +1,5 @@
 #!/bin/bash
+# /usr/syno/synoman/webman/3rdparty/synOCR/includes/functions.sh
 
 # ---------------------------------------------------------------------- #
 # native URL encode & decode:
