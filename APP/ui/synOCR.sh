@@ -48,6 +48,8 @@
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
 
+    source ./includes/functions.sh
+
 # load configuration:
 # ---------------------------------------------------------------------
 
@@ -88,18 +90,18 @@
 
 # System Information:
 # ---------------------------------------------------------------------
-#   echo "synOCR-version:           $(get_key_value /var/packages/synOCR/INFO version)"
     echo "synOCR-version:           $(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')"
     machinetyp=$(uname --machine); echo "Architecture:             $machinetyp"
     dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                $dsmbuild"
     read MAC </sys/class/net/eth0/address
     sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)"
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
-    echo "Device:                   $device ($sysID)"       #  | sed "s/ds//g"
+    echo "Device:                   $device ($sysID)"
     echo "current Profil:           $profile"
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1")"
     echo "used image (created):     $dockercontainer ($(docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
     echo "used ocr-parameter:       $ocropt"
+    echo "search prefix:            $SearchPraefix"
     echo "replace search prefix:    $delSearchPraefix"
     echo "renaming syntax:          $NameSyntax"
     echo "Symbol for tag marking:   ${tagsymbol}"
@@ -813,8 +815,10 @@ if [ -z "$NameSyntax" ]; then
 fi
 
 echo -n "                  apply renaming syntax ➜ "
-title=$(echo "${title}" | sed -f ./includes/encode.sed)             # encode special characters for sed compatibility
-renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
+title=$(urlencode "${title}")             # encode special characters for sed compatibility
+#title=$(echo "${title}" | sed -f ./includes/encode.sed)             # encode special characters for sed compatibility
+renameTag=$(urlencode "${renameTag}")
+#renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
 
 NewName="$NameSyntax"
 NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
@@ -854,8 +858,10 @@ NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
 NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
 NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
 
-NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # decode special characters
-renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
+NewName=$(urldecode "$NewName")          # decode special characters
+renameTag=$(urldecode "${renameTag}")
+#NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # decode special characters
+#renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
 
 echo "$NewName"
 
