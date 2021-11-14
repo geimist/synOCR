@@ -1,7 +1,7 @@
 #!/bin/bash
 # /usr/syno/synoman/webman/3rdparty/synOCR/index.cgi
 
-# System initiieren                                                      
+# Initiate system
 # ---------------------------------------------------------------------
     machinetyp=$(uname --machine)
     if [ $machinetyp = "x86_64" ]; then
@@ -16,87 +16,88 @@
     app_home=$(echo /volume*/@appstore/${app_name}/ui)
     [ ! -d "${app_home}" ] && exit
 
-# Zurücksetzten möglicher Zugangsberechtigungen
+# Resetting possible access authorizations
     unset syno_login syno_token syno_user user_exist is_admin is_privileged
 
 
-# App Authentifizierung auswerten
+# Evaluate app authentication
 # --------------------------------------------------------------
-	# Zum Auswerten des SynoToken, REQUEST_METHOD auf GET ändern
-	[[ "${REQUEST_METHOD}" == "POST" ]] && REQUEST_METHOD="GET" && OLD_REQUEST_METHOD="POST"
+    # To evaluate the SynoToken, change REQUEST_METHOD to GET.
+    [[ "${REQUEST_METHOD}" == "POST" ]] && REQUEST_METHOD="GET" && OLD_REQUEST_METHOD="POST"
 
 
-	# Auslesen und prüfen der Login Berechtigung  ( login.cgi )
-	# ----------------------------------------------------------
-		syno_login=$(/usr/syno/synoman/webman/login.cgi)
+    # Read out and check the login authorization ( login.cgi )
+    # ----------------------------------------------------------
+        syno_login=$(/usr/syno/synoman/webman/login.cgi)
 
-		# SynoToken ( nur bei eingeschaltetem Schutz gegen Cross-Site Request Forgery Attacken )
-		if echo ${syno_login} | grep -q SynoToken ; then
-			syno_token=$(echo "${syno_login}" | grep SynoToken | cut -d ":" -f2 | cut -d '"' -f2)
-		fi
-		if [ -n "${syno_token}" ]; then
-			[ -z ${QUERY_STRING} ] && QUERY_STRING="SynoToken=${syno_token}" || QUERY_STRING="${QUERY_STRING}&SynoToken=${syno_token}"
-		fi
+        # SynoToken ( only when protection against cross-site request forgery attacks is enabled )
+        if echo ${syno_login} | grep -q SynoToken ; then
+            syno_token=$(echo "${syno_login}" | grep SynoToken | cut -d ":" -f2 | cut -d '"' -f2)
+        fi
 
-		# Login Berechtigung ( result=success )
-		if echo ${syno_login} | grep -q result ; then
-			login_result=$(echo "${syno_login}" | grep result | cut -d ":" -f2 | cut -d '"' -f2)
-		fi
-		[[ ${login_result} != "success" ]] && { echo 'Access denied'; exit; }
+        if [ -n "${syno_token}" ]; then
+            [ -z ${QUERY_STRING} ] && QUERY_STRING="SynoToken=${syno_token}" || QUERY_STRING="${QUERY_STRING}&SynoToken=${syno_token}"
+        fi
 
-		# Login erfolgreich ( success=true )
-		if echo ${syno_login} | grep -q success ; then
-			login_success=$(echo "${syno_login}" | grep success | cut -d "," -f3 | grep success | cut -d ":" -f2 | cut -d " " -f2 )
-		fi
-		[[ ${login_success} != "true" ]] && { echo 'Access denied'; exit; }
+        # Login authorization ( result=success )
+        if echo ${syno_login} | grep -q result ; then
+            login_result=$(echo "${syno_login}" | grep result | cut -d ":" -f2 | cut -d '"' -f2)
+        fi
+        [[ ${login_result} != "success" ]] && { echo 'Access denied'; exit; }
 
-
-	# REQUEST_METHOD wieder zurück auf POST setzen
-	[[ "${OLD_REQUEST_METHOD}" == "POST" ]] && REQUEST_METHOD="POST" && unset OLD_REQUEST_METHOD
+        # Login successful ( success=true )
+        if echo ${syno_login} | grep -q success ; then
+            login_success=$(echo "${syno_login}" | grep success | cut -d "," -f3 | grep success | cut -d ":" -f2 | cut -d " " -f2 )
+        fi
+        [[ ${login_success} != "true" ]] && { echo 'Access denied'; exit; }
 
 
-	# Auslesen von Benutzer/Gruppe aus der authenticate.cgi
-	# ----------------------------------------------------------
-		syno_user=$(/usr/syno/synoman/webman/authenticate.cgi)
-
-		# Prüfen, ob der Benutzer existiert
-		user_exist=$(grep -o "^${syno_user}:" /etc/passwd)
-		[ -n "${user_exist}" ] && user_exist="yes" || exit
-
-		# Prüfen, ob der lokale Benutzer der Gruppe "administrators" angehört
-		if id -G "${syno_user}" | grep -q 101; then
-			is_admin="yes"
-		else
-			is_admin="no"
-		fi
-
-	# Authentifizierung auf Anwendungsebene auswerten
-	# ----------------------------------------------------------
-		# Zum auswerten der Authentifizierung muss die Datei /usr/syno/bin/synowebapi
-		# nach ${app_home}/modules/synowebapi kopiert, sowie die Besitzrechte
-		# auf ${app_name}:${app_name} angepasst werden.
-
-		if [ -f "${app_home}/includes/$include_synowebapi" ]; then
-			rar_data=$($app_home/includes/$include_synowebapi --exec api=SYNO.Core.Desktop.Initdata method=get version=1 runner="$syno_user" | jq '.data.AppPrivilege')
-			syno_privilege=$(echo "${rar_data}" | grep "SYNO.SDS.ThirdParty.App.${app_name}" | cut -d ":" -f2 | cut -d '"' -f2)
-			if echo "${syno_privilege}" | grep -q "true"; then
-				is_authenticated="yes"
-			else
-				is_authenticated="no"
-			fi
-		else
-			is_authenticated="no"
-			txtActivatePrivileg="<b>To enable app level authentication do...</b><br /><b>root@[local-machine]:~#</b> cp /usr/syno/bin/synowebapi /var/packages/${app_name}/target/ui/modules<br /><b>root@[local-machine]:~#</b> chown ${app_name}.${app_name} /var/packages/$MYPKG/target/ui/modules/synowebapi"
-		fi
+    # REQUEST_METHOD set back to POST
+    [[ "${OLD_REQUEST_METHOD}" == "POST" ]] && REQUEST_METHOD="POST" && unset OLD_REQUEST_METHOD
 
 
-	# Variablen zum Schutz auf "readonly" setzen oder Inhalt leeren
-	# ----------------------------------------------------------
-		unset syno_login rar_data syno_privilege
-		readonly syno_token syno_user user_exist is_admin is_authenticated
+    # Reading user/group from authenticate.cgi
+    # ----------------------------------------------------------
+        syno_user=$(/usr/syno/synoman/webman/authenticate.cgi)
+
+        # Check if the user exists
+        user_exist=$(grep -o "^${syno_user}:" /etc/passwd)
+        [ -n "${user_exist}" ] && user_exist="yes" || exit
+
+        # Check whether the local user belongs to the "administrators" group
+        if id -G "${syno_user}" | grep -q 101; then
+            is_admin="yes"
+        else
+            is_admin="no"
+        fi
+
+    # Evaluate authentication at application level
+    # ----------------------------------------------------------
+        # To evaluate the authentication, the file /usr/syno/bin/synowebapi
+        # must be copied to ${app_home}/modules/synowebapi, and the
+        # ownership must be adjusted to ${app_name}:${app_name}.
+
+        if [ -f "${app_home}/includes/$include_synowebapi" ]; then
+            rar_data=$($app_home/includes/$include_synowebapi --exec api=SYNO.Core.Desktop.Initdata method=get version=1 runner="$syno_user" | jq '.data.AppPrivilege')
+            syno_privilege=$(echo "${rar_data}" | grep "SYNO.SDS.ThirdParty.App.${app_name}" | cut -d ":" -f2 | cut -d '"' -f2)
+            if echo "${syno_privilege}" | grep -q "true"; then
+                is_authenticated="yes"
+            else
+                is_authenticated="no"
+            fi
+        else
+            is_authenticated="no"
+            txtActivatePrivileg="<b>To enable app level authentication do …</b><br /><b>root@[local-machine]:~#</b> cp /usr/syno/bin/synowebapi /var/packages/${app_name}/target/ui/modules<br /><b>root@[local-machine]:~#</b> chown ${app_name}.${app_name} /var/packages/$MYPKG/target/ui/modules/synowebapi"
+        fi
 
 
-# Spracheinstellungen aus der ../includes/functions.sh laden
+    # Set variables to "readonly" for protection or empty contents
+    # ----------------------------------------------------------
+        unset syno_login rar_data syno_privilege
+        readonly syno_token syno_user user_exist is_admin is_authenticated
+
+
+# Load language settings from ./includes/functions.sh
     [ -f "${app_home}/includes/functions.sh" ] && source "${app_home}/includes/functions.sh" || exit
     language
 
@@ -110,8 +111,8 @@
     fi
     var="${app_home}/usersettings/var.txt"
 
-#    var="$usersettings/var.txt"
-#    stop="$usersettings/stop.txt"
+#   var="$usersettings/var.txt"
+#   stop="$usersettings/stop.txt"
     stop="${app_home}/usersettings/stop.txt"
     black="color: #000000"
     green="color: #00B10D"
@@ -126,7 +127,7 @@
 
     # read MAC-adress (only to hide DEV pages)
     read MAC </sys/class/net/eth0/address
-    sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
+    sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
 
 
     if [ -z "$backifs" ]; then
@@ -144,7 +145,7 @@
         IFS="$backifs"
         variable=${i%%=*}
         encode_value=${i##*=}
-        decode_value=$(echo "$encode_value" | sed -f ${app_home}/includes/decode.sed)
+        decode_value=$(urldecode "$encode_value")
         "$set_var" "$var" "$variable" "$decode_value"
         "$set_var" "$var" "encode_$variable" "$encode_value"
     done
@@ -247,7 +248,7 @@ echo '
 # Layout - Dynamic page exchange:
 echo '
     <form action="index.cgi" method="get" autocomplete="on">'
-	
+    
 
     if [ -z "$mainpage" ]; then
         echo 'The page could not be found!'
