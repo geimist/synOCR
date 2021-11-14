@@ -12,9 +12,10 @@ known issues / limitations:
     BUGFIXES:
  -  Creating the required user group 'docker' was not possible if a similarly named group already existed.
  -  …
-    Minorbugfixes (thx to tommes)
+ -  Minorbugfixes (thx to tommes)
     IMPROVEMENT:
  -  Handling of special characters improved
+    IMPLEMENTATIONS:
  -  Renaming parameter for the year can now be 2 or 4 digits 
     (§yocr2 §yocr4 §ynow2 §ynow4 §ysource2 §ysource4)
  -   
