@@ -6,7 +6,7 @@ DSM7 version you can found at cphub.net
 
 1.3.0 [2021-xx-xx]
     BUGFIXES:
- -  …
+ -  RegEx with lookahead / lookbehind for tag names were not possible
  -  minor bugfixes (thx to tommes)
     IMPROVEMENT:
  -  Handling of special characters improved
