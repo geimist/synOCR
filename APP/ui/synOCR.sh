@@ -72,7 +72,19 @@
     searchAll=$(echo "$sqlerg" | awk -F'\t' '{print $12}')
     moveTaggedFiles=$(echo "$sqlerg" | awk -F'\t' '{print $13}')
     NameSyntax=$(echo "$sqlerg" | awk -F'\t' '{print $14}')
-    ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
+#    ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
+
+#echo -e; echo -e
+#echo "$ocropt" | wc -m
+#echo "used ocr-parameter:       $ocropt"
+# sed "s/ones/one's/" <<< 'ones thing'
+#echo "$sqlerg" | awk -F'\t' '{print $15}'
+    ocropt=$(urldecode "$(echo "$sqlerg" | awk -F'\t' '{print $15}')" | sed "s/'/\\\'/g")    # use urldecode, due to the problematic saving of quotes via the GUI.
+#echo "$ocropt" | wc -m
+#echo "used ocr-parameter:       $ocropt"
+
+#echo -e; echo -e
+    
     dockercontainer=$(echo "$sqlerg" | awk -F'\t' '{print $16}')
     PBTOKEN=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
     dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
@@ -229,8 +241,10 @@ sec_to_time()
 
 OCRmyPDF()
 {
+    echo $ocropt
+#    exit
     # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
-    cat "$input" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer $ocropt - - | cat - > "$outputtmp"
+    cat "$input" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer ${ocropt} - - | cat - > "$outputtmp"
 }
 
 
@@ -351,7 +365,7 @@ if [ $type_of_rule = advanced ]; then
 
         # define search area:
             if [[ $VARsource = content ]] ;then
-                VARsearchfile="$searchfile"
+                VARsearchfile="${searchfile}"
             else
                 VARsearchfile="${searchfilename}"
             fi
@@ -498,7 +512,7 @@ if [ $type_of_rule = advanced ]; then
 
             if [[ "$tagname_RegEx" != null ]] ; then
                 echo -n "                              ➜ search RegEx for tag ➜ "
-                tagname_RegEx_result=$( egrep -o "$tagname_RegEx" <<< "$content" | head -n1 )
+                tagname_RegEx_result=$( grep -oP "$tagname_RegEx" "${VARsearchfile}" | head -n1 )
                 if [[ ! -z "$tagname_RegEx_result" ]] ; then
                     searchtag=$(echo "$tagname_RegEx_result" | sed 's%\/\|\\\|\:\|\?%_%g') # filtered: \ / : ?
                     echo "$searchtag"
@@ -1305,7 +1319,7 @@ for input in ${files} ; do
         rm -rf "$work_tmp"
         continue
     else
-        echo "                  target file (OK): ${output}"
+        printf "                target file (OK): ${outputtmp}\n\n"
     fi
 
 
