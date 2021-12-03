@@ -72,14 +72,14 @@
     searchAll=$(echo "$sqlerg" | awk -F'\t' '{print $12}')
     moveTaggedFiles=$(echo "$sqlerg" | awk -F'\t' '{print $13}')
     NameSyntax=$(echo "$sqlerg" | awk -F'\t' '{print $14}')
-#    ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
+    ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
 
 #echo -e; echo -e
 #echo "$ocropt" | wc -m
 #echo "used ocr-parameter:       $ocropt"
 # sed "s/ones/one's/" <<< 'ones thing'
 #echo "$sqlerg" | awk -F'\t' '{print $15}'
-    ocropt=$(urldecode "$(echo "$sqlerg" | awk -F'\t' '{print $15}')" | sed "s/'/\\\'/g")    # use urldecode, due to the problematic saving of quotes via the GUI.
+#    ocropt=$(urldecode "$(echo "$sqlerg" | awk -F'\t' '{print $15}')" | sed "s/'/\\\'/g")    # use urldecode, due to the problematic saving of quotes via the GUI.
 #echo "$ocropt" | wc -m
 #echo "used ocr-parameter:       $ocropt"
 
