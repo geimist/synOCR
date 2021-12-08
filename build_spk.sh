@@ -124,14 +124,14 @@ printf "\n - INFO: collect the DSM specific files:\n"
         rm -f $build_tmp/APP/ui/config_DSM6
         mv $build_tmp/APP/ui/images_DSM7 $build_tmp/APP/ui/images
         rm -rf $build_tmp/APP/ui/images_DSM6
-        sed -i 's/VERSION_DSM/VERSION_DSM7/' "$build_tmp/APP/ui/synOCR-start.sh"
+#       sed -i 's/VERSION_DSM/VERSION_DSM7/' "$build_tmp/APP/ui/synOCR-start.sh"
     else
         PKG=PKG_DSM6
         mv $build_tmp/APP/ui/config_DSM6 $build_tmp/APP/ui/config
         rm -f $build_tmp/APP/ui/config_DSM7
         mv $build_tmp/APP/ui/images_DSM6 $build_tmp/APP/ui/images
         rm -rf $build_tmp/APP/ui/images_DSM7
-        sed -i 's/VERSION_DSM/VERSION_DSM6/' "$build_tmp/APP/ui/synOCR-start.sh"
+#       sed -i 's/VERSION_DSM/VERSION_DSM6/' "$build_tmp/APP/ui/synOCR-start.sh"
     fi
 
     build_version=$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
