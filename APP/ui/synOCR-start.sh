@@ -4,6 +4,7 @@
 
 # was the script called from the GUI (call with parameter "GUI")?
     callFrom=$1
+    dsm_version=6
     if [[ ! $callFrom = GUI ]] ; then
         callFrom=shell
         # adjust PATH:
@@ -16,6 +17,7 @@
 
     # set docker and admin permission to user synOCR for DSM7 and above
         if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
+            dsm_version=7
             echo "synOCR run at DSM7 or above"
             echo -n "    ➜ check admin permissions: "
             if ! cat /etc/group | grep ^administrators | grep -q synOCR ; then
@@ -137,7 +139,7 @@
             continue
         fi
 
-    # File counter:
+    # check counter:
         if [ ! -f ./etc/counter ] ; then
             touch ./etc/counter
             echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
@@ -145,14 +147,19 @@
             echo "pagecount=\"0\"" >> ./etc/counter
             echo "                      --> counter-File was created"
         else
+            # upgrade for old versions, without pagecount id:
             if ! cat ./etc/counter | grep -q "pagecount" ; then
                 echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
             fi
         fi
-        if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT checkmon FROM system WHERE rowid=1") != $(date +%m) ]]; then
-            if [[ $(wget --no-check-certificate --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION_DSM" | head -n1) = "ok" ]]; then
-                # wget --no-check-certificate --timeout=30 --tries=3 -q -O - "https://geimist.eu/synOCR/VERSION_DSM" > /dev/null  2>&1
-                sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET checkmon='$(date +%m)' WHERE rowid=1"
+
+    # installation counter:
+        if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT checkmon FROM system WHERE rowid=1") -ne $(date +%m) ]]; then
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET checkmon='$(date +%m)' WHERE rowid=1"
+            if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT checkmon FROM system WHERE rowid=1") -eq $(date +%m) ]]; then
+                if [[ $(wget --no-check-certificate --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION_DSM${dsm_version}" | head -n1) != "ok" ]]; then
+                    sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET checkmon='$(date -d "-1 month" +%m)' WHERE rowid=1"
+                fi
             fi
         fi
 
