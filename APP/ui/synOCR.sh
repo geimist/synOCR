@@ -202,13 +202,7 @@ update_dockerimage()
         updatelog=$(docker pull $dockercontainer)
 
     # purge images:
-        purge_log=$([[ $(docker images -f "dangling=true" -q) ]] && docker rmi -f $(docker images -f "dangling=true" -q))
-    # step 1:
-    #   docker image prune -f
-    # step 2:
-    #   for i in $(docker images --filter "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep "<none>");do
-    #       docker image rm -f $(echo "$i" | awk '-F:' '{print $1}')
-    #   done
+        purge_log=$([[ $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep "ocrmypdf") ]] && docker rmi -f $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep "ocrmypdf" | awk -F: '{print $1}'))
 
         if [ -z $(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='$dockercontainer'") ]; then
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '$dockercontainer', '$check_date' )"
