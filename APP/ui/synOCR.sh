@@ -201,6 +201,14 @@ update_dockerimage()
         echo -n "                      ➜ update image [$dockercontainer] ➜ "
         updatelog=$(docker pull $dockercontainer)
 
+    # purge images:
+    # step 1:
+        docker image prune -f
+    # step 2:
+        for i in $(docker images --filter "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep "<none>");do
+            docker image rm -f $(echo "$i" | awk '-F:' '{print $1}')
+        done
+
         if [ -z $(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='$dockercontainer'") ]; then
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '$dockercontainer', '$check_date' )"
         else
