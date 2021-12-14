@@ -9,11 +9,14 @@ urlencode() {
     old_lc_collate=$LC_COLLATE
     LC_COLLATE=C
 
+#    s=$(echo "$1"| sed 's/ /%20/g')
     local length="${#1}"
+#   local length="${#s}"
     for (( i = 0; i < length; i++ )); do
         local c="${1:$i:1}"
         case $c in
             [a-zA-Z0-9.~_-]) printf '%s' "$c" ;;
+            " ") echo -n "%20" ;;
             *) printf '%%%02X' "'$c" ;;
         esac
     done
@@ -21,17 +24,13 @@ urlencode() {
     LC_COLLATE=$old_lc_collate
 }
 
+
 urldecode() {
-    # urldecode <string>
-
-    local url_encoded="$(echo "$1" | sed 's/+/%2B/g')"
-    url_encoded="${url_encoded//+/ }"
+# urldecode <string>
+    local url_encoded="${1//+/ }"
     printf '%b' "${url_encoded//%/\\x}"
-
-
-#   local url_encoded="${1//+/ }"
-#   printf '%b' "${url_encoded//%/\\x}"
 }
+
 
 # -------------------------------------------------------------------------- #
 function language() {
