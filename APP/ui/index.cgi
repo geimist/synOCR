@@ -105,15 +105,12 @@
     # Initiate user folder
     get_var=$(which get_key_value) || exit
     set_var=$(which synosetkeyvalue) || exit
-    usersettings="${app_home}/usersettings"    # ToDo: move to "${app_home}/etc"
+    usersettings="${app_home}/etc"
     if [ ! -d "$usersettings" ]; then
         mkdir "$usersettings"
     fi
-    var="${app_home}/usersettings/var.txt"
-
-#   var="$usersettings/var.txt"
-#   stop="$usersettings/stop.txt"
-    stop="${app_home}/usersettings/stop.txt"
+    var="${app_home}/etc/var.txt"
+    stop="${app_home}/etc/stop.txt"
     black="color: #000000"
     green="color: #00B10D"
     red="color: #DF0101"
@@ -127,7 +124,7 @@
 
     # read MAC-adress (only to hide DEV pages)
     read MAC </sys/class/net/eth0/address
-    sysID=`echo $MAC | cksum | awk '{print $1}'`; sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
+    sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
 
 
     if [ -z "$backifs" ]; then
