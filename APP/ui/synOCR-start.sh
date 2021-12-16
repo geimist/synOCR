@@ -19,6 +19,7 @@
         if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
             dsm_version=7
             echo "synOCR run at DSM7 or above"
+
             echo -n "    ➜ check admin permissions: "
             if ! cat /etc/group | grep ^administrators | grep -q synOCR ; then
                 echo "added user synOCR to group administrators ..."
@@ -26,7 +27,7 @@
             else
                 echo "ok"
             fi
-    
+
             echo -n "    ➜ check docker group and permissions: "
             if ! cat /etc/group | grep -q ^docker: ; then
                 echo "create group docker ..."
@@ -38,6 +39,16 @@
                 sed -i "/^docker:/ s/$/,synOCR/" /etc/group
             else
                 echo "ok [$(cat /etc/group | grep ^docker:)]"
+            fi
+
+            echo -n "    ➜ delete DSM6 cron entry: "
+            if grep -q "synOCR-start.sh" "/etc/crontab" ; then
+                sed -i "/synOCR-start.sh/d" "/etc/crontab"
+                if [[ "$?" == "0" ]]; then
+                    echo "ok"
+                fi
+            else
+                echo "nothing to do"
             fi
         fi
     fi
