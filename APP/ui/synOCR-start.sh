@@ -46,6 +46,8 @@
                 sed -i "/synOCR-start.sh/d" "/etc/crontab"
                 if [[ "$?" == "0" ]]; then
                     echo "ok"
+                else
+                    echo "failed ! ! !"
                 fi
             else
                 echo "nothing to do"
