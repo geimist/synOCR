@@ -7,7 +7,7 @@ SOURCEPARENTDIR=""
 SYNOCR_INPUT=""
 SYNOCR_OUTPUT=""
 
-#-----------------------------------|
+#----------------------------------------------------------------------
 
 #   ! ! ! BITTE ZUNÄCHST EIN BACKUP DEINES QUELLORDNERS ANLEGEN ! ! !
 
@@ -29,9 +29,9 @@ SYNOCR_OUTPUT=""
 
 #   es empfiehlt sich ein Test mit einer Beispielverzeichnisstrucktur
 
-#-----------------------------------|
-# ab hier nichts mehr ändern        |
-#-----------------------------------|
+#----------------------------------------------------------------------
+#                   ab hier nichts mehr ändern                        |
+#----------------------------------------------------------------------
 
 preprocess() {
 # verschiebe Quelldateien nach SYNOCR_INPUT:
