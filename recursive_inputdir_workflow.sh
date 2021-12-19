@@ -36,6 +36,9 @@
 #   ➜ entfernt die ID aus dem Dateinamen
 #   ➜ und benennt die Indexdatei um
 
+#   4.)
+#   be happy :-)
+
 #   es empfiehlt sich ein Test mit einer Beispielverzeichnisstrucktur
 
 #----------------------------------------------------------------------
