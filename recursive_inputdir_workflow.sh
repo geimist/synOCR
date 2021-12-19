@@ -3,9 +3,13 @@
 # Tutorial: https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-879535
 # Dieses Skript hilft dabei, einmalig OCR auf eine hirachische Verzeichnisstrucktur mit PDF-Dateien anzuwenden
 
-SOURCEPARENTDIR=""
-SYNOCR_INPUT=""
-SYNOCR_OUTPUT=""
+# hier sind die absoluten Pfade (beginnen meist mit /volume… ) zwischen den Anführungszeichen anzugeben
+# Quellverzeichnisstruktur:
+    SOURCEPARENTDIR=""
+# Eingangsverzeichnis für synOCR:
+    SYNOCR_INPUT=""
+# Ausgabeverzeichnis für synOCR:
+    SYNOCR_OUTPUT=""
 
 #----------------------------------------------------------------------
 
