@@ -8,6 +8,26 @@ SYNOCR_INPUT=""
 SYNOCR_OUTPUT=""
 
 #-----------------------------------|
+
+#   ! ! ! BITTE ZUNÄCHST EIN BACKUP DEINES QUELLORDNERS ANLEGEN ! ! !
+
+#   Dieses Skript (die 3 Ordnervariablen müssen angepasst werden)
+#   ➜ durchsucht alle Verzeichnisse des angegebenen Ordners nach PDF-Dateien
+#   ➜ verschiebt diese in den angegebenen synOCR-INPUT-Ordner
+#   ➜ versieht diese mit einer ID
+#   ➜ und erstellt eine Indexdatei
+
+#   Nach dem ersten Aufruf lässt man synOCR seine Arbeit machen (ohne Umbenennungssyntax und Einsortierung in regeldefinierte Ordner, d.h. alle fertigen PDFs liegen im synOCR OUTPUT-Ordner)
+
+#   Das Skript muss jetzt erneut aufgerufen werden
+#   ➜ es erkennt die vorhandene Indexdatei
+#   ➜ verschiebt die fertigen PDFs an ihren Urspungsort
+#   ➜ entfernt die ID aus dem Dateinamen
+#   ➜ und benennt die Indexdatei um
+
+#   es empfiehlt sich ein Test mit einem Beispielordner
+
+#-----------------------------------|
 # ab hier nichts mehr ändern        |
 #-----------------------------------|
 
