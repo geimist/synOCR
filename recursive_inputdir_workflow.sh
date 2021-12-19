@@ -17,7 +17,9 @@ SYNOCR_OUTPUT=""
 #   ➜ versieht diese mit einer ID
 #   ➜ und erstellt eine Indexdatei
 
-#   Nach dem ersten Aufruf lässt man synOCR seine Arbeit machen (ohne Umbenennungssyntax und Einsortierung in regeldefinierte Ordner, d.h. alle fertigen PDFs liegen im synOCR OUTPUT-Ordner)
+#   Nach dem ersten Aufruf lässt man synOCR seine Arbeit machen 
+#   WICHTIG: synOCR-Profil ohne Umbenennungssyntax und Einsortierung in regeldefinierte 
+#   Ordner, d.h. alle fertigen PDFs liegen im synOCR OUTPUT-Ordner
 
 #   Das Skript muss jetzt erneut aufgerufen werden
 #   ➜ es erkennt die vorhandene Indexdatei
@@ -25,7 +27,7 @@ SYNOCR_OUTPUT=""
 #   ➜ entfernt die ID aus dem Dateinamen
 #   ➜ und benennt die Indexdatei um
 
-#   es empfiehlt sich ein Test mit einem Beispielordner
+#   es empfiehlt sich ein Test mit einer Beispielverzeichnisstrucktur
 
 #-----------------------------------|
 # ab hier nichts mehr ändern        |
