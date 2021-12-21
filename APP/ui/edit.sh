@@ -522,10 +522,8 @@ if [[ "$page" == "edit" ]]; then
         </p>'
 
     # profile ID (write to $var without GUI)
-        encode_value=$profile_ID
-        decode_value=$(urldecode "$encode_value")
-        "$set_var" "./usersettings/var.txt" "profile_ID" "$decode_value"
-        "$set_var" "./usersettings/var.txt" "encode_profile_ID" "$encode_value"
+        "$set_var" "$var" "profile_ID" "$(urldecode "$profile_ID")"
+        "$set_var" "$var" "encode_profile_ID" "$profile_ID"
     
     # SOURCEDIR
     echo '
