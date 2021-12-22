@@ -376,7 +376,7 @@ fi
 if [[ "$page" == "edit-save" ]]; then
     sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR',
         LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll',
-        moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$ocropt', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN',
+        moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$(sed -e "s/'/''/g" <<<"$ocropt")', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN',
         dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol', documentSplitPattern='$documentSplitPattern', ignoredDate='$ignoredDate' WHERE profile_ID='$profile_ID' "
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
 
