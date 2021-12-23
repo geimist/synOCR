@@ -850,22 +850,6 @@ else
     fi
 fi
 
-
-#    # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
-#    format=$1 # 1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy
-    
-#    echo "                  Using date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
-#    if [ $format -eq 1 ]; then
-#        # search by format: dd[./-]mm[./-]yy(yy)
-#        founddatestr=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
-#    elif [ $format -eq 2 ]; then
-#        # search by format: yy(yy)[./-]mm[./-]dd
-#        founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
-#    elif  [ $format -eq 3 ]; then
-#        # search by format: mm[./-]dd[./-]yy(yy) amerikanisch
-#        founddatestr=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
-#    fi
-
 if [[ ! -z $founddatestr ]]; then
     readarray -t founddates <<<"$founddatestr"
     cntDatesFound=${#founddates[@]}
