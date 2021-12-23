@@ -8,7 +8,7 @@
     echo "    -----------------------------------"
     echo -e
 
-    DevChannel="Release"    # BETA
+    DevChannel="BETA"     # "Release"    # BETA
     set -E -o functrace     # for function failure()
 
     failure()
@@ -32,15 +32,20 @@
 # to which user/group the DSM notification should be sent:
 # ---------------------------------------------------------------------
     synOCR_user=$(whoami); echo "synOCR-user:              $synOCR_user"
-    if cat /etc/group | grep administrators | grep -q "$synOCR_user"; then
+    if cat /etc/group | grep administrators | grep -q "$synOCR_user" || [ "$synOCR_user" = root ] ; then
         isAdmin=yes
     else
         isAdmin=no
     fi
     echo "synOCR-user is admin:     $isAdmin"
 
-    MessageTo="@administrators" # administrators (standard)
-    #MessageTo="$synOTR_user"   # user who called synOCR (of course this does not work for root, because root has no DSM-GUI-LogIn and the message is empty)
+
+# check DSM version:
+# ---------------------------------------------------------------------
+dsm_version=6
+if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
+    dsm_version=7
+fi
 
 # read out and change into the working directory:
 # ---------------------------------------------------------------------
@@ -52,12 +57,12 @@
 
 # load configuration:
 # ---------------------------------------------------------------------
-
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
         dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate FROM config WHERE profile_ID='$workprofile' "
 
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
+#   sqlerg=$(urldecode "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL" | sed -e 's/+/%2B/g')")  # replace encoded values which can't insert with GUI directly (e.g. ' ")
 
     profile_ID=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
     profile=$(echo "$sqlerg" | awk -F'\t' '{print $3}')
@@ -73,22 +78,11 @@
     moveTaggedFiles=$(echo "$sqlerg" | awk -F'\t' '{print $13}')
     NameSyntax=$(echo "$sqlerg" | awk -F'\t' '{print $14}')
     ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
-
-#echo -e; echo -e
-#echo "$ocropt" | wc -m
-#echo "used ocr-parameter:       $ocropt"
-# sed "s/ones/one's/" <<< 'ones thing'
-#echo "$sqlerg" | awk -F'\t' '{print $15}'
-#    ocropt=$(urldecode "$(echo "$sqlerg" | awk -F'\t' '{print $15}')" | sed "s/'/\\\'/g")    # use urldecode, due to the problematic saving of quotes via the GUI.
-#echo "$ocropt" | wc -m
-#echo "used ocr-parameter:       $ocropt"
-
-#echo -e; echo -e
-    
     dockercontainer=$(echo "$sqlerg" | awk -F'\t' '{print $16}')
     PBTOKEN=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
     dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
     MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
+    [[ -z $MessageTo ]] && MessageTo="@administrators" # group administrators (standard)
     dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
@@ -112,7 +106,32 @@
     echo "current Profil:           $profile"
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1")"
     echo "used image (created):     $dockercontainer ($(docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
-    echo "used ocr-parameter:       $ocropt"
+
+    echo "used ocr-parameter (raw): $ocropt"
+    # arguments with spaces must be submit as array (https://github.com/ocrmypdf/OCRmyPDF/issues/878)
+    # for loop split all parameters, which start with > -<:
+    c=0
+    ocropt_arr=()
+    IFS=$'\012'  # corresponds to a $'\n' newline
+    for value in $(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" $ocropt"); do
+        IFS=$OLDIFS
+        c=$((c+1))
+        # now, split parameters with additional arguments:
+        if [[ $(awk -F'[ ]' '{print NF}' <<<"$value") -gt 1 ]]; then
+            value_1=$(awk -F'[ ]' '{print $1}' <<<"$value")
+            [[ $loglevel = "2" ]] && echo "OCR-arg $c:               $value_1"
+            c=$((c+1))
+            value_2=$(echo "$value" | sed "s/$value_1 //g")
+            [[ $loglevel = "2" ]] && echo "OCR-arg $c:               $value_2"
+            ocropt_arr+=( "$value_1" "$value_2" )
+        else
+            [[ $loglevel = "2" ]] && echo "OCR-arg $c:               $value"
+            ocropt_arr+=( "$value" )
+        fi
+    done
+    unset c
+    echo "ocropt_array:             ${ocropt_arr[@]}"
+
     echo "search prefix:            $SearchPraefix"
     echo "replace search prefix:    $delSearchPraefix"
     echo "renaming syntax:          $NameSyntax"
@@ -137,14 +156,15 @@
         echo "Loglevel:                 normal"
         cURLloglevel="-s"
         wgetloglevel="-q"
-        dockerlogLeftSpace="               "
+#        dockerlogLeftSpace="               "
+        dockerlogLeftSpace="                "
     elif [[ $loglevel = "2" ]] ; then
         echo "Loglevel:                 debug"
         # set -x
         cURLloglevel="-v"
         wgetloglevel="-v"
-        dockerlogLeftSpace="                  "
-        ocropt="$ocropt -v2"
+        dockerlogLeftSpace="                    "
+        ocropt_arr+=( "-v2" )
     fi
 
 
@@ -191,18 +211,17 @@
 #                                                                                               #
 #################################################################################################
 
-
 update_dockerimage()
 {
 # this function checks for image update
 # --------------------------------------------------------------
     check_date=$(date +%Y-%m-%d)
     if echo $dockercontainer | grep -qE "latest$" && [[ $dockerimageupdate = 1 ]] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='$dockercontainer' ") = "$check_date" ]];then
-        echo -n "                      ➜ update image [$dockercontainer] ➜ "
+        echo -n "              ➜ update image [$dockercontainer] ➜ "
         updatelog=$(docker pull $dockercontainer)
 
-    # purge images:
-        purge_log=$([[ $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep "ocrmypdf") ]] && docker rmi -f $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep "ocrmypdf" | awk -F: '{print $1}'))
+    # purge only untaged ocrmypdf images:
+        log_purge=$([[ $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep "ocrmypdf") ]] && docker rmi -f $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep "ocrmypdf" | awk -F: '{print $1}'))
 
         if [ -z $(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='$dockercontainer'") ]; then
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '$dockercontainer', '$check_date' )"
@@ -218,7 +237,7 @@ update_dockerimage()
 
         if [[ $loglevel = "2" ]] ; then
             echo "$updatelog" | sed -e "s/^/                          /g"
-            echo "$purge_log" | sed -e "s/^/                          /g"
+            echo "$log_purge" | sed -e "s/^/                          /g"
         fi
     fi
 }
@@ -245,14 +264,12 @@ sec_to_time()
 
 OCRmyPDF()
 {
-    echo $ocropt
-#    exit
     # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
-    cat "$input" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer ${ocropt} - - | cat - > "$outputtmp"
+    cat "$input" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer "${ocropt_arr[@]}" - - | cat - > "$outputtmp"
 }
 
 
-tagsearch()
+tag_search()
 {
 echo "              ➜ search tags and date:"
 renameTag=""
@@ -590,7 +607,7 @@ fi
 
 renameTag=${renameTag% }
 renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')    # remove starting and ending spaces, or all spaces if no destination folder is defined
-renameTag_raw="$renameTag" # unmodified for tag folder / tag folder with spaces otherwise not possible
+renameTag_raw="$renameTag"                                  # unmodified for tag folder / tag folder with spaces otherwise not possible
 echo "                rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
 
 echo -e
@@ -697,24 +714,157 @@ yaml_validate()
 }
 
 
-findDate()
+adjust_python()
 {
-# by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
+#########################################################################################
+# This function check the python3 installation and the necessary modules                #
+#                                                                                       #
+#########################################################################################
 
-format=$1 # 1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy
-#echo "format: $format"
-echo "                  Using date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
+#echo ">>>>>>>>>>> DEV-PART:"
+    return 1    # deactivated
+#   return 0    # deactivated
+#echo "<<<<<<<<<<< DEV-PART"
+
+    if [ ! $(which python3) ]; then
+        echo "                  (Python3 is not installed / use fallback search with regex"
+        echo "                  for more precise search results Python3 is required)"
+        return 1
+    else
+        [[ $loglevel = "2" ]] && printf "                  python3 already installed ($(which python3))\n"
+
+    # check / install pip:
+        if ! python3 -m pip --version > /dev/null  2>&1 ; then
+            printf "                  Python3 pip was not found and will be now installed ➜ "
+            # install pip:
+            tmp_log1=$(python3 -m ensurepip --default-pip)
+            # upgrade pip:
+            tmp_log2=$(python3 -m pip install --upgrade pip)
+
+            # check install:
+            if python3 -m pip --version > /dev/null  2>&1 ; then
+                echo "ok"
+            else
+                echo "failed ! ! ! (please install Python3 pip manually)"
+                #[[ $loglevel = "2" ]] && 
+                echo "install log:" && echo "$tmp_log1" && echo "$tmp_log2"
+                return 1
+            fi
+        fi
+
+        modul_list=$(/var/packages/py3k/target/usr/local/bin/pip list)
+
+    # check / install dateutil (dateparser)
+        unset tmp_log1
+        if !  grep -q dateutil <<<"$modul_list"; then
+            printf "                  Python3 module dateutil was not found and will be installed ➜ "
+            # install dateutil:
+            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install python-dateutil)
+
+            # check install:
+            if grep -q dateutil <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
+                echo "ok"
+            else
+                echo "failed ! ! ! (please install python-dateutil manually)"
+                #[[ $loglevel = "2" ]] && 
+                echo "install log:" && echo "$tmp_log1"
+                return 1
+            fi
+        fi
+
+    # check / install datefinder
+    # https://github.com/akoumjian/datefinder
+        unset tmp_log1
+        if ! grep -q datefinder <<<"$modul_list" ; then
+            printf "                  Python3 module datefinder was not found and will be installed ➜ "
+            # install datefinder:
+            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install datefinder)
+
+            # check install:
+            if grep -q datefinder <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
+                echo "ok"
+            else
+                echo "failed ! ! ! (please install python datefinder manually)"
+                #[[ $loglevel = "2" ]] && 
+                echo "install log:" && echo "$tmp_log1"
+                return 1
+            fi
+        fi
+
+    # check / install pandas:
+        unset tmp_log1
+        if ! grep -q pandas <<<"$modul_list" ; then
+            printf "                  Python3 module pandas was not found and will be installed ➜ "
+            # install pandas:
+            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install pandas)
+
+            # check install:
+            if grep -q pandas <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
+                echo "ok"
+            else
+                echo "failed ! ! ! (please install python pandas manually)"
+                #[[ $loglevel = "2" ]] && 
+                echo "install log:" && echo "$tmp_log1"
+                return 1
+            fi
+        fi
+    fi
+
+    return 0
+}
+
+
+find_date()
+{
+#########################################################################################
+# This function search for a valid daten in ocr text                                    #
+#                                                                                       #
+# run with python3 and dateutil - if this impossible, use fallback to search with regex #
+#                                                                                       #
+#########################################################################################
+
 founddatestr=""
-if [ $format -eq 1 ]; then
-    # search by format: dd[./-]mm[./-]yy(yy)
-    founddatestr=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
-elif [ $format -eq 2 ]; then
-    # search by format: yy(yy)[./-]mm[./-]dd
-    founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
-elif  [ $format -eq 3 ]; then
-    # search by format: mm[./-]dd[./-]yy(yy) amerikanisch
-    founddatestr=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+format=$1 # for regex search - 1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy
+adjust_python
+
+if [ $? -eq 0 ]; then
+    # reduce multible spaces to one in source file (for better results):
+    sed -i 's/  */ /g' "$searchfile"
+
+    founddatestr=$(./includes/parse_date.py "$searchfile" | grep -v "ERROR" | sed '/^$/d' )
+    format=2
+else
+    echo "FallBack RegEx-Suche"
+
+    # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
+    echo "                  Using date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
+    if [ $format -eq 1 ]; then
+        # search by format: dd[./-]mm[./-]yy(yy)
+        founddatestr=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+    elif [ $format -eq 2 ]; then
+        # search by format: yy(yy)[./-]mm[./-]dd
+        founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
+    elif  [ $format -eq 3 ]; then
+        # search by format: mm[./-]dd[./-]yy(yy) amerikanisch
+        founddatestr=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+    fi
 fi
+
+
+#    # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
+#    format=$1 # 1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy
+    
+#    echo "                  Using date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
+#    if [ $format -eq 1 ]; then
+#        # search by format: dd[./-]mm[./-]yy(yy)
+#        founddatestr=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+#    elif [ $format -eq 2 ]; then
+#        # search by format: yy(yy)[./-]mm[./-]dd
+#        founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
+#    elif  [ $format -eq 3 ]; then
+#        # search by format: mm[./-]dd[./-]yy(yy) amerikanisch
+#        founddatestr=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+#    fi
 
 if [[ ! -z $founddatestr ]]; then
     readarray -t founddates <<<"$founddatestr"
@@ -770,9 +920,9 @@ fi
     
 if [[ $dateIsFound = no ]]; then
     if [ $format -eq 1 ]; then
-        findDate 2
+        find_date 2
     elif [ $format -eq 2 ]; then
-        findDate 3
+        find_date 3
     fi
 fi
 }
@@ -785,11 +935,13 @@ adjust_attributes()
 #########################################################################################
 
 # Dateirechte anpassen;
+# ---------------------------------------------------------------------
     cp --attributes-only -p "${input}" "${output}"
     chmod 664 "${output}"
     synoacltool -enforce-inherit "${output}"
 
 # Dateidatum anpassen:
+# ---------------------------------------------------------------------
     echo -n "              ➜ Adapt file date (Source: "
 
     if [[ "$filedate" == "ocr" ]]; then
@@ -811,6 +963,7 @@ adjust_attributes()
     fi
 
 # File permissions-Log:
+# ---------------------------------------------------------------------
     if [[ $loglevel = "2" ]] ; then
         echo "              ➜ File permissions target file:"
         echo "                  $(ls -l "$output")"
@@ -833,11 +986,12 @@ if [ -z "$NameSyntax" ]; then
 fi
 
 echo -n "                  apply renaming syntax ➜ "
-title=$(urlencode "${title}")             # encode special characters for sed compatibility
-#title=$(echo "${title}" | sed -f ./includes/encode.sed)             # encode special characters for sed compatibility
-renameTag=$(urlencode "${renameTag}")
-#renameTag=$( echo "${renameTag}" | sed -f ./includes/encode.sed)
 
+# encode special characters for sed compatibility:
+title=$(urlencode "${title}")
+renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before renew encoding
+
+# replace parameters with values:
 NewName="$NameSyntax"
 NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
 NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
@@ -871,15 +1025,14 @@ NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g")
 NewName=$( echo "$NewName" | sed "s/§tit/${title}/g")
 NewName=$( echo "$NewName" | sed "s/%20/ /g" )
 
-# Fallback für alte Parameter:
+# fallback to old  parameters:
 NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
 NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
 NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
 
-NewName=$(urldecode "$NewName")          # decode special characters
+# decode special characters:
+NewName=$(urldecode "$NewName")
 renameTag=$(urldecode "${renameTag}")
-#NewName=$( echo "$NewName" | sed -f ./includes/decode.sed)          # decode special characters
-#renameTag=$( echo "${renameTag}" | sed -f ./includes/decode.sed)
 
 echo "$NewName"
 
@@ -1067,18 +1220,19 @@ fi
 }
 
 
-purge_LOG()
+purge_log()
 {
 #########################################################################################
 # This function cleans up older log files                                               #
 #########################################################################################
 
 if [ -z $LOGmax ]; then
-    echo "purge_LOG deactivated"
+    echo "purge_log deactivated"
     return
 fi
 
 # Delete empty logs:
+# ---------------------------------------------------------------------
 # (sshould no longer be needed by query in start script / synOCR will not be started with empty queue)
 for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$')                    # Listing of all LOG files
     do
@@ -1108,7 +1262,22 @@ fi
 }
 
 
-mainrun()
+purge_backup()
+{
+#########################################################################################
+# This function cleans up older backup files                                            #
+#########################################################################################
+
+if [ -z $backup_max ]; then
+    echo "purge_backup deactivated"
+    return
+fi
+
+
+}
+
+
+main_run()
 {
 #########################################################################################
 # This function passes the files to docker / search for tags / …                        #
@@ -1140,9 +1309,11 @@ else
 fi
 
 # make special characters visible if necessary
+# ---------------------------------------------------------------------
     [[ $loglevel = "2" ]] && printf "                  show files in INPUT with transcoded special characters\n\n" && ls "${INPUTDIR}" | sed -ne 'l'
 
 # document split handling
+# ---------------------------------------------------------------------
 if [ -n "${documentSplitPattern}" ]; then
     IFS=$'\012'  # corresponds to a $'\n' newline
     for input in ${files} ; do
@@ -1153,14 +1324,16 @@ if [ -n "${documentSplitPattern}" ]; then
         filename=$(basename "$input")
         echo -n "PREPROCESSING:➜ $filename"
 
-    # create temporary working directory
+# create temporary working directory
+# ---------------------------------------------------------------------
         work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
         trap 'rm -rf "$work_tmp"; exit' EXIT
         outputtmp="${work_tmp}/${filename}"
 
         echo "              ➜ Searching for document split pattern in document $filename"
 
-    # OCRmyPDF:
+# OCRmyPDF:
+# ---------------------------------------------------------------------
         echo "                  temporary OCR to be able to recognize separator sheets:"
 
         dockerlog=$(OCRmyPDF 2>&1)
@@ -1172,7 +1345,8 @@ if [ -n "${documentSplitPattern}" ]; then
         echo "              ← OCRmyPDF-LOG-END"
         echo -e
 
-        # count pages containing document split pattern
+# count pages containing document split pattern
+# ---------------------------------------------------------------------
         pages=()
         while IFS= read -r line; do
             pages+=( "$line" )
@@ -1180,7 +1354,8 @@ if [ -n "${documentSplitPattern}" ]; then
         numberSplitPages=${#pages[@]}
         echo "                $numberSplitPages split pages detected in file $filename"
 
-        # split document
+# split document
+# ---------------------------------------------------------------------
         if (( $numberSplitPages > 0 )); then
             let currentPart=$numberSplitPages+1
             fileNoExtension="${filename%%.*}"
@@ -1203,7 +1378,8 @@ if [ -n "${documentSplitPattern}" ]; then
             echo "$dockerlog" | sed -e "s/^/${dockerlogLeftSpace}/g"
             filesWithSplittedParts+=($INPUTDIR/$partFileName)
 
-        # delete / save source file (takes into account existing files with the same name): ${filename%.*}
+# delete / save source file (takes into account existing files with the same name): ${filename%.*}
+# ---------------------------------------------------------------------
             if [ $backup = true ]; then
                 sourceFileCount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
                 if [ $sourceFileCount -eq 0 ]; then
@@ -1234,11 +1410,11 @@ if [ -n "${documentSplitPattern}" ]; then
     echo "                document split processing finished"
 fi
 
+# count pages / files:
+# ---------------------------------------------------------------------
 IFS=$'\012'  # corresponds to a $'\n' newline
 for input in ${files} ; do
     IFS=$OLDIFS
-
-# count pages / files:
     if [ $(which pdfinfo) ]; then
         pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
         [[ $loglevel = "2" ]] && echo "                (pages counted with pdfinfo)"
@@ -1260,6 +1436,7 @@ for input in ${files} ; do
     ocrcount_ID_new=$(( $(grep "^ocrcount_ID${profile_ID}" ./etc/counter | awk '-F=' '{print $2}' | sed -e 's/"//g') + 1))
 
 # create temporary working directory
+# ---------------------------------------------------------------------
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
     trap 'rm -rf "$work_tmp"; exit' EXIT
 
@@ -1280,6 +1457,7 @@ for input in ${files} ; do
     [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # OCRmyPDF:
+# ---------------------------------------------------------------------
     sleep 1
     dockerlog=$(OCRmyPDF 2>&1)
     sleep 1
@@ -1293,6 +1471,7 @@ for input in ${files} ; do
     [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # check if target file is valid (not empty), otherwise continue / defective source files are moved to ERROR including LOG:
+# ---------------------------------------------------------------------
     if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
         echo "                  ┖➜ failed! (target file is empty or not available)"
         rm "${outputtmp}"
@@ -1328,12 +1507,15 @@ for input in ${files} ; do
 
 
 # temporary output destination with seconds for uniqueness (otherwise there will be duplication if renaming syntax is missing)
+# ---------------------------------------------------------------------
     output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
 
 # move temporary file to destination folder:
+# ---------------------------------------------------------------------
     mv "${outputtmp}" "${output}"
 
 # source file permissions-Log:
+# ---------------------------------------------------------------------
     if [[ $loglevel = "2" ]] ; then
         echo "              ➜ File permissions source file:"
         echo -n "                  "
@@ -1341,11 +1523,13 @@ for input in ${files} ; do
     fi
 
 # exact text
+# ---------------------------------------------------------------------
     searchfile="${work_tmp}/synOCR.txt"
     searchfilename="${work_tmp}/synOCR_filename.txt"    # for search in file name
     echo "${title}" > "${searchfilename}"
 
 # Search in the whole documents, or only on the first page?:
+# ---------------------------------------------------------------------
     if [ $searchAll = no ]; then
         pdftotextOpt="-l 1"
     else
@@ -1360,11 +1544,13 @@ for input in ${files} ; do
     [[ $loglevel = "2" ]] && cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
 
 # search by tags:
-    tagsearch
+# ---------------------------------------------------------------------
+    tag_search
 
 # search by date:
+# ---------------------------------------------------------------------
     dateIsFound=no
-    findDate 1
+    find_date 1
 
     date_dd_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $3}')
     date_mm_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $2}')
@@ -1384,9 +1570,11 @@ for input in ${files} ; do
     fi
 
 # compose and rename file names / move to target:
+# ---------------------------------------------------------------------
     rename
 
 # delete / save source file (takes into account existing files with the same name): ${filename%.*}
+# ---------------------------------------------------------------------
     if [ $backup = true ]; then
         sourceFileCount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
         if [ $sourceFileCount -eq 0 ]; then
@@ -1405,12 +1593,16 @@ for input in ${files} ; do
         echo "              ➜ delete source file"
     fi
 
-# ToDo: the automatic language setting should be included here:
-    # Notification:
+# Notification:
+# ---------------------------------------------------------------------
+    # ToDo: the automatic language setting should be included here:
     if [ $dsmtextnotify = "on" ] ; then
         sleep 1
-        echo "                  INFO: (notification dosn't work at DSM7 without i18n …)"
-        #$MessageTo "synOCR" "File [$(basename "${output}")] is processed"
+        if [[ $dsm_version = "7" ]] ; then
+            echo "                  INFO: (notification dosn't work at DSM7 without i18n …)"
+        else
+            synodsmnotify $MessageTo "synOCR" "File [$(basename "${output}")] is processed"
+        fi
         sleep 1
     fi
 
@@ -1434,6 +1626,7 @@ for input in ${files} ; do
     fi
 
 # update file count total: ${pagecount_ID_new} ${ocrcount_ID_new} ${pagecount_new} ${ocrcount_new}
+# ---------------------------------------------------------------------
     synosetkeyvalue ./etc/counter pagecount ${pagecount_new}
     synosetkeyvalue ./etc/counter ocrcount ${ocrcount_new}
 # update file count profile:
@@ -1449,6 +1642,7 @@ for input in ${files} ; do
     echo -e
     
 # delete temporary working directory:
+# ---------------------------------------------------------------------
     echo "              ➜ delete tmp-files …"
     rm -rf "$work_tmp"
 done
@@ -1459,15 +1653,15 @@ done
 #       |                                 RUN THE FUNCTIONS                             |
 #       |_______________________________________________________________________________|
 
-    echo -e; echo -e
+    printf "\n\n\n"
     echo "    ----------------------------------"
     echo "    |    ==> Funktionsaufrufe <==    |"
     echo "    ----------------------------------"
 
     update_dockerimage
-    mainrun
-    purge_LOG
+    main_run
+    purge_log
 
-    echo -e; echo -e
+    printf "\n\n\n"
 
 exit 0
