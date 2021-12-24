@@ -9,9 +9,7 @@ urlencode() {
     old_lc_collate=$LC_COLLATE
     LC_COLLATE=C
 
-#    s=$(echo "$1"| sed 's/ /%20/g')
     local length="${#1}"
-#   local length="${#s}"
     for (( i = 0; i < length; i++ )); do
         local c="${1:$i:1}"
         case $c in
@@ -24,12 +22,12 @@ urlencode() {
     LC_COLLATE=$old_lc_collate
 }
 
-
 urldecode() {
 # urldecode <string>
     local url_encoded="${1//+/ }"
     printf '%b' "${url_encoded//%/\\x}"
 }
+
 
 
 # -------------------------------------------------------------------------- #
