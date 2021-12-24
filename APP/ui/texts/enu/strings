@@ -1,1 +1,3 @@
-# https://www.synology-forum.de/threads/howto-dsm-desktop-benachrichtigungen-unter-dsm-7-erstellen.115590/
+[app]
+app_name="synOCR"
+job_successful="File [job_successful_replacement] is processed."
