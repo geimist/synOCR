@@ -377,7 +377,8 @@ if [[ "$page" == "edit-save" ]]; then
     sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR',
         LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll',
         moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$(sed -e "s/'/''/g" <<<"$ocropt")', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN',
-        dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol', documentSplitPattern='$documentSplitPattern', ignoredDate='$ignoredDate' WHERE profile_ID='$profile_ID' "
+        dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol', 
+        documentSplitPattern='$documentSplitPattern', ignoredDate='$ignoredDate' WHERE profile_ID='$profile_ID' "
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
 
     # write global change to table system:
@@ -431,7 +432,6 @@ if [[ "$page" == "edit" ]]; then
         documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
         ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $26}')
 
-
     # read global values:
         dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
 
@@ -451,7 +451,7 @@ if [[ "$page" == "edit" ]]; then
 
 # Profile selection:
     sSQL="SELECT profile_ID, profile FROM config "
-    sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
+    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
     echo '<p>
         <label style="width: 200px;padding: 0.5em 0.5em 0.25em 0.25em;"><b>'$lang_edit_change_profile'</b></label>
         <select name="getprofile" style="width: 200px;">'
@@ -524,7 +524,7 @@ if [[ "$page" == "edit" ]]; then
     # profile ID (write to $var without GUI)
         "$set_var" "$var" "profile_ID" "$(urldecode "$profile_ID")"
         "$set_var" "$var" "encode_profile_ID" "$profile_ID"
-    
+
     # SOURCEDIR
     echo '
         <p>
@@ -826,6 +826,16 @@ if [[ "$page" == "edit" ]]; then
             echo '<option value="useTagDir" selected>'$lang_edit_set2_moveTaggedFiles_useTagDir'</option>'
         else
             echo '<option value="useTagDir">'$lang_edit_set2_moveTaggedFiles_useTagDir'</option>'
+        fi
+        if [[ "$moveTaggedFiles" == "useYearDir" ]]; then
+            echo '<option value="useYearDir" selected>'$lang_edit_set2_moveTaggedFiles_useYearDir'</option>'
+        else
+            echo '<option value="useYearDir">'$lang_edit_set2_moveTaggedFiles_useYearDir'</option>'
+        fi
+        if [[ "$moveTaggedFiles" == "useYearMonthDir" ]]; then
+            echo '<option value="useYearMonthDir" selected>'$lang_edit_set2_moveTaggedFiles_useYearMonthDir'</option>'
+        else
+            echo '<option value="useYearMonthDir">'$lang_edit_set2_moveTaggedFiles_useYearMonthDir'</option>'
         fi
     echo '
         </select>
