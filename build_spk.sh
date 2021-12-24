@@ -159,6 +159,7 @@ printf "\n - INFO: create empty dirs ...\n"
 printf "\n - INFO: adjust permissions ...\n"
     chmod -R 755 "${build_tmp}/APP/"
     chmod -R 755 "${build_tmp}/$PKG/"
+    chmod -R 644 "${build_tmp}/APP/ui/texts/"
 
 # Packing and dropping the current installation into the appropriate /Pack folder
     printf "\n - INFO: The archive package.tgz will be created ...\n"
