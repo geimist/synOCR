@@ -14,11 +14,11 @@
             "texts": "texts",
             "width": 992,
             "height": 560,
-            "url": "/webman/3rdparty/synOCR/index.cgi"
+            "url": "/webman/3rdparty/synOCR/index.cgi",
             "preloadTexts": [
-            "app:app_name",
-            "app:job_successful"
-            ]
+                "app:app_name",
+                "app:job_successful"
+                ]
         }
     }
 }
