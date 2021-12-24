@@ -1599,24 +1599,22 @@ for input in ${files} ; do
     # ToDo: the automatic language setting should be included here:
     if [ $dsmtextnotify = "on" ] ; then
         sleep 1
+        file_notify=$(basename "${output}")
         if [[ $dsm_version = "7" ]] ; then
-            echo "                  INFO: (notification dosn't work at DSM7 without i18n …)"
-            file_notify=$(basename "${output}")
 
             # adjust message text:
-            for file in /usr/syno/synoman/webman/3rdparty/synOCR/ui/texts/**/strings; do
-                sed -i "s/job_successful_replacement/${file_notify}/" "$file"
-            done
-
-            synodsmnotify -c SYNO.SDS.ThirdParty.App.synOCR @$MessageTo synOCR:app:app_name synOCR:app:job_successful
-
+# strings are preloadet from DSM / modify currently not possible ! ! !
+#            for file in /usr/syno/synoman/webman/3rdparty/synOCR/texts/**/strings; do
+#                sed -i "s/job_successful_replacement/${file_notify}/" "$file"
+#            done
+            synodsmnotify -c SYNO.SDS.ThirdParty.App.synOCR $MessageTo synOCR:app:app_name synOCR:app:job_successful
             # reset message text:
-            for file in /usr/syno/synoman/webman/3rdparty/synOCR/ui/texts/**/strings; do
-                sed -i "s/${file_notify}/job_successful_replacement/" "$file"
-            done
+#            for file in /usr/syno/synoman/webman/3rdparty/synOCR/texts/**/strings; do
+#                sed -i "s/${file_notify}/job_successful_replacement/" "$file"
+#            done
 
         else
-            synodsmnotify $MessageTo "synOCR" "File [$(basename "${output}")] is processed"
+           synodsmnotify $MessageTo "synOCR" "File [${file_notify}] was processed"
         fi
         sleep 1
     fi
