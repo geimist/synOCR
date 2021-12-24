@@ -143,7 +143,9 @@ lang_edit_set2_moveTaggedFiles_title="Using tag subdirectories"
 lang_edit_set2_moveTaggedFiles_targetdir="keep in the target folder"
 lang_edit_set2_moveTaggedFiles_useCatDir="Sort target PDF into category folder"
 lang_edit_set2_moveTaggedFiles_useTagDir="Sort target PDF into tag folder"
-lang_edit_set2_moveTaggedFiles_help1="Should tag subdirectories or category folders / rule-defined folders be used? If multiple tags apply, hard links are set."
+lang_edit_set2_moveTaggedFiles_useYearDir="Sort target PDF into folder for each Year"
+lang_edit_set2_moveTaggedFiles_useYearMonthDir="Sort target PDF into folder for each Year/Month"
+lang_edit_set2_moveTaggedFiles_help1="Should be used:<br>- tag subdirectories or category folders <br>- rule-defined folders be used <br>- folder for each year <br>- folders for each year/month? <br><br>If multiple tags apply, hard links are set."                # keep html-tag
 
 lang_edit_set2_renamesyntax_title="OCR Rename-Syntax"
 lang_edit_set2_renamesyntax_help1="Rename finished PDFs with a specific syntax."
