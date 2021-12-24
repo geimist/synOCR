@@ -22,12 +22,14 @@
     }
     trap 'failure ${LINENO} "$BASH_COMMAND"' ERR
 
+
 # ---------------------------------------------------------------------------------
 #           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
 # ---------------------------------------------------------------------------------
     niceness=15                 # The priority is in the range from -20 to +19 (in integer steps), where -20 is the highest priority (=most computing power) and 19 is the lowest priority (=lowest computing power). The default priority is 0. NEGATIVE VALUES SHOULD NEVER BE DEFAULTED!
     workprofile="$1"            # the profile submitted by the start script
     LOGFILE="$2"                # current logfile / is submitted by start script
+    shopt -s globstar           # enable 'globstar' shell option (to use ** for directionary wildcard)
 
 # to which user/group the DSM notification should be sent:
 # ---------------------------------------------------------------------
@@ -850,6 +852,21 @@ else
     fi
 fi
 
+
+
+
+
+
+echo ">>>>>>>>>>> DEV-PART:"
+    echo "found RegEx dates:"
+    echo "$founddatestr"
+    echo -e
+echo "<<<<<<<<<<< DEV-PART"
+
+
+#exit
+
+
 if [[ ! -z $founddatestr ]]; then
     readarray -t founddates <<<"$founddatestr"
     cntDatesFound=${#founddates[@]}
@@ -1584,6 +1601,20 @@ for input in ${files} ; do
         sleep 1
         if [[ $dsm_version = "7" ]] ; then
             echo "                  INFO: (notification dosn't work at DSM7 without i18n …)"
+            file_notify=$(basename "${output}")
+
+            # adjust message text:
+            for file in /usr/syno/synoman/webman/3rdparty/synOCR/ui/texts/**/strings; do
+                sed -i "s/job_successful_replacement/${file_notify}/" "$file"
+            done
+
+            synodsmnotify -c SYNO.SDS.ThirdParty.App.synOCR @$MessageTo synOCR:app:app_name synOCR:app:job_successful
+
+            # reset message text:
+            for file in /usr/syno/synoman/webman/3rdparty/synOCR/ui/texts/**/strings; do
+                sed -i "s/${file_notify}/job_successful_replacement/" "$file"
+            done
+
         else
             synodsmnotify $MessageTo "synOCR" "File [$(basename "${output}")] is processed"
         fi
