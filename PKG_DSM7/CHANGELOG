@@ -19,6 +19,7 @@ known issues / limitations:
  -  handling of special characters improved
  -  cleanup of unused docker images
  -  delete cron job who was generated with synOCR at DSM6
+ -  DSM notifications work again
  -  ...
     IMPLEMENTATIONS:
  -  renaming parameter for the year can now be 2 or 4 digits 
