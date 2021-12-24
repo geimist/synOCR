@@ -142,8 +142,10 @@ lang_edit_set2_searchall_help2="Standard ist nur auf erster Seite. Je größer d
 lang_edit_set2_moveTaggedFiles_title="Tag-Unterverzeichnisse nutzen"
 lang_edit_set2_moveTaggedFiles_targetdir="im Zielordner behalten"
 lang_edit_set2_moveTaggedFiles_useCatDir="verwende Regel-definierte Ordner"
-lang_edit_set2_moveTaggedFiles_useTagDir="Ziel-PDF in Tagordner einsortieren"
-lang_edit_set2_moveTaggedFiles_help1="Sollen Tag-Unterverzeichnisse, bzw. Kategorieordner / Regel-definierte Ordner genutzt werden? Bei mehreren zutreffenden Tags werden Hardlinks gesetzt."
+lang_edit_set2_moveTaggedFiles_useTagDir="verwende Tag basierte Ordner"
+lang_edit_set2_moveTaggedFiles_useYearDir="verwende Jahresordner"
+lang_edit_set2_moveTaggedFiles_useYearMonthDir="verwende Jahrordner & Monatssubordner"
+lang_edit_set2_moveTaggedFiles_help1="Welche Einsortierung soll genutzt werden: <br>- Tag-Unterverzeichnisse, bzw. Kategorieordner <br>- Regel-definierte Ordner <br>- Jahresordner <br>- Jahr/Monatsordner <br><br>Bei mehreren zutreffenden Tags werden Hardlinks gesetzt."                # keep html-tag
 
 lang_edit_set2_renamesyntax_title="OCR Rename-Syntax"
 lang_edit_set2_renamesyntax_help1="Fertige PDFs mit einer Bestimmten Syntax umbenennen."
