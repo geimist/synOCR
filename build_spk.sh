@@ -135,6 +135,8 @@ printf "\n - INFO: collect the DSM specific files:\n"
     fi
 
     build_version=$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
+    beta_status=""  #$(grep beta "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
+    [[ $(grep beta "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}') == yes ]] && beta_status="_BETA"
 
 printf "\n-----------------------------------------------------------------------------------\n"
 printf "   SPK will be created ..."
@@ -171,7 +173,7 @@ printf "\n - INFO: adjust permissions ...\n"
 
 # Creating the final SPK
     printf "\n - INFO: the SPK will be created ...\n"
-    TargetName="${project}_DSM${TargetDSM}_${set_spk_version}.spk"
+    TargetName="${project}_DSM${TargetDSM}_${set_spk_version}${beta_status}.spk"
     $FAKEROOT tar -cf "$TargetName" *
     cp -f "$TargetName" "${APPDIR}"
 
