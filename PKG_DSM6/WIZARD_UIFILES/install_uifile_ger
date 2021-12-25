@@ -1,9 +1,9 @@
 [
    {
-      "step_title" : "Hinweis zur Installation:",
+      "step_title" : "lang_wizui_install_title",
       "items" : [
          {
-            "desc" : "<p>Einzige Vorraussetzung ist das installierte Paket Docker. Im Normalfall ist keine weitere Konfiguration in Docker notwendig.</p>"
+            "desc" : "<p>lang_wizui_install_desc</p>"
          }
       ]
    }
