@@ -84,7 +84,7 @@ fi
     PBTOKEN=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
     dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
     MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
-    [[ -z $MessageTo ]] && MessageTo="@administrators" # group administrators (standard)
+    [[ -z $MessageTo ]] || [[ $MessageTo == "-" ]] && MessageTo="@administrators" # group administrators (standard)
     dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
@@ -150,6 +150,7 @@ fi
     else
         echo "WARNING: Docker could not be found. Please check if the Docker package has been installed!"
     fi
+    echo "DSM notify to user:       ${MessageTo}"
 
 # Configuration for LogLevel:
 # ---------------------------------------------------------------------
@@ -628,7 +629,7 @@ sub_jq()
 #########################################################################################
 
 # https://starkandwayne.com/blog/bash-for-loop-over-json-array-using-jq/
-echo "${sub_jq_value}" | base64 -i --decode | jq -r ${1}
+    echo "${sub_jq_value}" | base64 -i --decode | jq -r ${1}
 }
 
 
@@ -648,6 +649,7 @@ yaml_validate()
     fi
 
 # check & adjust the rule names (only numbers and letters / no number at the beginning):
+# ---------------------------------------------------------------------
     rulenames=$(cat "${taglisttmp}" | egrep -v '^[[:space:]]|^#|^$' | egrep ':[[:space:]]?$')
     for i in ${rulenames} ; do
         i2=$(echo "${i}" | sed -e 's/[^a-zA-Z0-9_:]/_/g')    # replace all nonconfom chars / only latin letters!
@@ -662,12 +664,14 @@ yaml_validate()
     done
 
 # check uniqueness of parent nodes:
+# ---------------------------------------------------------------------
     if [ $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l ) -ge 1 ] ; then # check for the number of duplicate lines
         echo "main keywords are not unique!"
         echo "dublicats are: $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d)"
     fi
 
 # check parameter validity:
+# ---------------------------------------------------------------------
     # check, if value of condition is "all" OR "any" OR "none":
     IFS=$'\012'
     for i in $(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^condition:") ; do
@@ -853,20 +857,6 @@ else
 fi
 
 
-
-
-
-
-echo ">>>>>>>>>>> DEV-PART:"
-    echo "found RegEx dates:"
-    echo "$founddatestr"
-    echo -e
-echo "<<<<<<<<<<< DEV-PART"
-
-
-#exit
-
-
 if [[ ! -z $founddatestr ]]; then
     readarray -t founddates <<<"$founddatestr"
     cntDatesFound=${#founddates[@]}
@@ -978,6 +968,7 @@ rename()
 [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # rename target file:
+# ---------------------------------------------------------------------
 echo "              ➜ renaming:"
 outputtmp=${output}
 
@@ -993,6 +984,7 @@ title=$(urlencode "${title}")
 renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before renew encoding
 
 # replace parameters with values:
+# ---------------------------------------------------------------------
 NewName="$NameSyntax"
 NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
 NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
@@ -1040,6 +1032,7 @@ echo "$NewName"
 [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 # set metadata:
+# ---------------------------------------------------------------------
 echo -n "              ➜ edit metadata "
 if which exiftool > /dev/null  2>&1 ; then
     echo -n "(exiftool ok) "
@@ -1050,19 +1043,80 @@ fi
 
 [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
+
 # move target files:
-if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
+# ---------------------------------------------------------------------
+i=0
+if [ $moveTaggedFiles = useYearDir ] ; then
+    # move to folder each year:
+    # ---------------------------------------------------------------------
+    echo "              ➜ move to folder each year ( …/target/YYYY/file.pdf)"
+    subOUTPUTDIR="${OUTPUTDIR}${date_yy}/"
+    echo -n "                  target directory \".../${date_yy}/\" exists? ➜  "
+    if [ -d "${subOUTPUTDIR}" ] ;then
+        echo "OK"
+    else
+        mkdir -p "${subOUTPUTDIR}"
+        echo "created"
+    fi
+    destfilecount=$(ls -t "${subOUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
+    if [ $destfilecount -eq 0 ]; then
+        output="${subOUTPUTDIR}${NewName}.pdf"
+    else
+        while [ -f "${subOUTPUTDIR}${NewName} ($destfilecount).pdf" ]; do
+            destfilecount=$(( $destfilecount + 1 ))
+            echo "                  continue counting … ($destfilecount)"
+        done
+
+        output="${subOUTPUTDIR}${NewName} ($destfilecount).pdf"
+        echo "                  File name already exists! Add counter ($destfilecount)"
+    fi
+    echo "                  target file: $(basename "${output}")"
+    mv "${outputtmp}" "${output}"
+
+    adjust_attributes
+
+elif [ $moveTaggedFiles = useYearMonthDir ] ; then
+    # move to folder each year & month:
+    # ---------------------------------------------------------------------
+    echo "              ➜ move to folder each year & month ( …/target/YYYY/MM/file.pdf)"
+    subOUTPUTDIR="${OUTPUTDIR}${date_yy}/${date_mm}/"
+    echo -n "                  target directory \".../${date_yy}/${date_mm}/\" exists? ➜  "
+    if [ -d "${subOUTPUTDIR}" ] ;then
+        echo "OK"
+    else
+        mkdir -p "${subOUTPUTDIR}"
+        echo "created"
+    fi
+    destfilecount=$(ls -t "${subOUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
+    if [ $destfilecount -eq 0 ]; then
+        output="${subOUTPUTDIR}${NewName}.pdf"
+    else
+        while [ -f "${subOUTPUTDIR}${NewName} ($destfilecount).pdf" ]; do
+            destfilecount=$(( $destfilecount + 1 ))
+            echo "                  continue counting … ($destfilecount)"
+        done
+
+        output="${subOUTPUTDIR}${NewName} ($destfilecount).pdf"
+        echo "                  File name already exists! Add counter ($destfilecount)"
+    fi
+    echo "                  target file: $(basename "${output}")"
+    mv "${outputtmp}" "${output}"
+
+    adjust_attributes
+
+elif [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
     # use sorting in category folder:
-    echo "              ➜ move to category directories"
+    # ---------------------------------------------------------------------
+    echo "              ➜ move to category directory"
     tagarray=( $renameCat )   # define target folder as array
-    i=0
     DestFolderList=""   # temp. list of used destination folders to avoid file duplicates (different tags, but one category)
     maxID=${#tagarray[*]}
 
     while (( i < maxID )); do
         tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
 
-        echo -n "                  tag directories \"${tagdir}\" exists? ➜  "
+        echo -n "                  tag directory \"${tagdir}\" exists? ➜  "
 
         if echo "${tagdir}"| grep -q "^/volume*" ; then
             subOUTPUTDIR="${tagdir%/}/"
@@ -1135,7 +1189,8 @@ if [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
     rm "${outputtmp}"
 elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
     # use sorting in tag folder:
-    echo "              ➜ move to tag directories"
+    # ---------------------------------------------------------------------
+    echo "              ➜ move to tag directory"
 
     if [ ! -z "$tagsymbol" ]; then
         renameTag=$( echo $renameTag_raw | sed -e "s/${tagsymbol}/ /g" )
@@ -1144,12 +1199,11 @@ elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
     fi
 
     tagarray=( $renameTag )   # define tags as array
-    i=0
     maxID=${#tagarray[*]}
 
     while (( i < maxID )); do
         tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-        echo -n "                  tag directories \"${tagdir}\" exists? ➜  "
+        echo -n "                  tag directory \"${tagdir}\" exists? ➜  "
 
         if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
             echo "OK"
@@ -1200,6 +1254,8 @@ elif [ ! -z "$renameTag" ] && [ $moveTaggedFiles = useTagDir ] ; then
     echo "              ➜ delete temp. target file"
     rm "${outputtmp}"
 else
+    # no rule fulfilled - use the target folder:
+    # ---------------------------------------------------------------------
     destfilecount=$(ls -t "${OUTPUTDIR}" | grep -o "^${NewName}.*" | wc -l)
     if [ $destfilecount -eq 0 ]; then
         output="${OUTPUTDIR}${NewName}.pdf"
@@ -1248,6 +1304,7 @@ for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$')                    # 
     done
 
 # delete surplus logs:
+# ---------------------------------------------------------------------
 count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax ))
 if [ ${count2del} -ge 0 ]; then
     for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} ) ; do
@@ -1602,7 +1659,7 @@ for input in ${files} ; do
         file_notify=$(basename "${output}")
         if [[ $dsm_version = "7" ]] ; then
 
-            # adjust message text:
+            # adjust message text with filename e.g.:
 # strings are preloadet from DSM / modify currently not possible ! ! !
 #            for file in /usr/syno/synoman/webman/3rdparty/synOCR/texts/**/strings; do
 #                sed -i "s/job_successful_replacement/${file_notify}/" "$file"
@@ -1612,7 +1669,6 @@ for input in ${files} ; do
 #            for file in /usr/syno/synoman/webman/3rdparty/synOCR/texts/**/strings; do
 #                sed -i "s/${file_notify}/job_successful_replacement/" "$file"
 #            done
-
         else
            synodsmnotify $MessageTo "synOCR" "File [${file_notify}] was processed"
         fi
