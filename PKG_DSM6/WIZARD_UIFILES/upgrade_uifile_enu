@@ -1,9 +1,9 @@
 [
    {
-      "step_title" : "Important note when upgrading!",
+      "step_title" : "lang_wizui_upgrade_title",
       "items" : [
          {
-            "desc" : "<p>Due to a problem in DiskStationManager synOCR cannot be opened after an upgrade. Therefore <u>it is necessary to reload the DSM page (F5)</u> or open synOCR in a new window after an upgrade.</p>"
+            "desc" : "<p>lang_wizui_upgrade_desc</p>"
          }
       ]
    }
