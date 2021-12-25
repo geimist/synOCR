@@ -18,15 +18,11 @@ File 1 - mainfile for GUI (most important):
 
 other files for packetmanagement:   
 - File 2: .[/PKG_DSM6/scripts/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/scripts/lang)**\<language_code\>**
-- File 3: .[/PKG_DSM6/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/WIZARD_UIFILES)uninstall\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
-- File 4: .[/PKG_DSM6/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/WIZARD_UIFILES)upgrade\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
-- File 5: .[/PKG_DSM6/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/INFO) (➜ only Parameter **"description"** !)
+- File 3: .[/PKG_DSM6/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/INFO) (➜ only Parameter **"description"** !)
     - description_\<language\_code\>="\<translated description\>"   
 
-- File 6: .[/PKG_DSM7/scripts/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/scripts/lang)**\<language_code\>**
-- File 7: .[/PKG_DSM7/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/WIZARD_UIFILES)uninstall\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
-- File 8: .[/PKG_DSM7/WIZARD_UIFILES/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/WIZARD_UIFILES)upgrade\_uifile\_**\<language\_code\>** (➜ only Parameter **"step_title"** and **"desc"** !)
-- File 9: .[/PKG_DSM7/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/INFO) (➜ only Parameter **"description"** !)
+- File 4: .[/PKG_DSM7/scripts/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/scripts/lang)**\<language_code\>**
+- File 5: .[/PKG_DSM7/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/INFO) (➜ only Parameter **"description"** !)
     - description_\<language\_code\>="\<translated description\>"   
   
   
