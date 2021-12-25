@@ -414,3 +414,9 @@ lang_synOCR_start_target_created="Target directory was created."
 lang_synOCR_start_umount_log="encrypted log folder not mounted"
 lang_synOCR_start_errorexit="synOCR was terminated with errors!"
 lang_synOCR_start_loginfo="more information in the LOG"
+
+#-------------------------------------------
+# WIZARD_UIFILES:
+#-------------------------------------------
+lang_wizui_install_title="Note on installation:"
+lang_wizui_install_desc="Einzige Vorraussetzung ist das installierte Paket Docker. Im Normalfall ist keine weitere Konfiguration in Docker notwendig."
