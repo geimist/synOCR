@@ -1003,15 +1003,37 @@ if [[ "$page" == "edit" ]]; then
         </p>'
 
     # MessageTo
+    user_list=$(cat /etc/passwd)
+    user_list_array=()
+    user_list_array+=( "-" )
+    IFS=$'\012'
+
+    for user in $user_list ; do
+        IFS=$oldIFS
+        user_name=$(echo $user | awk -F: '{print $1}')
+        user_id=$( id -u $user_name )
+        # sort out system user:
+        if [ $user_id -ge 1000 ] && [ $user_id -le 100000 ] ; then
+            user_list_array+=( "$user_name" )
+        fi
+    done
+
     echo '
         <p>
-        <label>'$lang_edit_set3_MessageTo_title'</label>'
-        if [ -n "$MessageTo" ]; then
-            echo '<input type="text" name="MessageTo" value="'$MessageTo'" />'
-        else
-            echo '<input type="text" name="MessageTo" value="" />'
-        fi
+        <label>'$lang_edit_set3_MessageTo_title'</label>
+        <select name="MessageTo">'
+
+        for entry in ${user_list_array[@]}; do
+            IFS=$OLDIFS
+            if [[ "$MessageTo" == "${entry}" ]]; then
+                echo "<option value=${entry} selected>${entry}</option>"
+            else
+                echo "<option value=${entry}>${entry}</option>"
+            fi
+        done
+
     echo '
+        </select>
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
             <span>'$lang_edit_set3_MessageTo_help1'
