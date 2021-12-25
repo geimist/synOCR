@@ -422,3 +422,5 @@ lang_wizui_install_title="Hinweis zur Installation:"
 lang_wizui_install_desc="Einzige Vorraussetzung ist das installierte Paket Docker. Im Normalfall ist keine weitere Konfiguration in Docker notwendig."
 lang_wizui_uninstall_title="Deinstallationshinweis"
 lang_wizui_uninstall_desc="Bei der Deinstallation werden alle Einstellungen gelöscht. Erstelle ggf. vor der Deinstallation eine Sicherung mit HyperBackup.</p><p><br>Ein manuell erstellter Task über den DSM-Aufgabenplaner muss ggf. manuell gelöscht werden."          # keep html-tag
+lang_wizui_upgrade_title="Wichtiger Hinweis bei einem Upgrade!"
+lang_wizui_upgrade_desc="Aufgrund eines Problems im DiskStationManager kann synOCR nach einem Upgrade nicht geöffnet werden. Daher <u>ist es nach einem Upgrage notwenig die DSM-Seite zu aktualisieren / neuzuladen (F5)</u> oder synOCR in einem neuen Fenster zu öffnen."          # keep html-tag
