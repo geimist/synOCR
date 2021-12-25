@@ -419,4 +419,4 @@ lang_synOCR_start_loginfo="more information in the LOG"
 # WIZARD_UIFILES:
 #-------------------------------------------
 lang_wizui_install_title="Note on installation:"
-lang_wizui_install_desc="Einzige Vorraussetzung ist das installierte Paket Docker. Im Normalfall ist keine weitere Konfiguration in Docker notwendig."
+lang_wizui_install_desc="The only prerequisite is the installed Docker package. Normally, no further configuration in Docker is necessary."
