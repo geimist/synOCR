@@ -1,9 +1,9 @@
 [
    {
-      "step_title" : "Note on installation:",
+      "step_title" : "lang_wizui_install_title",
       "items" : [
          {
-            "desc" : "<p>The only prerequisite is the installed Docker package. Normally, no further configuration in Docker is necessary.</p>"
+            "desc" : "<p>lang_wizui_install_desc</p>"
          }
       ]
    }
