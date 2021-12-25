@@ -415,3 +415,9 @@ lang_synOCR_start_umount_log="verschlüsselter LOG-Ordner nicht eingehangen"
 lang_synOCR_start_errorexit="synOCR wurde mit Fehlern beendet!"
 lang_synOCR_start_loginfo="weitere Informationen im LOG"
 
+#-------------------------------------------
+# WIZARD_UIFILES:
+#-------------------------------------------
+lang_wizui_install_title="Hinweis zur Installation:"
+lang_wizui_install_desc="Einzige Vorraussetzung ist das installierte Paket Docker. Im Normalfall ist keine weitere Konfiguration in Docker notwendig."
+
