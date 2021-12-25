@@ -2,6 +2,7 @@
 #
 #######
 project="synOCR"
+languages=( enu ger )   # for automated insert language strings to WIZARD_UIFILES
 #######
 #----------------------------------------------------------------------------------------
 # Folder structure:
@@ -135,7 +136,6 @@ printf "\n - INFO: collect the DSM specific files:\n"
     fi
 
 printf "\n - INFO: insert language strings to WIZARD_UIFILES:\n"
-    languages=( enu ger )
     sed -i "s/lang_wizui_install_title/$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_install_title)/" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
     sed -i "s/lang_wizui_install_desc/$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_install_desc)/" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
 
@@ -176,7 +176,7 @@ printf "\n - INFO: create empty dirs ...\n"
 printf "\n - INFO: adjust permissions ...\n"
     chmod -R 755 "${build_tmp}/APP/"
     chmod -R 755 "${build_tmp}/$PKG/"
-#   chmod -R 644 "${build_tmp}/APP/ui/texts/"
+    chmod -R 644 "${build_tmp}/APP/ui/texts/"
 
 # Packing and dropping the current installation into the appropriate /Pack folder
     printf "\n - INFO: The archive package.tgz will be created ...\n"
