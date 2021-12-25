@@ -145,7 +145,7 @@ printf "\n - INFO: insert language strings to WIZARD_UIFILES:\n"
     sed -i "s/lang_wizui_uninstall_desc/$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_uninstall_desc)/" "$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile"
 
 [[ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile" ]] && echo "vorhanden"
-sed -i "s/lang_wizui_upgrade_title/$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_upgrade_title)/" "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile"
+#sed -i "s/lang_wizui_upgrade_title/$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_upgrade_title)/" "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile"
 
 ls -la "$build_tmp/$PKG/WIZARD_UIFILES/"
 exit
