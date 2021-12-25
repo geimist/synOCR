@@ -1,13 +1,10 @@
-[{
-	"step_title": "Uninstallation hint",
-	"items": 
-		[{
-		"type": "multiselect",
-        "desc" : "<p>All settings are deleted during uninstallation. If necessary, create a backup with HyperBackup before uninstalling.</p><p>Should a schedule created in synOCR also be deleted?<br>(A manually created task via the DSM task scheduler may have to be deleted manually.)</p>",
-		"subitems": 
-			[{
-				"key": "pkgwizard_remove_cronjob",
-				"desc": "delete synOCR task"
-			}]
-		}]
-}]
+[
+   {
+      "step_title" : "lang_wizui_uninstall_uifile_title",
+      "items" : [
+         {
+            "desc" : "<p>lang_wizui_uninstall_uifile_desc</p>"
+         }
+      ]
+   }
+]
