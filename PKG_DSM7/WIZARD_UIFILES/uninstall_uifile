@@ -1,9 +1,9 @@
 [
    {
-      "step_title" : "lang_wizui_uninstall_uifile_title",
+      "step_title" : "lang_wizui_uninstall_title",
       "items" : [
          {
-            "desc" : "<p>lang_wizui_uninstall_uifile_desc</p>"
+            "desc" : "<p>lang_wizui_uninstall_desc</p>"
          }
       ]
    }
