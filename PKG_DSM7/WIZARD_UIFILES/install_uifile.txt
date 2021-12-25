@@ -1,0 +1,10 @@
+[
+   {
+      "step_title" : "Note on installation:",
+      "items" : [
+         {
+            "desc" : "<p>The only prerequisite is the installed Docker package. Normally, no further configuration in Docker is necessary.</p>"
+         }
+      ]
+   }
+]
