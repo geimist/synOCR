@@ -420,4 +420,5 @@ lang_synOCR_start_loginfo="weitere Informationen im LOG"
 #-------------------------------------------
 lang_wizui_install_title="Hinweis zur Installation:"
 lang_wizui_install_desc="Einzige Vorraussetzung ist das installierte Paket Docker. Im Normalfall ist keine weitere Konfiguration in Docker notwendig."
-
+lang_wizui_uninstall_uifile_title="Deinstallationshinweis"
+lang_wizui_uninstall_uifile_desc="Bei der Deinstallation werden alle Einstellungen gelöscht. Erstelle ggf. vor der Deinstallation eine Sicherung mit HyperBackup.</p><p><br>Ein manuell erstellter Task über den DSM-Aufgabenplaner muss ggf. manuell gelöscht werden."          # keep html-tag
