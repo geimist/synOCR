@@ -139,9 +139,15 @@ printf "\n - INFO: insert language strings to WIZARD_UIFILES:\n"
     sed -i "s/lang_wizui_install_title/$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_install_title)/" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
     sed -i "s/lang_wizui_install_desc/$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_install_desc)/" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
 
+    sed -i "s/lang_wizui_uninstall_title/$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_uninstall_title)/" "$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile"
+    sed -i "s/lang_wizui_uninstall_desc/$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_uninstall_desc)/" "$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile"
+
     for lang in ${languages[@]}; do
         sed -i "s/lang_wizui_install_title/$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_title)/" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
         sed -i "s/lang_wizui_install_desc/$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_desc)/" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
+
+        sed -i "s/lang_wizui_uninstall_title/$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_title)/" "$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile_${lang}"
+        sed -i "s/lang_wizui_uninstall_desc/$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc)/" "$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile_${lang}"
 
     done 
 #    if [ $TargetDSM -eq 7 ]; then   
