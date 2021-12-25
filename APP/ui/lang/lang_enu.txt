@@ -420,5 +420,5 @@ lang_synOCR_start_loginfo="more information in the LOG"
 #-------------------------------------------
 lang_wizui_install_title="Note on installation:"
 lang_wizui_install_desc="The only prerequisite is the installed Docker package. Normally, no further configuration in Docker is necessary."
-lang_wizui_uninstall_uifile_title="Uninstallation hint"
-lang_wizui_uninstall_uifile_desc="All settings are deleted during uninstallation. If necessary, create a backup with HyperBackup before uninstalling.</p><p><br>A manually created task via the DSM task scheduler may have to be deleted manually."          # keep html-tag
+lang_wizui_uninstall_title="Uninstallation hint"
+lang_wizui_uninstall_desc="All settings are deleted during uninstallation. If necessary, create a backup with HyperBackup before uninstalling.</p><p><br>A manually created task via the DSM task scheduler may have to be deleted manually."          # keep html-tag
