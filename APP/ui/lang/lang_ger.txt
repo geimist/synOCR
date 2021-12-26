@@ -427,3 +427,4 @@ lang_wizui_upgrade_desc="Aufgrund eines Problems im DiskStationManager kann synO
 lang_PKG_NOINSTALL_ERROR_PART1="Dein Gerät"
 lang_PKG_NOINSTALL_ERROR_PART2="mit der CPU-Architektur"
 lang_PKG_NOINSTALL_ERROR_PART3="wird von synOCR nicht unterstützt, da das benötigte Paket Docker nicht installiert werden kann (nur x86_64 / aarch64)"
+lang_INFO_description="synOCR ist eine einfache GUI für den Dockercontainer OCRmyPDF. Damit kannst du einfach OCR auf PDF-Dokumente anwenden. synOCR kann anschließend nach Tags und Datum in den Dokumenten suchen, diese nach einem individuellen Muster umbennenn und nach Kategorien in Unterordner einsortieren. Durch Verwendung von Hardlinks entsteht kein erhöhter Speicherplatzbedarf, wenn ein Dokument in mehrere Kategorieordner einsortiert werden muss."
