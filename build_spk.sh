@@ -136,6 +136,9 @@ printf "\n - INFO: collect the DSM specific files:\n"
     fi
 
 printf "\n - INFO: insert language strings to WIZARD_UIFILES:\n"
+    # PKG_DSMx/INFO
+    synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_INFO_description)
+
     # install_uifile
     sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_install_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
     sed -i "s|lang_wizui_install_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_install_desc)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
@@ -147,8 +150,16 @@ printf "\n - INFO: insert language strings to WIZARD_UIFILES:\n"
     # upgrade_uifile
     [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile" ] && sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_upgrade_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile"
     [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile" ] && sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_upgrade_desc)|" "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile"
- 
+
     for lang in ${languages[@]}; do
+        # PKG_DSMx/INFO
+        synosetkeyvalue "$build_tmp/$PKG/INFO" description_${lang} $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)
+
+        # PKG_DSMx/scripts/lang/${lang}
+        synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART1 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART1)
+        synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART2 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART2)
+        synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART3 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART3)
+
         # install_uifile
         sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
         sed -i "s|lang_wizui_install_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_desc)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
