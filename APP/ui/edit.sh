@@ -534,6 +534,15 @@ if [[ "$page" == "edit" ]]; then
         else
             echo '<input type="text" name="INPUTDIR" value="" />'
         fi
+
+        # folder status:
+        if [ -d "$INPUTDIR" ]; then
+            echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
+        else
+            echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
+        fi
+
+        # help text:
         echo '
             <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
@@ -550,6 +559,15 @@ if [[ "$page" == "edit" ]]; then
         else
             echo '<input type="text" name="OUTPUTDIR" value="" />'
         fi
+
+        # folder status:
+        if [ -d "$OUTPUTDIR" ]; then
+            echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
+        else
+            echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
+        fi
+
+        # help text:
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
@@ -566,6 +584,15 @@ if [[ "$page" == "edit" ]]; then
         else
             echo '<input type="text" name="BACKUPDIR" value="" />'
         fi
+
+        # folder status:
+        if [ -d "$BACKUPDIR" ]; then
+            echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
+        else
+            echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
+        fi
+
+        # help text:
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
@@ -583,6 +610,15 @@ if [[ "$page" == "edit" ]]; then
         else
             echo '<input type="text" name="LOGDIR" value="" />'
         fi
+
+        # folder status:
+        if [ -d "$LOGDIR" ]; then
+            echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
+        else
+            echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
+        fi
+
+        # help text:
     echo '
         <a class="helpbox" href="#HELP">
             <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
