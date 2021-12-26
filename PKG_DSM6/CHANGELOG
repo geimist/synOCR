@@ -12,6 +12,7 @@ DSM7 version you can found at cphub.net
  -  handling of special characters improved
  -  cleanup of unused docker images
  -  DSM notifications: list all possible users
+ -  Indicator about valid directorys in GUI
     IMPLEMENTATIONS:
  -  renaming parameter for the year can now be 2 or 4 digits 
     (§yocr2 §yocr4 §ynow2 §ynow4 §ysource2 §ysource4)
