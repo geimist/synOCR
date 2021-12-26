@@ -1,6 +1,6 @@
 # german language file for synOCR-GUI
 # /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_ger.txt
-# translation instructions can you found here: https://geimist.eu:30443/geimist/synOCR/src/branch/master/translation_instruction.md
+# translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
 
 #-------------------------------------------
 # general:
