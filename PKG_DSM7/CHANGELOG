@@ -21,6 +21,7 @@ known issues / limitations:
  -  delete cron job who was generated with synOCR at DSM6
  -  DSM notifications work again
  -  DSM notifications: list all possible users
+ -  Indicator about valid directorys in GUI
  -  ...
     IMPLEMENTATIONS:
  -  renaming parameter for the year can now be 2 or 4 digits 
