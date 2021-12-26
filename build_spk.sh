@@ -118,7 +118,7 @@ printf "\n----------------------------------------------------------------------
         echo "The $(git rev-parse --abbrev-ref HEAD)-branch will be used!"
     fi
 
-printf "\n - INFO: collect the DSM specific files:\n"
+printf "\n - INFO: collect the DSM specific files ...\n"
     if [ $TargetDSM -eq 7 ]; then
         PKG=PKG_DSM7
         mv $build_tmp/APP/ui/config_DSM7 $build_tmp/APP/ui/config
@@ -135,7 +135,7 @@ printf "\n - INFO: collect the DSM specific files:\n"
 #       sed -i 's/VERSION_DSM/VERSION_DSM6/' "$build_tmp/APP/ui/synOCR-start.sh"
     fi
 
-printf "\n - INFO: insert language strings to WIZARD_UIFILES:\n"
+printf "\n - INFO: insert language strings to WIZARD_UIFILES ...\n"
     # PKG_DSMx/INFO
     synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_INFO_description)
 
