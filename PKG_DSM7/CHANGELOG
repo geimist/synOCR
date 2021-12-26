@@ -26,7 +26,8 @@ known issues / limitations:
     IMPLEMENTATIONS:
  -  renaming parameter for the year can now be 2 or 4 digits 
     (§yocr2 §yocr4 §ynow2 §ynow4 §ysource2 §ysource4)
- -  target files can moved to folders named by year or year/month
+ -  target files can moved to folders named by year
+ -  target files can moved to folders named by year/month
  -  ...
 
 1.1.902 BETA [2021-07-26]
