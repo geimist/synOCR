@@ -11,20 +11,9 @@ For questions: synocr [@] geimist.eu
 
 -----
 
-**The following files are needed to translate:**
+**The only file are needed to translate:**
 
-File 1 - mainfile for GUI (most important):
 - .[/APP/ui/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/APP/ui/lang)lang_\<language\_code\>.txt
-
-other files for packetmanagement:   
-- File 2: .[/PKG_DSM6/scripts/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/scripts/lang)**\<language_code\>**
-- File 3: .[/PKG_DSM6/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/INFO) (➜ only Parameter **"description"** !)
-    - description_\<language\_code\>="\<translated description\>"   
-
-- File 4: .[/PKG_DSM7/scripts/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/scripts/lang)**\<language_code\>**
-- File 5: .[/PKG_DSM7/INFO](https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/INFO) (➜ only Parameter **"description"** !)
-    - description_\<language\_code\>="\<translated description\>"   
-  
   
 **The following languages are possible:**
 - ger = German
