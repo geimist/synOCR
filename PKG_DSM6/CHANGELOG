@@ -20,11 +20,6 @@ DSM7 version you can found at cphub.net
  -  target files can moved to folders named by year/month
  -  
 
-1.2.0 [2021-xx-xx]
-    IMPLEMENTATIONS:
- -  Renaming parameter for the year can now be 2 or 4 digits 
-    (§yocr2 §yocr4 §ynow2 §ynow4 §ysource2 §ysource4)
-
 1.1.2 [2021-04-21]
     BUGFIXES:
  -  an error when the page counter could not be calculated.
