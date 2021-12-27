@@ -588,6 +588,8 @@ if [[ "$page" == "edit" ]]; then
         # folder status:
         if [ -d "$BACKUPDIR" ]; then
             echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
+        elif [ -z "$BACKUPDIR" ]; then
+            echo ''
         else
             echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
         fi
@@ -614,6 +616,8 @@ if [[ "$page" == "edit" ]]; then
         # folder status:
         if [ -d "$LOGDIR" ]; then
             echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
+        elif [ -z "$LOGDIR" ]; then
+            echo ''
         else
             echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
         fi
