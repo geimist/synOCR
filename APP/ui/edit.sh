@@ -446,7 +446,13 @@ if [[ "$page" == "edit" ]]; then
         '$lang_edit_summary4'<br><br>'
 
         if [ ! -z "$DBupgradelog" ] ; then
-            echo "<p>'$lang_edit_dbupdate': $DBupgradelog </p>"
+            DBupgradelog=$(echo "$DBupgradelog" | sed ':a;N;$!ba;s/\n/<br>/g')
+            if echo "$DBupgradelog" | grep -q successfully ; then
+                message_color=$green
+            else
+                message_color=$synotrred
+            fi
+            echo '<p style="'$message_color';">'$lang_edit_dbupdate': '$DBupgradelog' </p>'
         fi
 
 # Profile selection:
