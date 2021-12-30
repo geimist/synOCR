@@ -447,10 +447,10 @@ if [[ "$page" == "edit" ]]; then
 
         if [ ! -z "$DBupgradelog" ] ; then
             DBupgradelog=$(echo "$DBupgradelog" | sed ':a;N;$!ba;s/\n/<br>/g')
-            if echo "$DBupgradelog" | grep -q successfully ; then
-                message_color=$green
-            else
+            if echo "$DBupgradelog" | grep -q ERROR ; then
                 message_color=$synotrred
+            else
+                message_color=$green
             fi
             echo '<p style="'$message_color';">'$lang_edit_dbupdate': '$DBupgradelog' </p>'
         fi
