@@ -195,6 +195,14 @@ lang_edit_set2_ignoredDate_help1="Specified dates will be ignored during the sea
 
 lang_edit_set3_title="DSM notification and other settings"
 
+lang_edit_set3_backuprotate_title="Limit backup files"
+lang_edit_set3_backuprotate_help1="Surplus backups can be removed automatically."
+lang_edit_set3_backuprotate_help2="Choose days or files as unit."
+lang_edit_set3_backuprotate_help3="An empty specification cancels the limitation."
+lang_edit_set3_backuprotatetype_title=
+lang_edit_set3_backuprotatetype_files="files"
+lang_edit_set3_backuprotatetype_days="days"
+
 lang_edit_set3_logmax_title="max. number of LOG files"
 lang_edit_set3_logmax_help="maximum number of LOG files (empty logs are deleted immediately)"
 
