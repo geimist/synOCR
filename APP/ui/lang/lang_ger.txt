@@ -195,6 +195,14 @@ lang_edit_set2_ignoredDate_help1="Angegebene Daten werden bei der Suche ignorier
 
 lang_edit_set3_title="DSM-Benachrichtigung und sonstige Einstellungen"
 
+lang_edit_set3_backuprotate_title="Backupdateien begrenzen"
+lang_edit_set3_backuprotate_help1="Überzählige Backups können automatisch entfernt werden."
+lang_edit_set3_backuprotate_help2="Wähle Tage oder Dateien als Einheit."
+lang_edit_set3_backuprotate_help3="Eine leere Angabe hebt die Begrenzung auf."
+lang_edit_set3_backuprotatetype_title=
+lang_edit_set3_backuprotatetype_files="Dateien"
+lang_edit_set3_backuprotatetype_days="Tage"
+
 lang_edit_set3_logmax_title="maximale LOG-Dateien"
 lang_edit_set3_logmax_help="maximale Anzahl der LOG-Dateien (leere Logs werden sofort gelöscht)"
 
