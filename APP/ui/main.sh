@@ -1,10 +1,12 @@
 #!/bin/bash
 # /usr/syno/synoman/webman/3rdparty/synOCR/main.sh
 
+PATH=$PATH:/usr/local/bin:/opt/usr/bin
 
 # Read file status:
 # ---------------------------------------------------------------------
     # Count of unfinished PDF files:
+    count_inputpdf=0
 
     sSQL="SELECT INPUTDIR, SearchPraefix FROM config WHERE active='1' "
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
