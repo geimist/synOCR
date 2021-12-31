@@ -31,28 +31,18 @@ OLDIFS=$IFS
         sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"system\" (\"rowid\" INTEGER PRIMARY KEY ,\"key\" VARCHAR ,\"value_1\" VARCHAR ,\"value_2\" VARCHAR ,\"value_3\" VARCHAR ,\"value_4\" VARCHAR );"
         # write default data:
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))')"
-#       sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('DB_Version', '5')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('db_version', '5')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('checkmon', '')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('dockerimageupdate', '1')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1 ) VALUES ('global_pagecount', '0')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1 ) VALUES ('global_ocrcount', '0')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1 ) VALUES ('count_start_date', '$(date +%Y-%m-%d)')"
-
-#       sqlinst="CREATE TABLE \"system\" (\"rowid\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"DB_Version\" varchar DEFAULT ('1'), \"checkmon\" varchar, \"dockerimageupdate\" varchar DEFAULT ('1') );"
-#       sqlite3 "./etc/synOCR.sqlite" "$sqlinst"
         sleep 1
-
-#       sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET checkmon='$(get_key_value ./etc/counter checkmon)' WHERE rowid=1"
-#       sleep 1
 
         # table dockerupdate / Docker-Image-Update - check date:
         sqlinst="CREATE TABLE \"dockerupdate\" (\"rowid\" INTEGER PRIMARY KEY ,\"image\" varchar,\"date_checked\" varchar );"
         sqlite3 "./etc/synOCR.sqlite" "$sqlinst"
         sleep 1
-
-#       sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( DB_Version ) VALUES ( '5' )"
-#       sleep 1
 
         # Create / migrate profile:
         if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT count(*) FROM config") -eq 0 ] ; then
@@ -297,17 +287,5 @@ exit 0
 # ➜ synOCR.sh: DB-Einlesen anpassen
 '
 ToDo:
-    Tabelle config die Spalten 
-        - ocrcount pagecount backup_max backup_max_type
-        main.sh anpassen
-        DB_Version -> db_version
-        counter file checken
-        global system tabelle checken
-        counter in synOCR.sh checken
-        
-        
-    Tabelle system 
-        - um 90° drehen / ggf. als system2 
-        - count_start_date global_ocrcount global_pagecount
-    
+
     '
