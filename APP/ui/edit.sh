@@ -4,7 +4,7 @@
 OLDIFS=$IFS
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
-PATH=$PATH:/usr/local/bin:/opt/usr/bin
+#PATH=$PATH:/usr/local/bin:/opt/usr/bin
 
 new_profile ()
 {
@@ -306,12 +306,12 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
         if [ ! -z "$new_profile_value" ] ; then
             sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
             if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
-                sSQL="INSERT INTO config ( profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll,
-                                    moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate
+                sSQL="INSERT INTO config ( profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles,
+                                    NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type
                                     ) VALUES (
                                     '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix',
                                     '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify',
-                                    '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate' )"
+                                    '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type' )"
                 sqlite3 ./etc/synOCR.sqlite "$sSQL"
 
                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
@@ -374,15 +374,17 @@ fi
 
 # Write record to DB:
 if [[ "$page" == "edit-save" ]]; then
+echo "backup_max='$backup_max', backup_max_type=$backup_max_type"
     sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR',
         LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll',
         moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$(sed -e "s/'/''/g" <<<"$ocropt")', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN',
         dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol', 
-        documentSplitPattern='$documentSplitPattern', ignoredDate='$ignoredDate' WHERE profile_ID='$profile_ID' "
+        documentSplitPattern='$documentSplitPattern', ignoredDate='$ignoredDate', backup_max='$backup_max', backup_max_type='$backup_max_type' WHERE profile_ID='$profile_ID' "
+
     sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
 
     # write global change to table system:
-    sqlite3 ./etc/synOCR.sqlite "UPDATE system SET dockerimageupdate='$dockerimageupdate' WHERE rowid=1 "
+    sqlite3 ./etc/synOCR.sqlite "UPDATE system SET value_1='$dockerimageupdate' WHERE key='dockerimageupdate' "
 
     echo '<div class="Content_1Col_full">'
     echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_savefin'</p><br /></div>'
@@ -396,11 +398,11 @@ if [[ "$page" == "edit" ]]; then
     if [ -z "$getprofile" ] ; then
         sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, ignoredDate FROM config WHERE profile_ID='1' "
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, ignoredDate, backup_max, backup_max_type FROM config WHERE profile_ID='1' "
     else
         sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, ignoredDate FROM config WHERE profile_ID='$getprofile' "
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, ignoredDate, backup_max, backup_max_type FROM config WHERE profile_ID='$getprofile' "
     fi
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -431,9 +433,11 @@ if [[ "$page" == "edit" ]]; then
         tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
         documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
         ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $26}')
+        backup_max=$(echo "$sqlerg" | awk -F'\t' '{print $27}')
+        backup_max_type=$(echo "$sqlerg" | awk -F'\t' '{print $28}')
 
     # read global values:
-        dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
+        dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
 
     echo '
     <div id="Content_1Col">
@@ -478,7 +482,10 @@ if [[ "$page" == "edit" ]]; then
 
     echo '</select><button name="page" value="edit" class="blue_button" style="float:right;">'$lang_buttonchange'</button>&nbsp;'
 
+
+# --------------------------------------------------------------
     # -> General section
+# --------------------------------------------------------------
 
 # Expandable:
     echo '<fieldset>
@@ -608,6 +615,7 @@ if [[ "$page" == "edit" ]]; then
             '$lang_edit_set1_backupdir_help2'<br>
             '$lang_edit_set1_backupdir_help3'</span></a>
         </p>'
+
 
     # LOGDIR
     echo '
@@ -1009,6 +1017,42 @@ if [[ "$page" == "edit" ]]; then
         <span class="detailsitem">'$lang_edit_set3_title'</span>
     </summary></p>
     <p>'
+
+    # BACKUP ROTATION
+
+    echo '
+        <p>
+        <label>'$lang_edit_set3_backuprotate_title'</label>'
+        if [ -n "$backup_max" ]; then
+            echo '<input type="text" name="backup_max" value="'$backup_max'" />'
+        else
+            echo '<input type="text" name="backup_max" value="" />'
+        fi
+    echo '</p>'
+
+    echo '
+        <p>
+        <label><span style="color: #FFFFFF;">.'$lang_edit_set3_backuprotatetype_title'</span></label>
+        <select name="backup_max_type">'
+        if [[ "$backup_max_type" == "files" ]]; then
+            echo '<option value="files" selected>'$lang_edit_set3_backuprotatetype_files'</option>'
+        else
+            echo '<option value="files">'$lang_edit_set3_backuprotatetype_files'</option>'
+        fi
+        if [[ "$backup_max_type" == "days" ]]; then
+            echo '<option value="days" selected>'$lang_edit_set3_backuprotatetype_days'</option>'
+        else
+            echo '<option value="days">'$lang_edit_set3_backuprotatetype_days'</option>'
+        fi
+    echo '
+        </select>
+        <a class="helpbox" href="#HELP">
+            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
+            <span>'$lang_edit_set3_backuprotate_help1'<br><br>
+            '$lang_edit_set3_backuprotate_help2'<br>
+            '$lang_edit_set3_backuprotate_help3'</span></a>
+        </p>'
+
 
     # LOGmax
     echo '
