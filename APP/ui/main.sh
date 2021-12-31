@@ -1,28 +1,27 @@
 #!/bin/bash
 # /usr/syno/synoman/webman/3rdparty/synOCR/main.sh
 
-PATH=$PATH:/usr/local/bin:/opt/usr/bin
 
-# Dateizähler:
+# file counter - migrated to DB:
 # ---------------------------------------------------------------------
-    count_inputpdf=0
-    if [ ! -f ./etc/counter ] ; then
-        touch ./etc/counter
-        echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
-        echo "ocrcount=\"0\"" >> ./etc/counter
-        echo "pagecount=\"0\"" >> ./etc/counter
-    else
-        if ! cat ./etc/counter | grep -q "pagecount" ; then
-            echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
-        fi
-    fi
+#    count_inputpdf=0
+#    if [ ! -f ./etc/counter ] ; then
+#        touch ./etc/counter
+#        echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
+#        echo "ocrcount=\"0\"" >> ./etc/counter
+#        echo "pagecount=\"0\"" >> ./etc/counter
+#    else
+#        if ! cat ./etc/counter | grep -q "pagecount" ; then
+#            echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
+#        fi
+#    fi
 
-# Dateistatus auslesen:
+# Read file status:
 # ---------------------------------------------------------------------
-    # Anzahl unfertiger PDF-Files:
+    # Count of unfinished PDF files:
 
     sSQL="SELECT INPUTDIR, SearchPraefix FROM config WHERE active='1' "
-    sqlerg=`sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL"`
+    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
     IFS=$'\012'
     for entry in $sqlerg; do
@@ -33,7 +32,7 @@ PATH=$PATH:/usr/local/bin:/opt/usr/bin
         exclusion=false
 
         if echo "${SearchPraefix}" | grep -qE '^!' ; then
-            # ist der prefix / suffix ein Ausschlusskriterium?
+            # is the prefix / suffix an exclusion criterion?
             exclusion=true
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e 's/^!//')
         fi
@@ -57,7 +56,7 @@ PATH=$PATH:/usr/local/bin:/opt/usr/bin
         fi
     done
 
-# manueller synOTR-Start:
+# manual synOCR start:
 # ---------------------------------------------------------------------
     if [[ "$page" == "main-run-synocr" ]]; then
       echo '
@@ -66,7 +65,7 @@ PATH=$PATH:/usr/local/bin:/opt/usr/bin
       echo '<meta http-equiv="refresh" content="2; URL=index.cgi?page=main"></div>'
     fi
 
-# synOCR beenden erzwingen:
+# Force synOCR exit:
 # ---------------------------------------------------------------------
     if [[ "$page" == "main-kill-synocr" ]]; then
         killall synOCR.sh
@@ -131,7 +130,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
         echo '<br><br><br><p class="center"><button name="page" class="blue_button" value="main-run-synocr">'$lang_main_buttonrun'</button></p><br />'
     fi
 
-# Abschnitt Status / Statistik:
+# Section Status / Statistics:
     echo '<fieldset>
       <hr style="border-style: dashed; size: 1px;">
       <br />
@@ -156,7 +155,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
         <td><span style="color:#BD0010;">'$count_inputpdf'</span></td></tr>'
     fi
 
-    echo '<tr><td class="td_color" bgcolor=#fff></td><td><span style="color:#0086E5;font-weight:normal; ">'$lang_main_totalsince' '$(get_key_value ./etc/counter startcount)' (PDF / '$lang_main_pages'):</td><td><span style="color:green;">'$(get_key_value ./etc/counter ocrcount)' / '$(get_key_value ./etc/counter pagecount)'</span></td></tr>'
+    echo '<tr><td class="td_color" bgcolor=#fff></td><td><span style="color:#0086E5;font-weight:normal; ">'$lang_main_totalsince' '$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")' (PDF / '$lang_main_pages'):</td><td><span style="color:green;">'$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")' / '$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")'</span></td></tr>'
 
     echo '</table>
         <!-- <p>Hier soll in Zukunft noch eine Statusübersicht / Statistik zu finden sein …<br>
