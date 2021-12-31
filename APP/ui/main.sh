@@ -2,20 +2,6 @@
 # /usr/syno/synoman/webman/3rdparty/synOCR/main.sh
 
 
-# file counter - migrated to DB:
-# ---------------------------------------------------------------------
-#    count_inputpdf=0
-#    if [ ! -f ./etc/counter ] ; then
-#        touch ./etc/counter
-#        echo "startcount=\"$(date +%Y)-$(date +%m)-$(date +%d)\"" >> ./etc/counter
-#        echo "ocrcount=\"0\"" >> ./etc/counter
-#        echo "pagecount=\"0\"" >> ./etc/counter
-#    else
-#        if ! cat ./etc/counter | grep -q "pagecount" ; then
-#            echo "pagecount=\"$(get_key_value ./etc/counter ocrcount)\"" >> ./etc/counter
-#        fi
-#    fi
-
 # Read file status:
 # ---------------------------------------------------------------------
     # Count of unfinished PDF files:
