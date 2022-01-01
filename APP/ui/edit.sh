@@ -374,7 +374,6 @@ fi
 
 # Write record to DB:
 if [[ "$page" == "edit-save" ]]; then
-echo "backup_max='$backup_max', backup_max_type=$backup_max_type"
     sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR',
         LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll',
         moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$(sed -e "s/'/''/g" <<<"$ocropt")', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN',
