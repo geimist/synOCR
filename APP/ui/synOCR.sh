@@ -31,6 +31,10 @@
     LOGFILE="$2"                # current logfile / is submitted by start script
     shopt -s globstar           # enable 'globstar' shell option (to use ** for directionary wildcard)
 
+#    if ! echo "$PATH" | grep -q '/usr/local/bin\|/opt/usr/bin' ; then
+#        PATH=$PATH:/usr/local/bin:/opt/usr/bin
+#    fi
+
 # to which user/group the DSM notification should be sent:
 # ---------------------------------------------------------------------
     synOCR_user=$(whoami); echo "synOCR-user:              $synOCR_user"
@@ -61,7 +65,8 @@ fi
 # ---------------------------------------------------------------------
     sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
         delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate FROM config WHERE profile_ID='$workprofile' "
+        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate, 
+        backup_max, backup_max_type, pagecount, ocrcount FROM config WHERE profile_ID='$workprofile' "
 
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 #   sqlerg=$(urldecode "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL" | sed -e 's/+/%2B/g')")  # replace encoded values which can't insert with GUI directly (e.g. ' ")
@@ -91,10 +96,16 @@ fi
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
     documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
     ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
+    backup_max=$(echo "$sqlerg" | awk -F'\t' '{print $26}')
+    backup_max_type=$(echo "$sqlerg" | awk -F'\t' '{print $27}')
+    pagecount_profile=$(echo "$sqlerg" | awk -F'\t' '{print $28}')
+    ocrcount_profile=$(echo "$sqlerg" | awk -F'\t' '{print $29}')
 
 # read global values:
-    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT dockerimageupdate FROM system WHERE rowid=1 ")
-    dockerimageupdate=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
+    dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
+    count_start_date=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")
+    global_pagecount=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")
+    global_ocrcount=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")
 
 # System Information:
 # ---------------------------------------------------------------------
@@ -106,7 +117,7 @@ fi
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
     echo "Device:                   $device ($sysID)"
     echo "current Profil:           $profile"
-    echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1")"
+    echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
     echo "used image (created):     $dockercontainer ($(docker inspect -f '{{ .Created }}' "$dockercontainer" | awk -F. '{print $1}'))"
 
     echo "used ocr-parameter (raw): $ocropt"
@@ -140,6 +151,19 @@ fi
     echo "Symbol for tag marking:   ${tagsymbol}"
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "Document split pattern:   ${documentSplitPattern}"
+
+    enhanced_date_search=no
+    echo -n "Date search method:       "
+    if [[ $enhanced_date_search = "yes" ]] ; then
+        echo "use Python (BETA)"
+#       echo "                          to use standard search via RegEx, you must change the settings with this command:"
+#       echo "                          synosetkeyvalue $(echo $0) enhanced_date_search no"
+    else
+        echo "use standard search via RegEx"
+#       echo "                          to use enhanced search via Python, you must change the settings with this command:"
+#       echo "                          synosetkeyvalue $(echo $0) enhanced_date_search yes"
+    fi
+
     echo "source for filedate:      ${filedate}"
     echo "ignored dates by search:  ${ignoredDate}"
     [[ $loglevel = "2" ]] && \
@@ -170,10 +194,10 @@ fi
         ocropt_arr+=( "-v2" )
     fi
 
+    echo "max. count of logfiles:   ${LOGmax}"
 
 # Check or create and adjust directories:
 # ---------------------------------------------------------------------
-    echo "Application Directory:    ${APPDIR}"
 
     # Adjust variable correction for older Konfiguration.txt and slash:
     INPUTDIR="${INPUTDIR%/}/"
@@ -203,6 +227,9 @@ fi
         echo "Files are deleted immediately! / No valid directory [$BACKUPDIR]"
         backup=false
     fi
+
+    echo "rotate backupfiles after: $backup_max $backup_max_type"
+
 
     LOGDIR="${LOGDIR%/}/"
 
@@ -727,10 +754,10 @@ adjust_python()
 #                                                                                       #
 #########################################################################################
 
-#echo ">>>>>>>>>>> DEV-PART:"
-    return 1    # deactivated
+# >>>>>>>>>>> DEV-PART
+#   return 1    # deactivated
 #   return 0    # deactivated
-#echo "<<<<<<<<<<< DEV-PART"
+# <<<<<<<<<<< DEV-PART
 
     if [ ! $(which python3) ]; then
         echo "                  (Python3 is not installed / use fallback search with regex"
@@ -780,40 +807,40 @@ adjust_python()
 
     # check / install datefinder
     # https://github.com/akoumjian/datefinder
-        unset tmp_log1
-        if ! grep -q datefinder <<<"$modul_list" ; then
-            printf "                  Python3 module datefinder was not found and will be installed ➜ "
+#        unset tmp_log1
+#        if ! grep -q datefinder <<<"$modul_list" ; then
+#            printf "                  Python3 module datefinder was not found and will be installed ➜ "
             # install datefinder:
-            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install datefinder)
+#            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install datefinder)
 
             # check install:
-            if grep -q datefinder <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
-                echo "ok"
-            else
-                echo "failed ! ! ! (please install python datefinder manually)"
-                #[[ $loglevel = "2" ]] && 
-                echo "install log:" && echo "$tmp_log1"
-                return 1
-            fi
-        fi
+#            if grep -q datefinder <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
+#                echo "ok"
+#            else
+#                echo "failed ! ! ! (please install python datefinder manually)"
+#                #[[ $loglevel = "2" ]] && 
+#                echo "install log:" && echo "$tmp_log1"
+#                return 1
+#            fi
+#        fi
 
     # check / install pandas:
-        unset tmp_log1
-        if ! grep -q pandas <<<"$modul_list" ; then
-            printf "                  Python3 module pandas was not found and will be installed ➜ "
+#        unset tmp_log1
+#        if ! grep -q pandas <<<"$modul_list" ; then
+#            printf "                  Python3 module pandas was not found and will be installed ➜ "
             # install pandas:
-            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install pandas)
+#            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install pandas)
 
             # check install:
-            if grep -q pandas <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
-                echo "ok"
-            else
-                echo "failed ! ! ! (please install python pandas manually)"
+#            if grep -q pandas <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
+#                echo "ok"
+#            else
+#                echo "failed ! ! ! (please install python pandas manually)"
                 #[[ $loglevel = "2" ]] && 
-                echo "install log:" && echo "$tmp_log1"
-                return 1
-            fi
-        fi
+#                echo "install log:" && echo "$tmp_log1"
+#                return 1
+#            fi
+#        fi
     fi
 
     return 0
@@ -830,17 +857,47 @@ find_date()
 #########################################################################################
 
 founddatestr=""
-format=$1 # for regex search - 1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy
-adjust_python
+format=$1   # for regex search: 1 = dd mm [yy]yy
+            #                   2 = [yy]yy mm dd
+            #                   3 = mm dd [yy]yy
 
-if [ $? -eq 0 ]; then
+    ordinary_date_example_search_DEV(){
+        echo -e
+        echo ">>>>>>>>>>> DEV-PART - example matches for RegEx search:"
+            echo -n "search by RegEx format: dd[./-]mm[./-]yy(yy) ➜ "
+            founddatestr_DEV=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+            echo "$founddatestr_DEV"
+            echo -n "search by RegEx format: yy(yy)[./-]mm[./-]dd ➜ "
+            founddatestr_DEV=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
+            echo "$founddatestr_DEV"
+            echo -n "search by RegExformat: mm[./-]dd[./-]yy(yy) ➜ "
+            founddatestr_DEV=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+            echo "$founddatestr_DEV"
+        echo "<<<<<<<<<<< DEV-PART"
+        echo -e
+    }
+
+    enhanced_date_example_search_DEV(){
+        echo -e
+        echo ">>>>>>>>>>> DEV-PART - example match for enhanced Pytho search:"
+            sed -i 's/  */ /g' "$searchfile"
+            founddatestr_DEV=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$(./includes/parse_date.py "$searchfile" | grep -v "ERROR" | sed '/^$/d' )" | head )
+            echo "$founddatestr_DEV"
+        echo "<<<<<<<<<<< DEV-PART"
+        echo -e
+    }
+
+if [[ $(adjust_python) -eq 0 ]] && [[ $enhanced_date_search = "yes" ]]; then
+#adjust_python
+#if [ $? -eq 10000 ]; then
     # reduce multible spaces to one in source file (for better results):
     sed -i 's/  */ /g' "$searchfile"
 
-    founddatestr=$(./includes/parse_date.py "$searchfile" | grep -v "ERROR" | sed '/^$/d' )
+#   founddatestr=$(./includes/parse_date.py "$searchfile" | grep -v "ERROR" | sed '/^$/d' )
+    founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$(./includes/parse_date.py "$searchfile" | grep -v "ERROR" | sed '/^$/d' )" | head)
     format=2
 else
-    echo "FallBack RegEx-Suche"
+    echo "fallback RegEx search"
 
     # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
     echo "                  Using date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
@@ -855,7 +912,6 @@ else
         founddatestr=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
     fi
 fi
-
 
 if [[ ! -z $founddatestr ]]; then
     readarray -t founddates <<<"$founddatestr"
@@ -908,7 +964,7 @@ if [[ ! -z $founddatestr ]]; then
         fi
     done
 fi
-    
+
 if [[ $dateIsFound = no ]]; then
     if [ $format -eq 1 ]; then
         find_date 2
@@ -916,6 +972,12 @@ if [[ $dateIsFound = no ]]; then
         find_date 3
     fi
 fi
+
+# >>>>>>>>>>> DEV-PART
+[[ $enhanced_date_search == "yes" ]] && enhanced_date_example_search_DEV
+[[ $enhanced_date_search == "yes" ]] && ordinary_date_example_search_DEV
+# <<<<<<<<<<< DEV-PART
+
 }
 
 
@@ -1004,10 +1066,10 @@ NewName=$( echo "$NewName" | sed "s/§hhnow/$(date +%H)/g" )
 NewName=$( echo "$NewName" | sed "s/§mmnow/$(date +%M)/g" )
 NewName=$( echo "$NewName" | sed "s/§ssnow/$(date +%S)/g" )
 
-NewName=$( echo "$NewName" | sed "s/§pagecounttotal/${pagecount_new}/g" )
-NewName=$( echo "$NewName" | sed "s/§filecounttotal/${ocrcount_new}/g" )
-NewName=$( echo "$NewName" | sed "s/§pagecountprofile/${pagecount_ID_new}/g" )
-NewName=$( echo "$NewName" | sed "s/§filecountprofile/${ocrcount_ID_new}/g" )
+NewName=$( echo "$NewName" | sed "s/§pagecounttotal/${global_pagecount_new}/g" )
+NewName=$( echo "$NewName" | sed "s/§filecounttotal/${global_ocrcount_new}/g" )
+NewName=$( echo "$NewName" | sed "s/§pagecountprofile/${pagecount_profile_new}/g" )
+NewName=$( echo "$NewName" | sed "s/§filecountprofile/${ocrcount_profile_new}/g" )
 
 NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
 NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
@@ -1288,32 +1350,34 @@ if [ -z $LOGmax ]; then
     return
 fi
 
+echo "              ➜ purge logfiles:"
+
 # Delete empty logs:
 # ---------------------------------------------------------------------
 # (sshould no longer be needed by query in start script / synOCR will not be started with empty queue)
-for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$')                    # Listing of all LOG files
-    do
-        # if [ $( cat "${LOGDIR}$i" | tail -n5 | head -n2 | wc -c ) -le 5 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
-        if [ $( cat "${LOGDIR}$i" | sed -n "/Funktionsaufrufe/,/synOCR ENDE/p" | wc -c ) -eq 160 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
-        #    if [ -z "$TRASHDIR" ] ; then
-                rm "${LOGDIR}$i"
-        #    else
-        #        mv "${LOGDIR}$i" "$TRASHDIR"
-        #    fi
-        fi
-    done
+IFS=$'\012'  # corresponds to a $'\n' newline
+for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$') ; do
+    IFS=$OLDIFS
+    if [ $( cat "${LOGDIR}$i" | sed -n "/Funktionsaufrufe/,/synOCR ENDE/p" | wc -c ) -eq 160 ] && cat "${LOGDIR}$i" | grep -q "synOCR ENDE" ; then
+        rm "${LOGDIR}$i"
+    fi
+done
 
 # delete surplus logs:
 # ---------------------------------------------------------------------
 count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax ))
 if [ ${count2del} -ge 0 ]; then
+    IFS=$'\012'  # corresponds to a $'\n' newline
     for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} ) ; do
+        IFS=$OLDIFS
         rm "${LOGDIR}$i"
     done
 fi
 count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | wc -l) - $LOGmax ))
 if [ ${count2del} -ge 0 ]; then
+    IFS=$'\012'  # corresponds to a $'\n' newline
     for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} ) ; do
+        IFS=$OLDIFS
         rm "${LOGDIR}$i"
     done
 fi
@@ -1326,11 +1390,46 @@ purge_backup()
 # This function cleans up older backup files                                            #
 #########################################################################################
 
-if [ -z $backup_max ]; then
-    echo "purge_backup deactivated"
+if [[ -z $backup_max ]] || [[ $backup_max == 0 ]]; then
+    echo "              ➜ purge backup deactivated"
     return
 fi
 
+echo "              ➜ purge backup files:"
+
+# delete surplus logs:
+if [[ $backup_max_type == days ]]; then
+    echo -n "                delete $(find "${BACKUPDIR}" -maxdepth 1 -iname "*.pdf" -mtime +$backup_max | wc -l) files ( > $backup_max days) ➜ "
+
+    del_log=$(find "${BACKUPDIR}" -maxdepth 1 -iname "*.pdf" -mtime +$backup_max -exec rm {} \;)
+
+    if [ $? = 0 ]; then
+        echo "ok"
+    else
+        echo "failed!"
+        echo "$del_log"
+    fi
+else
+    echo -n "                delete "$(ls -t "${BACKUPDIR}" | grep -i pdf | tail -n+$(($backup_max+1)) | wc -l )" files ( > $backup_max files) ➜ "
+
+#   del_log=$(ls -tF "${BACKUPDIR}" | grep -i pdf | tail -n+$(($backup_max+1)) | xargs rm -rf)
+# ---------------------------------------------------------------------
+    count2del=$(( $(ls -t "${BACKUPDIR}" | grep -i pdf | wc -l) - $backup_max ))
+    if [ ${count2del} -ge 0 ]; then
+        IFS=$'\012'  # corresponds to a $'\n' newline
+        for i in $(ls -tr "${BACKUPDIR}" | grep -i pdf | head -n${count2del} ) ; do
+            IFS=$OLDIFS
+            rm -fv "${BACKUPDIR}${i}"
+        done
+    fi
+
+    if [ $? = 0 ]; then
+        echo "ok"
+    else
+        echo "failed!"
+        echo "$del_log"
+    fi
+fi
 
 }
 
@@ -1483,15 +1582,11 @@ for input in ${files} ; do
 
     [ -z $pagecount_latest ] && pagecount_latest=0 && echo "                ERROR - with pdfinfo / exiftool - \$pagecount was set to 0"
 
-#   pagecount_new=$(( $(get_key_value ./etc/counter pagecount) + $pagecount_latest))
-#   ocrcount_new=$(( $(get_key_value ./etc/counter ocrcount) + 1))
-#   pagecount_ID_new=$(( $(get_key_value ./etc/counter pagecount_ID${profile_ID}) + $pagecount_latest))
-#   ocrcount_ID_new=$(( $(get_key_value ./etc/counter ocrcount_ID${profile_ID}) + 1))
-
-    pagecount_new=$(( $(grep "^pagecount=" ./etc/counter | awk '-F=' '{print $2}' | sed -e 's/"//g') + $pagecount_latest))
-    ocrcount_new=$(( $(grep "^ocrcount=" ./etc/counter | awk '-F=' '{print $2}' | sed -e 's/"//g') + 1))
-    pagecount_ID_new=$(( $(grep "^pagecount_ID${profile_ID}" ./etc/counter | awk '-F=' '{print $2}' | sed -e 's/"//g') + $pagecount_latest))
-    ocrcount_ID_new=$(( $(grep "^ocrcount_ID${profile_ID}" ./etc/counter | awk '-F=' '{print $2}' | sed -e 's/"//g') + 1))
+# adapt counter:
+    global_pagecount_new=$(( $global_pagecount + $pagecount_latest))
+    global_ocrcount_new=$(( $global_ocrcount + 1))
+    pagecount_profile_new=$(( $pagecount_profile + $pagecount_latest))
+    ocrcount_profile_new=$(( $ocrcount_profile + 1))
 
 # create temporary working directory
 # ---------------------------------------------------------------------
@@ -1694,20 +1789,20 @@ for input in ${files} ; do
         echo "                  INFO: (PushBullet-TOKEN not set)"
     fi
 
-# update file count total: ${pagecount_ID_new} ${ocrcount_ID_new} ${pagecount_new} ${ocrcount_new}
+# update file count total: ${pagecount_profile_new} ${ocrcount_profile_new} ${global_pagecount_new} ${global_ocrcount_new}
 # ---------------------------------------------------------------------
-    synosetkeyvalue ./etc/counter pagecount ${pagecount_new}
-    synosetkeyvalue ./etc/counter ocrcount ${ocrcount_new}
+    sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$global_pagecount_new' WHERE key='global_pagecount'"
+    sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$global_ocrcount_new' WHERE key='global_ocrcount'"
 # update file count profile:
-    synosetkeyvalue ./etc/counter pagecount_ID${profile_ID} ${pagecount_ID_new}
-    synosetkeyvalue ./etc/counter ocrcount_ID${profile_ID} ${ocrcount_ID_new}
+    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET pagecount='$pagecount_profile_new' WHERE profile_ID='$profile_ID'"
+    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET ocrcount='$ocrcount_profile_new' WHERE profile_ID='$profile_ID'"
 
     echo -e
     echo "              Stats:"
     echo "                  ➜ runtime last file:    $(sec_to_time $(( $(date +%s) - ${date_start} )))"
     echo "                  ➜ pagecount last file:  $pagecount_latest"
-    echo "                  ➜ file count profile :  (profile $profile) - ${ocrcount_ID_new} PDF's / ${pagecount_ID_new} Pages processed up to now"
-    echo "                  ➜ file count total:     ${ocrcount_new} PDF's / ${pagecount_new} Pages processed up to now"
+    echo "                  ➜ file count profile :  (profile $profile) - ${ocrcount_profile_new} PDF's / ${pagecount_profile_new} Pages processed up to now"
+    echo "                  ➜ file count total:     ${global_ocrcount_new} PDF's / ${global_pagecount_new} Pages processed up to now"
     echo -e
     
 # delete temporary working directory:
@@ -1730,6 +1825,7 @@ done
     update_dockerimage
     main_run
     purge_log
+    purge_backup
 
     printf "\n\n\n"
 
