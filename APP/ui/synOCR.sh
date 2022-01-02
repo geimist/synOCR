@@ -106,15 +106,24 @@ fi
     count_start_date=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")
     global_pagecount=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")
     global_ocrcount=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")
+    online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
 
 # System Information:
 # ---------------------------------------------------------------------
-    echo "synOCR-version:           $(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')"
+    local_version=$(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')
+    highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
+    echo "synOCR-version:           $local_version"
+    if [[ $local_version != $highest_version ]] ; then
+        echo "UPDATE AVAILABLE:         online version: $online_version"
+        echo "                          please visit cphub.net / geimist.eu/synOCR/ or check your pakage center"
+    fi
+
     machinetyp=$(uname --machine); echo "Architecture:             $machinetyp"
     dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                $dsmbuild"
     read MAC </sys/class/net/eth0/address
     sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)"
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
+
     echo "Device:                   $device ($sysID)"
     echo "current Profil:           $profile"
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
@@ -333,7 +342,7 @@ fi
 if [ $type_of_rule = advanced ]; then
 # process complex tag rules:
     # list tagrules:
-    for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key") ; do
+    for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key" | sort -r) ; do
         found=0
 
         [[ $loglevel = "2" ]] && printf "\n                [runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
