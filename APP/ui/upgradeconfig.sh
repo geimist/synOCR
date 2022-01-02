@@ -30,14 +30,14 @@ OLDIFS=$IFS
         # table system:
         sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"system\" (\"rowid\" INTEGER PRIMARY KEY ,\"key\" VARCHAR ,\"value_1\" VARCHAR ,\"value_2\" VARCHAR ,\"value_3\" VARCHAR ,\"value_4\" VARCHAR );"
         # write default data:
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('db_version', '5')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('checkmon', '')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('dockerimageupdate', '1')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1 ) VALUES ('global_pagecount', '0')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1 ) VALUES ('global_ocrcount', '0')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1 ) VALUES ('count_start_date', '$(date +%Y-%m-%d)')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('online_version', '')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '5')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('checkmon', '')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('global_ocrcount', '0')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('online_version', '')"
         sleep 1
 
         # table dockerupdate / Docker-Image-Update - check date:
@@ -192,20 +192,20 @@ OLDIFS=$IFS
             # read stored data:
             sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT timestamp, DB_Version, checkmon, dockerimageupdate FROM system WHERE rowid=1")
             # rewrite data:
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('timestamp', '$(echo "$sqlerg" | awk -F'\t' '{print $1}')')"
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('db_version', '$(echo "$sqlerg" | awk -F'\t' '{print $2}')')"
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('checkmon', '$(echo "$sqlerg" | awk -F'\t' '{print $3}')')"
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('dockerimageupdate', '$(echo "$sqlerg" | awk -F'\t' '{print $4}')')"
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1) VALUES ('online_version', '')"
+            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('timestamp', '$(echo "$sqlerg" | awk -F'\t' '{print $1}')')"
+            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('db_version', '$(echo "$sqlerg" | awk -F'\t' '{print $2}')')"
+            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('checkmon', '$(echo "$sqlerg" | awk -F'\t' '{print $3}')')"
+            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('dockerimageupdate', '$(echo "$sqlerg" | awk -F'\t' '{print $4}')')"
+            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('online_version', '')"
             # migrate global data from 'counter' file:
             if [ -f ./etc/counter ] ; then
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('global_pagecount', '$(get_key_value ./etc/counter pagecount)')"
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('global_ocrcount', '$(get_key_value ./etc/counter ocrcount)')"
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('count_start_date', '$(get_key_value ./etc/counter startcount)')"
+                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '$(get_key_value ./etc/counter pagecount)')"
+                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '$(get_key_value ./etc/counter ocrcount)')"
+                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(get_key_value ./etc/counter startcount)')"
             else
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('global_pagecount', '0')"
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('global_ocrcount', '0')"
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('count_start_date', '$(date +%Y-%m-%d)')"
+                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '0')"
+                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '0')"
+                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)')"
             fi
             # check tables / reorder names:
             if echo $(sqlite3 "./etc/synOCR.sqlite" .tables) | grep -q system_new ; then
