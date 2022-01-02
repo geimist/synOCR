@@ -37,6 +37,7 @@ OLDIFS=$IFS
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1 ) VALUES ('global_pagecount', '0')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1 ) VALUES ('global_ocrcount', '0')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1 ) VALUES ('count_start_date', '$(date +%Y-%m-%d)')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system ( key, value_1) VALUES ('online_version', '')"
         sleep 1
 
         # table dockerupdate / Docker-Image-Update - check date:
@@ -195,6 +196,7 @@ OLDIFS=$IFS
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('db_version', '$(echo "$sqlerg" | awk -F'\t' '{print $2}')')"
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('checkmon', '$(echo "$sqlerg" | awk -F'\t' '{print $3}')')"
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('dockerimageupdate', '$(echo "$sqlerg" | awk -F'\t' '{print $4}')')"
+            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1) VALUES ('online_version', '')"
             # migrate global data from 'counter' file:
             if [ -f ./etc/counter ] ; then
                 sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new ( key, value_1 ) VALUES ('global_pagecount', '$(get_key_value ./etc/counter pagecount)')"
