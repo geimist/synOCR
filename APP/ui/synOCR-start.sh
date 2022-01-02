@@ -139,11 +139,14 @@
             continue
         fi
 
-    # installation counter:
+    # check for update:
         if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -ne $(date +%m) ]]; then
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon'"
+            
             if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -eq $(date +%m) ]]; then
-                if [[ $(wget --no-check-certificate --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION_DSM${dsm_version}" | head -n1 ) != "ok" ]]; then
+                server_info=$(wget --no-check-certificate --timeout=30 --tries=3 -q -O - "http://geimist.eu/synOCR/VERSION_DSM${dsm_version}" )
+                sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(echo "$server_info" | sed -n "2p")' WHERE key='online_version'"
+                if [[ $(echo "$server_info" | sed -n "1p" ) != "ok" ]]; then
                     sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date -d "-1 month" +%m)' WHERE key='checkmon'"
                 fi
             fi
