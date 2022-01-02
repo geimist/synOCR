@@ -9,7 +9,7 @@ known issues / limitations:
     and possibly not mounted does not work when running the program via the GUI
     (due to the known rights restrictions)
 
-1.3.0 [2022-xx-xx]
+1.2.0 [2022-01-xx]
   BUGFIXES:
  -  Creating the required user group 'docker' was not possible if a similarly named group already existed.
  -  RegEx with lookahead / lookbehind for tag names were not possible
