@@ -1,19 +1,19 @@
 {
-	".url": {
-		"SYNO.SDS.synOCR.Application": {
-			"type": "legacy",
-			"allUsers": false,
-			"allowMultiInstance": false,
-			"grantPrivilege": "all",
-			"advanceGrantPrivilege" : true,
-			"configablePrivilege" : true,
-			"title": "synOCR",
-			"desc": "synOCR",
-			"icon": "images/synOCR_{0}.png",
-			"appWindow": "SYNO.SDS.synOCR.Application",
-			"texts": "texts",
-			"width": 960,
-			"url": "/webman/3rdparty/synOCR/index.cgi"
-		}
-	}
+    ".url": {
+        "SYNO.SDS.synOCR.Application": {
+            "type": "legacy",
+            "allUsers": false,
+            "allowMultiInstance": false,
+            "grantPrivilege": "all",
+            "advanceGrantPrivilege" : true,
+            "configablePrivilege" : true,
+            "title": "synOCR",
+            "desc": "synOCR",
+            "icon": "images/synOCR_{0}.png",
+            "appWindow": "SYNO.SDS.synOCR.Application",
+            "texts": "texts",
+            "width": 960,
+            "url": "/webman/3rdparty/synOCR/index.cgi"
+        }
+    }
 }
