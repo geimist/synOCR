@@ -764,7 +764,7 @@ adjust_python()
 #########################################################################################
 
 # >>>>>>>>>>> DEV-PART
-#   return 1    # deactivated
+    return 1    # deactivated
 #   return 0    # deactivated
 # <<<<<<<<<<< DEV-PART
 
@@ -1033,6 +1033,15 @@ adjust_attributes()
 }
 
 
+replace_variables(){
+    echo "$1" | sed "s~§dsource~${date_dd_source}~g;s~§msource~${date_mm_source}~g;s~§ysource2~${date_yy_source:2}~g;s~§ysource4~${date_yy_source}~g" \
+     | sed "s~§ysource~${date_yy_source}~g;s~§hhsource~${date_houre_source}~g;s~§mmsource~${date_min_source}~g;s~§sssource~${date_sek_source}~g;s~§dnow~$(date +%d)~g" \
+     | sed "s~§mnow~$(date +%m)~g;s~§ynow2~$(date +%y)~g;s~§ynow4~$(date +%Y)~g;s~§ynow~$(date +%Y)~g;s~§hhnow~$(date +%H)~g;s~§mmnow~$(date +%M)~g;s~§ssnow~$(date +%S)~g" \
+     | sed "s~§pagecounttotal~${global_pagecount_new}~g;s~§filecounttotal~${global_ocrcount_new}~g;s~§pagecountprofile~${pagecount_profile_new}~g;s~§filecountprofile~${ocrcount_profile_new}~g" \
+     | sed "s~§docr~${date_dd}~g;s~§mocr~${date_mm}~g;s~§yocr2~${date_yy:2}~g;s~§yocr4~${date_yy}~g;s~§yocr~${date_yy}~g;s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" 
+}
+
+
 rename()
 {
 
@@ -1056,38 +1065,7 @@ renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before rene
 
 # replace parameters with values:
 # ---------------------------------------------------------------------
-NewName="$NameSyntax"
-NewName=$( echo "$NewName" | sed "s/§dsource/${date_dd_source}/g" )
-NewName=$( echo "$NewName" | sed "s/§msource/${date_mm_source}/g" )
-NewName=$( echo "$NewName" | sed "s/§ysource2/${date_yy_source:2}/g" )
-NewName=$( echo "$NewName" | sed "s/§ysource4/${date_yy_source}/g" )        # same as §ysource
-NewName=$( echo "$NewName" | sed "s/§ysource/${date_yy_source}/g" )
-NewName=$( echo "$NewName" | sed "s/§hhsource/${date_houre_source}/g" )
-NewName=$( echo "$NewName" | sed "s/§mmsource/${date_min_source}/g" )
-NewName=$( echo "$NewName" | sed "s/§sssource/${date_sek_source}/g" )
-
-NewName=$( echo "$NewName" | sed "s/§dnow/$(date +%d)/g" )
-NewName=$( echo "$NewName" | sed "s/§mnow/$(date +%m)/g" )
-NewName=$( echo "$NewName" | sed "s/§ynow2/$(date +%y)/g" )
-NewName=$( echo "$NewName" | sed "s/§ynow4/$(date +%Y)/g" )                 # same as §ynow
-NewName=$( echo "$NewName" | sed "s/§ynow/$(date +%Y)/g" )
-NewName=$( echo "$NewName" | sed "s/§hhnow/$(date +%H)/g" )
-NewName=$( echo "$NewName" | sed "s/§mmnow/$(date +%M)/g" )
-NewName=$( echo "$NewName" | sed "s/§ssnow/$(date +%S)/g" )
-
-NewName=$( echo "$NewName" | sed "s/§pagecounttotal/${global_pagecount_new}/g" )
-NewName=$( echo "$NewName" | sed "s/§filecounttotal/${global_ocrcount_new}/g" )
-NewName=$( echo "$NewName" | sed "s/§pagecountprofile/${pagecount_profile_new}/g" )
-NewName=$( echo "$NewName" | sed "s/§filecountprofile/${ocrcount_profile_new}/g" )
-
-NewName=$( echo "$NewName" | sed "s/§docr/${date_dd}/g" )
-NewName=$( echo "$NewName" | sed "s/§mocr/${date_mm}/g" )
-NewName=$( echo "$NewName" | sed "s/§yocr2/${date_yy:2}/g" )
-NewName=$( echo "$NewName" | sed "s/§yocr4/${date_yy}/g" )                  # same as §yocr
-NewName=$( echo "$NewName" | sed "s/§yocr/${date_yy}/g" )
-NewName=$( echo "$NewName" | sed "s/§tag/${renameTag}/g")
-NewName=$( echo "$NewName" | sed "s/§tit/${title}/g")
-NewName=$( echo "$NewName" | sed "s/%20/ /g" )
+NewName=$(replace_variables "$NameSyntax")
 
 # fallback to old  parameters:
 NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
@@ -1180,6 +1158,13 @@ elif [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
     # use sorting in category folder:
     # ---------------------------------------------------------------------
     echo "              ➜ move to category directory"
+
+    # replace date parameters:
+    # encode special characters for sed compatibility:
+    #        title=$(urlencode "${title}")
+    #        renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before renew encoding
+    renameCat=$(replace_variables "$renameCat")
+
     tagarray=( $renameCat )   # define target folder as array
     DestFolderList=""   # temp. list of used destination folders to avoid file duplicates (different tags, but one category)
     maxID=${#tagarray[*]}
