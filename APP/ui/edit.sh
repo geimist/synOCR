@@ -231,164 +231,346 @@ chmod 755 "${SAMPLECONFIGFILE}"
     return 0
 }
 
-
-# convert existing tag list to YAML file:
+# --------------------------------------------------------------
+# -> convert existing tag list to YAML file:
+# --------------------------------------------------------------
 if [[ "$page" == "edit-convert2YAML" ]]; then
-        echo '<div class="Content_1Col_full">'
+	echo '
+	<!-- Modal -->
+	<div class="modal fade" id="popup-validation" tabindex="-1" aria-labelledby="label-validation" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header bg-light">
+					<h5 class="modal-title align-baseline">'$lang_popup_note'</h5>
+					<a href="index.cgi" onclick="history.go(-1); event.preventDefault();" class="btn-close" aria-label="Close"></a>
+				</div>
+				<div class="modal-body text-center">'
 
-        SAMPLECONFIGFILE="${INPUTDIR%/}/_TagConfig_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")].txt"
-        SAMPLECONFIGLOGFILE="${SAMPLECONFIGFILE}_$(date +%s)_convert.log"
+					SAMPLECONFIGFILE="${INPUTDIR%/}/_TagConfig_[profile_$(echo "$profile" | tr -dc "[a-z][A-Z][0-9] .-_")].txt"
+					SAMPLECONFIGLOGFILE="${SAMPLECONFIGFILE}_$(date +%s)_convert.log"
 
-        if [ $loglevel = "2" ] ; then
-            convert2YAML > "${SAMPLECONFIGLOGFILE}"
-            chmod 755 "${SAMPLECONFIGLOGFILE}"
-        else
-            convert2YAML > /dev/null  2>&1 
-        fi
+					if [ $loglevel = "2" ] ; then
+						convert2YAML > "${SAMPLECONFIGLOGFILE}"
+						chmod 755 "${SAMPLECONFIGLOGFILE}"
+					else
+						convert2YAML > /dev/null  2>&1
+					fi
 
-        if [ $? -eq 1 ]; then
-            echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_yamlsample_gui_01'
-            <br>'$lang_edit_yamlsample_gui_02'
-            <br><br>('$SAMPLECONFIGFILE')</p><br /></div>'
-        else
-            echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_yamlsample_gui_03'
-            <br><br>('$SAMPLECONFIGFILE')<br /></div>'
-        fi
-        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />'
-        echo '</div><div class="clear"></div>'
+					if [ $? -eq 1 ]; then
+						echo '
+						<p class="text-danger">
+							'$lang_edit_yamlsample_gui_01'<br />
+							'$lang_edit_yamlsample_gui_02'<br /><br />
+							('$SAMPLECONFIGFILE')
+						</p>'
+					else
+						echo '
+						<p>
+							'$lang_edit_yamlsample_gui_03'<br /><br />
+							('$SAMPLECONFIGFILE')
+						</p>'
+					fi
+
+					echo '
+				</div>
+				<div class="modal-footer bg-light">
+					<button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_buttonnext'...</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(window).on("load", function() {
+			$("#popup-validation").modal("show");
+		});
+	</script>'
 fi
 
-
-# Delete current profile:
+# --------------------------------------------------------------
+# -> Delete current profile:
+# --------------------------------------------------------------
 if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile" ]]; then
-    if [[ "$page" == "edit-del_profile-query" ]]; then
-        echo '<p class="center" style="'$synotrred';">
-            '$lang_edit_delques_1' (<b>'$profile'</b>) '$lang_edit_delques_2'<br /><br /><br />
-            <a href="index.cgi?page=edit-del_profile" class="red_button">'$lang_yes'</a>&nbsp;&nbsp;&nbsp;<a href="index.cgi?page=edit" class="button">'$lang_no'</a></p>'  >> "$stop"
-    elif [[ "$page" == "edit-del_profile" ]]; then
-        sqlite3 ./etc/synOCR.sqlite "DELETE FROM config WHERE profile_ID='$profile_ID';"
+	echo '
+	<!-- Modal -->
+	<div class="modal fade" id="popup-validation" tabindex="-1" aria-labelledby="label-validation" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header bg-light">
+					<h5 class="modal-title align-baseline">'$lang_popup_note'</h5>
+					<a href="index.cgi" onclick="history.go(-1); event.preventDefault();" class="btn-close" aria-label="Close"></a>
+				</div>'
 
-    # make the first profile of the DB active next (otherwise a profile name with empty data would be displayed)
-        getprofile=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
-        # getprofile (write to $var without GUI):
-        encode_value=$getprofile
-        decode_value=$(urldecode "$encode_value")
-        "$set_var" "./usersettings/var.txt" "getprofile" "$decode_value"
-        "$set_var" "./usersettings/var.txt" "encode_getprofile" "$encode_value"
+				if [[ "$page" == "edit-del_profile-query" ]]; then
+					echo '
+					<div class="modal-body text-center">
+						<p>'$lang_edit_delques_1' (<strong>'$profile'</strong>) '$lang_edit_delques_2'</p>
+					</div>
+					<div class="modal-footer bg-light">
+						<a href="index.cgi?page=edit-del_profile" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_yes'</a>&nbsp;&nbsp;&nbsp;
+						<a href="index.cgi?page=edit&value=" class="btn btn-secondary btn-sm">'$lang_button_abort'</a>
+					</div>'
 
-        sleep 1
-        if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='$profile_ID' ") = "0" ] ; then
-            echo '<p class="center" style="'$green';"><b>'$lang_edit_profname' <b>'$profile'</b> '$lang_edit_delfin2'.</b></p>
-                <br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />' >> "$stop"
-        else
-            echo '<p class="center" style="'$green';">'$lang_edit_deler' (<b>'$profile'</b>)!</p>
-                <br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />' >> "$stop"
-        fi
-    fi
+				elif [[ "$page" == "edit-del_profile" ]]; then
+					sqlite3 ./etc/synOCR.sqlite "DELETE FROM config WHERE profile_ID='$profile_ID';"
+
+					# make the first profile of the DB active next (otherwise a profile name with empty data would be displayed)
+					getprofile=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
+					# getprofile (write to $var without GUI):
+					encode_value=$getprofile
+					decode_value=$(urldecode "$encode_value")
+					"$set_var" "./usersettings/var.txt" "getprofile" "$decode_value"
+					"$set_var" "./usersettings/var.txt" "encode_getprofile" "$encode_value"
+					sleep 1
+
+					echo '
+					<div class="modal-body text-center">'
+						if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='$profile_ID' ") = "0" ] ; then
+							echo '
+							<p>
+								'$lang_edit_profname' <strong>'$profile'</strong> '$lang_edit_delfin2'
+							</p>'
+						else
+							echo '
+							<p class="text-danger">
+								'$lang_edit_deler' (<strong>'$profile'</strong>)!
+							</p>'
+						fi
+						echo '
+					</div>
+					<div class="modal-footer bg-light">
+						<button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_buttonnext'...</button>
+					</div>'
+
+				fi
+				echo '
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(window).on("load", function() {
+			$("#popup-validation").modal("show");
+		});
+	</script>'
 fi
 
-
-# Duplicate profile:
+# --------------------------------------------------------------
+# -> Duplicate profile:
+# --------------------------------------------------------------
 if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile" ]]; then
-    if [[ "$page" == "edit-dup-profile-query" ]]; then
-        echo '<div class="Content_1Col_full">'
-        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_dup1':</p><br />
-        <label style="width: auto;padding: 0.5em 0.5em 0.25em 0.25em;"><b>'$lang_edit_profname': </b></label>' #style="vertical-align: bottom;" style="width: 200px;"
-        if [ -n "$new_profile_value" ]; then
-            echo '<input type="text" style="width: 200px;" name="new_profile_value" value="'$new_profile_value'" />'
-        else
-            echo '<input type="text" style="width: 200px;" name="new_profile_value" value="" />'
-        fi
-        echo '</p></div><br /><p class="center"><button name="page" value="edit-dup-profile" class="blue_button">'$lang_edit_create'...</button></p><br />
-            </div><div class="clear"></div>'
-    elif [[ "$page" == "edit-dup-profile" ]]; then
-        echo '<div class="Content_1Col_full">'
-        if [ ! -z "$new_profile_value" ] ; then
-            sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
-            if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
-                sSQL="INSERT INTO config ( profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles,
-                                    NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type
-                                    ) VALUES (
-                                    '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix',
-                                    '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify',
-                                    '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type' )"
-                sqlite3 ./etc/synOCR.sqlite "$sSQL"
+	echo '
+	<!-- Modal -->
+	<div class="modal fade" id="popup-validation" tabindex="-1" aria-labelledby="label-validation" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header bg-light">
+					<h5 class="modal-title align-baseline">'$lang_popup_note'</h5>
+					<a href="index.cgi" onclick="history.go(-1); event.preventDefault();" class="btn-close" aria-label="Close"></a>
+				</div>'
 
-                sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
-                if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL2") = "1" ] ; then
-                    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_profname' <b>'$profile'</b> '$lang_edit_dup2' <b>'$new_profile_value'</b> '$lang_edit_dup3'.</p><br /></div>'
-                else
-                    echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_dup4'</p><br /></div>'
-                fi
-            else
-                echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_dup4'
-                <br>'$lang_edit_dup5' <b>'$new_profile_value'</b> '$lang_edit_dup6'</p><br /></div>'
-            fi
-        else
-            echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_dup4'
-            <br>'$lang_edit_dup7'</p><br /></div>'
-        fi
-        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />'
-        echo '</div><div class="clear"></div>'
-    fi
+				if [[ "$page" == "edit-dup-profile-query" ]]; then
+					echo '
+					<div class="modal-body">
+						<p>'$lang_edit_dup1'</p>
+						<div class="row mb-3">
+							<div class="col">
+								<label for="new_profile_value">'$lang_edit_profname'</label>
+							</div>
+							<div class="col">'
+								if [ -n "$new_profile_value" ]; then
+									echo '<input type="text" name="new_profile_value" id="new_profile_value" class="form-control form-control-sm" value="'$new_profile_value'" />'
+								else
+									echo '<input type="text" name="new_profile_value" id="new_profile_value" class="form-control form-control-sm" value="" />'
+								fi
+								echo '
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer bg-light">
+						<button name="page" value="edit-dup-profile" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_edit_create'...</button>&nbsp;&nbsp;&nbsp;
+						<a href="index.cgi?page=edit&value=" class="btn btn-secondary btn-sm">'$lang_button_abort'</a>
+					</div>'
+
+				elif [[ "$page" == "edit-dup-profile" ]]; then
+					echo '
+					<div class="modal-body text-center">'
+						if [ ! -z "$new_profile_value" ] ; then
+							sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
+							if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
+								sSQL="INSERT INTO config ( profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type ) VALUES ( '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type' )"
+								sqlite3 ./etc/synOCR.sqlite "$sSQL"
+
+								sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
+
+								if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL2") = "1" ] ; then
+									echo '
+									<p>
+										'$lang_edit_profname' <strong>'$profile'</strong> '$lang_edit_dup2' <strong>'$new_profile_value'</strong> '$lang_edit_dup3'.
+									</p>'
+								else
+									echo '
+									<p class="text-danger">
+										'$lang_edit_dup4'
+									</p>'
+								fi
+							else
+								echo '
+								<p class="text-danger">
+									'$lang_edit_dup4'<br />
+									'$lang_edit_dup5' <strong>'$new_profile_value'</strong> '$lang_edit_dup6'
+								</p>'
+							fi
+						else
+							echo '
+							<p class="text-warning">
+								'$lang_edit_dup4'<br />
+								'$lang_edit_dup7'
+							</p>'
+						fi
+						echo '
+					</div>
+					<div class="modal-footer bg-light">
+						<button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_buttonnext'...</button>
+					</div>'
+				fi
+				echo '
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(window).on("load", function() {
+			$("#popup-validation").modal("show");
+		});
+	</script>'
 fi
 
-
-# create new profile:
+# --------------------------------------------------------------
+# -> create new profile:
+# --------------------------------------------------------------
 if [[ "$page" == "edit-new_profile-query" ]] || [[ "$page" == "edit-new_profile" ]]; then
-    if [[ "$page" == "edit-new_profile-query" ]]; then
-        echo '<div class="Content_1Col_full">'
-        echo '<p><br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_new1':</p><br />
-        <label style="width: auto;padding: 0.5em 0.5em 0.25em 0.25em;"><b>'$lang_edit_profname': </b></label>' #style="vertical-align: bottom;" style="width: 200px;"
-        if [ -n "$new_profile_value" ]; then
-            echo '<input type="text" style="width: 200px;" name="new_profile_value" value="'$new_profile_value'" />'
-        else
-            echo '<input type="text" style="width: 200px;" name="new_profile_value" value="" />'
-        fi
-        echo '</p></div><br /><p class="center"><button name="page" value="edit-new_profile" class="blue_button">'$lang_edit_create'...</button></p><br />
-            </div><div class="clear"></div>'
-    elif [[ "$page" == "edit-new_profile" ]]; then
-        echo '<div class="Content_1Col_full">'
-        if [ ! -z "$new_profile_value" ] ; then
-            sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
-            if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
-                new_profile "$new_profile_value"
-                if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "1" ] ; then
-                    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_new2' <b>'$new_profile_value'</b> '$lang_edit_new3'.</p><br /></div>'
-                else
-                    echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_new4'</p><br /></div>'
-                fi
-            else
-                echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_new4'
-                <br>'$lang_edit_dup5' <b>'$new_profile_value'</b> '$lang_edit_dup6'</p><br /></div>'
-            fi
-        else
-            echo '<br /><div class="warning"><br /><p class="center">'$lang_edit_new4'
-            <br>'$lang_edit_dup7'</p><br /></div>'
-        fi
-        echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />'
-        echo '</div><div class="clear"></div>'
-    fi
+	echo '
+	<!-- Modal -->
+	<div class="modal fade" id="popup-validation" tabindex="-1" aria-labelledby="label-validation" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header bg-light">
+					<h5 class="modal-title align-baseline">'$lang_popup_note'</h5>
+					<a href="index.cgi" onclick="history.go(-1); event.preventDefault();" class="btn-close" aria-label="Close"></a>
+				</div>'
+
+				if [[ "$page" == "edit-new_profile-query" ]]; then
+					echo '
+					<div class="modal-body">
+						<p>'$lang_edit_new1'</p>
+						<div class="row mb-3">
+							<div class="col">
+								<label for="new_profile_value">'$lang_edit_profname'</label>
+							</div>
+							<div class="col">'
+
+								if [ -n "$new_profile_value" ]; then
+									echo '<input type="text" name="new_profile_value" id="new_profile_value" class="form-control form-control-sm" value="'$new_profile_value'" />'
+								else
+									echo '<input type="text" name="new_profile_value" id="new_profile_value" class="form-control form-control-sm" value="" />'
+								fi
+								echo '
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer bg-light">
+						<button name="page" value="edit-new_profile" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_edit_create'...</button>&nbsp;&nbsp;&nbsp;
+						<a href="index.cgi?page=edit&value=" class="btn btn-secondary btn-sm">'$lang_button_abort'</a>
+					</div>'
+				elif [[ "$page" == "edit-new_profile" ]]; then
+					echo '
+					<div class="modal-body text-center">'
+						if [ ! -z "$new_profile_value" ] ; then
+							sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
+							if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
+								new_profile "$new_profile_value"
+								if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL") = "1" ] ; then
+									echo '
+									<p>
+										'$lang_edit_new2' <strong>'$new_profile_value'</strong> '$lang_edit_new3'.
+									</p>'
+								else
+									echo '
+									<p class="text-danger">
+										'$lang_edit_new4'
+									</p>'
+								fi
+							else
+								echo '
+								<p class="text-danger">
+									'$lang_edit_new4'<br />
+									'$lang_edit_dup5' <strong>'$new_profile_value'</strong> '$lang_edit_dup6'
+								</p>'
+							fi
+						else
+							echo '
+							<p class="text-danger">
+								'$lang_edit_new4'<br />
+								'$lang_edit_dup7'
+							</p>'
+						fi
+						echo '
+					</div>
+					<div class="modal-footer bg-light">
+						<button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_buttonnext'...</button>
+					</div>'
+				fi
+				echo '
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(window).on("load", function() {
+			$("#popup-validation").modal("show");
+		});
+	</script>'
 fi
 
-
-# Write record to DB:
+# --------------------------------------------------------------
+# -> Write record to DB:
+# --------------------------------------------------------------
 if [[ "$page" == "edit-save" ]]; then
-    sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR',
-        LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll',
-        moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$(sed -e "s/'/''/g" <<<"$ocropt")', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN',
-        dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol', 
-        documentSplitPattern='$documentSplitPattern', ignoredDate='$ignoredDate', backup_max='$backup_max', backup_max_type='$backup_max_type' WHERE profile_ID='$profile_ID' "
+	echo '
+	<!-- Modal -->
+	<div class="modal fade" id="popup-validation" tabindex="-1" aria-labelledby="label-validation" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header bg-light">
+					<h5 class="modal-title align-baseline">'$lang_popup_note'</h5>
+					<a href="index.cgi" onclick="history.go(-1); event.preventDefault();" class="btn-close" aria-label="Close"></a>
+				</div>
+				<div class="modal-body text-center">'
 
-    sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
+					sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR',
+						LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll',
+						moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$(sed -e "s/'/''/g" <<<"$ocropt")', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN',
+						dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol',
+						documentSplitPattern='$documentSplitPattern', ignoredDate='$ignoredDate', backup_max='$backup_max', backup_max_type='$backup_max_type' WHERE profile_ID='$profile_ID' "
 
-    # write global change to table system:
-    sqlite3 ./etc/synOCR.sqlite "UPDATE system SET value_1='$dockerimageupdate' WHERE key='dockerimageupdate' "
+					sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
 
-    echo '<div class="Content_1Col_full">'
-    echo '<br /><div class="info"><br /><p class="center" style="color:#0086E5;font-weight:normal; ">'$lang_edit_savefin'</p><br /></div>'
-    echo '<br /><p class="center"><button name="page" value="edit" class="blue_button">'$lang_buttonnext'...</button></p><br />'
-    echo '</div><div class="clear"></div>'
+					# write global change to table system:
+					sqlite3 ./etc/synOCR.sqlite "UPDATE system SET value_1='$dockerimageupdate' WHERE key='dockerimageupdate' "
+
+					echo '
+					<p>
+						'$lang_edit_savefin'
+					</p>
+				</div>
+				<div class="modal-footer bg-light">
+					<button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_buttonnext'...</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(window).on("load", function() {
+			$("#popup-validation").modal("show");
+		});
+	</script>'
 fi
 
 
@@ -438,776 +620,1323 @@ if [[ "$page" == "edit" ]]; then
     # read global values:
         dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
 
-    echo '
-    <div id="Content_1Col">
-    <div class="Content_1Col_full">
-        <div class="title">
-            synOCR '$lang_page2'
-        </div>'$lang_edit_summary1'<br>
-        '$lang_edit_summary2'<br><br>
-        '$lang_edit_summary3'<br><br>
-        '$lang_edit_summary4'<br><br>'
+
+	# -> Headline
+	echo '
+	<h2 class="synocr-text-blue mt-3">synOCR '$lang_page2'</h2>
+	<p>&nbsp;</p>
+    <p>'$lang_edit_summary1'</p>
+	<p>'$lang_edit_summary2'</p>
+    <p>'$lang_edit_summary3'</p>
+    <p>'$lang_edit_summary4'</p>'
 
         if [ ! -z "$DBupgradelog" ] ; then
-            DBupgradelog=$(echo "$DBupgradelog" | sed ':a;N;$!ba;s/\n/<br>/g')
+            DBupgradelog=$(echo "$DBupgradelog" | sed ':a;N;$!ba;s/\n/<br />/g')
             if echo "$DBupgradelog" | grep -q ERROR ; then
-                message_color=$synotrred
+                message_color="color: #BD0010;"
             else
-                message_color=$green
+                message_color="color: green;"
             fi
             echo '<p style="'$message_color';">'$lang_edit_dbupdate': '$DBupgradelog' </p>'
         fi
 
-# Profile selection:
+	# Profile selection:
     sSQL="SELECT profile_ID, profile FROM config "
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
-    echo '<p>
-        <label style="width: 200px;padding: 0.5em 0.5em 0.25em 0.25em;"><b>'$lang_edit_change_profile'</b></label>
-        <select name="getprofile" style="width: 200px;">'
 
-        IFS=$'\012'
-        for entry in $sqlerg; do
-            IFS=$OLDIFS
+	echo '
+	<p>&nbsp;</p>
+	<div class="row mb-3">
+		<div class="col-sm-5">
+			<label for="getprofile" class="ms-4">'$lang_edit_change_profile'</label>
+		</div>
+		<div class="col-sm-5">
+			<select name="getprofile" id="getprofile" class="form-select form-select-sm">'
 
-            profile_ID_DB=$(echo "$entry" | awk -F'\t' '{print $1}')
-            profile_DB=$(echo "$entry" | awk -F'\t' '{print $2}')
+				IFS=$'\012'
+				for entry in $sqlerg; do
+					IFS=$OLDIFS
 
-            if [[ "$profile_ID" == $profile_ID_DB ]]; then
-                echo '<option value='$profile_ID_DB' selected>'$profile_DB'</option>'
-            else
-                echo '<option value='$profile_ID_DB'>'$profile_DB'</option>'
-            fi
-        done
+					profile_ID_DB=$(echo "$entry" | awk -F'\t' '{print $1}')
+					profile_DB=$(echo "$entry" | awk -F'\t' '{print $2}')
 
-    echo '</select><button name="page" value="edit" class="blue_button" style="float:right;">'$lang_buttonchange'</button>&nbsp;'
+					if [[ "$profile_ID" == $profile_ID_DB ]]; then
+						echo '<option value='$profile_ID_DB' selected>'$profile_DB'</option>'
+					else
+						echo '<option value='$profile_ID_DB'>'$profile_DB'</option>'
+					fi
+				done
+				echo '
+			</select>
+		</div>
+		<div class="col-sm-2">
+			<button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_buttonchange'</button>
+		</div>
+	</div><br />'
 
 
-# --------------------------------------------------------------
+	# --------------------------------------------------------------
     # -> General section
-# --------------------------------------------------------------
+	# --------------------------------------------------------------
+	echo '
+	<div class="accordion" id="Accordion-01">
+		<div class="accordion-item border-start-0 border-end-0" style="border-style: dashed none dashed none; size: 1px;">
+			<h2 class="accordion-header" id="Heading-01">
+				<button class="accordion-button collapsed bg-white synocr-accordion-glow-off" type="button" data-bs-toggle="collapse" data-bs-target="#Collapse-01" aria-expanded="false" aria-controls="collapseTwo">
+					<span class="synocr-text-blue">'$lang_edit_set1_title'</span>
+				</button>
+			</h2>
+			<div id="Collapse-01" class="accordion-collapse collapse border-white" aria-labelledby="Heading-01" data-bs-parent="#Accordion-01">
+				<div class="accordion-body">'
 
-# Expandable:
-    echo '<fieldset>
-    <hr style="border-style: dashed; size: 1px;">
-    <br />
-    <details><p>
-    <summary>
-        <span class="detailsitem">'$lang_edit_set1_title'</span>
-    </summary></p>
-    <p>' # from here is the text to be expanded and collapsed.
+					# Profil name
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="profile">'$lang_edit_profname'</label>
+						</div>
+						<div class="col-sm-5">'
+							if [ -n "$profile" ]; then
+								echo '<input type="text" name="profile" id="profile" class="form-control form-control-sm" value="'$profile'" />'
+							else
+								echo '<input type="text" name="profile" id="profile" class="form-control form-control-sm" value="" />'
+							fi
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#profile-info" role="button" aria-expanded="false" aria-controls="profile-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="profile-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set1_profilename_help'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # Profil name
-    echo '
-        <p>
-        <label>'$lang_edit_profname'</label>'
-        if [ -n "$profile" ]; then
-            echo '<input type="text" name="profile" value="'$profile'" />'
-        else
-            echo '<input type="text" name="profile" value="" />'
-        fi
-        echo '<a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set1_profilename_help'</span></a></p>'
+					# Profile activated?
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="active">'$lang_edit_set1_profile_activ_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="active" id="active" class="form-select form-select-sm">'
+								if [[ "$active" == "1" ]]; then
+									echo '<option value="1" selected>'$lang_edit_set1_profile_activ'</option>'
+								else
+									echo '<option value="1">'$lang_edit_set1_profile_activ'</option>'
+								fi
+								if [[ "$active" == "0" ]]; then
+									echo '<option value="0" selected>'$lang_edit_set1_profile_inactiv'</option>'
+								else
+									echo '<option value="0">'$lang_edit_set1_profile_inactiv'</option>'
+								fi
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#active-info" role="button" aria-expanded="false" aria-controls="active-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="active-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set1_profile_activ_help1'<br />
+										'$lang_edit_set1_profile_activ_help2'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+					# profile ID (write to $var without GUI)
+					"$set_var" "$var" "profile_ID" "$(urldecode "$profile_ID")"
+					"$set_var" "$var" "encode_profile_ID" "$profile_ID"
 
-    # Profile activated?
-    echo '
-        <p>
-        <label>'$lang_edit_set1_profile_activ_title'</label>
-        <select name="active">'
-        if [[ "$active" == "1" ]]; then
-            echo '<option value="1" selected>'$lang_edit_set1_profile_activ'</option>'
-        else
-            echo '<option value="1">'$lang_edit_set1_profile_activ'</option>'
-        fi
-        if [[ "$active" == "0" ]]; then
-            echo '<option value="0" selected>'$lang_edit_set1_profile_inactiv'</option>'
-        else
-            echo '<option value="0">'$lang_edit_set1_profile_inactiv'</option>'
-        fi
+					# SOURCEDIR
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="INPUTDIR">'$lang_edit_set1_sourcedir_title'</label>
+						</div>
+						<div class="col-sm-5">'
+							if [ -n "$INPUTDIR" ]; then
+								echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm" value="'$INPUTDIR'" />'
+							else
+								echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm" value="" />'
+							fi
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">'
 
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set1_profile_activ_help1'<br>
-            '$lang_edit_set1_profile_activ_help2'</span></a>
-        </p>'
+								# folder status:
+								if [ -d "$INPUTDIR" ]; then
+									echo '<img src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
+								else
+									echo '<img src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
+								fi
+								echo '
 
-    # profile ID (write to $var without GUI)
-        "$set_var" "$var" "profile_ID" "$(urldecode "$profile_ID")"
-        "$set_var" "$var" "encode_profile_ID" "$profile_ID"
+								<a data-bs-toggle="collapse" href="#INPUTDIR-info" role="button" aria-expanded="false" aria-controls="INPUTDIR-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="INPUTDIR-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set1_sourcedir_help1'<br />
+										'$lang_edit_set1_sourcedir_help2'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # SOURCEDIR
-    echo '
-        <p>
-        <label>'$lang_edit_set1_sourcedir_title'</label>'
-        if [ -n "$INPUTDIR" ]; then
-            echo '<input type="text" name="INPUTDIR" value="'$INPUTDIR'" />'
-        else
-            echo '<input type="text" name="INPUTDIR" value="" />'
-        fi
+					# OUTPUTDIR
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="OUTPUTDIR">'$lang_edit_set1_targetdir_title'</label>
+						</div>
+						<div class="col-sm-5">'
+							if [ -n "$OUTPUTDIR" ]; then
+								echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm" value="'$OUTPUTDIR'" />'
+							else
+								echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm" value="" />'
+							fi
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">'
 
-        # folder status:
-        if [ -d "$INPUTDIR" ]; then
-            echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
-        else
-            echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
-        fi
+								# folder status:
+								if [ -d "$OUTPUTDIR" ]; then
+									echo '<img src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
+								else
+									echo '<img src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
+								fi
+								echo '
 
-        # help text:
-        echo '
-            <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set1_sourcedir_help1'<br>
-            '$lang_edit_set1_sourcedir_help2'</span></a>
-            </p>'
+								<a data-bs-toggle="collapse" href="#OUTPUTDIR-info" role="button" aria-expanded="false" aria-controls="OUTPUTDIR-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="OUTPUTDIR-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set1_targetdir_help1'<br />
+										'$lang_edit_set1_targetdir_help2'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # OUTPUTDIR
-    echo '
-        <p>
-        <label>'$lang_edit_set1_targetdir_title'</label>'
-        if [ -n "$OUTPUTDIR" ]; then
-            echo '<input type="text" name="OUTPUTDIR" value="'$OUTPUTDIR'" />'
-        else
-            echo '<input type="text" name="OUTPUTDIR" value="" />'
-        fi
+					# BACKUPDIR
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="BACKUPDIR">'$lang_edit_set1_backupdir_title'</label>
+						</div>
+						<div class="col-sm-5">'
+							if [ -n "$BACKUPDIR" ]; then
+								echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm" value="'$BACKUPDIR'" />'
+							else
+								echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm" value="" />'
+							fi
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">'
 
-        # folder status:
-        if [ -d "$OUTPUTDIR" ]; then
-            echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
-        else
-            echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
-        fi
+								# folder status:
+								if [ -d "$BACKUPDIR" ]; then
+									echo '<img src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
+								else
+									echo '<img src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
+								fi
+								echo '
 
-        # help text:
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set1_targetdir_help1'<br>
-            '$lang_edit_set1_targetdir_help2'</span></a>
-        </p>'
+								<a data-bs-toggle="collapse" href="#BACKUPDIR-info" role="button" aria-expanded="false" aria-controls="BACKUPDIR-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="BACKUPDIR-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set1_backupdir_help1'<br />
+										'$lang_edit_set1_backupdir_help2'<br />
+										'$lang_edit_set1_backupdir_help3'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # BACKUPDIR
-    echo '
-        <p>
-        <label>'$lang_edit_set1_backupdir_title'</label>'
-        if [ -n "$BACKUPDIR" ]; then
-            echo '<input type="text" name="BACKUPDIR" value="'$BACKUPDIR'" />'
-        else
-            echo '<input type="text" name="BACKUPDIR" value="" />'
-        fi
+					# LOGDIR
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="LOGDIR">'$lang_edit_set1_logdir_title'</label>
+						</div>
+						<div class="col-sm-5">'
+							if [ -n "$LOGDIR" ]; then
+								echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm" value="'$LOGDIR'" />'
+							else
+								echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm" value="" />'
+							fi
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">'
 
-        # folder status:
-        if [ -d "$BACKUPDIR" ]; then
-            echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
-        elif [ -z "$BACKUPDIR" ]; then
-            echo ''
-        else
-            echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
-        fi
+								# folder status:
+								if [ -d "$LOGDIR" ]; then
+									echo '<img src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
+								else
+									echo '<img src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
+								fi
+								echo '
 
-        # help text:
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set1_backupdir_help1'<br>
-            '$lang_edit_set1_backupdir_help2'<br>
-            '$lang_edit_set1_backupdir_help3'</span></a>
-        </p>'
+								<a data-bs-toggle="collapse" href="#LOGDIR-info" role="button" aria-expanded="false" aria-controls="LOGDIR-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="LOGDIR-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set1_logdir_help1'<br />
+										'$lang_edit_set1_logdir_help2'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
+					echo '
+				</div>
+			</div>
+		</div>
+	</div>'
 
-    # LOGDIR
-    echo '
-        <p>
-        <label>'$lang_edit_set1_logdir_title'</label>'
-        if [ -n "$LOGDIR" ]; then
-            echo '<input type="text" name="LOGDIR" value="'$LOGDIR'" />'
-        else
-            echo '<input type="text" name="LOGDIR" value="" />'
-        fi
+	# --------------------------------------------------------------
+    # -> OCR section
+	# --------------------------------------------------------------
+	echo '
+	<div class="accordion" id="Accordion-02">
+		<div class="accordion-item border-start-0 border-end-0" style="border-style: dashed none dashed none; size: 1px;">
+			<h2 class="accordion-header" id="Heading-02">
+				<button class="accordion-button collapsed bg-white synocr-accordion-glow-off" type="button" data-bs-toggle="collapse" data-bs-target="#Collapse-02" aria-expanded="false" aria-controls="collapseTwo">
+					<span class="synocr-text-blue">'$lang_edit_set2_title'</span>
+				</button>
+			</h2>
+			<div id="Collapse-02" class="accordion-collapse collapse border-white" aria-labelledby="Heading-02" data-bs-parent="#Accordion-02">
+				<div class="accordion-body">'
 
-        # folder status:
-        if [ -d "$LOGDIR" ]; then
-            echo '<img src="images/status_green@geimist.svg" height="18" width="18"/>'
-        elif [ -z "$LOGDIR" ]; then
-            echo ''
-        else
-            echo '<img src="images/status_error@geimist.svg" height="18" width="18"/>'
-        fi
+					# ocropt
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="ocropt">'$lang_edit_set2_ocropt_title'</label>
+						</div>
+						<div class="col-sm-5">'
+							if [ -n "$ocropt" ]; then
+								echo '<input type="text" name="ocropt" id="ocropt" class="form-control form-control-sm" value="'$ocropt'" />'
+							else
+								echo '<input type="text" name="ocropt" id="ocropt" class="form-control form-control-sm" value="" />'
+							fi
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#ocropt-info" role="button" aria-expanded="false" aria-controls="ocropt-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="ocropt-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_ocropt_help1'<br /><br />
+										-l&nbsp;&nbsp;'$lang_edit_set2_ocropt_help5' (deu,enu,...)<br />
+										-s&nbsp;&nbsp;'$lang_edit_set2_ocropt_help2'<br />
+										-f&nbsp;&nbsp;'$lang_edit_set2_ocropt_help3'<br />
+										-r&nbsp;&nbsp;'$lang_edit_set2_ocropt_help4'<br />
+										-d&nbsp;&nbsp;'$lang_edit_set2_ocropt_help6'<br />
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-        # help text:
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set1_logdir_help1'<br>
-            '$lang_edit_set1_logdir_help2'</span></a>
-        </p>'
+					# docker container
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="dockercontainer">'$lang_edit_set2_dockerimage_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="dockercontainer" id="dockercontainer" class="form-select form-select-sm">'
 
+								# local ocrmypdf images:
+								imagelist=($(docker images | sort | awk '/ocrmypdf/ && !/<none>/ {print $1 ":" $2}'))
 
-    echo '
-    </details>
-        </fieldset>
-    </p>'
+								# check for default images and add if necessary:
+								if ! $(echo "${imagelist[@]}" | grep -q "jbarlow83/ocrmypdf:latest" ) ; then
+									imagelist+=("jbarlow83/ocrmypdf:latest")
+								fi
+								if ! $(echo "${imagelist[@]}" | grep -q "geimist/ocrmypdf-polyglot:latest" ) ; then
+									imagelist+=("geimist/ocrmypdf-polyglot:latest")
+								fi
 
+								IFS=$'\012'
+								for entry in ${imagelist[@]}; do
+									IFS=$OLDIFS
+									if [[ "$dockercontainer" == "${entry}" ]]; then
+										echo "<option value=${entry} selected>${entry}</option>"
+									else
+										echo "<option value=${entry}>${entry}</option>"
+									fi
+								done
 
-    # -> OCR section:
-    echo '<fieldset>
-    <hr style="border-style: dashed; size: 1px;">
-    <br />
-    <details><p>
-    <summary>
-        <span class="detailsitem">'$lang_edit_set2_title'</span>
-    </summary></p>
-    <p>'
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#dockercontainer-info" role="button" aria-expanded="false" aria-controls="dockercontainer-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="dockercontainer-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_dockerimage_help1'<br />
+										jbarlow83/ocrmypdf '$lang_edit_set2_dockerimage_help2'<br />
+										'$lang_edit_set2_dockerimage_help3'<br />
+										'$lang_edit_set2_dockerimage_help4'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # ocropt
-    echo '
-        <p>
-        <label>'$lang_edit_set2_ocropt_title'</label>'
-        if [ -n "$ocropt" ]; then
-            echo '<input type="text" name="ocropt" value="'$ocropt'" />'
-        else
-            echo '<input type="text" name="ocropt" value="" />'
-        fi
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_ocropt_help1'<br><br>
-            -l&nbsp;&nbsp;'$lang_edit_set2_ocropt_help5' (deu,enu,...)<br>
-            -s&nbsp;&nbsp;'$lang_edit_set2_ocropt_help2'<br>
-            -f&nbsp;&nbsp;'$lang_edit_set2_ocropt_help3'<br>
-            -r&nbsp;&nbsp;'$lang_edit_set2_ocropt_help4'<br>
-            -d&nbsp;&nbsp;'$lang_edit_set2_ocropt_help6'<br></span></a>
-        </p>'
+					# docker container
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="dockerimageupdate">'$lang_edit_set2_dockerimageupdate_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="dockerimageupdate" id="dockerimageupdate" class="form-select form-select-sm">'
 
-    # docker container
-    echo '
-        <p>
-        <label>'$lang_edit_set2_dockerimage_title'</label>
-        <select name="dockercontainer">'
+								if [[ "$dockerimageupdate" == "0" ]]; then
+									echo '<option value="0" selected>'$lang_edit_set2_dockerimageupdate_no'</option>'
+								else
+									echo '<option value="0">'$lang_edit_set2_dockerimageupdate_no'</option>'
+								fi
+								if [[ "$dockerimageupdate" == "1" ]]; then
+									echo '<option value="1" selected>'$lang_edit_set2_dockerimageupdate_yes'</option>'
+								else
+									echo '<option value="1">'$lang_edit_set2_dockerimageupdate_yes'</option>'
+								fi
 
-        # local ocrmypdf images:
-        imagelist=($(docker images | sort | awk '/ocrmypdf/ && !/<none>/ {print $1 ":" $2}'))
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#dockerimageupdate-info" role="button" aria-expanded="false" aria-controls="dockerimageupdate-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="dockerimageupdate-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_dockerimageupdate_help1'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-        # check for default images and add if necessary:
-        if ! $(echo "${imagelist[@]}" | grep -q "jbarlow83/ocrmypdf:latest" ) ; then
-            imagelist+=("jbarlow83/ocrmypdf:latest")
-        fi
-        if ! $(echo "${imagelist[@]}" | grep -q "geimist/ocrmypdf-polyglot:latest" ) ; then
-            imagelist+=("geimist/ocrmypdf-polyglot:latest")
-        fi
+					# SearchPraefix
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="SearchPraefix">'$lang_edit_set2_searchpref_title'</label>
+						</div>
+						<div class="col-sm-5">'
 
-        IFS=$'\012'
-        for entry in ${imagelist[@]}; do
-            IFS=$OLDIFS
-            if [[ "$dockercontainer" == "${entry}" ]]; then
-                echo "<option value=${entry} selected>${entry}</option>"
-            else
-                echo "<option value=${entry}>${entry}</option>"
-            fi
-        done
+							if [ -n "$SearchPraefix" ]; then
+								echo '<input type="text" name="SearchPraefix" id="SearchPraefix" class="form-control form-control-sm" value="'$SearchPraefix'" />'
+							else
+								echo '<input type="text" name="SearchPraefix" id="SearchPraefix" class="form-control form-control-sm" value="" />'
+							fi
 
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_dockerimage_help1'<br>
-            jbarlow83/ocrmypdf '$lang_edit_set2_dockerimage_help2'<br>
-            '$lang_edit_set2_dockerimage_help3'<br>
-            '$lang_edit_set2_dockerimage_help4'</span></a>
-        </p>'
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#SearchPraefix-info" role="button" aria-expanded="false" aria-controls="SearchPraefix-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="SearchPraefix-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_searchpref_help1'<br />
+										'$lang_edit_set2_searchpref_help2'<br />
+										<strong>!</strong> '$lang_edit_set2_searchpref_help3' ( !value )<br />
+										<strong>$</strong> '$lang_edit_set2_searchpref_help4' ( value$ )
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # docker-image-update
-    echo '
-        <p>
-        <label>'$lang_edit_set2_dockerimageupdate_title'</label>
-        <select name="dockerimageupdate">'
-        if [[ "$dockerimageupdate" == "0" ]]; then
-            echo '<option value="0" selected>'$lang_edit_set2_dockerimageupdate_no'</option>'
-        else
-            echo '<option value="0">'$lang_edit_set2_dockerimageupdate_no'</option>'
-        fi
-        if [[ "$dockerimageupdate" == "1" ]]; then
-            echo '<option value="1" selected>'$lang_edit_set2_dockerimageupdate_yes'</option>'
-        else
-            echo '<option value="1">'$lang_edit_set2_dockerimageupdate_yes'</option>'
-        fi
+					# delSearchPraefix
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="delSearchPraefix">.'$lang_edit_set2_delsearchpref_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="delSearchPraefix" id="delSearchPraefix" class="form-select form-select-sm">'
 
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_dockerimageupdate_help1'<br></span></a>
-        </p>'
+								if [[ "$delSearchPraefix" == "no" ]]; then
+									echo '<option value="no" selected>'$lang_edit_set2_delsearchpref_keep'</option>'
+								else
+									echo '<option value="no">'$lang_edit_set2_delsearchpref_keep'</option>'
+								fi
+								if [[ "$delSearchPraefix" == "yes" ]]; then
+									echo '<option value="yes" selected>'$lang_edit_set2_delsearchpref_delete'</option>'
+								else
+									echo '<option value="yes">'$lang_edit_set2_delsearchpref_delete'</option>'
+								fi
 
-    # SearchPraefix
-    echo '
-        <p>
-        <label>'$lang_edit_set2_searchpref_title'</label>'
-        if [ -n "$SearchPraefix" ]; then
-            echo '<input type="text" name="SearchPraefix" value="'$SearchPraefix'" />'
-        else
-            echo '<input type="text" name="SearchPraefix" value="" />'
-        fi
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_searchpref_help1'<br>
-            '$lang_edit_set2_searchpref_help2'<br>
-            <strong>!</strong> '$lang_edit_set2_searchpref_help3' ( !value )<br>
-            <strong>$</strong> '$lang_edit_set2_searchpref_help4' ( value$ )</span></a>
-        </p>'
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#delSearchPraefix-info" role="button" aria-expanded="false" aria-controls="delSearchPraefix-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="delSearchPraefix-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_delsearchpref_help1'<br />
+										'$lang_edit_set2_delsearchpref_help2'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # delSearchPraefix
-    echo '
-        <p>
-        <label><span style="color: #FFFFFF;">.'$lang_edit_set2_delsearchpref_title'</span></label>
-        <select name="delSearchPraefix">'
-        if [[ "$delSearchPraefix" == "no" ]]; then
-            echo '<option value="no" selected>'$lang_edit_set2_delsearchpref_keep'</option>'
-        else
-            echo '<option value="no">'$lang_edit_set2_delsearchpref_keep'</option>'
-        fi
-        if [[ "$delSearchPraefix" == "yes" ]]; then
-            echo '<option value="yes" selected>'$lang_edit_set2_delsearchpref_delete'</option>'
-        else
-            echo '<option value="yes">'$lang_edit_set2_delsearchpref_delete'</option>'
-        fi
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_delsearchpref_help1'<br>
-            '$lang_edit_set2_delsearchpref_help2'</span></a>
-        </p>'
+					# Document split pattern
+					# echo '
+					# <div class="row mb-3">
+						# <div class="col-sm-5">
+							# <label for="documentSplitPattern">'$lang_edit_set2_documentSplitPattern_title'</label>
+						# </div>
+						# <div class="col-sm-5">'
 
-    # Document split pattern
- #   echo '
- #       <p>
- #       <label>'$lang_edit_set2_documentSplitPattern_title'</label>'
- #       if [ -n "$documentSplitPattern" ]; then
- #           echo '<input type="text" name="documentSplitPattern" value="'$documentSplitPattern'" />'
- #       else
- #           echo '<input type="text" name="documentSplitPattern" value="" />'
- #       fi
- #   echo '
- #       <a class="helpbox" href="#HELP">
- #           <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
- #           <span>'$lang_edit_set2_documentSplitPattern_help1'</span></a>
- #       </p>'
-    
-    # Taglist
-    echo '
-        <p>
-        <label>'$lang_edit_set2_taglist_title
-    # YAML convert button:
-        # ("taglist" does not refer to an external file OR refers to an external file and has max. one line) AND input directory is a valid path
-        if ( [[ ! -f "$taglist" ]] || $([[ -f "$taglist" ]] && [[ $( cat "$taglist" | wc -l ) -le 1 ]]) ) && [ -d "$INPUTDIR" ] ; then
-            echo '<a class="helpbox" >
-            <br><br><label><button name="page" value="edit-convert2YAML" class="blue_button">'$lang_edit_yamlsample_button'</button></label>&nbsp;<span>
-            <strong>'$lang_edit_yamlsample_button_help_headline'</strong><br><br>
-            '$lang_edit_yamlsample_button_help_01'<br>
-            '$lang_edit_yamlsample_button_help_02'<br>
-            '$lang_edit_yamlsample_button_help_03'<br></span></a>'
-        fi
-        echo '</label>'
-        if [ -n "$taglist" ]; then
-        #    echo '<input type="text" name="taglist" value="'$taglist'" />'
-            echo '<textarea id="text" name="taglist" cols="35" rows="4">'$taglist'</textarea>'
-        else
-        #    echo '<input type="text" name="taglist" value="" />'
-            echo '<textarea id="text" name="taglist" cols="35" rows="4"></textarea>'
-        fi
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_taglist_help1'<br>
-            '$lang_edit_set2_taglist_help2'<br>
-            '$lang_edit_set2_taglist_help2_1'<br>
-            <strong>'$lang_edit_set2_taglist_help3'</strong><br>
-            '$lang_edit_set2_taglist_help4'<br>
-            '$lang_edit_set2_taglist_help5'<br><br>
-            '$lang_edit_set2_taglist_help6'<br>
-            <br>
-            '$lang_edit_set2_taglist_help7'<br><br>
-            '$lang_edit_set2_taglist_help8'<br><br>
-            '$lang_edit_set2_taglist_help9'<br>
-            '$lang_edit_set2_taglist_help10'<br>
-            '$lang_edit_set2_taglist_help11'<br><br>
-            <strong>'$lang_edit_yamlsample_button_help_headline'</strong><br><br></span></a>
-        </p>'
+							 # if [ -n "$documentSplitPattern" ]; then
+								# echo '<input type="text" name="documentSplitPattern" id="documentSplitPattern" class="form-control form-control-sm" value="'$documentSplitPattern'" />'
+							# else
+								# echo '<input type="text" name="documentSplitPattern" id="documentSplitPattern" class="form-control form-control-sm" value="" />'
+							# fi
 
-    # searchArea
-    echo '
-        <p>
-        <label>'$lang_edit_set2_searchall_title'</label>
-        <select name="searchAll">'
-        if [[ "$searchAll" == "no" ]]; then
-            echo '<option value="no" selected>'$lang_edit_set2_searchall_1page'</option>'
-        else
-            echo '<option value="no">'$lang_edit_set2_searchall_1page'</option>'
-        fi
-        if [[ "$searchAll" == "searchAll" ]]; then
-            echo '<option value="searchAll" selected>'$lang_edit_set2_searchall_all'</option>'
-        else
-            echo '<option value="searchAll">'$lang_edit_set2_searchall_all'</option>'
-        fi
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_searchall_help1'<br>
-            '$lang_edit_set2_searchall_help2'</span></a>
-        </p>'
+							# echo '
+						# </div>
+						# <div class="col-sm-2">
+							# <div class="float-end">
+								# <a data-bs-toggle="collapse" href="#documentSplitPattern-info" role="button" aria-expanded="false" aria-controls="documentSplitPattern-info">
+									# <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							# </div>
+						# </div>
+					# </div>
+					# <div class="row">
+						# <div class="col-sm-10">
+							# <div class="collapse" id="documentSplitPattern-info">
+								# <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									# <span>
+									# 	'$lang_edit_set2_documentSplitPattern_help1'
+									# </span>
+								# </div>
+							# </div>
+						# </div>
+						# <div class="col-sm-2"></div>
+					# </div>'
 
-    # moveTaggedFiles
-    echo '
-        <p>
-        <label><span style="color: #FFFFFF;">'$lang_edit_set2_moveTaggedFiles_title'</span></label>
-        <select name="moveTaggedFiles">'
-        if [[ "$moveTaggedFiles" == "no" ]]; then
-            echo '<option value="no" selected>'$lang_edit_set2_moveTaggedFiles_targetdir'</option>'
-        else
-            echo '<option value="no">'$lang_edit_set2_moveTaggedFiles_targetdir'</option>'
-        fi
-        if [[ "$moveTaggedFiles" == "useCatDir" ]]; then
-            echo '<option value="useCatDir" selected>'$lang_edit_set2_moveTaggedFiles_useCatDir'</option>'
-        else
-            echo '<option value="useCatDir">'$lang_edit_set2_moveTaggedFiles_useCatDir'</option>'
-        fi
-        if [[ "$moveTaggedFiles" == "useTagDir" ]]; then
-            echo '<option value="useTagDir" selected>'$lang_edit_set2_moveTaggedFiles_useTagDir'</option>'
-        else
-            echo '<option value="useTagDir">'$lang_edit_set2_moveTaggedFiles_useTagDir'</option>'
-        fi
-        if [[ "$moveTaggedFiles" == "useYearDir" ]]; then
-            echo '<option value="useYearDir" selected>'$lang_edit_set2_moveTaggedFiles_useYearDir'</option>'
-        else
-            echo '<option value="useYearDir">'$lang_edit_set2_moveTaggedFiles_useYearDir'</option>'
-        fi
-        if [[ "$moveTaggedFiles" == "useYearMonthDir" ]]; then
-            echo '<option value="useYearMonthDir" selected>'$lang_edit_set2_moveTaggedFiles_useYearMonthDir'</option>'
-        else
-            echo '<option value="useYearMonthDir">'$lang_edit_set2_moveTaggedFiles_useYearMonthDir'</option>'
-        fi
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_moveTaggedFiles_help1'</span></a>
-        </p>'
+					# Taglist
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="taglist">'$lang_edit_set2_taglist_title''
+								# ("taglist" does not refer to an external file OR refers to an external file and has max. one line) AND input directory is a valid path
+								if ( [[ ! -f "$taglist" ]] || $([[ -f "$taglist" ]] && [[ $( cat "$taglist" | wc -l ) -le 1 ]]) ) && [ -d "$INPUTDIR" ] ; then
+									echo '
+										<br /><br />
+										<button name="page" value="edit-convert2YAML" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_edit_yamlsample_button'</button>&nbsp;&nbsp;
+									<a data-bs-toggle="collapse" href="#convert2YAML" role="button" aria-expanded="false" aria-controls="convert2YAML">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>'
+								fi
 
-    # OCR Rename-Syntax
-    echo '
-        <p>
-        <label>'$lang_edit_set2_renamesyntax_title'</label>'
-        if [ -n "$NameSyntax" ]; then
-            echo '<input type="text" name="NameSyntax" value="'$NameSyntax'" />'
-        else
-            echo '<input type="text" name="NameSyntax" value="" />'
-        fi
+								echo '
+							</label>
+						</div>
+						<div class="col-sm-5">'
 
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_renamesyntax_help1'<br><br>
-            '$lang_edit_set2_renamesyntax_help2'<br>
-            '$lang_edit_set2_renamesyntax_help3':<br>
-            <b>§docr</b> ('$lang_edit_set2_renamesyntax_help4')<br>
-            <b>§mocr</b> ('$lang_edit_set2_renamesyntax_help5')<br>
-            <b>§yocr2</b> ('$lang_edit_set2_renamesyntax_help6a')<br>
-            <b>§yocr4</b> ('$lang_edit_set2_renamesyntax_help6b')<br>
-            <b>§ssnow</b> ('$lang_edit_set2_renamesyntax_help22')<br>
-            <b>§mmnow</b> ('$lang_edit_set2_renamesyntax_help23')<br>
-            <b>§hhnow</b> ('$lang_edit_set2_renamesyntax_help24')<br>
-            <b>§dnow</b> ('$lang_edit_set2_renamesyntax_help7')<br>
-            <b>§mnow</b> ('$lang_edit_set2_renamesyntax_help8')<br>
-            <b>§ynow2</b> ('$lang_edit_set2_renamesyntax_help9a')<br>
-            <b>§ynow4</b> ('$lang_edit_set2_renamesyntax_help9b')<br>
-            <b>§sssource</b> ('$lang_edit_set2_renamesyntax_help25')<br>
-            <b>§mmsource</b> ('$lang_edit_set2_renamesyntax_help26')<br>
-            <b>§hhsource</b> ('$lang_edit_set2_renamesyntax_help27')<br>
-            <b>§dsource</b> ('$lang_edit_set2_renamesyntax_help10')<br>
-            <b>§msource</b> ('$lang_edit_set2_renamesyntax_help11')<br>
-            <b>§ysource2</b> ('$lang_edit_set2_renamesyntax_help12a')<br>
-            <b>§ysource4</b> ('$lang_edit_set2_renamesyntax_help12b')<br>
-            <b>§tag</b> ('$lang_edit_set2_renamesyntax_help13')<br>
-            <b>§tit</b> ('$lang_edit_set2_renamesyntax_help14')<br>
-            <b>§pagecounttotal</b> ('$lang_edit_set2_renamesyntax_help18')<br>
-            <b>§filecounttotal</b> ('$lang_edit_set2_renamesyntax_help19')<br>
-            <b>§pagecountprofile</b> ('$lang_edit_set2_renamesyntax_help20')<br>
-            <b>§filecountprofile</b> ('$lang_edit_set2_renamesyntax_help21')<br><br>
-            >><b>§yocr4-§mocr-§docr_§tag_§tit</b><< '$lang_edit_set2_renamesyntax_help15'<br>
-            '$lang_edit_set2_renamesyntax_help16' >><b>2018-12-09_#Rechnung_00376.pdf</b><<<br>
-            <br>'$lang_edit_set2_renamesyntax_help17'<br><br><br><br><br></span></a>
-        </p>'
+							if [ -n "$taglist" ]; then
+							#    echo '<input type="text" name="taglist" value="'$taglist'" />'
+								echo '<textarea name="taglist" id="taglist" class="form-control" cols="35" rows="4">'$taglist'</textarea>'
+							else
+							#    echo '<input type="text" name="taglist" value="" />'
+								echo '<textarea name="taglist" id="taglist" class="form-control" cols="35" rows="4"></textarea>'
+							fi
+							echo '
 
-    # Tagkennzeichnung
-    echo '
-        <p>
-        <label>'$lang_edit_set2_tagsymbol_title'</label>'
-        if [ -n "$tagsymbol" ]; then
-            echo '<input type="text" name="tagsymbol" value="'$tagsymbol'" />'
-        else
-            echo '<input type="text" name="tagsymbol" value="" />'
-        fi
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_tagsymbol_help1'<br>
-            '$lang_edit_set2_tagsymbol_help2'<br></span></a>
-        </p>'
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#taglist-info" role="button" aria-expanded="false" aria-controls="taglist-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="convert2YAML">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										<strong>'$lang_edit_yamlsample_button_help_headline'</strong><br /><br />
+										'$lang_edit_yamlsample_button_help_01'<br />
+										'$lang_edit_yamlsample_button_help_02'<br />
+										'$lang_edit_yamlsample_button_help_03'<br />
+									</span>
+								</div>
+							</div>
 
-    # Filedate
-    echo '
-        <p>
-        <label>'$lang_edit_set2_filedate_title'</label>
-        <select name="filedate">'
-        if [[ "$filedate" == "now" ]]; then
-            echo '<option value="now" selected>'$lang_edit_set2_filedate_now'</option>'
-        else
-            echo '<option value="now">'$lang_edit_set2_filedate_now'</option>'
-        fi
-        if [[ "$filedate" == "ocr" ]]; then
-            echo '<option value="ocr" selected>'$lang_edit_set2_filedate_ocr'</option>'
-        else
-            echo '<option value="ocr">'$lang_edit_set2_filedate_ocr'</option>'
-        fi
-        if [[ "$filedate" == "source" ]]; then
-            echo '<option value="source" selected>'$lang_edit_set2_filedate_source'</option>'
-        else
-            echo '<option value="source">'$lang_edit_set2_filedate_source'</option>'
-        fi
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_filedate_help1'<br>
-            '$lang_edit_set2_filedate_help2'</span></a>
-        </p>'
+							<div class="collapse" id="taglist-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_taglist_help1'<br />
+										'$lang_edit_set2_taglist_help2'<br />
+										'$lang_edit_set2_taglist_help2_1'<br />
+										<strong>'$lang_edit_set2_taglist_help3'</strong><br />
+										'$lang_edit_set2_taglist_help4'<br />
+										'$lang_edit_set2_taglist_help5'<br /><br />
+										'$lang_edit_set2_taglist_help6'<br />
+										<br />
+										'$lang_edit_set2_taglist_help7'<br /><br />
+										'$lang_edit_set2_taglist_help8'<br /><br />
+										'$lang_edit_set2_taglist_help9'<br />
+										'$lang_edit_set2_taglist_help10'<br />
+										'$lang_edit_set2_taglist_help11'<br /><br />
+										<strong>'$lang_edit_yamlsample_button_help_headline'</strong>
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # ignoredDate:
-    echo '
-        <p>
-        <label>'$lang_edit_set2_ignoredDate_title'</label>'
-        if [ -n "$ignoredDate" ]; then
-            echo '<input type="text" name="ignoredDate" value="'$ignoredDate'" />'
-        else
-            echo '<input type="text" name="ignoredDate" value="" />'
-        fi
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set2_ignoredDate_help1'<br><br>
-            <b>'$lang_edit_set2_ignoredDate_help2'</b><br></span></a>
-        </p>'
+					# searchArea
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="searchAll">'$lang_edit_set2_searchall_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="searchAll" id="searchAll" class="form-select form-select-sm">'
 
-    echo '
-    </details>
-        </fieldset>
-    </p>'
+								if [[ "$searchAll" == "no" ]]; then
+									echo '<option value="no" selected>'$lang_edit_set2_searchall_1page'</option>'
+								else
+									echo '<option value="no">'$lang_edit_set2_searchall_1page'</option>'
+								fi
+								if [[ "$searchAll" == "searchAll" ]]; then
+									echo '<option value="searchAll" selected>'$lang_edit_set2_searchall_all'</option>'
+								else
+									echo '<option value="searchAll">'$lang_edit_set2_searchall_all'</option>'
+								fi
 
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#searchAll-info" role="button" aria-expanded="false" aria-controls="searchAll-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="searchAll-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_searchall_help1'<br />
+										'$lang_edit_set2_searchall_help2'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					# moveTaggedFiles
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="moveTaggedFiles" class="text-white">'$lang_edit_set2_moveTaggedFiles_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="moveTaggedFiles" id="moveTaggedFiles" class="form-select form-select-sm">'
+
+								if [[ "$moveTaggedFiles" == "no" ]]; then
+									echo '<option value="no" selected>'$lang_edit_set2_moveTaggedFiles_targetdir'</option>'
+								else
+									echo '<option value="no">'$lang_edit_set2_moveTaggedFiles_targetdir'</option>'
+								fi
+								if [[ "$moveTaggedFiles" == "useCatDir" ]]; then
+									echo '<option value="useCatDir" selected>'$lang_edit_set2_moveTaggedFiles_useCatDir'</option>'
+								else
+									echo '<option value="useCatDir">'$lang_edit_set2_moveTaggedFiles_useCatDir'</option>'
+								fi
+								if [[ "$moveTaggedFiles" == "useTagDir" ]]; then
+									echo '<option value="useTagDir" selected>'$lang_edit_set2_moveTaggedFiles_useTagDir'</option>'
+								else
+									echo '<option value="useTagDir">'$lang_edit_set2_moveTaggedFiles_useTagDir'</option>'
+								fi
+								if [[ "$moveTaggedFiles" == "useYearDir" ]]; then
+									echo '<option value="useYearDir" selected>'$lang_edit_set2_moveTaggedFiles_useYearDir'</option>'
+								else
+									echo '<option value="useYearDir">'$lang_edit_set2_moveTaggedFiles_useYearDir'</option>'
+								fi
+								if [[ "$moveTaggedFiles" == "useYearMonthDir" ]]; then
+									echo '<option value="useYearMonthDir" selected>'$lang_edit_set2_moveTaggedFiles_useYearMonthDir'</option>'
+								else
+									echo '<option value="useYearMonthDir">'$lang_edit_set2_moveTaggedFiles_useYearMonthDir'</option>'
+								fi
+
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#moveTaggedFiles-info" role="button" aria-expanded="false" aria-controls="moveTaggedFiles-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="moveTaggedFiles-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_moveTaggedFiles_help1'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					# OCR Rename-Syntax
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="NameSyntax">'$lang_edit_set2_renamesyntax_title'</label>
+						</div>
+						<div class="col-sm-5">'
+
+							if [ -n "$NameSyntax" ]; then
+								echo '<input type="text" name="NameSyntax" id="NameSyntax" class="form-control form-control-sm" value="'$NameSyntax'" />'
+							else
+								echo '<input type="text" name="NameSyntax" id="NameSyntax" class="form-control form-control-sm" value="" />'
+							fi
+
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#NameSyntax-info" role="button" aria-expanded="false" aria-controls="NameSyntax-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="NameSyntax-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_renamesyntax_help1'<br /><br />
+										'$lang_edit_set2_renamesyntax_help2'<br />
+										'$lang_edit_set2_renamesyntax_help3':<br />
+										<strong>§docr</strong> ('$lang_edit_set2_renamesyntax_help4')<br />
+										<strong>§mocr</strong> ('$lang_edit_set2_renamesyntax_help5')<br />
+										<strong>§yocr2</strong> ('$lang_edit_set2_renamesyntax_help6a')<br />
+										<strong>§yocr4</strong> ('$lang_edit_set2_renamesyntax_help6b')<br />
+										<strong>§ssnow</strong> ('$lang_edit_set2_renamesyntax_help22')<br />
+										<strong>§mmnow</strong> ('$lang_edit_set2_renamesyntax_help23')<br />
+										<strong>§hhnow</strong> ('$lang_edit_set2_renamesyntax_help24')<br />
+										<strong>§dnow</strong> ('$lang_edit_set2_renamesyntax_help7')<br />
+										<strong>§mnow</strong> ('$lang_edit_set2_renamesyntax_help8')<br />
+										<strong>§ynow2</strong> ('$lang_edit_set2_renamesyntax_help9a')<br />
+										<strong>§ynow4</strong> ('$lang_edit_set2_renamesyntax_help9b')<br />
+										<strong>§sssource</strong> ('$lang_edit_set2_renamesyntax_help25')<br />
+										<strong>§mmsource</strong> ('$lang_edit_set2_renamesyntax_help26')<br />
+										<strong>§hhsource</strong> ('$lang_edit_set2_renamesyntax_help27')<br />
+										<strong>§dsource</strong> ('$lang_edit_set2_renamesyntax_help10')<br />
+										<strong>§msource</strong> ('$lang_edit_set2_renamesyntax_help11')<br />
+										<strong>§ysource2</strong> ('$lang_edit_set2_renamesyntax_help12a')<br />
+										<strong>§ysource4</strong> ('$lang_edit_set2_renamesyntax_help12b')<br />
+										<strong>§tag</strong> ('$lang_edit_set2_renamesyntax_help13')<br />
+										<strong>§tit</strong> ('$lang_edit_set2_renamesyntax_help14')<br />
+										<strong>§pagecounttotal</strong> ('$lang_edit_set2_renamesyntax_help18')<br />
+										<strong>§filecounttotal</strong> ('$lang_edit_set2_renamesyntax_help19')<br />
+										<strong>§pagecountprofile</strong> ('$lang_edit_set2_renamesyntax_help20')<br />
+										<strong>§filecountprofile</strong> ('$lang_edit_set2_renamesyntax_help21')<br /><br />
+										>><strong>§yocr4-§mocr-§docr_§tag_§tit</strong><< '$lang_edit_set2_renamesyntax_help15'<br />
+										'$lang_edit_set2_renamesyntax_help16' >><strong>2018-12-09_#Rechnung_00376.pdf</strong><<<br />
+										<br />'$lang_edit_set2_renamesyntax_help17'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					# Tagkennzeichnung
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="tagsymbol">'$lang_edit_set2_tagsymbol_title'</label>
+						</div>
+						<div class="col-sm-5">'
+
+							if [ -n "$tagsymbol" ]; then
+								echo '<input type="text" name="tagsymbol" id="tagsymbol" class="form-control form-control-sm" value="'$tagsymbol'" />'
+							else
+								echo '<input type="text" name="tagsymbol" id="tagsymbol" class="form-control form-control-sm" value="" />'
+							fi
+
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#tagsymbol-info" role="button" aria-expanded="false" aria-controls="tagsymbol-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="tagsymbol-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_tagsymbol_help1'<br />
+										'$lang_edit_set2_tagsymbol_help2'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					# Filedate
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="filedate">'$lang_edit_set2_filedate_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="filedate" id="filedate" class="form-select form-select-sm">'
+
+							   if [[ "$filedate" == "now" ]]; then
+									echo '<option value="now" selected>'$lang_edit_set2_filedate_now'</option>'
+								else
+									echo '<option value="now">'$lang_edit_set2_filedate_now'</option>'
+								fi
+								if [[ "$filedate" == "ocr" ]]; then
+									echo '<option value="ocr" selected>'$lang_edit_set2_filedate_ocr'</option>'
+								else
+									echo '<option value="ocr">'$lang_edit_set2_filedate_ocr'</option>'
+								fi
+								if [[ "$filedate" == "source" ]]; then
+									echo '<option value="source" selected>'$lang_edit_set2_filedate_source'</option>'
+								else
+									echo '<option value="source">'$lang_edit_set2_filedate_source'</option>'
+								fi
+
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#filedate-info" role="button" aria-expanded="false" aria-controls="filedate-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="filedate-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_filedate_help1'<br />
+										'$lang_edit_set2_filedate_help2'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					# ignoredDate
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="tagsymbol">'$lang_edit_set2_ignoredDate_title'</label>
+						</div>
+						<div class="col-sm-5">'
+
+							if [ -n "$ignoredDate" ]; then
+								echo '<input type="text" name="ignoredDate" id="ignoredDate" class="form-control form-control-sm" value="'$ignoredDate'" />'
+							else
+								echo '<input type="text" name="ignoredDate" id="ignoredDate" class="form-control form-control-sm" value="" />'
+							fi
+
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#fignoredDate-info" role="button" aria-expanded="false" aria-controls="fignoredDate-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="fignoredDate-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set2_ignoredDate_help1'<br /><br />
+										<strong>'$lang_edit_set2_ignoredDate_help2'</strong>
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					echo '
+				</div>
+			</div>
+		</div>
+	</div>'
+
+	# --------------------------------------------------------------
     # -> Section DSM notification and other settings
-    echo '<fieldset>
-    <hr style="border-style: dashed; size: 1px;">
-    <br />
-    <details><p>
-    <summary>
-        <span class="detailsitem">'$lang_edit_set3_title'</span>
-    </summary></p>
-    <p>'
+	# --------------------------------------------------------------
+	echo '
+	<div class="accordion" id="Accordion-03">
+		<div class="accordion-item border-start-0 border-end-0" style="border-style: dashed none dashed none; size: 1px;">
+			<h2 class="accordion-header" id="Heading-03">
+				<button class="accordion-button collapsed bg-white synocr-accordion-glow-off" type="button" data-bs-toggle="collapse" data-bs-target="#Collapse-03" aria-expanded="false" aria-controls="collapseTwo">
+					<span class="synocr-text-blue">'$lang_edit_set3_title'</span>
+				</button>
+			</h2>
+			<div id="Collapse-03" class="accordion-collapse collapse border-white" aria-labelledby="Heading-03" data-bs-parent="#Accordion-03">
+				<div class="accordion-body">'
 
-    # BACKUP ROTATION
+					# BACKUP ROTATION
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="backup_max">'$lang_edit_set3_backuprotate_title'</label>
+						</div>
+						<div class="col-sm-2">'
 
-    echo '
-        <p>
-        <label>'$lang_edit_set3_backuprotate_title'</label>'
-        if [ -n "$backup_max" ]; then
-            echo '<input type="text" name="backup_max" value="'$backup_max'" />'
-        else
-            echo '<input type="text" name="backup_max" value="" />'
-        fi
-    echo '</p>'
+							if [ -n "$backup_max" ]; then
+								echo '<input type="text" name="backup_max" id="ignoredDate" class="form-control form-control-sm" value="'$backup_max'" />'
+							else
+								echo '<input type="text" name="backup_max" id="ignoredDate" class="form-control form-control-sm" value="" />'
+							fi
 
-    echo '
-        <p>
-        <label><span style="color: #FFFFFF;">.'$lang_edit_set3_backuprotatetype_title'</span></label>
-        <select name="backup_max_type">'
-        if [[ "$backup_max_type" == "files" ]]; then
-            echo '<option value="files" selected>'$lang_edit_set3_backuprotatetype_files'</option>'
-        else
-            echo '<option value="files">'$lang_edit_set3_backuprotatetype_files'</option>'
-        fi
-        if [[ "$backup_max_type" == "days" ]]; then
-            echo '<option value="days" selected>'$lang_edit_set3_backuprotatetype_days'</option>'
-        else
-            echo '<option value="days">'$lang_edit_set3_backuprotatetype_days'</option>'
-        fi
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set3_backuprotate_help1'<br><br>
-            '$lang_edit_set3_backuprotate_help2'<br>
-            '$lang_edit_set3_backuprotate_help3'</span></a>
-        </p>'
+							echo '
+						</div>'
 
+						# Ausgeblendeter Label-Tag: $lang_edit_set3_backuprotatetype_title
+						echo '
+						<div class="col-sm-3">
+							<select name="backup_max_type" id="backup_max_type" class="form-select form-select-sm">'
 
-    # LOGmax
-    echo '
-        <p>
-        <label>'$lang_edit_set3_logmax_title'</label>'
-        if [ -n "$LOGmax" ]; then
-            echo '<input type="text" name="LOGmax" value="'$LOGmax'" />'
-        else
-            echo '<input type="text" name="LOGmax" value="" />'
-        fi
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set3_logmax_help'</span></a>
-        </p>'
+								if [[ "$backup_max_type" == "files" ]]; then
+									echo '<option value="files" selected>'$lang_edit_set3_backuprotatetype_files'</option>'
+								else
+									echo '<option value="files">'$lang_edit_set3_backuprotatetype_files'</option>'
+								fi
+								if [[ "$backup_max_type" == "days" ]]; then
+									echo '<option value="days" selected>'$lang_edit_set3_backuprotatetype_days'</option>'
+								else
+									echo '<option value="days">'$lang_edit_set3_backuprotatetype_days'</option>'
+								fi
 
-    # dsmtextnotify
-    echo '
-        <p>
-        <label>'$lang_edit_set3_dsmtextnotify_title'</label>
-        <select name="dsmtextnotify">'
-        if [[ "$dsmtextnotify" == "off" ]]; then
-            echo '<option value="off" selected>'$lang_edit_set3_dsmtextnotify_off'</option>'
-        else
-            echo '<option value="off">'$lang_edit_set3_dsmtextnotify_off'</option>'
-        fi
-        if [[ "$dsmtextnotify" == "on" ]]; then
-            echo '<option value="on" selected>'$lang_edit_set3_dsmtextnotify_on'</option>'
-        else
-            echo '<option value="on">'$lang_edit_set3_dsmtextnotify_on'</option>'
-        fi
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set3_dsmtextnotify_help1'
-            <br>'$lang_edit_set3_dsmtextnotify_help2'</span></a>
-        </p>'
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#backup_max_type-info" role="button" aria-expanded="false" aria-controls="backup_max_type-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="backup_max_type-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set3_backuprotate_help1'<br /><br />
+										'$lang_edit_set3_backuprotate_help2'<br />
+										'$lang_edit_set3_backuprotate_help3'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # MessageTo
-    user_list=$(cat /etc/passwd)
-    user_list_array=()
-    user_list_array+=( "-" )
-    IFS=$'\012'
+					# LOGmax
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="LOGmax">'$lang_edit_set3_logmax_title'</label>
+						</div>
+						<div class="col-sm-5">'
 
-    for user in $user_list ; do
-        IFS=$oldIFS
-        user_name=$(echo $user | awk -F: '{print $1}')
-        user_id=$( id -u $user_name )
-        # sort out system user:
-        if [ $user_id -ge 1000 ] && [ $user_id -le 100000 ] ; then
-            user_list_array+=( "$user_name" )
-        fi
-    done
+							if [ -n "$LOGmax" ]; then
+								echo '<input type="text" name="LOGmax" id="LOGmax" class="form-control form-control-sm" value="'$LOGmax'" />'
+							else
+								echo '<input type="text" name="LOGmax" id="LOGmax" class="form-control form-control-sm" value="" />'
+							fi
 
-    echo '
-        <p>
-        <label>'$lang_edit_set3_MessageTo_title'</label>
-        <select name="MessageTo">'
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#LOGmax-info" role="button" aria-expanded="false" aria-controls="LOGmax-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="LOGmax-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set3_logmax_help'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-        for entry in ${user_list_array[@]}; do
-            IFS=$OLDIFS
-            if [[ "$MessageTo" == "${entry}" ]]; then
-                echo "<option value=${entry} selected>${entry}</option>"
-            else
-                echo "<option value=${entry}>${entry}</option>"
-            fi
-        done
+					# dsmtextnotify
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="dsmtextnotify">'$lang_edit_set3_dsmtextnotify_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="dsmtextnotify" id="dsmtextnotify" class="form-select form-select-sm">'
 
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set3_MessageTo_help1'
-            <br>'$lang_edit_set3_MessageTo_help2'
-            <br>'$lang_edit_set3_MessageTo_help3'
-        </span></a></p>'
+								if [[ "$dsmtextnotify" == "off" ]]; then
+									echo '<option value="off" selected>'$lang_edit_set3_dsmtextnotify_off'</option>'
+								else
+									echo '<option value="off">'$lang_edit_set3_dsmtextnotify_off'</option>'
+								fi
+								if [[ "$dsmtextnotify" == "on" ]]; then
+									echo '<option value="on" selected>'$lang_edit_set3_dsmtextnotify_on'</option>'
+								else
+									echo '<option value="on">'$lang_edit_set3_dsmtextnotify_on'</option>'
+								fi
 
-    # PushBullet token
-    echo '
-        <p>
-        <label>'$lang_edit_set3_PBTOKEN_title'</label>'
-        if [ -n "$PBTOKEN" ]; then
-            echo '<input type="text" name="PBTOKEN" value="'$PBTOKEN'" />'
-        else
-            echo '<input type="text" name="PBTOKEN" value="" />'
-        fi
-    echo '
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set3_PBTOKEN_help1'<br>
-            '$lang_edit_set3_PBTOKEN_help2'<br>
-            '$lang_edit_set3_PBTOKEN_help3'</span></a>
-        </p>'
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#dsmtextnotify-info" role="button" aria-expanded="false" aria-controls="dsmtextnotify-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="dsmtextnotify-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set3_dsmtextnotify_help1'<br />
+										'$lang_edit_set3_dsmtextnotify_help2'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
 
-    # dsmbeepnotify
-    echo '
-        <p>
-        <label>'$lang_edit_set3_dsmbeepnotify_title'</label>
-        <select name="dsmbeepnotify">'
-        if [[ "$dsmbeepnotify" == "off" ]]; then
-            echo '<option value="off" selected>'$lang_edit_set3_dsmbeepnotify_off'</option>'
-        else
-            echo '<option value="off">'$lang_edit_set3_dsmbeepnotify_off'</option>'
-        fi
-        if [[ "$dsmbeepnotify" == "on" ]]; then
-            echo '<option value="on" selected>'$lang_edit_set3_dsmbeepnotify_on'</option>'
-        else
-            echo '<option value="on">'$lang_edit_set3_dsmbeepnotify_on'</option>'
-        fi
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set3_dsmbeepnotify_help1'</span></a>
-        </p>'
+					# MessageTo
+					user_list=$(cat /etc/passwd)
+					user_list_array=()
+					user_list_array+=( "-" )
+					IFS=$'\012'
 
-    # LOGlevel
-    echo '
-        <p>
-        <label>'$lang_edit_set3_loglevel_title'</label>
-        <select name="loglevel">'
-        if [[ "$loglevel" == "0" ]]; then
-            echo '<option value="0" selected>'$lang_edit_set3_loglevel_off'</option>'
-        else
-            echo '<option value="0">'$lang_edit_set3_loglevel_off'</option>'
-        fi
-        if [[ "$loglevel" == "1" ]]; then
-            echo '<option value="1" selected>'$lang_edit_set3_loglevel_1'</option>'
-        else
-            echo '<option value="1">'$lang_edit_set3_loglevel_1'</option>'
-        fi
-        if [[ "$loglevel" == "2" ]]; then
-            echo '<option value="2" selected>'$lang_edit_set3_loglevel_2'</option>'
-        else
-            echo '<option value="2">'$lang_edit_set3_loglevel_2'</option>'
-        fi
+					for user in $user_list ; do
+						IFS=$oldIFS
+						user_name=$(echo $user | awk -F: '{print $1}')
+						user_id=$( id -u $user_name )
+						# sort out system user:
+						if [ $user_id -ge 1000 ] && [ $user_id -le 100000 ] ; then
+							user_list_array+=( "$user_name" )
+						fi
+					done
 
-    echo '
-        </select>
-        <a class="helpbox" href="#HELP">
-            <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/>
-            <span>'$lang_edit_set3_loglevel_help1'<br>
-            '$lang_edit_set3_loglevel_help2'<br>
-            '$lang_edit_set3_loglevel_help3'</span><br><br><br></a>
-        </p>'
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="MessageTo">'$lang_edit_set3_MessageTo_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="MessageTo" id="MessageTo" class="form-select form-select-sm">'
 
-    echo '
-        </p>
-        </details>
-        <br><hr style="border-style: dashed; size: 1px;">
-    </fieldset>'
+								for entry in ${user_list_array[@]}; do
+									IFS=$OLDIFS
+									if [[ "$MessageTo" == "${entry}" ]]; then
+										echo "<option value=${entry} selected>${entry}</option>"
+									else
+										echo "<option value=${entry}>${entry}</option>"
+									fi
+								done
 
-    echo '
-    </div>
-    </div><div class="clear"></div>
-    <div id="minheight"></div>
-'
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#MessageTo-info" role="button" aria-expanded="false" aria-controls="MessageTo-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="MessageTo-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set3_MessageTo_help1'<br />
+										'$lang_edit_set3_MessageTo_help2'<br />
+										'$lang_edit_set3_MessageTo_help3'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					# PushBullet token
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="PBTOKEN">'$lang_edit_set3_PBTOKEN_title'</label>
+						</div>
+						<div class="col-sm-5">'
+
+							if [ -n "$PBTOKEN" ]; then
+								echo '<input type="text" name="PBTOKEN" id="PBTOKEN" class="form-control form-control-sm" value="'$PBTOKEN'" />'
+							else
+								echo '<input type="text" name="PBTOKEN" id="PBTOKEN" class="form-control form-control-sm" value="" />'
+							fi
+
+							echo '
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#PBTOKEN-info" role="button" aria-expanded="false" aria-controls="PBTOKEN-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="PBTOKEN-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set3_PBTOKEN_help1'<br />
+										'$lang_edit_set3_PBTOKEN_help2'<br />
+										'$lang_edit_set3_PBTOKEN_help3'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					# dsmbeepnotify
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="dsmbeepnotify">'$lang_edit_set3_dsmbeepnotify_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="dsmbeepnotify" id="dsmbeepnotify" class="form-select form-select-sm">'
+
+								if [[ "$dsmbeepnotify" == "off" ]]; then
+									echo '<option value="off" selected>'$lang_edit_set3_dsmbeepnotify_off'</option>'
+								else
+									echo '<option value="off">'$lang_edit_set3_dsmbeepnotify_off'</option>'
+								fi
+								if [[ "$dsmbeepnotify" == "on" ]]; then
+									echo '<option value="on" selected>'$lang_edit_set3_dsmbeepnotify_on'</option>'
+								else
+									echo '<option value="on">'$lang_edit_set3_dsmbeepnotify_on'</option>'
+								fi
+
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#dsmbeepnotify-info" role="button" aria-expanded="false" aria-controls="dsmbeepnotify-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="dsmbeepnotify-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set3_dsmbeepnotify_help1'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					# LOGlevel
+					echo '
+					<div class="row mb-3">
+						<div class="col-sm-5">
+							<label for="loglevel">'$lang_edit_set3_loglevel_title'</label>
+						</div>
+						<div class="col-sm-5">
+							<select name="loglevel" id="loglevel" class="form-select form-select-sm">'
+
+								if [[ "$loglevel" == "0" ]]; then
+									echo '<option value="0" selected>'$lang_edit_set3_loglevel_off'</option>'
+								else
+									echo '<option value="0">'$lang_edit_set3_loglevel_off'</option>'
+								fi
+								if [[ "$loglevel" == "1" ]]; then
+									echo '<option value="1" selected>'$lang_edit_set3_loglevel_1'</option>'
+								else
+									echo '<option value="1">'$lang_edit_set3_loglevel_1'</option>'
+								fi
+								if [[ "$loglevel" == "2" ]]; then
+									echo '<option value="2" selected>'$lang_edit_set3_loglevel_2'</option>'
+								else
+									echo '<option value="2">'$lang_edit_set3_loglevel_2'</option>'
+								fi
+
+								echo '
+							</select>
+						</div>
+						<div class="col-sm-2">
+							<div class="float-end">
+								<a data-bs-toggle="collapse" href="#loglevel-info" role="button" aria-expanded="false" aria-controls="loglevel-info">
+									<img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-10">
+							<div class="collapse" id="loglevel-info">
+								<div class="card card-body mb-3" style="background-color: #F2FAFF;">
+									<span>
+										'$lang_edit_set3_loglevel_help1'<br />
+										'$lang_edit_set3_loglevel_help2'<br />
+										'$lang_edit_set3_loglevel_help3'
+									</span>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-2"></div>
+					</div>'
+
+					echo '
+				</div>
+			</div>
+		</div>
+	</div>
+	<p>&nbsp;</p>'
+
 fi
