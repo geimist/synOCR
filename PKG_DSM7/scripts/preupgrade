@@ -57,4 +57,17 @@ else
     exit 1
 fi
 
+# -------------------------------------------------------------------------------------
+# select language:
+    if [ -f $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE} ] ; then
+         . $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE}
+    else
+         . $(/usr/bin/dirname $0)/lang/enu
+    fi
+
+# timer in older installations is no longer available. Please use the DSM task scheduler!:
+    if [[ $(printf "1.1.999\n$SYNOPKG_OLD_PKGVER" | sort -V | tail -n1) = "1.1.999" ]] ; then
+        echo "${PKG_DELETE_TIMER}" > $SYNOPKG_TEMP_LOGFILE
+    fi
+
 exit 0
