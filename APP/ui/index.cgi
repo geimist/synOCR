@@ -231,21 +231,21 @@ echo '
                         fi
 
                         # Zeitplaner
-                        if [[ "$mainpage" == "timer" ]] && [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
-                            echo '
-                            <li class="nav-item">
-                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=timer">
-                                    <img class="svg me-3" src="images/calendar_white@geimist.svg" height="25" width="25"/>'$lang_page3'
-                                </a>
-                            </li>'
-                        elif [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
-                            echo '
-                            <li class="nav-item">
-                                <a class="nav-link text-secondary" href="index.cgi?page=timer">
-                                    <img class="svg me-3" src="images/calendar_grey3@geimist.svg" height="25" width="25"/>'$lang_page3'
-                                </a>
-                            </li>'
-                        fi
+#                        if [[ "$mainpage" == "timer" ]] && [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
+#                            echo '
+#                            <li class="nav-item">
+#                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=timer">
+#                                    <img class="svg me-3" src="images/calendar_white@geimist.svg" height="25" width="25"/>'$lang_page3'
+#                                </a>
+#                            </li>'
+#                        elif [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
+#                            echo '
+#                            <li class="nav-item">
+#                                <a class="nav-link text-secondary" href="index.cgi?page=timer">
+#                                    <img class="svg me-3" src="images/calendar_grey3@geimist.svg" height="25" width="25"/>'$lang_page3'
+#                                </a>
+#                            </li>'
+#                        fi
 
                         # Hilfe
                         if [[ "$mainpage" == "help" ]]; then
