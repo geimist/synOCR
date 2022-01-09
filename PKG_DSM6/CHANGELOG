@@ -5,6 +5,9 @@ This version only supports DSM6.x
 DSM7 version you can found at cphub.net
 
 1.2.0 [2022-01-xx]
+  IMPORTANT:
+ -  with this version the scheduler is no longer available in the GUI. 
+    Please use the DSM task scheduler!
   BUGFIXES:
  -  RegEx with lookahead / lookbehind for tag names were not possible
  -  minor bugfixes (thx to tommes)
