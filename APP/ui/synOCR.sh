@@ -8,7 +8,7 @@
     echo "    -----------------------------------"
     echo -e
 
-    DevChannel="BETA"     # "Release"    # BETA
+    DevChannel="Release"    # BETA
     set -E -o functrace     # for function failure()
 
     failure()
@@ -165,8 +165,8 @@ fi
     echo -n "Date search method:       "
     if [[ $enhanced_date_search = "yes" ]] ; then
         echo "use Python (BETA)"
-#       echo "                          to use standard search via RegEx, you must change the settings with this command:"
-#       echo "                          synosetkeyvalue $(echo $0) enhanced_date_search no"
+        echo "                          to use standard search via RegEx, you must change the settings with this command:"
+        echo "                          synosetkeyvalue $(echo $0) enhanced_date_search no"
     else
         echo "use standard search via RegEx"
 #       echo "                          to use enhanced search via Python, you must change the settings with this command:"
@@ -1037,7 +1037,7 @@ replace_variables(){
     echo "$1" | sed "s~§dsource~${date_dd_source}~g;s~§msource~${date_mm_source}~g;s~§ysource2~${date_yy_source:2}~g;s~§ysource4~${date_yy_source}~g" \
      | sed "s~§ysource~${date_yy_source}~g;s~§hhsource~${date_houre_source}~g;s~§mmsource~${date_min_source}~g;s~§sssource~${date_sek_source}~g;s~§dnow~$(date +%d)~g" \
      | sed "s~§mnow~$(date +%m)~g;s~§ynow2~$(date +%y)~g;s~§ynow4~$(date +%Y)~g;s~§ynow~$(date +%Y)~g;s~§hhnow~$(date +%H)~g;s~§mmnow~$(date +%M)~g;s~§ssnow~$(date +%S)~g" \
-     | sed "s~§pagecounttotal~${global_pagecount_new}~g;s~§filecounttotal~${global_ocrcount_new}~g;s~§pagecountprofile~${pagecount_profile_new}~g;s~§filecountprofile~${ocrcount_profile_new}~g" \
+     | sed "s~§pagecount~${pagecount_latest}~g;s~§pagecounttotal~${global_pagecount_new}~g;s~§filecounttotal~${global_ocrcount_new}~g;s~§pagecountprofile~${pagecount_profile_new}~g;s~§filecountprofile~${ocrcount_profile_new}~g" \
      | sed "s~§docr~${date_dd}~g;s~§mocr~${date_mm}~g;s~§yocr2~${date_yy:2}~g;s~§yocr4~${date_yy}~g;s~§yocr~${date_yy}~g;s~%20~ ~g" 
 }
 
@@ -1067,6 +1067,7 @@ renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before rene
 # ---------------------------------------------------------------------
 NewName=$(replace_variables "$NameSyntax")
 
+# parameters without replace_variables function:
 NewName=$( echo "$NewName" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g" )
 
 # fallback to old  parameters:
