@@ -97,203 +97,212 @@
         readonly syno_token syno_user user_exist is_admin is_authenticated
 
 
-# Load language settings from ./includes/functions.sh
-    [ -f "${app_home}/includes/functions.sh" ] && source "${app_home}/includes/functions.sh" || exit
-    language
+    # Load language settings from ./includes/functions.sh
+    # ----------------------------------------------------------
+        [ -f "${app_home}/includes/functions.sh" ] && source "${app_home}/includes/functions.sh" || exit
+        language
 
-# ---------------------------------------------------------------------
+
     # Initiate user folder
-    get_var=$(which get_key_value) || exit
-    set_var=$(which synosetkeyvalue) || exit
-    usersettings="${app_home}/etc"
-    if [ ! -d "$usersettings" ]; then
-        mkdir "$usersettings"
-    fi
-    var="${app_home}/etc/var.txt"
-    stop="${app_home}/etc/stop.txt"
-    black="color: #000000"
-    green="color: #00B10D"
-    red="color: #DF0101"
-    synotrred="color: #BD0010"
-    synocrred="color: #BD0010"
-    blue="color: #2A588C"
-    orange="color: #FFA500"
-    grey="color: #424242"
-    grey1="color: #53657D"
-    grey2="color: #374355"
+    # ----------------------------------------------------------
+        get_var=$(which get_key_value) || exit
+        set_var=$(which synosetkeyvalue) || exit
+        usersettings="${app_home}/etc"
+        if [ ! -d "$usersettings" ]; then
+            mkdir "$usersettings"
+        fi
+        var="${app_home}/etc/var.txt"
+        stop="${app_home}/etc/stop.txt"
 
-    # read MAC-adress (only to hide DEV pages)
-    read MAC </sys/class/net/eth0/address
-    sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
+        # read MAC-adress (only to hide DEV pages)
+        read MAC </sys/class/net/eth0/address
+        sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
 
+        if [ -z "$backifs" ]; then
+            backifs="$IFS"
+            readonly backifs
+        fi
 
-    if [ -z "$backifs" ]; then
-        backifs="$IFS"
-        readonly backifs
-    fi
+        IFS="&"
+        set -- $QUERY_STRING
+        IFS='
+    '
 
-    IFS="&"
-    set -- $QUERY_STRING
-    IFS='
-'
+    # Initiate environment parameters:
+    # ----------------------------------------------------------
+        for i in "$@"; do
+            IFS="$backifs"
+            variable=${i%%=*}
+            encode_value=${i##*=}
+            decode_value=$(urldecode "$encode_value")
+            "$set_var" "$var" "$variable" "$decode_value"
+            "$set_var" "$var" "encode_$variable" "$encode_value"
+        done
 
-# Initiate environment parameters:
-    for i in "$@"; do
-        IFS="$backifs"
-        variable=${i%%=*}
-        encode_value=${i##*=}
-        decode_value=$(urldecode "$encode_value")
-        "$set_var" "$var" "$variable" "$decode_value"
-        "$set_var" "$var" "encode_$variable" "$encode_value"
-    done
+        if [ -f "$var" ]; then
+            source "$var"
+        fi
 
-    if [ -f "$var" ]; then
-        source "$var"
-    fi
+        mainpage=${page%%-*}
+        site=${page##*-}
+        sitemore=$(( $site + 1 ))
+        siteless=$(( $site - 1 ))
 
-    mainpage=${page%%-*}
-    site=${page##*-}
-    sitemore=$(( $site + 1 ))
-    siteless=$(( $site - 1 ))
+        if [[ "$mainpage" == "start" ]]; then
+            [ -f "$var" ] && rm "$var"
+            [ -f "$stop" ] && rm "$stop"
+            [ -f "$usersettings/stop2.txt" ] && rm "$usersettings/stop2.txt"
+            mainpage="main"
+        fi
 
-    if [[ "$mainpage" == "start" ]]; then
-        [ -f "$var" ] && rm "$var"
-        [ -f "$stop" ] && rm "$stop"
-        [ -f "$usersettings/stop2.txt" ] && rm "$usersettings/stop2.txt"
-        mainpage="main"
-    fi
+    # Layout - Define Home Page:
+    # ----------------------------------------------------------
+        if [ -z "$page" ]; then
+            mainpage="main"
+        fi
 
-# Layout - Define Home Page:
-    if [ -z "$page" ]; then
-        mainpage="main"
-    fi
-
-    "$set_var" "$var" "page" ""
+        "$set_var" "$var" "page" ""
 
 # Layout - Open basic framework incl. navigation -
+# ----------------------------------------------------------
 echo "Content-type: text/html"
 echo
 echo '
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!doctype html>
+<html lang="en">
 <head>
     <title>synOCR</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="icon" type="image/svg+xml" href="images/synOCR-LOGO.svg" sizes="any">
-    <!-- <link rel="shortcut icon" href="images/uh_32.png" type="image/x-icon" /> -->
-    <link rel="stylesheet" type="text/css" href="includes/synocr_1.1.0.css" />
-    <!--Load the AJAX API-->
-    <!--<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>-->
-    <script type="text/javascript" src="js/chartsloader.js"></script>
+        <!-- Einbinden von bootstrap Framework 5.1.3 -->
+        <link rel="stylesheet" href="template/bootstrap/css/bootstrap.min.css" />
+
+        <!-- Einbinden eigener CSS Formatierungen -->
+        <link rel="stylesheet" href="template/stylesheet.css" />
+
+        <!-- Einbinden von jQuery -->
+        <script src="template/jquery/jquery-3.6.0.min.js"></script>
 </head>
-<body>'
-# Check Enviroment
-# echo '<b>SynoToken:</b> '$syno_token' - <b>User name:</b> '$syno_user' - <b>User exist:</b> '$user_exist' - <b>Is admin:</b> '$is_admin' - <b>Is authenticated:</b> '$is_authenticated''
-# echo '<br />'${txtActivatePrivileg}'<br />'
+<body>
+<body>
+<header></header>
+    <article>
+        <!-- container -->
+        <div class="container-fluid">
+            <div class="row mt-2">'
 
-echo '<div id="wrapper">'
-echo '
-<div id="navleft">
-    <div id="navleftinbox">
-    <ul class="li_blank">'
-
-#   old main-Page:
-    if [[ "$mainpage" == "main" ]]; then
-        echo '
-        <li><a class="navitemselc" href="index.cgi?page=main"><img class="svg" src="images/home_white@geimist.svg" height="25" width="25"/>'$lang_page1'</a></li>'
-    else
-        echo '
-        <li><a class="navitem" href="index.cgi?page=main"><img class="svg" src="images/home_grey3@geimist.svg" height="25" width="25"/>'$lang_page1'</a></li>'
-    fi
-
-if [[ "$mainpage" == "edit" ]]; then
-    echo '
-    <li><a class="navitemselc" href="index.cgi?page=edit"><img class="svg" src="images/settings_white@geimist.svg" height="25" width="25"/>'$lang_page2'</a></li>'
-else
-    echo '
-    <li><a class="navitem" href="index.cgi?page=edit"><img class="svg" src="images/settings_grey3@geimist.svg" height="25" width="25"/>'$lang_page2'</a></li>'
-fi
-
-if [[ "$mainpage" == "timer" ]] && [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
-    echo '
-    <li><a class="navitemselc" href="index.cgi?page=timer"><img class="svg" src="images/calendar_white@geimist.svg" height="25" width="25"/>'$lang_page3'</a></li>'
-elif [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
-    echo '
-    <li><a class="navitem" href="index.cgi?page=timer"><img class="svg" src="images/calendar_grey3@geimist.svg" height="25" width="25"/>'$lang_page3'</a></li>'
-fi
-
-if [[ "$mainpage" == "help" ]]; then
-    echo '
-    <li><a class="navitemselc" href="index.cgi?page=help"><img class="svg" src="images/help_white@geimist.svg" height="25" width="25"/>'$lang_page4'</a></li>'
-else
-    echo '
-    <li><a class="navitem" href="index.cgi?page=help"><img class="svg" src="images/help_grey3@geimist.svg" height="25" width="25"/>'$lang_page4'</a></li>'
-fi
+                # Linke Spalte - Navigation
+                # ------------------------------------------------------
+                echo '
+                <div class="col-3 pr-1 border-end border-light border-5">
+                    <ul class="nav nav-pills flex-column">'
 
 
-echo '</ul>
-    </div>
-    </div>'
+                        # Startseite
+                        if [[ "$mainpage" == "main" ]]; then
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=main">
+                                    <img class="svg me-3" src="images/home_white@geimist.svg" height="25" width="25"/>'$lang_page1'
+                                </a>
+                            </li>'
+                        else
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link text-secondary" href="index.cgi?page=main">
+                                    <img class="svg me-3" src="images/home_grey3@geimist.svg" height="25" width="25"/>'$lang_page1'
+                                </a>
+                            </li>'
+                        fi
 
-echo '
-<p style="padding: 15px;">
-<div class="clear"></div>'
+                        # Konfiguration
+                        if [[ "$mainpage" == "edit" ]]; then
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=edit">
+                                    <img class="svg me-3" src="images/settings_white@geimist.svg" height="25" width="25"/>'$lang_page2'
+                                </a>
+                            </li>'
+                        else
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link text-secondary" href="index.cgi?page=edit">
+                                    <img class="svg me-3" src="images/settings_grey3@geimist.svg" height="25" width="25"/>'$lang_page2'
+                                </a>
+                            </li>'
+                        fi
 
-# Layout - Dynamic page exchange:
-echo '
-    <form action="index.cgi" method="get" autocomplete="on">'
-    
+                        # Zeitplaner
+                        if [[ "$mainpage" == "timer" ]] && [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=timer">
+                                    <img class="svg me-3" src="images/calendar_white@geimist.svg" height="25" width="25"/>'$lang_page3'
+                                </a>
+                            </li>'
+                        elif [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link text-secondary" href="index.cgi?page=timer">
+                                    <img class="svg me-3" src="images/calendar_grey3@geimist.svg" height="25" width="25"/>'$lang_page3'
+                                </a>
+                            </li>'
+                        fi
 
-    if [ -z "$mainpage" ]; then
-        echo 'The page could not be found!'
-    else
-        script="$mainpage.sh"
-        if [ -f "$script" ]; then
-            . ./"$script"
-        else
-            . ./main.sh
-        fi
-    fi
+                        # Hilfe
+                        if [[ "$mainpage" == "help" ]]; then
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=help">
+                                    <img class="svg me-3" src="images/help_white@geimist.svg" height="25" width="25"/>'$lang_page4'
+                                </a>
+                            </li>'
+                        else
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link text-secondary" href="index.cgi?page=help">
+                                    <img class="svg me-3" src="images/help_grey3@geimist.svg" height="25" width="25"/>'$lang_page4'
+                                </a>
+                            </li>'
+                        fi
 
-# Error output:
-if [ -f "$usersettings/stop2.txt" ]; then
-#<div id="Content_1Col">
-    echo '
-    <div class="Content_1Col_full">
-        <div class="warning">
-            <p class="center">'
-            IFS='
-            '
-            for i in $(< "$usersettings/stop2.txt"); do
-                IFS="$backifs"
-                echo ''$i''
-            done
-            [ -f "$stop" ] && rm "$stop"
-            [ -f "$usersettings/stop2.txt" ] && rm "$usersettings/stop2.txt"
-            echo '
-            </p>
-        </div>
-        <div id="lastLine"></div>
-    </div><div class="clear"></div>'
-#</div>
-fi
+                        echo '
+                    </ul>
+                </div><!-- col -->'
 
-if [ -f "$stop" ]; then
-    cp "$stop" "$usersettings/stop2.txt"
-    echo '<meta http-equiv="refresh" content="0; url=index.cgi?page='$(echo "$page" | sed 's/[[:digit:]]*$//')''$siteless'#lastLine">'
-fi
+                # Rechte Spalte
+                # ------------------------------------------------------
+                echo '
+                <div class="col-9 pl-1">
+                    <form action="index.cgi" method="get" autocomplete="on">'
 
-# Footer
-if [ -f "footer.sh" ] && [ ! -f "$stop" ]; then
-    . ./footer.sh
-fi
+                        # Dynamisches nachladen der Seiten
+                        if [ -z "$mainpage" ]; then
+                            echo 'The page could not be found!'
+                        else
+                            script="$mainpage.sh"
+                            if [ -f "$script" ]; then
+                                . ./"$script"
+                            else
+                                . ./main.sh
+                            fi
+                        fi
 
-# Layout - Close base frame -
-echo '
-    </form>
-    </div>
+                        # Footer
+                        if [ -f "footer.sh" ] && [ ! -f "$stop" ]; then
+                            . ./footer.sh
+                        fi
+                        echo '
+
+                    </form>
+                </div><!-- col -->
+            </div><!-- row -->
+        </div><!-- container -->
+    </article>
+
+    <!-- Einbinden von bootstrap JavaScript 5.1.3 -->
+    <script src="template/bootstrap/js/bootstrap.min.js"></script>
+
 </body>
 </html>'
