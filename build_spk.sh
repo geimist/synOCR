@@ -159,6 +159,7 @@ printf "\n - INFO: insert language strings to WIZARD_UIFILES ...\n"
         synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART1 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART1)
         synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART2 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART2)
         synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART3 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART3)
+        synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_DELETE_TIMER $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_DELETE_TIMER)
 
         # install_uifile
         sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
