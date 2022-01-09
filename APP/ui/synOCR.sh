@@ -1038,7 +1038,7 @@ replace_variables(){
      | sed "s~§ysource~${date_yy_source}~g;s~§hhsource~${date_houre_source}~g;s~§mmsource~${date_min_source}~g;s~§sssource~${date_sek_source}~g;s~§dnow~$(date +%d)~g" \
      | sed "s~§mnow~$(date +%m)~g;s~§ynow2~$(date +%y)~g;s~§ynow4~$(date +%Y)~g;s~§ynow~$(date +%Y)~g;s~§hhnow~$(date +%H)~g;s~§mmnow~$(date +%M)~g;s~§ssnow~$(date +%S)~g" \
      | sed "s~§pagecounttotal~${global_pagecount_new}~g;s~§filecounttotal~${global_ocrcount_new}~g;s~§pagecountprofile~${pagecount_profile_new}~g;s~§filecountprofile~${ocrcount_profile_new}~g" \
-     | sed "s~§docr~${date_dd}~g;s~§mocr~${date_mm}~g;s~§yocr2~${date_yy:2}~g;s~§yocr4~${date_yy}~g;s~§yocr~${date_yy}~g;s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" 
+     | sed "s~§docr~${date_dd}~g;s~§mocr~${date_mm}~g;s~§yocr2~${date_yy:2}~g;s~§yocr4~${date_yy}~g;s~§yocr~${date_yy}~g;s~%20~ ~g" 
 }
 
 
@@ -1066,6 +1066,8 @@ renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before rene
 # replace parameters with values:
 # ---------------------------------------------------------------------
 NewName=$(replace_variables "$NameSyntax")
+
+NewName=$( echo "$NewName" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g" )
 
 # fallback to old  parameters:
 NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
@@ -1160,9 +1162,6 @@ elif [ ! -z "$renameCat" ] && [ $moveTaggedFiles = useCatDir ] ; then
     echo "              ➜ move to category directory"
 
     # replace date parameters:
-    # encode special characters for sed compatibility:
-    #        title=$(urlencode "${title}")
-    #        renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before renew encoding
     renameCat=$(replace_variables "$renameCat")
 
     tagarray=( $renameCat )   # define target folder as array
