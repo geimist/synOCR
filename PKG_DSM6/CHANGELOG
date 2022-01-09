@@ -19,6 +19,7 @@ DSM7 version you can found at cphub.net
   IMPLEMENTATIONS:
  -  renaming parameter for the year can now be 2 or 4 digits 
     (§yocr2 §yocr4 §ynow2 §ynow4 §ysource2 §ysource4)
+ -  added renaming parameter §pagecount (pages of current document)
  -  all renaming parameter can be used as path components in YAML-rules (except document title [§tit])
  -  target files can moved to folders named by year
  -  target files can moved to folders named by year/month
