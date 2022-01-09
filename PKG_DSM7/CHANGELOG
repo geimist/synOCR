@@ -23,6 +23,7 @@ known issues / limitations:
  -  indicator about valid directorys in GUI
  -  the order of the tags can now be defined
     criterion is the alphabetical sorting of the rule names in the YAML file
+ -  rewrite GUI backend (thx to tommes)
   IMPLEMENTATIONS:
  -  renaming parameter for the year can now be 2 or 4 digits 
     (§yocr2 §yocr4 §ynow2 §ynow4 §ysource2 §ysource4)
