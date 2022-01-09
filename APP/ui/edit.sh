@@ -1448,6 +1448,7 @@ if [[ "$page" == "edit" ]]; then
                                         <strong>§ysource4</strong> ('$lang_edit_set2_renamesyntax_help12b')<br />
                                         <strong>§tag</strong> ('$lang_edit_set2_renamesyntax_help13')<br />
                                         <strong>§tit</strong> ('$lang_edit_set2_renamesyntax_help14')<br />
+                                        <strong>§pagecount</strong> ('$lang_edit_set2_renamesyntax_help18a')<br />
                                         <strong>§pagecounttotal</strong> ('$lang_edit_set2_renamesyntax_help18')<br />
                                         <strong>§filecounttotal</strong> ('$lang_edit_set2_renamesyntax_help19')<br />
                                         <strong>§pagecountprofile</strong> ('$lang_edit_set2_renamesyntax_help20')<br />
