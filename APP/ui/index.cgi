@@ -1,6 +1,10 @@
 #!/bin/bash
 # /usr/syno/synoman/webman/3rdparty/synOCR/index.cgi
 
+# Neu hinzugefügte Language Variablen
+lang_popup_note="Hinweis"
+lang_button_abort="Abbruch"
+
 # Initiate system
 # ---------------------------------------------------------------------
     machinetyp=$(uname --machine)
@@ -95,73 +99,66 @@
     # ----------------------------------------------------------
         unset syno_login rar_data syno_privilege
         readonly syno_token syno_user user_exist is_admin is_authenticated
+        
+        # read MAC-adress (only to hide DEV pages)
+        read MAC </sys/class/net/eth0/address
+        sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
 
 
-    # Load language settings from ./includes/functions.sh
+    # Load functions from ./includes/functions.sh
     # ----------------------------------------------------------
         [ -f "${app_home}/includes/functions.sh" ] && source "${app_home}/includes/functions.sh" || exit
+        # Load language settings
         language
 
 
     # Initiate user folder
     # ----------------------------------------------------------
-        get_var=$(which get_key_value) || exit
-        set_var=$(which synosetkeyvalue) || exit
         usersettings="${app_home}/etc"
         if [ ! -d "$usersettings" ]; then
             mkdir "$usersettings"
         fi
-        var="${app_home}/etc/var.txt"
-        stop="${app_home}/etc/stop.txt"
 
-        # read MAC-adress (only to hide DEV pages)
-        read MAC </sys/class/net/eth0/address
-        sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
 
-        if [ -z "$backifs" ]; then
-            backifs="$IFS"
-            readonly backifs
-        fi
-
-        IFS="&"
+# Verarbeitung von GET-Request Variablen
+# --------------------------------------------------------------
+    set_var="/usr/syno/bin/synosetkeyvalue"
+    get_var="/bin/get_key_value"
+    var="${app_home}/etc/var.txt"
+        
+    # Sicherung des Internal Field Separator (IFS) sowie das separieren der
+    # GET/POST key/value Anfragen, durch Lokalisierung des Trennzeichen "&"
+    if [ -z "${backupIFS}" ]; then
+        backupIFS="${IFS}"
+        IFS='&'
         set -- $QUERY_STRING
-        IFS='
-    '
+        readonly backupIFS
+        IFS="${backupIFS}"
+    fi
 
-    # Initiate environment parameters:
-    # ----------------------------------------------------------
-        for i in "$@"; do
-            IFS="$backifs"
-            variable=${i%%=*}
-            encode_value=${i##*=}
-            decode_value=$(urldecode "$encode_value")
-            "$set_var" "$var" "$variable" "$decode_value"
-            "$set_var" "$var" "encode_$variable" "$encode_value"
-        done
+    # Analysieren eingehender GET-Anfragen und Verarbeitung zu key="$value" Variablen
+    for i in "$@"; do
+        IFS="$backupIFS"
+        variable=${i%%=*}
+        encode_value=${i##*=}
+        decode_value=$(urldecode "$encode_value")
+        "$set_var" "$var" "$variable" "$decode_value"
+        "$set_var" "$var" "encode_$variable" "$encode_value"
+    done
+    
+    if [ -f "$var" ]; then
+        source "$var"
+    fi
 
-        if [ -f "$var" ]; then
-            source "$var"
-        fi
+    mainpage=${page%%-*}
 
-        mainpage=${page%%-*}
-        site=${page##*-}
-        sitemore=$(( $site + 1 ))
-        siteless=$(( $site - 1 ))
+    if [ -z "$page" ]; then
+        #[ -f "${var}" ] && rm "${var}"
+        mainpage="main"
+    fi
+    
+    "$set_var" "$var" "page" ""
 
-        if [[ "$mainpage" == "start" ]]; then
-            [ -f "$var" ] && rm "$var"
-            [ -f "$stop" ] && rm "$stop"
-            [ -f "$usersettings/stop2.txt" ] && rm "$usersettings/stop2.txt"
-            mainpage="main"
-        fi
-
-    # Layout - Define Home Page:
-    # ----------------------------------------------------------
-        if [ -z "$page" ]; then
-            mainpage="main"
-        fi
-
-        "$set_var" "$var" "page" ""
 
 # Layout - Open basic framework incl. navigation -
 # ----------------------------------------------------------
