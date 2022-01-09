@@ -26,7 +26,7 @@
             else
                 echo "ok"
             fi
-    
+
             echo -n "    ➜ check docker group and permissions: "
             if ! cat /etc/group | grep -q ^docker: ; then
                 echo "create group docker ..."
@@ -62,21 +62,35 @@
     synOCR_pid=$( /bin/pidof synOCR.sh )
     if [ ! -z "$synOCR_pid" ] ; then
         if [ $callFrom = GUI ] ; then
-            echo '<p class="center"><span style="color: #BD0010;"><b>'$lang_synOCR_start_is_running'</b><br>(Prozess-ID: '$synOCR_pid')</span></p>'
-            echo '<br /><p class="center"><button name="page" value="main-kill-synocr" style="color: #BD0010;">('$lang_synOCR_start_req_kill')</button></p><br />'
+            echo '
+            <p class="text-center synocr-text-red">
+                <b>'$lang_synOCR_start_is_running'</b><br>(Prozess-ID: '$synOCR_pid')
+            </p><br />'
+            echo '
+            <p class="text-center">
+                <button name="page" value="main-kill-synocr" style="color: #BD0010;">('$lang_synOCR_start_req_kill')</button>
+            </p><br />'
         else
             echo "$lang_synOCR_start_is_running (Prozess-ID: ${synOCR_pid})"
         fi
         exit
     else
         if [ $callFrom = GUI ] ; then
-            echo '<p class="title">'$lang_synOCR_start_runs' ...</p><br><br><br><br>
-            <center><table id="system_msg" style="width: 40%;table-align: center;">
-                <tr>
-                    <th style="width: 20%;"><img class="imageStyle" alt="status_loading" src="images/status_loading.gif" style="float:left;"></th>
-                    <th style="width: 80%;"><p class="center"><span style="color: #424242;font-weight:normal;">'$lang_synOCR_start_wait1'</span></p></th>
-                </tr>
-            </table></center>'
+            echo '
+            <h2 class="synocr-text-blue mt-3">'$lang_synOCR_start_runs' ...</h2>
+            <p>&nbsp;</p>
+            <center>
+                <table id="system_msg" style="width: 40%; table-align: center;">
+                    <tr>
+                        <th style="width: 15%;">
+                            <img class="float-start" alt="status_loading" src="images/status_loading.gif">
+                        </th>
+                        <th style="width: 85%;">
+                            <p class="text-center mt-2"><span style="color: #424242; font-weight:normal;">'$lang_synOCR_start_wait1'</span></p>
+                        </th>
+                    </tr>
+                </table>
+            </center>'
         else
             echo "$lang_synOCR_start_runs ..."
             echo "$lang_synOCR_start_wait2"
@@ -102,7 +116,9 @@
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
             if [ $callFrom = GUI ] ; then
                 echo '
-                <p class="center"><span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_lost_input' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span></p>'
+                <p class="text-center">
+                    <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_lost_input' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span>
+                </p>'
             else
                 echo "! ! ! $lang_synOCR_start_lost_input ! ! !"
                 echo "$lang_synOCR_start_abort"
@@ -115,7 +131,10 @@
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$OUTPUTDIR" | awk -F/ '{print $3}') ; then
                 # is it an encrypted folder and is it mounted?
                 if [ $callFrom = GUI ] ; then
-                    echo '<p class="center"><span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_target' ! ! !</b><br>EXIT SCRIPT!<br></span></p>'
+                    echo '
+                    <p class="text-center"><
+                        span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_target' ! ! !</b><br>EXIT SCRIPT!<br></span>
+                    </p>'
                 else
                     echo "$lang_synOCR_start_umount_target    ➜    EXIT SCRIPT!"
                 fi
@@ -124,14 +143,18 @@
             mkdir -p "$OUTPUTDIR"
             if [ $callFrom = GUI ] ; then
                 echo '
-                <p class="center"><span style="color: #BD0010;"><b>'$lang_synOCR_start_target_created'</b></span></p>'
+                <p class="text-center">
+                    <span style="color: #BD0010;"><b>'$lang_synOCR_start_target_created'</b></span>
+                </p>'
             else
                 echo "$lang_synOCR_start_target_created"
             fi
         elif [ ! -d "$OUTPUTDIR" ] || ! $(echo "$OUTPUTDIR" | grep -q "/volume") ; then
             if [ $callFrom = GUI ] ; then
                 echo '
-                <p class="center"><span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_check_target' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span></p>'
+                <p class="text-center">
+                    <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_check_target' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span>
+                </p>'
             else
                 echo "! ! ! $lang_synOCR_start_check_target ! ! !"
                 echo "$lang_synOCR_start_abort"
@@ -194,7 +217,10 @@
         elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$LOGDIR" | awk -F/ '{print $3}') ; then
                 if [ $callFrom = GUI ] ; then
-                    echo '<p class="center"><span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_log' ! ! !</b><br>EXIT SCRIPT!<br></span></p>'
+                    echo '
+                    <p class="text-center">
+                        <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_log' ! ! !</b><br>EXIT SCRIPT!<br></span>
+                    </p>'
                 else
                     echo "$lang_synOCR_start_umount_log    ➜    EXIT SCRIPT!"
                 fi
