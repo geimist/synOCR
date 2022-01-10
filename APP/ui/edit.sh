@@ -1134,8 +1134,8 @@ if [[ "$page" == "edit" ]]; then
                                     <span>
                                         '$lang_edit_set2_searchpref_help1'<br />
                                         '$lang_edit_set2_searchpref_help2'<br />
-                                        <strong>!</strong> '$lang_edit_set2_searchpref_help3' ( !value )<br />
-                                        <strong>$</strong> '$lang_edit_set2_searchpref_help4' ( value$ )
+                                        <code>!</code> '$lang_edit_set2_searchpref_help3' ( <code>!value</code> )<br />
+                                        <code>$</code> '$lang_edit_set2_searchpref_help4' ( <code>value$</code> )
                                     </span>
                                 </div>
                             </div>
