@@ -95,6 +95,7 @@ lang_edit_set2_ocropt_help3="erneutes OCRen erzwingen"
 lang_edit_set2_ocropt_help4="automatisches drehen von Seiten"
 lang_edit_set2_ocropt_help5="Sprachcode"
 lang_edit_set2_ocropt_help6="schiefe Scans entzerren"
+lang_edit_set2_ocropt_help7="vollständige Hilfe"
 
 lang_edit_set2_dockerimage_title="zuverwendendes Dockerimage"
 lang_edit_set2_dockerimage_help1="Welches Dockerimage soll verwendet werden?"
