@@ -997,6 +997,7 @@ if [[ "$page" == "edit" ]]; then
                                         -f&nbsp;&nbsp;'$lang_edit_set2_ocropt_help3'<br />
                                         -r&nbsp;&nbsp;'$lang_edit_set2_ocropt_help4'<br />
                                         -d&nbsp;&nbsp;'$lang_edit_set2_ocropt_help6'<br />
+                                        <br /><a href="https://ocrmypdf.readthedocs.io/en/latest/cookbook.html" style="color: #BD0010;">'$lang_edit_set2_ocropt_help7'</a><br />
                                     </span>
                                 </div>
                             </div>
