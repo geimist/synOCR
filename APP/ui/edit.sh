@@ -1147,7 +1147,7 @@ if [[ "$page" == "edit" ]]; then
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="delSearchPraefix">.'$lang_edit_set2_delsearchpref_title'</label>
+                            <label for="delSearchPraefix">'$lang_edit_set2_delsearchpref_title'</label>
                         </div>
                         <div class="col-sm-5">
                             <select name="delSearchPraefix" id="delSearchPraefix" class="form-select form-select-sm">'
