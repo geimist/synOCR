@@ -95,6 +95,7 @@ lang_edit_set2_ocropt_help3="force re-OCR"
 lang_edit_set2_ocropt_help4="automatic rotating pages"
 lang_edit_set2_ocropt_help5="Language code"
 lang_edit_set2_ocropt_help6="deskew scans"
+lang_edit_set2_ocropt_help7="full help"
 
 lang_edit_set2_dockerimage_title="Docker image to be used"
 lang_edit_set2_dockerimage_help1="Which docker image should be used?"
