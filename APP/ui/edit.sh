@@ -992,12 +992,12 @@ if [[ "$page" == "edit" ]]; then
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set2_ocropt_help1'<br /><br />
-                                        <code><span style="background-color:#cccccc;font-hight:1.1em;">-l&nbsp;</span></code>&nbsp;'$lang_edit_set2_ocropt_help5' (deu, eng, deu+eng, ...)<br />
-                                        <code><span style="background-color:#cccccc;font-hight:1.1em;">-s&nbsp;</span></code>&nbsp;'$lang_edit_set2_ocropt_help2'<br />
-                                        <code><span style="background-color:#cccccc;font-hight:1.1em;">-f&nbsp;</span></code>&nbsp;'$lang_edit_set2_ocropt_help3'<br />
-                                        <code><span style="background-color:#cccccc;font-hight:1.1em;">-r&nbsp;</span></code>&nbsp;'$lang_edit_set2_ocropt_help4'<br />
-                                        <code><span style="background-color:#cccccc;font-hight:1.1em;">-d&nbsp;</span></code>&nbsp;'$lang_edit_set2_ocropt_help6'<br />
-                                        <br /><a href="https://ocrmypdf.readthedocs.io/en/latest/cookbook.html" style="color: #BD0010;">'$lang_edit_set2_ocropt_help7'</a><br />
+                                        <code>-l</code>&nbsp;&nbsp;'$lang_edit_set2_ocropt_help5' (deu, eng, deu+eng, ...)<br />
+                                        <code>-s</code>&nbsp;&nbsp;'$lang_edit_set2_ocropt_help2'<br />
+                                        <code>-f</code>&nbsp;&nbsp;'$lang_edit_set2_ocropt_help3'<br />
+                                        <code>-r</code>&nbsp;&nbsp;'$lang_edit_set2_ocropt_help4'<br />
+                                        <code>-d</code>&nbsp;&nbsp;'$lang_edit_set2_ocropt_help6'<br />
+                                        <br /><a href="https://ocrmypdf.readthedocs.io/en/latest/cookbook.html" onclick="window.open(this.href); return false;" style="color: #BD0010;">'$lang_edit_set2_ocropt_help7'</a><br />
                                     </span>
                                 </div>
                             </div>
