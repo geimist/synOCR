@@ -166,7 +166,7 @@
         if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -ne $(date +%m) ]]; then
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon'"
             if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -eq $(date +%m) ]]; then
-                server_info=$(wget --no-check-certificate --timeout=30 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION_DSM${dsm_version}&version=$(get_key_value /var/packages/synOCR/INFO version)" )
+                server_info=$(wget --no-check-certificate --timeout=60 --tries=1 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION_DSM${dsm_version}&version=$(get_key_value /var/packages/synOCR/INFO version)" )
                 sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(echo "$server_info" | sed -n "2p")' WHERE key='online_version'"
                 if [[ $(echo "$server_info" | sed -n "1p" ) != "ok" ]]; then
                     sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date -d "-1 month" +%m)' WHERE key='checkmon'"
