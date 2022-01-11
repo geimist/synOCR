@@ -108,6 +108,12 @@ fi
     global_ocrcount=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")
     online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
 
+# Preset variables for correct calculation in the loop:
+    global_pagecount_new=$global_pagecount
+    global_ocrcount_new=$global_ocrcount
+    pagecount_profile_new=$pagecount_profile
+    ocrcount_profile_new=$ocrcount_profile
+
 # System Information:
 # ---------------------------------------------------------------------
     local_version=$(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')
@@ -1577,10 +1583,10 @@ for input in ${files} ; do
     [ -z $pagecount_latest ] && pagecount_latest=0 && echo "                ERROR - with pdfinfo / exiftool - \$pagecount was set to 0"
 
 # adapt counter:
-    global_pagecount_new=$(( $global_pagecount + $pagecount_latest))
-    global_ocrcount_new=$(( $global_ocrcount + 1))
-    pagecount_profile_new=$(( $pagecount_profile + $pagecount_latest))
-    ocrcount_profile_new=$(( $ocrcount_profile + 1))
+    global_pagecount_new=$(( $global_pagecount_new + $pagecount_latest))
+    global_ocrcount_new=$(( $global_ocrcount_new + 1))
+    pagecount_profile_new=$(( $pagecount_profile_new + $pagecount_latest))
+    ocrcount_profile_new=$(( $ocrcount_profile_new + 1))
 
 # create temporary working directory
 # ---------------------------------------------------------------------
