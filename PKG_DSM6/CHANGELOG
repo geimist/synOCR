@@ -4,7 +4,7 @@ Release Notes
 This version only supports DSM6.x
 DSM7 version you can found at cphub.net
 
-1.2.0 [2022-01-xx]
+1.2.0 [2022-01-11]
   IMPORTANT:
  -  with this version the scheduler is no longer available in the GUI. 
     Please use the DSM task scheduler!
