@@ -137,7 +137,7 @@ printf "\n - INFO: collect the DSM specific files ...\n"
 
 printf "\n - INFO: insert language strings to WIZARD_UIFILES ...\n"
     # PKG_DSMx/INFO
-    synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_INFO_description)
+#    synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_INFO_description)
 
     # install_uifile
     sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_install_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
@@ -153,7 +153,7 @@ printf "\n - INFO: insert language strings to WIZARD_UIFILES ...\n"
 
     for lang in ${languages[@]}; do
         # PKG_DSMx/INFO
-        synosetkeyvalue "$build_tmp/$PKG/INFO" description_${lang} $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)
+    #    synosetkeyvalue "$build_tmp/$PKG/INFO" description_${lang} $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)
 
         # PKG_DSMx/scripts/lang/${lang}
         synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART1 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART1)
