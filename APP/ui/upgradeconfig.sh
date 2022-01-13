@@ -76,9 +76,9 @@ OLDIFS=$IFS
     fi
 
 
+if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q DB_Version ) ; then
 # DB-Update von v1 auf v2:
 # ----------------------------------------------------------
-if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q DB_Version ) ; then
     if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1") -eq 1 ] ; then
             # filedate at OCR:
             # ---------------------------------------------------------------------
