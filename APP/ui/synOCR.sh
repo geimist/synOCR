@@ -912,7 +912,7 @@ if [[ $(adjust_python) -eq 0 ]] && [[ $enhanced_date_search = "yes" ]]; then
     founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$(./includes/parse_date.py "$searchfile" | grep -v "ERROR" | sed '/^$/d' )" | head)
     format=2
 else
-    echo "fallback RegEx search"
+#    echo "fallback RegEx search"
 
     # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
     echo "                  Using date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
@@ -989,8 +989,8 @@ if [[ $dateIsFound = no ]]; then
 fi
 
 # >>>>>>>>>>> DEV-PART
-[[ $enhanced_date_search == "yes" ]] && enhanced_date_example_search_DEV
-[[ $enhanced_date_search == "yes" ]] && ordinary_date_example_search_DEV
+# [[ $enhanced_date_search == "yes" ]] && enhanced_date_example_search_DEV
+# [[ $enhanced_date_search == "yes" ]] && ordinary_date_example_search_DEV
 # <<<<<<<<<<< DEV-PART
 
 }
@@ -1044,7 +1044,7 @@ replace_variables(){
      | sed "s~§ysource~${date_yy_source}~g;s~§hhsource~${date_houre_source}~g;s~§mmsource~${date_min_source}~g;s~§sssource~${date_sek_source}~g;s~§dnow~$(date +%d)~g" \
      | sed "s~§mnow~$(date +%m)~g;s~§ynow2~$(date +%y)~g;s~§ynow4~$(date +%Y)~g;s~§ynow~$(date +%Y)~g;s~§hhnow~$(date +%H)~g;s~§mmnow~$(date +%M)~g;s~§ssnow~$(date +%S)~g" \
      | sed "s~§pagecount~${pagecount_latest}~g;s~§pagecounttotal~${global_pagecount_new}~g;s~§filecounttotal~${global_ocrcount_new}~g;s~§pagecountprofile~${pagecount_profile_new}~g;s~§filecountprofile~${ocrcount_profile_new}~g" \
-     | sed "s~§docr~${date_dd}~g;s~§mocr~${date_mm}~g;s~§yocr2~${date_yy:2}~g;s~§yocr4~${date_yy}~g;s~§yocr~${date_yy}~g;s~%20~ ~g" 
+     | sed "s~§docr~${date_dd}~g;s~§mocr~${date_mm}~g;s~§yocr2~${date_yy:2}~g;s~§yocr4~${date_yy}~g;s~§yocr~${date_yy}~g" 
 }
 
 
@@ -1074,7 +1074,7 @@ renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before rene
 NewName=$(replace_variables "$NameSyntax")
 
 # parameters without replace_variables function:
-NewName=$( echo "$NewName" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g" )
+NewName=$( echo "$NewName" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" )
 
 # fallback to old  parameters:
 NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
