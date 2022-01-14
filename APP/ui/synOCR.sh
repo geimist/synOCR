@@ -183,7 +183,7 @@ fi
     echo "ignored dates by search:  ${ignoredDate}"
     [[ $loglevel = "2" ]] && \
     echo "PATH-Variable:            $PATH"
-    echo -n "Docker Test:              "
+    echo -n "Docker test:              "
     if docker --version | grep -q "version"  ; then
         echo "OK"
     else
@@ -243,7 +243,11 @@ fi
         backup=false
     fi
 
-    echo "rotate backupfiles after: $backup_max $backup_max_type"
+    if [[ -z $backup_max ]] || [[ $backup_max == 0 ]]; then
+        echo "rotate backupfiles after: (purge backup deactivated)"
+    else
+        echo "rotate backupfiles after: $backup_max $backup_max_type"
+    fi
 
 
     LOGDIR="${LOGDIR%/}/"
