@@ -4,11 +4,12 @@
 
 # was the script called from the GUI (call with parameter "GUI")?
     callFrom=$1
-    dsm_version=6
+    dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
+    machinetyp=$(uname --machine)
+
     if [[ ! $callFrom = GUI ]] ; then
         callFrom=shell
         # adjust PATH:
-        machinetyp=$(uname --machine)
         if [ $machinetyp = "x86_64" ]; then
             PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
         elif [ $machinetyp = "aarch64" ]; then
@@ -16,8 +17,7 @@
         fi
 
     # set docker and admin permission to user synOCR for DSM7 and above
-        if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
-            dsm_version=7
+        if [ $dsm_version -ge 7 ]; then
             echo "synOCR run at DSM7 or above"
             echo -n "    ➜ check admin permissions: "
             if ! cat /etc/group | grep ^administrators | grep -q synOCR ; then
