@@ -59,6 +59,7 @@ samplefilecontent="    #########################################################
     #           - \"sampletagrulename\" $lang_edit_yamlsample_10
     #           - $lang_edit_yamlsample_11
     #           - $lang_edit_yamlsample_12
+    #           - $lang_edit_yamlsample_12b
     #           - $lang_edit_yamlsample_13
     #           - $lang_edit_yamlsample_14
     #       > \"tagname:\"
