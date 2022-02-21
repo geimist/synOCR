@@ -7,6 +7,15 @@ DSM7 version you can found at cphub.net
 V1.2.0 IS THE LAST VERSION FOR DSM6, WHICH WILL BE ROLLED OUT VIA CPHUB.NET. 
 FOR FURTHER UPDATES VISIT THE GERMAN COMMUNITY FORUM.
 
+1.3.0 [2022-xx-xx]
+  BUGFIXES:
+ -  
+  IMPROVEMENT:
+ -  
+  IMPLEMENTATIONS:
+ -  logging deleted backup files in loglevel 2 
+ -  
+
 1.2.0 [2022-01-11]
   IMPORTANT:
  -  with this version the scheduler is no longer available in the GUI. 
