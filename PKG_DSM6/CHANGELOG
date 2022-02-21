@@ -11,6 +11,7 @@ FOR FURTHER UPDATES VISIT THE GERMAN COMMUNITY FORUM.
   BUGFIXES:
  -  
   IMPROVEMENT:
+ -  YAML rules: if the value for condition not set - fallback to any
  -  
   IMPLEMENTATIONS:
  -  logging deleted backup files in loglevel 2 
