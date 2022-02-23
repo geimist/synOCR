@@ -13,3 +13,10 @@ synOCR is a simple GUI for the Docker container OCRmyPDF.
 It allows you to easily apply OCR to PDF documents. synOCR can then search for tags and dates in the documents, rename them according to a custom pattern, and sort them into subfolders by category. By using hardlinks, there is no increased memory requirement if a document has to be sorted into multiple category folders.
 
 Instructions and help can be found in the [Wiki (still under construction)](https://git.geimist.eu/geimist/synOCR/wiki).
+
+___
+
+<img src="https://git.geimist.eu/geimist/synOCR/raw/branch/master/synOCR_screenshot_1.png" width="800" />
+<br>    
+<img src="https://git.geimist.eu/geimist/synOCR/raw/branch/master/synOCR_screenshot_2.png" width="800" />
+<br> 
