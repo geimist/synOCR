@@ -15,7 +15,7 @@ FOR FURTHER UPDATES VISIT THE GERMAN COMMUNITY FORUM.
  -  
   IMPLEMENTATIONS:
  -  logging deleted backup files in loglevel 2 
- -  notify about updates in main page
+ -  notify about updates in main page (GUI)
  -  
 
 1.2.0 [2022-01-11]
