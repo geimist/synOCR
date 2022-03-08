@@ -18,6 +18,9 @@ known issues / limitations:
   IMPLEMENTATIONS:
  -  logging deleted backup files in loglevel 2 
  -  notify about updates in main page (GUI)
+ -  Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
+    to use this: call synOCR-start.sh with parameter start
+    `/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start`
  -  
 
 1.2.0 [2022-01-11]
