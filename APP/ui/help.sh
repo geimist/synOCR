@@ -19,6 +19,7 @@ echo '
             <div class="accordion-body">
                 <ol style="list-style:decimal">
                     <li>'$lang_help_QS_1_beforelink' <a href="index.cgi?page=edit" style="'$synocrred';">'$lang_page2'</a> '$lang_help_QS_1_afterlink'</li>
+                    <li>'$lang_help_QS_1b' <a href="https://synocommunity.com/package/inotify-tools" onclick="window.open(this.href); return false;" style="'$synocrred';"><b>(DOWNLOAD inotify-tools)</b></a></li>
                     <li>'$lang_help_QS_2'<br /><br />
                         <h6 class="synocr-text-blue">'$lang_help_QS_sub1_tit'</h6>
                         <ul class="li_standard">
@@ -40,7 +41,7 @@ echo '
                         <h6 class="synocr-text-blue">'$lang_help_QS_sub4_tit'</h6>
                         <ul class="li_standard">
                             <li>'$lang_help_QS_sub4_1'</li><br />
-                            <code><span style="background-color:#cccccc;font-hight:1.1em;">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</span></code>
+                            <code><span style="background-color:#cccccc;font-hight:1.1em;">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start</span></code>
                         </ul><br />
                 </ol>
             </div>
@@ -88,6 +89,7 @@ echo '
 
                 <h6 class="synocr-text-blue">'$lang_help_FAQ_sub5_tit'</h6>
                 <ul>
+                    <li><a href="https://git.geimist.eu/geimist/synOCR/wiki/04_FAQ_de" onclick="window.open(this.href); return false;" style="'$synocrred';">synOCR Wiki</a></li>
                     <li>'$lang_help_FAQ_sub5_beforelink' <a href="https://www.synology-forum.de/showthread.html?99647-synOCR-GUI-f%C3%BCr-OCRmyPDF" onclick="window.open(this.href); return false;" style="'$synocrred';">'$lang_help_FAQ_sub5_linktitle'</a>'$lang_help_FAQ_sub5_afterlink'</li>
                 </ul>
             </div>
@@ -113,7 +115,7 @@ echo '
                         <img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="200"/>
                     </a><br />
                     '$lang_help_about_3'
-                </p>
+                </p><br>
             </div>
         </div>
     </div>

@@ -3,17 +3,13 @@
 
 PATH=$PATH:/usr/local/bin:/opt/usr/bin
 
+
 # Read file status:
 # ---------------------------------------------------------------------
     # Count of unfinished PDF files:
     count_inputpdf=0
 
-    sSQL="SELECT INPUTDIR, SearchPraefix FROM config WHERE active='1' "
-    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
-
-    IFS=$'\012'
-    for entry in $sqlerg; do
-        IFS=$OLDIFS
+    while read entry ; do
         INPUTDIR=$(echo "$entry" | awk -F'\t' '{print $1}')
         SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $2}')
 
@@ -42,7 +38,7 @@ PATH=$PATH:/usr/local/bin:/opt/usr/bin
                 count_inputpdf=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | egrep -iv "^${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf ))
             fi
         fi
-    done
+    done <<<"$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT INPUTDIR, SearchPraefix FROM config WHERE active='1' ")"
 
 # manual synOCR start:
 # ---------------------------------------------------------------------
@@ -67,9 +63,47 @@ PATH=$PATH:/usr/local/bin:/opt/usr/bin
 # ---------------------------------------------------------------------
 if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     # -> Headline
+
+    # monitoring active?
+    if [ $(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}') ]; then
+        # pulsate icon, if monitoring are running
+        css_pulsate='class="pulsate"'
+        monitoring_title='title="monitoring is running"'
+
+        # check if the list of watched folders is still up to date:
+        monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
+        sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
+        if [ "$(cat "$monitored_folders" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
+            echo ' 
+            <h5 class="text-center pulsate" style="font-size: 0.7rem;">
+                '$lang_main_monitor_restart_necessary_1'<br>
+                '$lang_main_monitor_restart_necessary_2'<br>
+                '$lang_main_monitor_restart_necessary_3'<br>
+            </h5>'
+        fi
+        rm -f "${monitored_folders}_tmp"
+    else
+        # pulsate icon, if monitoring are running
+        css_pulsate=""
+        monitoring_title='title="monitoring is not running"'
+    fi
+
+
     echo '
     <h2 class="synocr-text-blue mt-3">synOCR '$lang_page1'</h2>
     <p>&nbsp;</p>'
+
+#   notify about update, if necessary:
+# ---------------------------------------------------------------------
+    online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
+    local_version=$(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')
+    highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
+    if [[ "$local_version" != "$highest_version" ]] ; then
+        echo ' 
+        <h5 class="text-center">
+            <a href="https://git.geimist.eu/geimist/synOCR/releases/" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">UPDATE TO VERSION '$online_version' AVAILABLE!</a>
+        </h5>'
+    fi
 
     echo '
     <h5 class="text-center">
@@ -78,8 +112,6 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
 
 # check Docker:
     if [ ! $(which docker) ]; then
-#   if ! $(docker --version | grep -q "version") ; then
-    # the user synOCR cannot access docker under unknown circumstances, which falsely triggers the error message
         echo '
         <p class="text-center synocr-text-red mb-5">'$lang_main_dockerfailed'</p>
         <div class="float-end">
@@ -96,12 +128,12 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     elif [[ "$count_inputpdf" == 0 ]]; then
         echo '
         <div class="float-end">
-            <img src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px">
+            <img src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px" '$css_pulsate' '$monitoring_title'>
         </div>'
     else
         echo '
         <div class="float-end">
-            <img src="images/sanduhr_blue@geimist.svg" height="120" width="120" style="padding: 10px">
+            <img src="images/sanduhr_blue@geimist.svg" height="120" width="120" style="padding: 10px" '$css_pulsate' '$monitoring_title'>
         </div>'
     fi
 
@@ -113,12 +145,31 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     <p>'$lang_main_desc2'</p>
     <p>&nbsp;</p>'
 
+
+
+
+
+
+
+
+
+
+# show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
     if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 6 ] || (cat /etc/group | grep ^administrators | grep -q synOCR && cat /etc/group | grep ^docker | grep -q synOCR) ; then
         echo '
         <p class="text-center">
             <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'$lang_main_buttonrun'</button>
         </p><br />'
     fi
+
+
+
+
+
+
+
+
+
 
 # Section Status / Statistics:
 echo '

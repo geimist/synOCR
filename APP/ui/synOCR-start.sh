@@ -1,47 +1,81 @@
 #!/bin/sh
-# /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
+# /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start stop GUI
+
 # changes to synOCR directory and starts synOCR with or without LOG (depending on configuration)
+# adjust monitoring with inotifywait
 
-# was the script called from the GUI (call with parameter "GUI")?
-    callFrom=$1
-    dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
-    machinetyp=$(uname --machine)
+callFrom=shell
+exit_status=0
+dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
+machinetyp=$(uname --machine)
 
-    if [[ ! $callFrom = GUI ]] ; then
-        callFrom=shell
-        # adjust PATH:
-        if [ $machinetyp = "x86_64" ]; then
-            PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
-        elif [ $machinetyp = "aarch64" ]; then
-            PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
+
+# create list (array need for tee) with all active log folders:
+# --------------------------------------------------------------
+LOG_DIR_LIST=()
+while read value ; do
+    LOG_DIR_LIST+=( "$value" )
+done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
+
+
+# reading parameters:
+for i in "$@" ; do
+    case $i in
+        start)
+            # start-monitoring:
+            /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start | tee -a "${LOG_DIR_LIST[@]}" &
+            sleep 1
+            shift
+            ;;
+        stop)
+            # stop-monitoring:
+            /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop &
+            sleep 1
+            exit 0
+#           shift
+            ;;
+        GUI)
+            # was the script called from the GUI (call with parameter "GUI")? / the log output is adjusted accordingly
+            callFrom=GUI
+#           shift
+            ;;
+    esac
+done
+
+
+if [ "$callFrom" = shell ] ; then
+    # adjust PATH:
+    if [ $machinetyp = "x86_64" ]; then
+        PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
+    elif [ $machinetyp = "aarch64" ]; then
+        PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
+    fi
+
+# set docker and admin permission to user synOCR for DSM7 and above
+    if [ "$dsm_version" -ge 7 ]; then
+        echo "synOCR run at DSM7 or above"
+        echo -n "    ➜ check admin permissions: "
+        if ! cat /etc/group | grep ^administrators | grep -q synOCR ; then
+            echo "added user synOCR to group administrators ..."
+            sed -i "/^administrators:/ s/$/,synOCR/" /etc/group
+        else
+            echo "ok"
         fi
 
-    # set docker and admin permission to user synOCR for DSM7 and above
-        if [ $dsm_version -ge 7 ]; then
-            echo "synOCR run at DSM7 or above"
-            echo -n "    ➜ check admin permissions: "
-            if ! cat /etc/group | grep ^administrators | grep -q synOCR ; then
-                echo "added user synOCR to group administrators ..."
-                sed -i "/^administrators:/ s/$/,synOCR/" /etc/group
-            else
-                echo "ok"
-            fi
-
-            echo -n "    ➜ check docker group and permissions: "
-            if ! cat /etc/group | grep -q ^docker: ; then
-                echo "create group docker ..."
-                synogroup --add docker
-                chown root:docker /var/run/docker.sock
-                synogroup --member docker synOCR
-            elif ! cat /etc/group | grep ^docker: | grep -q synOCR ; then
-                echo "added user synOCR to group docker ..."
-                sed -i "/^docker:/ s/$/,synOCR/" /etc/group
-            else
-                echo "ok [$(cat /etc/group | grep ^docker:)]"
-            fi
+        echo -n "    ➜ check docker group and permissions: "
+        if ! cat /etc/group | grep -q ^docker: ; then
+            echo "create group docker ..."
+            synogroup --add docker
+            chown root:docker /var/run/docker.sock
+            synogroup --member docker synOCR
+        elif ! cat /etc/group | grep ^docker: | grep -q synOCR ; then
+            echo "added user synOCR to group docker ..."
+            sed -i "/^docker:/ s/$/,synOCR/" /etc/group
+        else
+            echo "ok [$(cat /etc/group | grep ^docker:)]"
         fi
     fi
-    exit_status=0
+fi
 
 # Read working directory and change into it:
     APPDIR=$(cd $(dirname $0);pwd)
@@ -61,7 +95,7 @@
 # is an instance of synOCR already running?
     synOCR_pid=$( /bin/pidof synOCR.sh )
     if [ ! -z "$synOCR_pid" ] ; then
-        if [ $callFrom = GUI ] ; then
+        if [ "$callFrom" = GUI ] ; then
             echo '
             <p class="text-center synocr-text-red">
                 <b>'$lang_synOCR_start_is_running'</b><br>(Prozess-ID: '$synOCR_pid')
@@ -75,7 +109,7 @@
         fi
         exit
     else
-        if [ $callFrom = GUI ] ; then
+        if [ "$callFrom" = GUI ] ; then
             echo '
             <h2 class="synocr-text-blue mt-3">'$lang_synOCR_start_runs' ...</h2>
             <p>&nbsp;</p>
@@ -99,12 +133,22 @@
 
 # check for update:
     if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -ne $(date +%m) ]]; then
+        local_version=$(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')
         sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon'"
         if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -eq $(date +%m) ]]; then
-            server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION_DSM${dsm_version}&version=$(get_key_value /var/packages/synOCR/INFO version)&arch=$machinetyp" )
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(echo "$server_info" | sed -n "2p")' WHERE key='online_version'"
+            server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION_DSM${dsm_version}&version=${local_version}&arch=$machinetyp" )
+            online_version=$(echo "$server_info" | sed -n "2p")
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${online_version}' WHERE key='online_version'"
             if [[ $(echo "$server_info" | sed -n "1p" ) != "ok" ]]; then
                 sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date -d "-1 month" +%m)' WHERE key='checkmon'"
+            fi
+            highest_version=$(printf "${online_version}\n${local_version}" | sort -V | tail -n1)
+            if [[ "${local_version}" != "$highest_version" ]] ; then
+                if [ "$dsm_version" = "7" ] ; then
+                    synodsmnotify -c SYNO.SDS.ThirdParty.App.synOCR @administrators synOCR:app:app_name synOCR:app:update_available
+                else
+                    synodsmnotify @administrators "synOCR" "Update available [version ${online_version}]"
+                fi
             fi
         fi
     fi
@@ -126,7 +170,7 @@
 
     # is the source directory present and is the path valid?
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
-            if [ $callFrom = GUI ] ; then
+            if [ "$callFrom" = GUI ] ; then
                 echo '
                 <p class="text-center">
                     <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_lost_input' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span>
@@ -142,7 +186,7 @@
         if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$OUTPUTDIR" | awk -F/ '{print $3}') ; then
                 # is it an encrypted folder and is it mounted?
-                if [ $callFrom = GUI ] ; then
+                if [ "$callFrom" = GUI ] ; then
                     echo '
                     <p class="text-center"><
                         span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_target' ! ! !</b><br>EXIT SCRIPT!<br></span>
@@ -153,7 +197,7 @@
                 continue
             fi
             mkdir -p "$OUTPUTDIR"
-            if [ $callFrom = GUI ] ; then
+            if [ "$callFrom" = GUI ] ; then
                 echo '
                 <p class="text-center">
                     <span style="color: #BD0010;"><b>'$lang_synOCR_start_target_created'</b></span>
@@ -162,7 +206,7 @@
                 echo "$lang_synOCR_start_target_created"
             fi
         elif [ ! -d "$OUTPUTDIR" ] || ! $(echo "$OUTPUTDIR" | grep -q "/volume") ; then
-            if [ $callFrom = GUI ] ; then
+            if [ "$callFrom" = GUI ] ; then
                 echo '
                 <p class="text-center">
                     <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_check_target' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span>
@@ -187,22 +231,22 @@
         if echo "${SearchPraefix}" | grep -q "\$"$ ; then
             # is suffix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
-            if [[ $exclusion = false ]] ; then
+            if [[ "$exclusion" = false ]] ; then
                 count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}.pdf$" | wc -l)
-            elif [[ $exclusion = true ]] ; then
+            elif [[ "$exclusion" = true ]] ; then
                 count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l)
             fi
         else
             # is prefix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
-            if [[ $exclusion = false ]] ; then
+            if [[ "$exclusion" = false ]] ; then
                 count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*.pdf$" | wc -l)
-            elif [[ $exclusion = true ]] ; then
+            elif [[ "$exclusion" = true ]] ; then
                 count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | egrep -iv "^${SearchPraefix}.*.pdf$" | wc -l)
             fi
         fi
 
-        if [ $count_inputpdf -eq 0 ] ;then
+        if [ "$count_inputpdf" -eq 0 ] ;then
             continue
         fi
 
@@ -216,7 +260,7 @@
             ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1     # $LOGFILE is passed as a parameter to synOCR, since the file may be needed there for ERRORFILES
         elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$LOGDIR" | awk -F/ '{print $3}') ; then
-                if [ $callFrom = GUI ] ; then
+                if [ "$callFrom" = GUI ] ; then
                     echo '
                     <p class="text-center">
                         <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_log' ! ! !</b><br>EXIT SCRIPT!<br></span>
@@ -234,20 +278,24 @@
         fi
 
         if (( $? == 0 )); then
-            echo "    -----------------------------------" >> $LOGFILE
-            echo "    |       ==> synOCR ENDE <==       |" >> $LOGFILE
-            echo "    -----------------------------------" >> $LOGFILE
+            echo "  ######################################" >> $LOGFILE
+            echo "  # ---------------------------------- #" >> $LOGFILE
+            echo "  # |    ==> END OF FUNCTIONS <==    | #" >> $LOGFILE
+            echo "  # ---------------------------------- #" >> $LOGFILE
+            echo "  ######################################" >> $LOGFILE
         else
-            echo "    -----------------------------------" >> $LOGFILE
-            echo "    |     synOCR exit with ERROR!     |" >> $LOGFILE
-            echo "    -----------------------------------" >> $LOGFILE
+            echo "  ######################################" >> $LOGFILE
+            echo "  # ---------------------------------- #" >> $LOGFILE
+            echo "  # |    ==> EXIT WITH ERROR! <==    | #" >> $LOGFILE
+            echo "  # ---------------------------------- #" >> $LOGFILE
+            echo "  ######################################" >> $LOGFILE
             echo "$lang_synOCR_start_errorexit"
             echo "$lang_synOCR_start_loginfo: $LOGFILE"
             exit_status=ERROR
         fi
     done
 
-if  [ $exit_status = "ERROR" ] ; then
+if  [ "$exit_status" = "ERROR" ] ; then
     exit 1
 else
     exit 0

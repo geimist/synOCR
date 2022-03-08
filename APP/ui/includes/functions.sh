@@ -33,9 +33,9 @@ urldecode() {
 # -------------------------------------------------------------------------- #
 function language() {
     # ---------------------------------------------------------------------- #
-    # Spracheinstellungen konfigurieren                                      #
+    # Configure language settings                                            #
     # ---------------------------------------------------------------------- #
-    # Englische Sprachdatei laden
+    # Load English language file
     source "lang/lang_enu.txt"
 
     #********************************************************************#
