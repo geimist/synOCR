@@ -14,8 +14,8 @@ done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "S
 
 
 if [ ! $(which inotifywait) ]; then
-    echo "ERROR: inotify-tools are not installed" | tee -a "${LOG_DIR_LIST[@]}" > /dev/null
-    echo "You can install the SPK from https://synocommunity.com/package/inotify-tools" | tee -a "${LOG_DIR_LIST[@]}" > /dev/null
+    echo "ERROR: inotify-tools are not installed" | tee -a "${LOG_DIR_LIST[@]}"
+    echo "You can install the SPK from https://synocommunity.com/package/inotify-tools" | tee -a "${LOG_DIR_LIST[@]}"
     exit 1
 fi
 
