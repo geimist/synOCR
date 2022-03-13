@@ -8,29 +8,70 @@ callFrom=shell
 exit_status=0
 dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
 machinetyp=$(uname --machine)
+monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
 
 
 # create list (array need for tee) with all active log folders:
 # --------------------------------------------------------------
-LOG_DIR_LIST=()
+log_dir_list=()
 while read value ; do
-    LOG_DIR_LIST+=( "$value" )
+    [ -d "${value%/*}" ] && log_dir_list+=( "$value" )
 done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
 
+
+inotify_process_id () {
+    # print process id of inotify in
+    ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}'
+}
 
 # reading parameters:
 for i in "$@" ; do
     case $i in
         start)
-            # start-monitoring:
-            /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start | tee -a "${LOG_DIR_LIST[@]}" &
+            # (re)start-monitoring:
+            echo "startaufruf"
+            monitor=off
+            loop_count=0
+            while [ "$monitor" = off ] ; do
+                # terminate parallel instances:
+                [ $(echo $(inotify_process_id) | awk '{ print NF; }') -gt 1 ] && echo "parallel processes active - terminate ..." && kill $(inotify_process_id)
+
+                if [ -z "$(inotify_process_id)" ] ;then
+                    echo "does not run - start monitoring ..."
+                    sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}"
+                    /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start
+                else
+                    echo "still running (count of processes: $(echo $(inotify_process_id) | awk '{ print NF; }')) - check if restart is necessary:"
+                    sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
+
+                    if [ "$(cat "$monitored_folders" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
+
+                        echo "Change noticed in the watched folders - restart monitoring ..."
+                        rm -f "${monitored_folders}_tmp"
+
+                        echo "stop monitoring ..."
+                        /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop
+                    else
+                        echo "no restart necessary"
+                    fi
+                fi
+
+                [ "$(inotify_process_id)" ] && monitor=on && echo "Monitoring successfully started" && break | tee -a "${log_dir_list[@]}"
+                loop_count=$((loop_count + 1))
+                [ "$loop_count" -gt 10 ] && echo "! ! ! ERROR: failed to start monitoring after $loop_count trys" && break 1 | tee -a "${log_dir_list[@]}"
+            done
+
+            [ "$monitor" = on ] && echo "Monitoring successfully started"
             sleep 1
             shift
             ;;
         stop)
             # stop-monitoring:
-            /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop &
-            sleep 1
+            if [ "$(inotify_process_id)" ] ;then
+                echo "stop monitoring ..."
+                /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop | tee -a "${log_dir_list[@]}"
+                sleep 1
+            fi
             exit 0
 #           shift
             ;;
