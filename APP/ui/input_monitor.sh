@@ -23,14 +23,14 @@ fi
 inotify_start() {
 # start monitoring:
 # --------------------------------------------------------------
-    printf "\n---------- START MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n" | tee -a "${LOG_DIR_LIST[@]}" > /dev/null
+    printf "\n---------- START MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
     nohup inotifywait --fromfile "${monitored_folders}" -e moved_to -e create --monitor --timeout -1 | 
         while read line ; do 
             printf "\n---------------- EVENT --------------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n"
             printf "detected event: $line\n"
             printf "\nsynOCR-start.sh Log:\n"
             /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
-        done | tee -a "${LOG_DIR_LIST[@]}" > /dev/null &
+        done | tee -a "${LOG_DIR_LIST[@]}" &
 
     sleep 1
 }
@@ -40,13 +40,13 @@ inotify_stop()
 {
 # stop monitoring:
 # --------------------------------------------------------------
-    printf "\n---------- STOP  MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n" | tee -a "${LOG_DIR_LIST[@]}" > /dev/null
+    printf "\n---------- STOP  MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
     [ -f "${monitored_folders}" ] && rm -f "${monitored_folders}"
     kill $inotify_process_id
     if [ $? = 0 ]; then
-        echo "Monitoring ended" | tee -a "${LOG_DIR_LIST[@]}" > /dev/null
+        echo "Monitoring ended" | tee -a "${LOG_DIR_LIST[@]}" #> /dev/null
     else
-        echo "ERROR when stopping the monitoring!" | tee -a "${LOG_DIR_LIST[@]}" > /dev/null
+        echo "ERROR when stopping the monitoring!" | tee -a "${LOG_DIR_LIST[@]}" #> /dev/null
         exit 1
     fi
 
