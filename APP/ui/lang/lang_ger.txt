@@ -299,6 +299,9 @@ lang_edit_yamlsample_gui_03="Die Regeldatei wurde erfolgreich erstellt."
 #-------------------------------------------
 lang_main_title1="OCR auf Synology DSM"
 lang_main_title2="Beschreibung"
+lang_main_monitor_restart_necessary_1="Die Liste der überwachten Input-Ordner ist nicht mehr aktuell!"
+lang_main_monitor_restart_necessary_2="Bitte führe im Aufgabenplaner einen Neustart der Überwachung durch."
+lang_main_monitor_restart_necessary_3="(das entspricht dem normalen Aufruf im Aufgabenplaner mit Parameter start)"
 lang_main_dockerfailed="A C H T U N G:<br>Docker wurde nicht gefunden.<br>Bitte prüfe, ob das Paket Docker installiert ist!"    # keep html-tag
 lang_main_permissions_failed="A C H T U N G:<br>synOCR verfügt noch nicht über die notwendigen Berechtigungen!<br>Bitte erstelle im Aufgabenplaner eine Aufgabe mit nachstehenden Skript (als root)<br>(die Aufgabe muss mindestens einmal ausgeführt werden)"    # keep html-tag
 lang_main_desc1="SynOCR liefert eine einfache GUI für den Dockercontainer OCRmyPDF. Eine Konfiguration in Docker ist nicht erforderlich."
@@ -317,6 +320,7 @@ lang_main_pages="Seiten"
 lang_help_title_QS="Schnellstart"
 lang_help_QS_1_beforelink="Passe zunächst deine Installation in der"
 lang_help_QS_1_afterlink="an."
+lang_help_QS_1b="(optional): Um Input-Ordner automatisch zu überwachen, muss das Paket inotify-tools installiert sein"
 lang_help_QS_2="Für einen ordnungsgemäßen Betrieb von synOCR muss im DSM Aufgabenplaner eine neue Aufgabe erstellt werden."                                                # keep html-tag
 lang_help_QS_sub1_tit="Öffne dazu im DSM die Systemsteuerung"
 lang_help_QS_sub1_1="Aufgabenplaner"                                    # ensure exact translation from the DSM!
