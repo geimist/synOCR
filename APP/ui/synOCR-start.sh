@@ -29,7 +29,6 @@ for i in "$@" ; do
     case $i in
         start)
             # (re)start-monitoring:
-            echo "startaufruf"
             monitor=off
             loop_count=0
             while [ "$monitor" = off ] ; do
