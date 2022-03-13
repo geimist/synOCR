@@ -1022,6 +1022,9 @@ if [[ "$page" == "edit" ]]; then
                                 if ! $(echo "${imagelist[@]}" | grep -q "jbarlow83/ocrmypdf:latest" ) ; then
                                     imagelist+=("jbarlow83/ocrmypdf:latest")
                                 fi
+                                if ! $(echo "${imagelist[@]}" | grep -q "jbarlow83/ocrmypdf:v12.7.2" ) ; then
+                                    imagelist+=("jbarlow83/ocrmypdf:v12.7.2")
+                                fi
                                 if ! $(echo "${imagelist[@]}" | grep -q "geimist/ocrmypdf-polyglot:latest" ) ; then
                                     imagelist+=("geimist/ocrmypdf-polyglot:latest")
                                 fi
