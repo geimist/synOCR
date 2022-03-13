@@ -64,6 +64,10 @@ PATH=$PATH:/usr/local/bin:/opt/usr/bin
 if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     # -> Headline
 
+    echo '
+    <h2 class="synocr-text-blue mt-3">synOCR '$lang_page1'</h2>
+    <p>&nbsp;</p>'
+
     # monitoring active?
     if [ $(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}') ]; then
         # pulsate icon, if monitoring are running
@@ -87,11 +91,6 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
         css_pulsate=""
         monitoring_title='title="monitoring is not running"'
     fi
-
-
-    echo '
-    <h2 class="synocr-text-blue mt-3">synOCR '$lang_page1'</h2>
-    <p>&nbsp;</p>'
 
 #   notify about update, if necessary:
 # ---------------------------------------------------------------------
