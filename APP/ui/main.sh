@@ -145,15 +145,6 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     <p>'$lang_main_desc2'</p>
     <p>&nbsp;</p>'
 
-
-
-
-
-
-
-
-
-
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
     if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 6 ] || (cat /etc/group | grep ^administrators | grep -q synOCR && cat /etc/group | grep ^docker | grep -q synOCR) ; then
         echo '
@@ -161,15 +152,6 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
             <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'$lang_main_buttonrun'</button>
         </p><br />'
     fi
-
-
-
-
-
-
-
-
-
 
 # Section Status / Statistics:
 echo '
