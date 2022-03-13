@@ -4,6 +4,7 @@
 # changes to synOCR directory and starts synOCR with or without LOG (depending on configuration)
 # adjust monitoring with inotifywait
 
+
 callFrom=shell
 exit_status=0
 dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
@@ -32,42 +33,57 @@ for i in "$@" ; do
             monitor=off
             loop_count=0
             while [ "$monitor" = off ] ; do
-                # terminate parallel instances:
-                [ $(echo $(inotify_process_id) | awk '{ print NF; }') -gt 1 ] && echo "parallel processes active - terminate ..." && kill $(inotify_process_id)
 
+                # terminate parallel instances:
+                if [ $(echo $(inotify_process_id) | awk '{ print NF; }') -gt 1 ]; then 
+                    echo "parallel processes active - terminate ..." | tee -a "${log_dir_list[@]}"
+                    kill $(inotify_process_id)
+                fi
+
+                # start, if not running:
                 if [ -z "$(inotify_process_id)" ] ;then
-                    echo "does not run - start monitoring ..."
+                    echo "does not run - start monitoring ..." | tee -a "${log_dir_list[@]}"
                     sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}"
                     /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start
                 else
-                    echo "still running (count of processes: $(echo $(inotify_process_id) | awk '{ print NF; }')) - check if restart is necessary:"
+                    # check if restart is necessary:
+#                   echo "still running (count of processes: $(echo $(inotify_process_id) | awk '{ print NF; }')) - check if restart is necessary:" | tee -a "${log_dir_list[@]}"
                     sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
 
                     if [ "$(cat "$monitored_folders" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
-
-                        echo "Change noticed in the watched folders - restart monitoring ..."
+                        echo "still running, but change noticed in the watched folders - restart monitoring ..." | tee -a "${log_dir_list[@]}"
                         rm -f "${monitored_folders}_tmp"
 
-                        echo "stop monitoring ..."
+                        echo "stop monitoring ..." | tee -a "${log_dir_list[@]}"
                         /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop
                     else
-                        echo "no restart necessary"
+#                       echo "no restart necessary" | tee -a "${log_dir_list[@]}"
+                        break
                     fi
                 fi
 
-                [ "$(inotify_process_id)" ] && monitor=on && echo "Monitoring successfully started" && break | tee -a "${log_dir_list[@]}"
+                if [ "$(inotify_process_id)" ]; then
+                    monitor=on
+                    echo "Monitoring successfully started" | tee -a "${log_dir_list[@]}"
+                    break
+                fi
+
                 loop_count=$((loop_count + 1))
-                [ "$loop_count" -gt 10 ] && echo "! ! ! ERROR: failed to start monitoring after $loop_count trys" && break 1 | tee -a "${log_dir_list[@]}"
+                echo "loop count: $loop_count" | tee -a "${log_dir_list[@]}"
+
+                if [ "$loop_count" -gt 10 ]; then
+                    echo "! ! ! ERROR: failed to start monitoring after $loop_count trys" | tee -a "${log_dir_list[@]}"
+                    break 1
+                fi
             done
 
-            [ "$monitor" = on ] && echo "Monitoring successfully started"
             sleep 1
             shift
             ;;
         stop)
             # stop-monitoring:
             if [ "$(inotify_process_id)" ] ;then
-                echo "stop monitoring ..."
+                echo "stop monitoring ..." | tee -a "${log_dir_list[@]}"
                 /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop | tee -a "${log_dir_list[@]}"
                 sleep 1
             fi
