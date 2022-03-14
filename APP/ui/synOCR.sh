@@ -132,6 +132,12 @@ fi
 
     echo "Device:                   $device ($sysID)"
     echo "current Profil:           $profile"
+    echo -n "monitor is running?:      "
+    if [ "$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}')" ]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
     echo "used image (created):     $dockercontainer ($(docker inspect -f '{{ .Created }}' "$dockercontainer" 2>/dev/null | awk -F. '{print $1}'))"
 
