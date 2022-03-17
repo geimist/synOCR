@@ -883,35 +883,9 @@ format=$1   # for regex search: 1 = dd mm [yy]yy
             #                   2 = [yy]yy mm dd
             #                   3 = mm dd [yy]yy
 
-    ordinary_date_example_search_DEV(){
-        echo -e
-        echo ">>>>>>>>>>> DEV-PART - example matches for RegEx search:"
-            echo -n "search by RegEx format: dd[./-]mm[./-]yy(yy) ➜ "
-            founddatestr_DEV=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
-            echo "$founddatestr_DEV"
-            echo -n "search by RegEx format: yy(yy)[./-]mm[./-]dd ➜ "
-            founddatestr_DEV=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
-            echo "$founddatestr_DEV"
-            echo -n "search by RegExformat: mm[./-]dd[./-]yy(yy) ➜ "
-            founddatestr_DEV=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
-            echo "$founddatestr_DEV"
-        echo "<<<<<<<<<<< DEV-PART"
-        echo -e
-    }
-
-    enhanced_date_example_search_DEV(){
-        echo -e
-        echo ">>>>>>>>>>> DEV-PART - example match for enhanced Pytho search:"
-            sed -i 's/  */ /g' "$searchfile"
-            founddatestr_DEV=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$(./includes/parse_date.py "$searchfile" | grep -v "ERROR" | sed '/^$/d' )" | head )
-            echo "$founddatestr_DEV"
-        echo "<<<<<<<<<<< DEV-PART"
-        echo -e
-    }
-
 if [[ $(adjust_python) -eq 0 ]] && [ "$enhanced_date_search" = "yes" ]; then
 #adjust_python
-#if [ $? -eq 10000 ]; then
+#if [ $? -eq 1 ]; then
     # reduce multible spaces to one in source file (for better results):
     sed -i 's/  */ /g' "$searchfile"
 
@@ -994,13 +968,6 @@ if [ "$dateIsFound" = no ]; then
         find_date 3
     fi
 fi
-
-# >>>>>>>>>>> DEV-PART
-# [[ $enhanced_date_search == "yes" ]] && enhanced_date_example_search_DEV
-# [[ $enhanced_date_search == "yes" ]] && ordinary_date_example_search_DEV
-# <<<<<<<<<<< DEV-PART
-
-}
 
 
 adjust_attributes()
