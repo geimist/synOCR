@@ -95,7 +95,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
 #   notify about update, if necessary:
 # ---------------------------------------------------------------------
     online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
-    local_version=$(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')
+    local_version=$(grep "^version" /var/packages/synOCR/INFO  | cut -d '"' -f2)
     highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
     if [[ "$local_version" != "$highest_version" ]] ; then
         echo ' 
