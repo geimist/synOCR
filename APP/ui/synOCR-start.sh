@@ -189,7 +189,7 @@ fi
 
 # check for update:
     if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -ne $(date +%m) ]]; then
-        local_version=$(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')
+        local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
         sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon'"
         if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -eq $(date +%m) ]]; then
             server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION_DSM${dsm_version}&version=${local_version}&arch=$machinetyp" )
