@@ -116,7 +116,7 @@ fi
 
 # System Information:
 # ---------------------------------------------------------------------
-    local_version=$(grep "^version" /var/packages/synOCR/INFO | awk '-F=' '{print $2}' | sed -e 's/"//g')
+    local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
     highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
     echo "synOCR-version:           $local_version"
     if [[ "$local_version" != "$highest_version" ]] ; then
