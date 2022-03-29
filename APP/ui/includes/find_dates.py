@@ -5,7 +5,7 @@
 #  DD-/.MM-/.YYYY  / means or
 #  returnvalue = founddate YYYY-MM-DD or None
 #
-#  Author: gthorsten
+#  Author:  gthorsten
 #  Version: 0.1, 24.03.2022
 #
 #
