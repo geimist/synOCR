@@ -58,6 +58,7 @@ for i in "$@" ; do
                         /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop
                     else
 #                       echo "no restart necessary" | tee -a "${log_dir_list[@]}"
+                        rm -f "${monitored_folders}_tmp"
                         break
                     fi
                 fi
