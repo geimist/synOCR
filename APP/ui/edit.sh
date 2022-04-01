@@ -1,6 +1,8 @@
 #!/bin/bash
 # /usr/syno/synoman/webman/3rdparty/synOCR/edit.sh
 
+dev_mode="true" # show field in development ...
+
 OLDIFS=$IFS
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
@@ -397,8 +399,14 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
                         if [ ! -z "$new_profile_value" ] ; then
                             sSQL="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
                             if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
-                                sSQL="INSERT INTO config ( profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type ) VALUES ( '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type' )"
-                                sqlite3 ./etc/synOCR.sqlite "$sSQL"
+                                sqlite3 ./etc/synOCR.sqlite "INSERT INTO config 
+                                    ( 
+                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, accept_cpdf_license
+                                    ) 
+                                        VALUES 
+                                    ( 
+                                        '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type', '$search_nearest_date', '$date_search_method', '$clean_up_spaces', '$accept_cpdf_license' 
+                                    )"
 
                                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
 
@@ -545,16 +553,51 @@ if [[ "$page" == "edit-save" ]]; then
                 </div>
                 <div class="modal-body text-center">'
 
-                    sSQLupdate="UPDATE config SET profile='$profile', active='$active', INPUTDIR='$INPUTDIR', OUTPUTDIR='$OUTPUTDIR', BACKUPDIR='$BACKUPDIR',
-                        LOGDIR='$LOGDIR', LOGmax='$LOGmax', SearchPraefix='$SearchPraefix', delSearchPraefix='$delSearchPraefix', taglist='$taglist', searchAll='$searchAll',
-                        moveTaggedFiles='$moveTaggedFiles', NameSyntax='$NameSyntax', ocropt='$(sed -e "s/'/''/g" <<<"$ocropt")', dockercontainer='$dockercontainer', PBTOKEN='$PBTOKEN',
-                        dsmtextnotify='$dsmtextnotify', MessageTo='$MessageTo', dsmbeepnotify='$dsmbeepnotify', loglevel='$loglevel', filedate='$filedate', tagsymbol='$tagsymbol',
-                        documentSplitPattern='$documentSplitPattern', ignoredDate='$ignoredDate', backup_max='$backup_max', backup_max_type='$backup_max_type' WHERE profile_ID='$profile_ID' "
+                sqlite3 ./etc/synOCR.sqlite "
+                            UPDATE 
+                                config 
+                            SET 
+                                profile='$profile', 
+                                active='$active', 
+                                INPUTDIR='$INPUTDIR', 
+                                OUTPUTDIR='$OUTPUTDIR', 
+                                BACKUPDIR='$BACKUPDIR',
+                                LOGDIR='$LOGDIR', 
+                                LOGmax='$LOGmax', 
+                                SearchPraefix='$SearchPraefix', 
+                                delSearchPraefix='$delSearchPraefix', 
+                                taglist='$taglist', 
+                                searchAll='$searchAll',
+                                moveTaggedFiles='$moveTaggedFiles', 
+                                NameSyntax='$NameSyntax', 
+                                ocropt='$(sed -e "s/'/''/g" <<<"$ocropt")', 
+                                dockercontainer='$dockercontainer', 
+                                PBTOKEN='$PBTOKEN',
+                                dsmtextnotify='$dsmtextnotify', 
+                                MessageTo='$MessageTo', 
+                                dsmbeepnotify='$dsmbeepnotify', 
+                                loglevel='$loglevel', 
+                                filedate='$filedate', 
+                                tagsymbol='$tagsymbol',
+                                documentSplitPattern='$documentSplitPattern', 
+                                ignoredDate='$ignoredDate', 
+                                backup_max='$backup_max', 
+                                backup_max_type='$backup_max_type',
+                                search_nearest_date='$search_nearest_date',
+                                date_search_method='$date_search_method',
+                                clean_up_spaces='$clean_up_spaces',
+                                accept_cpdf_license='$accept_cpdf_license'
+                            WHERE 
+                                profile_ID='$profile_ID' "
 
-                    sqlite3 ./etc/synOCR.sqlite "$sSQLupdate"
-
-                    # write global change to table system:
-                    sqlite3 ./etc/synOCR.sqlite "UPDATE system SET value_1='$dockerimageupdate' WHERE key='dockerimageupdate' "
+                # write global change to table system:
+                sqlite3 ./etc/synOCR.sqlite "
+                            UPDATE 
+                                system 
+                            SET 
+                                value_1='$dockerimageupdate' 
+                            WHERE 
+                                key='dockerimageupdate' "
 
                     echo '
                     <p>
@@ -576,15 +619,26 @@ fi
 
 
 if [[ "$page" == "edit" ]]; then
+
     # Read file contents for variable utilization
     if [ -z "$getprofile" ] ; then
-        sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
-            delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, ignoredDate, backup_max, backup_max_type FROM config WHERE profile_ID='1' "
+        sSQL="SELECT 
+                profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
+                NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, accept_cpdf_license
+            FROM 
+                config 
+            WHERE 
+                profile_ID='1' "
     else
-        sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
-            delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, ignoredDate, backup_max, backup_max_type FROM config WHERE profile_ID='$getprofile' "
+        sSQL="SELECT 
+                profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
+                NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, accept_cpdf_license
+            FROM 
+                config 
+            WHERE 
+                profile_ID='$getprofile' "
     fi
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -617,10 +671,13 @@ if [[ "$page" == "edit" ]]; then
         ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $26}')
         backup_max=$(echo "$sqlerg" | awk -F'\t' '{print $27}')
         backup_max_type=$(echo "$sqlerg" | awk -F'\t' '{print $28}')
+        search_nearest_date=$(echo "$sqlerg" | awk -F'\t' '{print $29}')
+        date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $30}')
+        clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
+        accept_cpdf_license=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
 
     # read global values:
         dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
-
 
     # -> Headline
     echo '
@@ -1191,41 +1248,43 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
+    if [ "$dev_mode" = "true" ]; then
                     # Document split pattern
-                    # echo '
-                    # <div class="row mb-3">
-                        # <div class="col-sm-5">
-                            # <label for="documentSplitPattern">'$lang_edit_set2_documentSplitPattern_title'</label>
-                        # </div>
-                        # <div class="col-sm-5">'
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="documentSplitPattern">'$lang_edit_set2_documentSplitPattern_title'</label>
+                        </div>
+                        <div class="col-sm-5">'
 
-                             # if [ -n "$documentSplitPattern" ]; then
-                                # echo '<input type="text" name="documentSplitPattern" id="documentSplitPattern" class="form-control form-control-sm" value="'$documentSplitPattern'" />'
-                            # else
-                                # echo '<input type="text" name="documentSplitPattern" id="documentSplitPattern" class="form-control form-control-sm" value="" />'
-                            # fi
+                             if [ -n "$documentSplitPattern" ]; then
+                                echo '<input type="text" name="documentSplitPattern" id="documentSplitPattern" class="form-control form-control-sm" value="'$documentSplitPattern'" />'
+                            else
+                                echo '<input type="text" name="documentSplitPattern" id="documentSplitPattern" class="form-control form-control-sm" value="" />'
+                            fi
 
-                            # echo '
-                        # </div>
-                        # <div class="col-sm-2">
-                            # <div class="float-end">
-                                # <a data-bs-toggle="collapse" href="#documentSplitPattern-info" role="button" aria-expanded="false" aria-controls="documentSplitPattern-info">
-                                    # <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
-                            # </div>
-                        # </div>
-                    # </div>
-                    # <div class="row">
-                        # <div class="col-sm-10">
-                            # <div class="collapse" id="documentSplitPattern-info">
-                                # <div class="card card-body mb-3" style="background-color: #F2FAFF;">
-                                    # <span>
-                                    #     '$lang_edit_set2_documentSplitPattern_help1'
-                                    # </span>
-                                # </div>
-                            # </div>
-                        # </div>
-                        # <div class="col-sm-2"></div>
-                    # </div>'
+                            echo '
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#documentSplitPattern-info" role="button" aria-expanded="false" aria-controls="documentSplitPattern-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="documentSplitPattern-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                         '$lang_edit_set2_documentSplitPattern_help1'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+    fi
 
                     # Taglist
                     echo '
@@ -1591,6 +1650,139 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
+                    # search_nearest_date
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="search_nearest_date">'$lang_edit_set2_filedate_search_nearest_date_title':</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="search_nearest_date" id="search_nearest_date" class="form-select form-select-sm">'
+
+                                if [[ "$search_nearest_date" == "firstfound" ]]; then
+                                    echo '<option value="firstfound" selected>'$lang_edit_set2_filedate_search_nearest_firstfound'</option>'
+                                else
+                                    echo '<option value="firstfound">'$lang_edit_set2_filedate_search_nearest_firstfound'</option>'
+                                fi
+                                if [[ "$search_nearest_date" == "nearest" ]]; then
+                                    echo '<option value="nearest" selected>'$lang_edit_set2_filedate_search_nearest_nearest'</option>'
+                                else
+                                    echo '<option value="nearest">'$lang_edit_set2_filedate_search_nearest_nearest'</option>'
+                                fi
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#filedate_nearest-info" role="button" aria-expanded="false" aria-controls="filedate_nearest-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="filedate_nearest-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set2_filedate_search_nearest_help1'<br>
+                                        '$lang_edit_set2_filedate_search_nearest_help2'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # date_search_method
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="date_search_method">'$lang_edit_set2_date_search_method_title':</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="date_search_method" id="date_search_method" class="form-select form-select-sm">'
+
+                                if [[ "$date_search_method" == "python" ]]; then
+                                    echo '<option value="python" selected>'$lang_edit_set2_date_search_method_python'</option>'
+                                else
+                                    echo '<option value="python">'$lang_edit_set2_date_search_method_python'</option>'
+                                fi
+                                if [[ "$date_search_method" == "regex" ]]; then
+                                    echo '<option value="regex" selected>'$lang_edit_set2_date_search_method_regex'</option>'
+                                else
+                                    echo '<option value="regex">'$lang_edit_set2_date_search_method_regex'</option>'
+                                fi
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#date_search_method-info" role="button" aria-expanded="false" aria-controls="date_search_method-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="date_search_method-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set2_date_search_method_help1'<br><br><b>Python:</b><br>
+                                        '$lang_edit_set2_date_search_method_help2'<br><br><b>RegEx:</b><br>
+                                        '$lang_edit_set2_date_search_method_help3'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # clean_up_spaces
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="clean_up_spaces">'$lang_edit_set2_clean_up_spaces_title':</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="clean_up_spaces" id="clean_up_spaces" class="form-select form-select-sm">'
+
+                                if [[ "$clean_up_spaces" == "true" ]]; then
+                                    echo '<option value="true" selected>'$lang_edit_set2_clean_up_spaces_true'</option>'
+                                else
+                                    echo '<option value="true">'$lang_edit_set2_clean_up_spaces_true'</option>'
+                                fi
+                                if [[ "$clean_up_spaces" == "false" ]]; then
+                                    echo '<option value="false" selected>'$lang_edit_set2_clean_up_spaces_false'</option>'
+                                else
+                                    echo '<option value="false">'$lang_edit_set2_clean_up_spaces_false'</option>'
+                                fi
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#clean_up_spaces-info" role="button" aria-expanded="false" aria-controls="clean_up_spaces-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="clean_up_spaces-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set2_clean_up_spaces_help1'<br><br>
+                                        '$lang_edit_set2_clean_up_spaces_help2'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
                     echo '
                 </div>
             </div>
@@ -1937,6 +2129,56 @@ if [[ "$page" == "edit" ]]; then
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
+
+    if [ "$dev_mode" = "true" ]; then
+                    # accept_cpdf_license
+                    lang_edit_set3_accept_cpdf_license_help4="Now we're releasing the tools for free, under a special not-for-commercial-use license. If you like the tools and want to use them commercially, or need support, licenses are available from Coherent Graphics Ltd. Commercial use involves anything other than private, personal use. Charities and educational institutions still require a license, but one may be obtained at greatly reduced cost - ask us. If you're still not sure if you need a license, ask us."
+
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="accept_cpdf_license"><a href="https://community.coherentpdf.com/" onclick="window.open(this.href); return false;" style="color: #BD0010;">cpdf '$lang_edit_set3_accept_cpdf_license_title'</a></label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="accept_cpdf_license" id="accept_cpdf_license" class="form-select form-select-sm">'
+
+                                if [[ "$accept_cpdf_license" == "not_accepted" ]]; then
+                                    echo '<option value="not_accepted" selected>'$lang_edit_set3_accept_cpdf_license_no'</option>'
+                                else
+                                    echo '<option value="not_accepted">'$lang_edit_set3_accept_cpdf_license_no'</option>'
+                                fi
+                                if [[ "$accept_cpdf_license" == "accepted" ]]; then
+                                    echo '<option value="accepted" selected>'$lang_edit_set3_accept_cpdf_license_yes'</option>'
+                                else
+                                    echo '<option value="accepted">'$lang_edit_set3_accept_cpdf_license_yes'</option>'
+                                fi
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#accept_cpdf_license-info" role="button" aria-expanded="false" aria-controls="accept_cpdf_license-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="accept_cpdf_license-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set3_accept_cpdf_license_help1'<br>
+                                        '$lang_edit_set3_accept_cpdf_license_help2'<br><br>
+                                        <b>'$lang_edit_set3_accept_cpdf_license_help3'</b><br>
+                                        <i>"'$lang_edit_set3_accept_cpdf_license_help4'"</i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+    fi
 
                     echo '
                 </div>
