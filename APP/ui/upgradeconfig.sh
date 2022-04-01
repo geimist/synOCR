@@ -27,17 +27,61 @@ OLDIFS=$IFS
 
         # table config:
         # ---------------------------------------------------------------------
-        sqlinst="CREATE TABLE \"config\" (\"profile_ID\" INTEGER PRIMARY KEY ,\"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,\"profile\" varchar ,\"active\" varchar DEFAULT ('1') ,\"INPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_INPUT') ,\"OUTPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_OUTPUT') ,\"BACKUPDIR\" varchar DEFAULT ('/volume1/<PATH>/_BACKUP') ,\"LOGDIR\" varchar DEFAULT ('/volume1/<PATH>/_LOG') ,\"LOGmax\" varchar DEFAULT ('10') ,\"SearchPraefix\" varchar ,\"delSearchPraefix\" varchar(5) DEFAULT ('yes') ,\"taglist\" varchar ,\"searchAll\" varchar DEFAULT ('no') ,\"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,\"NameSyntax\" varchar DEFAULT ('§y-§m-§d_§tag_§tit') , \"ocropt\" varchar DEFAULT ('-srd -l deu+eng') ,\"dockercontainer\" varchar DEFAULT ('geimist/ocrmypdf-polyglot') ,\"PBTOKEN\" varchar ,\"dsmtextnotify\" varchar DEFAULT ('on') ,\"MessageTo\" varchar DEFAULT ('admin') ,\"dsmbeepnotify\" varchar DEFAULT ('on') ,\"loglevel\" varchar DEFAULT ('1') ,\"filedate\" VARCHAR DEFAULT ('ocr') ,\"tagsymbol\" VARCHAR DEFAULT ('#') ,\"documentSplitPattern\" varchar ,\"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31') ,\"backup_max\" VARCHAR ,\"backup_max_type\" VARCHAR DEFAULT ('files') ,\"pagecount\" VARCHAR DEFAULT ('0') ,\"ocrcount\" VARCHAR  DEFAULT ('0')) ;"
-        sqlite3 "./etc/synOCR.sqlite" "$sqlinst"
+        sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"config\" 
+                    (
+                        \"profile_ID\" INTEGER PRIMARY KEY ,
+                        \"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,
+                        \"profile\" varchar ,
+                        \"active\" varchar DEFAULT ('1') ,
+                        \"INPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_INPUT') ,
+                        \"OUTPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_OUTPUT') ,
+                        \"BACKUPDIR\" varchar DEFAULT ('/volume1/<PATH>/_BACKUP') ,
+                        \"LOGDIR\" varchar DEFAULT ('/volume1/<PATH>/_LOG') ,
+                        \"LOGmax\" varchar DEFAULT ('10') ,
+                        \"SearchPraefix\" varchar ,
+                        \"delSearchPraefix\" varchar(5) DEFAULT ('yes') ,
+                        \"taglist\" varchar ,
+                        \"searchAll\" varchar DEFAULT ('no') ,
+                        \"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,
+                        \"NameSyntax\" varchar DEFAULT ('§y-§m-§d_§tag_§tit') ,
+                        \"ocropt\" varchar DEFAULT ('-srd -l deu+eng') ,
+                        \"dockercontainer\" varchar DEFAULT ('geimist/ocrmypdf-polyglot') ,
+                        \"PBTOKEN\" varchar ,
+                        \"dsmtextnotify\" varchar DEFAULT ('on') ,
+                        \"MessageTo\" varchar DEFAULT ('admin') ,
+                        \"dsmbeepnotify\" varchar DEFAULT ('on') ,
+                        \"loglevel\" varchar DEFAULT ('1') ,
+                        \"filedate\" VARCHAR DEFAULT ('ocr') ,
+                        \"tagsymbol\" VARCHAR DEFAULT ('#') ,
+                        \"documentSplitPattern\" varchar ,
+                        \"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31') ,
+                        \"backup_max\" VARCHAR ,
+                        \"backup_max_type\" VARCHAR DEFAULT ('files') ,
+                        \"pagecount\" VARCHAR DEFAULT ('0') ,
+                        \"ocrcount\" VARCHAR  DEFAULT ('0') ,
+                        \"search_nearest_date\" VARCHAR  DEFAULT ('false') ,
+                        \"date_search_method\" VARCHAR  DEFAULT ('python') ,
+                        \"clean_up_spaces\" VARCHAR  DEFAULT ('true') ,
+                        \"accept_cpdf_license\" VARCHAR  DEFAULT ('false')
+                    ) ;"
         sleep 1
 
         # table system:
         # ---------------------------------------------------------------------
-        sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"system\" (\"rowid\" INTEGER PRIMARY KEY ,\"key\" VARCHAR ,\"value_1\" VARCHAR ,\"value_2\" VARCHAR ,\"value_3\" VARCHAR ,\"value_4\" VARCHAR );"
+        sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"system\" 
+                    (
+                        \"rowid\" INTEGER PRIMARY KEY ,
+                        \"key\" VARCHAR ,
+                        \"value_1\" VARCHAR ,
+                        \"value_2\" VARCHAR ,
+                        \"value_3\" VARCHAR ,
+                        \"value_4\" VARCHAR 
+                    );"
+
         # write default data:
         # ---------------------------------------------------------------------
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '5')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '6')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('checkmon', '')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0')"
@@ -48,8 +92,12 @@ OLDIFS=$IFS
 
         # table dockerupdate / Docker-Image-Update - check date:
         # ---------------------------------------------------------------------
-        sqlinst="CREATE TABLE \"dockerupdate\" (\"rowid\" INTEGER PRIMARY KEY ,\"image\" varchar,\"date_checked\" varchar );"
-        sqlite3 "./etc/synOCR.sqlite" "$sqlinst"
+        sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"dockerupdate\" 
+                    (
+                        \"rowid\" INTEGER PRIMARY KEY ,
+                        \"image\" varchar,
+                        \"date_checked\" varchar 
+                    );"
         sleep 1
 
         # Create / migrate profile:
@@ -58,12 +106,17 @@ OLDIFS=$IFS
             if [ -f "./etc/Konfiguration.txt" ]; then
                 # Migration from text-based to DB-based configuration
                 source "./etc/Konfiguration.txt"
-                sqlite3 ./etc/synOCR.sqlite "INSERT INTO config ( profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, 
-                                    moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel 
-                                    ) VALUES ( 
-                                    'default', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', 
-                                    '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', 
-                                    '$MessageTo', '$dsmbeepnotify', '$loglevel' )"
+                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO config 
+                    ( 
+                        profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, 
+                        moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel 
+                    ) 
+                        VALUES 
+                    ( 
+                        'default', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$taglist', '$searchAll', 
+                        '$moveTaggedFiles', '$NameSyntax', '$ocropt', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel'
+                    )"
+
                 mv "./etc/Konfiguration.txt" "./etc/Konfiguration_imported.txt"
                 log="$log 
                 ➜ Configuration was migrated to DB"
@@ -82,7 +135,8 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
     if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1") -eq 1 ] ; then
             # filedate at OCR:
             # ---------------------------------------------------------------------
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"filedate\" varchar DEFAULT ('ocr') "
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                           ADD COLUMN \"filedate\" varchar DEFAULT ('ocr') "
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q filedate ) ; then
                 log="$log 
@@ -92,7 +146,8 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 
             # tag indicator:
             # ---------------------------------------------------------------------
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"tagsymbol\" varchar DEFAULT ('#') "
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                           ADD COLUMN \"tagsymbol\" varchar DEFAULT ('#') "
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q tagsymbol ) ; then
                 log="$log 
@@ -102,8 +157,11 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 
             # checkmon
             # ---------------------------------------------------------------------
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system ADD COLUMN \"checkmon\" varchar "
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET checkmon='$(get_key_value ./etc/counter checkmon)' WHERE rowid=1"
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system 
+                                           ADD COLUMN \"checkmon\" varchar "
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET checkmon='$(get_key_value ./etc/counter checkmon)' 
+                                           WHERE rowid=1"
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q checkmon ) ; then
                 log="$log
@@ -115,7 +173,9 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 
         if [[ "$error" == "0" ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET DB_Version='2', timestamp=(datetime('now','localtime')) WHERE rowid=1"
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET DB_Version='2', timestamp=(datetime('now','localtime')) 
+                                           WHERE rowid=1"
             log="$log 
             DB-Upgrade successfully processed (v1 ➜ v2)"
         fi
@@ -127,7 +187,8 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
     if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1") -eq 2 ] ; then
             # Docker-Image-Update - no (0) or yes (1):
             # ---------------------------------------------------------------------
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system ADD COLUMN \"dockerimageupdate\" varchar DEFAULT ('1') "
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system 
+                                           ADD COLUMN \"dockerimageupdate\" varchar DEFAULT ('1') "
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q dockerimageupdate ) ; then
                 log="$log 
@@ -137,8 +198,12 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 
             # Docker-Image-Update - check date:
             # ---------------------------------------------------------------------
-            sqlinst="CREATE TABLE \"dockerupdate\" (\"rowid\" INTEGER PRIMARY KEY ,\"image\" varchar,\"date_checked\" varchar );"
-            sqlite3 "./etc/synOCR.sqlite" "$sqlinst"
+            sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"dockerupdate\" 
+                                            (
+                                                \"rowid\" INTEGER PRIMARY KEY ,
+                                                \"image\" varchar,
+                                                \"date_checked\" varchar 
+                                            );"
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(dockerupdate)" | awk -F'|' '{print $2}' | grep -q image ) ; then
                 log="$log 
@@ -148,7 +213,9 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 
         if [[ "$error" == "0" ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET DB_Version='3', timestamp=(datetime('now','localtime')) WHERE rowid=1"
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET DB_Version='3', timestamp=(datetime('now','localtime')) 
+                                           WHERE rowid=1"
             log="$log
             DB-Upgrade successfully processed (v2 ➜ v3)"
         fi
@@ -160,7 +227,8 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
     if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1") -eq 3 ] ; then
             # documentSplitPattern:
             # ---------------------------------------------------------------------
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"documentSplitPattern\" varchar"
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                           ADD COLUMN \"documentSplitPattern\" varchar"
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q documentSplitPattern ) ; then
                 log="$log 
@@ -170,7 +238,8 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 
             # ignoredDate:
             # ---------------------------------------------------------------------
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31')"
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                           ADD COLUMN \"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31')"
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q ignoredDate ) ; then
                 log="$log 
@@ -180,7 +249,9 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 
         if [[ "$error" == "0" ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET DB_Version='4', timestamp=(datetime('now','localtime')) WHERE rowid=1"
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET DB_Version='4', timestamp=(datetime('now','localtime')) 
+                                           WHERE rowid=1"
             log="$log
             DB-Upgrade successfully processed (v3 ➜ v4)"
         fi
@@ -193,14 +264,16 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
     if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1") -eq 4 ] ; then
             # rotate backup file configuration:
             # ---------------------------------------------------------------------
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"backup_max\" VARCHAR"
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                           ADD COLUMN \"backup_max\" VARCHAR"
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q backup_max ) ; then
                 log="$log 
                 ➜ ERROR: the DB column could not be created (backup_max"
                 error=1
             fi
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"backup_max_type\" VARCHAR DEFAULT ('files')"
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                           ADD COLUMN \"backup_max_type\" VARCHAR DEFAULT ('files')"
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q backup_max_type ) ; then
                 log="$log 
@@ -211,9 +284,19 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
             # reorganize table system:
             # create new table:
             # ---------------------------------------------------------------------
-            sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"system_new\" (\"rowid\" INTEGER PRIMARY KEY ,\"key\" VARCHAR ,\"value_1\" VARCHAR ,\"value_2\" VARCHAR ,\"value_3\" VARCHAR ,\"value_4\" VARCHAR );"
+            sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"system_new\" 
+                                            (
+                                                \"rowid\" INTEGER PRIMARY KEY ,
+                                                \"key\" VARCHAR ,
+                                                \"value_1\" VARCHAR ,
+                                                \"value_2\" VARCHAR ,
+                                                \"value_3\" VARCHAR ,
+                                                \"value_4\" VARCHAR 
+                                            );"
             # read stored data:
-            sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT timestamp, DB_Version, checkmon, dockerimageupdate FROM system WHERE rowid=1")
+            sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT timestamp, DB_Version, checkmon, dockerimageupdate 
+                                                                   FROM system 
+                                                                   WHERE rowid=1")
             # rewrite data:
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('timestamp', '$(echo "$sqlerg" | awk -F'\t' '{print $1}')')"
             sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('db_version', '$(echo "$sqlerg" | awk -F'\t' '{print $2}')')"
@@ -234,13 +317,16 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 
             # check tables / reorder names:
             if echo $(sqlite3 "./etc/synOCR.sqlite" .tables) | grep -q system_new ; then
-                sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system RENAME TO system_archived;"
-                sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system_new RENAME TO system;"
+                sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system 
+                                               RENAME TO system_archived;"
+                sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system_new 
+                                               RENAME TO system;"
             fi
 
             # migrate profile specific data from 'counter' file to DB:
             # create new columns:
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"pagecount\" VARCHAR DEFAULT ('0')"
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                           ADD COLUMN \"pagecount\" VARCHAR DEFAULT ('0')"
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q pagecount ) ; then
                 log="$log 
@@ -248,7 +334,8 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
                 error=1
                 mig_count_err=1
             fi
-            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config ADD COLUMN \"ocrcount\" VARCHAR DEFAULT ('0')"
+            sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                           ADD COLUMN \"ocrcount\" VARCHAR DEFAULT ('0')"
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q ocrcount ) ; then
                 log="$log 
@@ -263,16 +350,24 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
                 for entry in $sqlerg; do
                     IFS=$OLDIFS
                     profile_ID_DB=$(echo "$entry" | awk -F'\t' '{print $1}')
-                    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET pagecount='$(get_key_value ./etc/counter pagecount_ID${profile_ID_DB} )' WHERE profile_ID='$profile_ID_DB'"
-                    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET ocrcount='$(get_key_value ./etc/counter ocrcount_ID${profile_ID_DB} )' WHERE profile_ID='$profile_ID_DB'"
+                    sqlite3 "./etc/synOCR.sqlite" "UPDATE config 
+                                                   SET pagecount='$(get_key_value ./etc/counter pagecount_ID${profile_ID_DB} )' 
+                                                   WHERE profile_ID='$profile_ID_DB'"
+                    sqlite3 "./etc/synOCR.sqlite" "UPDATE config 
+                                                   SET ocrcount='$(get_key_value ./etc/counter ocrcount_ID${profile_ID_DB} )' 
+                                                   WHERE profile_ID='$profile_ID_DB'"
                 done
                 mv ./etc/counter ./etc/counter_archived
             fi
 
         if [[ "$error" == "0" ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='5' WHERE key='db_version'"
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1=(datetime('now','localtime')) WHERE key='timestamp'"
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET value_1='5' 
+                                           WHERE key='db_version'"
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET value_1=(datetime('now','localtime')) 
+                                           WHERE key='timestamp'"
             log="$log
             DB-Upgrade successfully processed (v4 ➜ v5)"
         fi
@@ -281,23 +376,92 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 fi
 
 
-# DB-Update von v5 auf v6:
+# DB-update from v5 to v6:
 # ---------------------------------------------------------------------
     if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'") -eq 5 ] ; then
-        echo ""
-#        sqlite3 "./etc/synOCR.sqlite" "DROP TABLE system_archived;"
+        # search_nearest_date:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"search_nearest_date\" VARCHAR DEFAULT ('firstfound')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q search_nearest_date ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (search_nearest_date)"
+            error=1
+        fi
 
+        # date_search_method:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"date_search_method\" VARCHAR DEFAULT ('python')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q date_search_method ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (date_search_method)"
+            error=1
+        fi
 
+        # clean_up_spaces:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"clean_up_spaces\" VARCHAR DEFAULT ('true')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q clean_up_spaces ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (clean_up_spaces)"
+            error=1
+        fi
 
-#        if [[ "$error" == "0" ]]; then
+        # accept_cpdf_license:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"accept_cpdf_license\" VARCHAR DEFAULT ('false')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q accept_cpdf_license ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (accept_cpdf_license)"
+            error=1
+        fi
+
+        if [[ "$error" == "0" ]]; then
             # lift DB version:
-#            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET db_version='6', timestamp=(datetime('now','localtime')) WHERE rowid=1"
-#            log="$log
-#            DB-Upgrade successfully processed (v5 ➜ v6)"
-#        fi
-#        error=0
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET value_1='6' 
+                                           WHERE key='db_version'"
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET value_1=(datetime('now','localtime')) 
+                                           WHERE key='timestamp'"
+            log="$log
+            DB-Upgrade successfully processed (v5 ➜ v6)"
+        fi
+        error=0
     fi
 
+
+# DB-update from v6 to v7:
+# ---------------------------------------------------------------------
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'") -eq 60000 ] ; then
+        echo ""
+
+
+
+
+
+
+
+        if [[ "$error" == "0" ]]; then
+            # lift DB version:
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET value_1='7' 
+                                           WHERE key='db_version'"
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET value_1=(datetime('now','localtime')) 
+                                           WHERE key='timestamp'"
+            log="$log
+            DB-Upgrade successfully processed (v6 ➜ v7)"
+        fi
+#        error=0
+    fi
 
 
 # adjust permissions:
@@ -313,6 +477,7 @@ exit 0
 # ➜ edit.sh: Parameter in 'Profil duplizieren' anpassen (bei Änderungen an Tabelle config)
 # ➜ edit.sh: Parameter in 'Datensatz in DB schreiben' anpassen
 # ➜ edit.sh: "$page" == "edit" Profil einlesen anpassen
+
 # ➜ synOCR.sh: DB-Einlesen anpassen
 '
 ToDo:
