@@ -175,7 +175,7 @@ class FindDates:
 
 if __name__ == '__main__':
     acceptedvalue = ['on','off']
-    parser = argparse.ArgumentParser(exit_on_error=False)
+    parser = argparse.ArgumentParser()
     parser.add_argument('-fileWithTextFindings', type=str)
     parser.add_argument('-dateBlackList', type=str, required=False)
     parser.add_argument('-searchnearest', type=str, required=False)
@@ -200,4 +200,3 @@ if __name__ == '__main__':
 
     foundDate = findDate.search_dates()
     print(f"{foundDate}")
-
