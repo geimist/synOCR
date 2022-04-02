@@ -17,6 +17,8 @@ FOR FURTHER UPDATES VISIT THE GERMAN COMMUNITY FORUM.
  -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
     to use this: call synOCR-start.sh with parameter start in DSM task scheduler:
     /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
+ -  🔥 optional Python based date search implemented, which also finds written out months (gthorsten)
+ -  option to reduce multiple spaces to one (helpful with RegEx)
  -  logging deleted backup files in loglevel 2 
  -  notify about updates in main page (GUI)
  -  
