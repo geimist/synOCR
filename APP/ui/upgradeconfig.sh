@@ -61,7 +61,7 @@ OLDIFS=$IFS
                         \"ocrcount\" VARCHAR  DEFAULT ('0') ,
                         \"search_nearest_date\" VARCHAR  DEFAULT ('false') ,
                         \"date_search_method\" VARCHAR  DEFAULT ('python') ,
-                        \"clean_up_spaces\" VARCHAR  DEFAULT ('true') ,
+                        \"clean_up_spaces\" VARCHAR  DEFAULT ('false') ,
                         \"accept_cpdf_license\" VARCHAR  DEFAULT ('false')
                     ) ;"
         sleep 1
@@ -404,7 +404,7 @@ fi
         # clean_up_spaces:
         # ---------------------------------------------------------------------
         sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
-                                       ADD COLUMN \"clean_up_spaces\" VARCHAR DEFAULT ('true')"
+                                       ADD COLUMN \"clean_up_spaces\" VARCHAR DEFAULT ('false')"
         # check:
         if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q clean_up_spaces ) ; then
             log="$log 
