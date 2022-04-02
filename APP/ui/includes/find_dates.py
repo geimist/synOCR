@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 #######################################################################
 #  Parse Textfiles for valid dates.
 #  Check if dates were not listed in a blacklist and/or were not in the future
@@ -5,9 +7,11 @@
 #  DD-/.MM-/.YYYY  / means or
 #  returnvalue = founddate YYYY-MM-DD or None
 #
-#  Author:  gthorsten
-#  Version: 0.1, 24.03.2022
-#
+#  Author: gthorsten
+#  Version:
+#     0.1, 24.03.2022
+#     0.2, 01.04.2022
+#          remove exit on error for call ArgumentParser(exit_on_error=False)
 #
 #
 import datetime
@@ -94,6 +98,16 @@ class FindDates:
         # reg für zahlendatums
         # 12.12.2022
         # 12.12.20     (DD.MM.YY)
+
+        #(0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}(\s|\.|\,)
+        # DD-|.|/MM-|.|/YYYY
+        # DD-|.|/MM-|.|/YY
+        #s(0[1-9]|[12][0-9]|3[01])(\s?)(-|\.|/)(\s?)(0[1-9]|1[0-2])(\s?)(-|\.|/)(\s?)(\d{4}|\d{2})(\s|\.|\,)
+        #
+        # YYYY-|.|/MM-|.|/DD
+        #\s(((\d{4})(\s?)(-|\.|/)(\s?))|((\d{2})(\s?)(-|\.|/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)
+
+
         regex = r"(0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}"
 
         maxlen = len(self.searchtextstr)
