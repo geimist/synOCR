@@ -64,10 +64,15 @@ fi
 
 # load configuration:
 # ---------------------------------------------------------------------
-    sSQL="SELECT profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
-        delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
-        dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate, 
-        backup_max, backup_max_type, pagecount, ocrcount FROM config WHERE profile_ID='$workprofile' "
+    sSQL="SELECT 
+            profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
+            delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
+            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate, 
+            backup_max, backup_max_type, pagecount, ocrcount, search_nearest_date, date_search_method, clean_up_spaces, accept_cpdf_license 
+        FROM 
+            config 
+        WHERE 
+            profile_ID='$workprofile' "
 
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
 
@@ -100,6 +105,10 @@ fi
     backup_max_type=$(echo "$sqlerg" | awk -F'\t' '{print $27}')
     pagecount_profile=$(echo "$sqlerg" | awk -F'\t' '{print $28}')
     ocrcount_profile=$(echo "$sqlerg" | awk -F'\t' '{print $29}')
+    search_nearest_date=$(echo "$sqlerg" | awk -F'\t' '{print $30}')
+    date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
+    clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
+    accept_cpdf_license=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
 
 # read global values:
     dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -146,9 +155,6 @@ fi
     # for loop split all parameters, which start with > -<:
     c=0
     ocropt_arr=()
-#    IFS=$'\012'  # corresponds to a $'\n' newline
-#    for value in $(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" $ocropt"); do
-#        IFS=$OLDIFS
     while read value ; do
         c=$((c+1))
         # now, split parameters with additional arguments:
@@ -173,19 +179,17 @@ fi
     echo "Symbol for tag marking:   ${tagsymbol}"
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "Document split pattern:   ${documentSplitPattern}"
+    echo "clean up spaces:          ${clean_up_spaces}"
+    echo "accept cpdf license:      ${accept_cpdf_license}"
 
-    enhanced_date_search=no
     echo -n "Date search method:       "
-    if [ "$enhanced_date_search" = "yes" ] ; then
+    if [ "$date_search_method" = "python" ] ; then
         echo "use Python (BETA)"
-        echo "                          to use standard search via RegEx, you must change the settings with this command:"
-        echo "                          synosetkeyvalue $(echo $0) enhanced_date_search no"
     else
         echo "use standard search via RegEx"
-#       echo "                          to use enhanced search via Python, you must change the settings with this command:"
-#       echo "                          synosetkeyvalue $(echo $0) enhanced_date_search yes"
     fi
 
+    echo "date found order:         ${search_nearest_date}"
     echo "source for filedate:      ${filedate}"
     echo "ignored dates by search:  ${ignoredDate}"
     [ "$loglevel" = "2" ] && \
@@ -769,17 +773,16 @@ yaml_validate()
 adjust_python()
 {
 #########################################################################################
-# This function check the python3 installation and the necessary modules                #
+# This function check the python3 & pip installation and the necessary modules          #
 #                                                                                       #
 #########################################################################################
 
-# >>>>>>>>>>> DEV-PART
-    return 1    # deactivated
-#   return 0    # deactivated
-# <<<<<<<<<<< DEV-PART
-
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "check the python3 installation and the necessary modules:" "${dashline}"
+    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
+# check python3:
+# ---------------------------------------------------------------------
+    [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check Python:\n"
     if [ ! $(which python3) ]; then
         echo "${log_indent}  (Python3 is not installed / use fallback search with regex"
         echo "${log_indent}  for more precise search results Python3 is required)"
@@ -787,7 +790,9 @@ adjust_python()
     else
         [ "$loglevel" = "2" ] && printf "${log_indent}  python3 already installed ($(which python3))\n"
 
-    # check / install pip:
+# check / install pip:
+# ---------------------------------------------------------------------
+        [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check pip:\n"
         if ! python3 -m pip --version > /dev/null  2>&1 ; then
             printf "${log_indent}  Python3 pip was not found and will be now installed ➜ "
             # install pip:
@@ -800,69 +805,55 @@ adjust_python()
                 echo "ok"
             else
                 echo "failed ! ! ! (please install Python3 pip manually)"
-                #[ "$loglevel" = "2" ] && 
-                echo "install log:" && echo "$tmp_log1" && echo "$tmp_log2"
+                echo "${log_indent}  install log:"
+                echo "$tmp_log1" | sed -e "s/^/${log_indent}  /g"
+                echo "$tmp_log2" | sed -e "s/^/${log_indent}  /g"
                 return 1
             fi
-        fi
-
-        modul_list=$(/var/packages/py3k/target/usr/local/bin/pip list)
-
-    # check / install dateutil (dateparser)
-        unset tmp_log1
-        if !  grep -q dateutil <<<"$modul_list"; then
-            printf "${log_indent}  Python3 module dateutil was not found and will be installed ➜ "
-            # install dateutil:
-            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install python-dateutil)
-
-            # check install:
-            if grep -q dateutil <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
-                echo "ok"
+        else
+            if /var/packages/py3k/target/usr/local/bin/pip list 2>&1 | grep -q "version.*is available" ; then
+                printf "${log_indent}  pip already installed ($(python3 -m pip --version)) / upgrade available ...\n"
+                python3 -m pip install --upgrade pip | sed -e "s/^/${log_indent}  /g"
             else
-                echo "failed ! ! ! (please install python-dateutil manually)"
-                #[ "$loglevel" = "2" ] && 
-                echo "install log:" && echo "$tmp_log1"
-                return 1
+                [ "$loglevel" = "2" ] && printf "${log_indent}  pip already installed ($(python3 -m pip --version))\n"
             fi
         fi
 
-    # check / install datefinder
-    # https://github.com/akoumjian/datefinder
-#        unset tmp_log1
-#        if ! grep -q datefinder <<<"$modul_list" ; then
-#            printf "${log_indent}  Python3 module datefinder was not found and will be installed ➜ "
-            # install datefinder:
-#            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install datefinder)
+        [ "$loglevel" = "2" ] && printf "\n${log_indent}  read installed python modules:\n"
 
-            # check install:
-#            if grep -q datefinder <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
-#                echo "ok"
-#            else
-#                echo "failed ! ! ! (please install python datefinder manually)"
-#                #[ "$loglevel" = "2" ] && 
-#                echo "install log:" && echo "$tmp_log1"
-#                return 1
-#            fi
-#        fi
+        module_list=$(/var/packages/py3k/target/usr/local/bin/pip list 2>/dev/null)
 
-    # check / install pandas:
-#        unset tmp_log1
-#        if ! grep -q pandas <<<"$modul_list" ; then
-#            printf "${log_indent}  Python3 module pandas was not found and will be installed ➜ "
-            # install pandas:
-#            tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install pandas)
+        [ "$loglevel" = "2" ] && echo "$module_list" | sed -e "s/^/${log_indent}  /g"
 
-            # check install:
-#            if grep -q pandas <<<"$(/var/packages/py3k/target/usr/local/bin/pip list)" ; then
-#                echo "ok"
-#            else
-#                echo "failed ! ! ! (please install python pandas manually)"
-                #[ "$loglevel" = "2" ] && 
-#                echo "install log:" && echo "$tmp_log1"
-#                return 1
-#            fi
-#        fi
+# check / install python modules:
+# ---------------------------------------------------------------------
+        synOCR_module_list=( DateTime dateparser python-dateutil )
+
+        echo -e
+        for module in ${synOCR_module_list[@]}; do
+            unset tmp_log1
+            printf "${log_indent}  ➜ check python module \"$module\": ➜ "
+            if !  grep -qi "$module" <<<"$module_list"; then
+                printf "$module was not found and will be installed ➜ "
+
+                # install module:
+                tmp_log1=$(/var/packages/py3k/target/usr/local/bin/pip3 install "$module")
+
+                # check install:
+                if grep -qi "$module" <<<"$(/var/packages/py3k/target/usr/local/bin/pip list 2>/dev/null)" ; then
+                    echo "ok"
+                else
+                    echo "failed ! ! ! (please install $module manually)"
+                    echo "${log_indent}  install log:" && echo "$tmp_log1" | sed -e "s/^/${log_indent}  /g"
+                    return 1
+                fi
+            else
+                printf "ok\n"
+            fi
+        done
     fi
+
+    [ "$loglevel" = "2" ] && printf "\n${log_indent}  module list:\n" && /var/packages/py3k/target/usr/local/bin/pip list | sed -e "s/^/${log_indent}  /g"
 
     return 0
 }
@@ -873,7 +864,7 @@ find_date()
 #########################################################################################
 # This function search for a valid daten in ocr text                                    #
 #                                                                                       #
-# run with python3 and dateutil - if this impossible, use fallback to search with regex #
+# run with python3 - if this impossible, use fallback to search with regex              #
 #                                                                                       #
 #########################################################################################
 
@@ -881,19 +872,33 @@ find_date()
 founddatestr=""
 format=$1   # for regex search: 1 = dd mm [yy]yy
             #                   2 = [yy]yy mm dd
-            #                   3 = mm dd [yy]yy
 
-if [[ $(adjust_python) -eq 0 ]] && [ "$enhanced_date_search" = "yes" ]; then
-#adjust_python
-#if [ $? -eq 1 ]; then
-    # reduce multible spaces to one in source file (for better results):
-    sed -i 's/  */ /g' "$searchfile"
+if [ "$date_search_method" = "python" ]; then
+    adjust_python_log=$(adjust_python)
 
-#   founddatestr=$(./includes/parse_date.py "$searchfile" | grep -v "ERROR" | sed '/^$/d' )
-    founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$(./includes/parse_date.py "$searchfile" | grep -v "ERROR" | sed '/^$/d' )" | head)
+    if [ "$?" -eq 0 ]; then
+        echo "$adjust_python_log"
+        printf "\n${log_indent}adjust_python: OK\n"
+    else
+        echo "$adjust_python_log"
+        printf "\n${log_indent}adjust_python: ! ! ! ERROR ! ! ! - fallback to regex search\n"
+        date_search_method=regex
+    fi
+fi
+
+if [ "$date_search_method" = "python" ]; then
+    if [ "$search_nearest_date" = "nearest" ]; then
+        arg_searchnearest='-searchnearest="on"'
+    fi
+
+    find_dates_result=$( ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate")
+
+#    [ "$loglevel" = "2" ] && 
+    echo "${log_indent}find_dates.py log:" && echo "$find_dates_result" | sed -e "s/^/${log_indent}/g"
+
     format=2
 else
-#    echo "fallback RegEx search"
+    echo "${log_indent}fallback RegEx search"
 
     # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
     echo "${log_indent}  Using date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
@@ -968,6 +973,8 @@ if [ "$dateIsFound" = no ]; then
         find_date 3
     fi
 fi
+
+}
 
 
 adjust_attributes()
@@ -1331,20 +1338,16 @@ echo "  purge logfiles ..."
 # delete surplus logs:
 # ---------------------------------------------------------------------
 count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax ))
-if [ "${count2del}" -ge 0 ]; then
-#    IFS=$'\012'  # corresponds to a $'\n' newline
-#for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} ) ; do
-#        IFS=$OLDIFS
+if [ "${count2del}" != 0 ]; then
     while read line ; do
         rm "${LOGDIR}$line"
     done <<<"$(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} )"
 fi
 
+# delete surplus search text files:
+# ---------------------------------------------------------------------
 count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | wc -l) - $LOGmax ))
-if [ "${count2del}" -ge 0 ]; then
-#    IFS=$'\012'  # corresponds to a $'\n' newline
-#    for i in $(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} ) ; do
-#        IFS=$OLDIFS
+if [ "${count2del}" != 0 ]; then
     while read line ; do
         rm "${LOGDIR}$line"
     done <<<"$(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} )"
@@ -1366,13 +1369,14 @@ purge_backup()
     echo "  purge backup files ..."
 
     # delete surplus backup files:
+    # ---------------------------------------------------------------------
     if [[ "$backup_max_type" == days ]]; then
         echo "${log_indent}delete $(find "${BACKUPDIR}" -maxdepth 1 -iname "*.pdf" -mtime +$backup_max | wc -l) files ( > $backup_max days) ➜ "
         find "${BACKUPDIR}" -maxdepth 1 -iname "*.pdf" -mtime +$backup_max -exec rm -f${rm_log_level} {} \; | sed -e "s/^/${log_indent}/g"
     else
         echo "${log_indent}delete "$(ls -t "${BACKUPDIR}" | grep -i pdf | tail -n+$(($backup_max+1)) | wc -l )" files ( > $backup_max files) ➜ "
         count2del=$(( $(ls -t "${BACKUPDIR}" | grep -i pdf | wc -l) - $backup_max ))
-        if [ "${count2del}" -ge 0 ]; then
+        if [ "${count2del}" != 0 ]; then
             while read line ; do
                 rm -f${rm_log_level} "${BACKUPDIR}/${line}" | sed -e "s/^/${log_indent}/g"
             done <<<"$(ls -tr "${BACKUPDIR}" | grep -i pdf | head -n${count2del} )"
@@ -1555,11 +1559,10 @@ for input in ${files} ; do
     outputtmp="${work_tmp}/${title}.pdf"
     echo "${log_indent}  temp. target file: ${outputtmp}"
 
-    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
-
 # OCRmyPDF:
 # ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "processing PDF @ OCRmyPDF:" "${dashline}"
+    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
     sleep 1
     dockerlog=$(OCRmyPDF 2>&1)
@@ -1640,7 +1643,10 @@ for input in ${files} ; do
     fi
 
     /bin/pdftotext -layout $pdftotextOpt "$output" "$searchfile"
-    sed -i 's/^ *//' "$searchfile"        # delete beginning blanks
+    sed -i 's/^ *//' "$searchfile"        # delete beginning spaces
+    if [ "$clean_up_spaces" = "true" ]; then
+        sed -i 's/ \+/ /g' "$searchfile"
+    fi
 
     content=$(cat "$searchfile" )   # the standard rules search in the variable / the extended rules directly in the source file
 
