@@ -47,7 +47,6 @@ for i in "$@" ; do
                     /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start
                 else
                     # check if restart is necessary:
-#                   echo "still running (count of processes: $(echo $(inotify_process_id) | awk '{ print NF; }')) - check if restart is necessary:" | tee -a "${log_dir_list[@]}"
                     sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
 
                     if [ "$(cat "$monitored_folders" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
@@ -57,7 +56,6 @@ for i in "$@" ; do
                         echo "stop monitoring ..." | tee -a "${log_dir_list[@]}"
                         /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop
                     else
-#                       echo "no restart necessary" | tee -a "${log_dir_list[@]}"
                         rm -f "${monitored_folders}_tmp"
                         break
                     fi
@@ -114,7 +112,7 @@ if [ "$callFrom" = shell ] ; then
         echo -n "    ➜ check admin permissions: "
         if ! cat /etc/group | grep ^administrators | grep -q synOCR ; then
             echo "added user synOCR to group administrators ..."
-            sed -i "/^administrators:/ s/$/,synOCR/" /etc/group
+            synogroup --member administrators synOCR
         else
             echo "ok"
         fi
@@ -127,7 +125,7 @@ if [ "$callFrom" = shell ] ; then
             synogroup --member docker synOCR
         elif ! cat /etc/group | grep ^docker: | grep -q synOCR ; then
             echo "added user synOCR to group docker ..."
-            sed -i "/^docker:/ s/$/,synOCR/" /etc/group
+            synogroup --member docker synOCR
         else
             echo "ok [$(cat /etc/group | grep ^docker:)]"
         fi
