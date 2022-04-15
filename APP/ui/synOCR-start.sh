@@ -112,7 +112,7 @@ if [ "$callFrom" = shell ] ; then
         echo -n "    ➜ check admin permissions: "
         if ! cat /etc/group | grep ^administrators | grep -q synOCR ; then
             echo "added user synOCR to group administrators ..."
-            synogroup --member administrators synOCR
+            sed -i "/^administrators:/ s/$/,synOCR/" /etc/group
         else
             echo "ok"
         fi
@@ -125,7 +125,7 @@ if [ "$callFrom" = shell ] ; then
             synogroup --member docker synOCR
         elif ! cat /etc/group | grep ^docker: | grep -q synOCR ; then
             echo "added user synOCR to group docker ..."
-            synogroup --member docker synOCR
+            sed -i "/^docker:/ s/$/,synOCR/" /etc/group
         else
             echo "ok [$(cat /etc/group | grep ^docker:)]"
         fi
