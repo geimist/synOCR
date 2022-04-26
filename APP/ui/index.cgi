@@ -1,10 +1,6 @@
 #!/bin/bash
 # /usr/syno/synoman/webman/3rdparty/synOCR/index.cgi
 
-# Neu hinzugefügte Language Variablen
-lang_popup_note="Hinweis"
-lang_button_abort="Abbruch"
-
 # Initiate system
 # ---------------------------------------------------------------------
     machinetyp=$(uname --machine)
