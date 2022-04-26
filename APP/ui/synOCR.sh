@@ -170,7 +170,9 @@ fi
             ocropt_arr+=( "$value" )
         fi
     done <<<"$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" $ocropt")"
+
     unset c
+
     echo "ocropt_array:             ${ocropt_arr[@]}"
 
     echo "search prefix:            $SearchPraefix"
@@ -200,6 +202,7 @@ fi
     else
         echo "WARNING: Docker could not be found. Please check if the Docker package has been installed!"
     fi
+
     echo "DSM notify to user:       ${MessageTo}"
 
 # Configuration for LogLevel:
@@ -873,35 +876,50 @@ founddatestr=""
 format=$1   # for regex search: 1 = dd mm [yy]yy
             #                   2 = [yy]yy mm dd
 
-if [ "$date_search_method" = "python" ]; then
+# run python check
+# ---------------------------------------------------------------------
+if [ "$tmp_date_search_method" = "python" ] && [ "$adjust_python_already_checked" = "no" ]; then
     adjust_python_log=$(adjust_python)
 
     if [ "$?" -eq 0 ]; then
         echo "$adjust_python_log"
-        printf "\n${log_indent}adjust_python: OK\n"
+        printf "\n${log_indent}adjust_python: OK\n\n"
+        adjust_python_already_checked=ok
     else
         echo "$adjust_python_log"
-        printf "\n${log_indent}adjust_python: ! ! ! ERROR ! ! ! - fallback to regex search\n"
+        printf "\n${log_indent}adjust_python: ! ! ! ERROR ! ! ! - fallback to regex search\n\n"
         date_search_method=regex
+        adjust_python_already_checked=failed
     fi
 fi
 
-if [ "$date_search_method" = "python" ]; then
+# run python date search / RegEx date search
+# ---------------------------------------------------------------------
+if [ "$date_search_method" = "python" ] && [ "$find_date_1st_run" = "yes" ]; then
+    find_date_1st_run=no    # fallback if python search failed
     if [ "$search_nearest_date" = "nearest" ]; then
         arg_searchnearest='-searchnearest="on"'
     fi
 
-    find_dates_result=$( ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate")
+    founddatestr=$( ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" 2>&1)
 
 #    [ "$loglevel" = "2" ] && 
-    echo "${log_indent}find_dates.py log:" && echo "$find_dates_result" | sed -e "s/^/${log_indent}/g"
+    echo "${log_indent}find_dates.py log:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
 
     format=2
+    
+# test and maybe fallback to RegEx search, if result of python search not valid:
+# ---------------------------------------------------------------------
+    date "+%d/%m/%Y" -d $(awk -F- '{print $2}' <<<"$founddatestr" )/$(awk -F- '{print $3}' <<<"$founddatestr" )/$(awk -F- '{print $1}' <<<"$founddatestr" ) > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+    if [ $? -ne 0 ]; then
+        printf "\n${log_indent}! ! ! failed ...\n${log_indent}fallback to RegEx search\n\n"
+        tmp_date_search_method=regex
+        find_date 1
+    fi
 else
-    echo "${log_indent}fallback RegEx search"
-
+    # run RegEx date search
     # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
-    echo "${log_indent}  Using date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
+    echo "${log_indent}  search for date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
     if [ "$format" -eq 1 ]; then
         # search by format: dd[./-]mm[./-]yy(yy)
         founddatestr=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
@@ -1022,7 +1040,8 @@ adjust_attributes()
 }
 
 
-replace_variables(){
+replace_variables()
+{
     echo "$1" | sed "s~§dsource~${date_dd_source}~g;s~§msource~${date_mm_source}~g;s~§ysource2~${date_yy_source:2}~g;s~§ysource4~${date_yy_source}~g" \
      | sed "s~§ysource~${date_yy_source}~g;s~§hhsource~${date_houre_source}~g;s~§mmsource~${date_min_source}~g;s~§sssource~${date_sek_source}~g;s~§dnow~$(date +%d)~g" \
      | sed "s~§mnow~$(date +%m)~g;s~§ynow2~$(date +%y)~g;s~§ynow4~$(date +%Y)~g;s~§ynow~$(date +%Y)~g;s~§hhnow~$(date +%H)~g;s~§mmnow~$(date +%M)~g;s~§ssnow~$(date +%S)~g" \
@@ -1551,6 +1570,9 @@ for input in ${files} ; do
     echo -n "PROCESSING:   ➜ $filename"
     echo " ($(date))"
     date_start=$(date +%s)
+    find_date_1st_run=yes
+    adjust_python_already_checked=no
+    tmp_date_search_method="$date_search_method"
 
     if [ "$delSearchPraefix" = "yes" ] && [ ! -z "${SearchPraefix}" ]; then
         title=$( echo "${title}" | sed s/${SearchPraefix}//I )
