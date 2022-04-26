@@ -120,14 +120,14 @@ lang_button_abort="Abbruch"
         fi
 
 
-# Verarbeitung von GET-Request Variablen
+# Processing of GET request variables
 # --------------------------------------------------------------
     set_var="/usr/syno/bin/synosetkeyvalue"
     get_var="/bin/get_key_value"
     var="${app_home}/etc/var.txt"
         
-    # Sicherung des Internal Field Separator (IFS) sowie das separieren der
-    # GET/POST key/value Anfragen, durch Lokalisierung des Trennzeichen "&"
+    # Backup of the Internal Field Separator (IFS) as well as the separation of 
+    # GET/POST key/value requests, by localization of the separator "&".
     if [ -z "${backupIFS}" ]; then
         backupIFS="${IFS}"
         IFS='&'
@@ -136,7 +136,7 @@ lang_button_abort="Abbruch"
         IFS="${backupIFS}"
     fi
 
-    # Analysieren eingehender GET-Anfragen und Verarbeitung zu key="$value" Variablen
+    # Analyze incoming GET requests and process them into key="$value" variable
     for i in "$@"; do
         IFS="$backupIFS"
         variable=${i%%=*}
@@ -172,13 +172,13 @@ echo '
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <!-- Einbinden von bootstrap Framework 5.1.3 -->
+        <!-- Include bootstrap framework 5.1.3 -->
         <link rel="stylesheet" href="template/bootstrap/css/bootstrap.min.css" />
 
-        <!-- Einbinden eigener CSS Formatierungen -->
+        <!-- Include custom CSS formatting -->
         <link rel="stylesheet" href="template/stylesheet.css" />
 
-        <!-- Einbinden von jQuery -->
+        <!-- Include jQuery -->
         <script src="template/jquery/jquery-3.6.0.min.js"></script>
 </head>
 <body>
@@ -189,14 +189,14 @@ echo '
         <div class="container-fluid">
             <div class="row mt-2">'
 
-                # Linke Spalte - Navigation
+                # Left column - Navigation
                 # ------------------------------------------------------
                 echo '
                 <div class="col-3 pr-1 border-end border-light border-5">
                     <ul class="nav nav-pills flex-column">'
 
 
-                        # Startseite
+                        # Startpage
                         if [[ "$mainpage" == "main" ]]; then
                             echo '
                             <li class="nav-item">
@@ -213,7 +213,7 @@ echo '
                             </li>'
                         fi
 
-                        # Konfiguration
+                        # Settings
                         if [[ "$mainpage" == "edit" ]]; then
                             echo '
                             <li class="nav-item">
@@ -230,7 +230,7 @@ echo '
                             </li>'
                         fi
 
-                        # Zeitplaner
+                        # Timer
 #                        if [[ "$mainpage" == "timer" ]] && [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
 #                            echo '
 #                            <li class="nav-item">
@@ -247,7 +247,7 @@ echo '
 #                            </li>'
 #                        fi
 
-                        # Hilfe
+                        # Help
                         if [[ "$mainpage" == "help" ]]; then
                             echo '
                             <li class="nav-item">
@@ -268,13 +268,13 @@ echo '
                     </ul>
                 </div><!-- col -->'
 
-                # Rechte Spalte
+                # Right column
                 # ------------------------------------------------------
                 echo '
                 <div class="col-9 pl-1">
                     <form action="index.cgi" method="get" autocomplete="on">'
 
-                        # Dynamisches nachladen der Seiten
+                        # Dynamic page reloading
                         if [ -z "$mainpage" ]; then
                             echo 'The page could not be found!'
                         else
@@ -298,7 +298,7 @@ echo '
         </div><!-- container -->
     </article>
 
-    <!-- Einbinden von bootstrap JavaScript 5.1.3 -->
+    <!-- Include bootstrap JavaScript 5.1.3 -->
     <script src="template/bootstrap/js/bootstrap.min.js"></script>
 
 </body>
