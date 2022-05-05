@@ -1,4 +1,4 @@
-# synOCR [DOWNLOAD](https://geimist.eu/synOCR)
+# synOCR - [DOWNLOAD](https://geimist.eu/synOCR)
 
 synOCR ist eine einfache GUI für den Dockercontainer OCRmyPDF. 
 
