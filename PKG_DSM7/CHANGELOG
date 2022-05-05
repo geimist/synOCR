@@ -2,7 +2,7 @@ Release Notes
 
 ! ! ! ATTENTION ! ! ! 
 This version only supports DSM7
-DSM6.x version you can found at cphub.net
+DSM6.x version you can found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/CHANGELOG
 
 known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted 
