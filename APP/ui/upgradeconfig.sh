@@ -43,7 +43,7 @@ OLDIFS=$IFS
                         \"taglist\" varchar ,
                         \"searchAll\" varchar DEFAULT ('no') ,
                         \"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,
-                        \"NameSyntax\" varchar DEFAULT ('§y-§m-§d_§tag_§tit') ,
+                        \"NameSyntax\" varchar DEFAULT ('§yocr-§mocr-§docr_§tag_§tit') ,
                         \"ocropt\" varchar DEFAULT ('-srd -l deu+eng') ,
                         \"dockercontainer\" varchar DEFAULT ('geimist/ocrmypdf-polyglot') ,
                         \"PBTOKEN\" varchar ,
