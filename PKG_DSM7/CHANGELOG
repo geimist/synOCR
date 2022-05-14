@@ -11,6 +11,7 @@ known issues / limitations:
 
 1.3.0 [2022-xx-xx]
   BUGFIXES:
+ -  counting of log and backup files to be deleted was not correct under certain situations
  -  
   IMPROVEMENT:
  -  YAML rules: if the value for condition not set - fallback to any
@@ -19,7 +20,8 @@ known issues / limitations:
  -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
     to use this: call synOCR-start.sh with parameter start in DSM task scheduler:
     /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
- -  🔥 optional Python based date search implemented, which also finds written out months (gthorsten)
+ -  🔥 new Python based date search implemented, which also finds written out months (gthorsten)
+ -  🔥 support separator sheet - dokument split pattern can be configured in GUI
  -  option to reduce multiple spaces to one (helpful with RegEx)
  -  logging deleted backup files in loglevel 2 
  -  notify about updates in main page (GUI)
