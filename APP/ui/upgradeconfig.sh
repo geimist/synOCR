@@ -1,6 +1,11 @@
 #!/bin/sh
-# /usr/syno/synoman/webman/3rdparty/synOCR/upgradeconfig.sh
-# checks the configuration DB for new variables and adds them if necessary
+
+#################################################################################
+#   description:    checks / create the configuration DB for new variables      #
+#                   and adds them if necessary                                  #
+#   path:           /usr/syno/synoman/webman/3rdparty/synOCR/upgradeconfig.sh   #
+#   © 2022 by geimist                                                           #
+#################################################################################
 
 log=""
 error=0
