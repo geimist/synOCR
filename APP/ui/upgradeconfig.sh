@@ -393,7 +393,7 @@ fi
         # date_search_method:
         # ---------------------------------------------------------------------
         sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
-                                       ADD COLUMN \"date_search_method\" VARCHAR DEFAULT ('python')"
+                                       ADD COLUMN \"date_search_method\" VARCHAR DEFAULT ('regex')"
         # check:
         if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q date_search_method ) ; then
             log="$log 
@@ -412,31 +412,6 @@ fi
             error=1
         fi
 
-        # accept_cpdf_license:
-        # ---------------------------------------------------------------------
-        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
-                                       ADD COLUMN \"accept_cpdf_license\" VARCHAR DEFAULT ('false')"
-        # check:
-        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q accept_cpdf_license ) ; then
-            log="$log 
-            ➜ ERROR: the DB column could not be created (accept_cpdf_license)"
-            error=1
-        fi
-
-        if [[ "$error" == "0" ]]; then
-            # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-                                           SET value_1='6' 
-                                           WHERE key='db_version'"
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-                                           SET value_1=(datetime('now','localtime')) 
-                                           WHERE key='timestamp'"
-            log="$log
-            DB-Upgrade successfully processed (v5 ➜ v6)"
-        fi
-        error=0
-    fi
-
 
 # DB-update from v6 to v7:
 # ---------------------------------------------------------------------
@@ -444,6 +419,31 @@ fi
         echo ""
 
 
+
+        # accept_cpdf_license / maybe not necessary:
+        # ---------------------------------------------------------------------
+#        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+#                                       ADD COLUMN \"accept_cpdf_license\" VARCHAR DEFAULT ('false')"
+        # check:
+#        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q accept_cpdf_license ) ; then
+#            log="$log 
+#            ➜ ERROR: the DB column could not be created (accept_cpdf_license)"
+#            error=1
+#        fi
+
+#        if [[ "$error" == "0" ]]; then
+            # lift DB version:
+#            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+#                                           SET value_1='6' 
+#                                           WHERE key='db_version'"
+#            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+#                                           SET value_1=(datetime('now','localtime')) 
+#                                           WHERE key='timestamp'"
+#            log="$log
+#            DB-Upgrade successfully processed (v5 ➜ v6)"
+#        fi
+#        error=0
+#    fi
 
 
 
