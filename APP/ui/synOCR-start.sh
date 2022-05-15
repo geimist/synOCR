@@ -1,9 +1,15 @@
 #!/bin/sh
-# /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start stop GUI
 
-# changes to synOCR directory and starts synOCR with or without LOG (depending on configuration)
-# adjust monitoring with inotifywait
-
+#################################################################################
+#   description:    - changes to synOCR directory and starts synOCR             #
+#                     with or without LOG (depending on configuration)          #
+#                   - adjust monitoring with inotifywait                        #
+#   path:           /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh    #
+#   arguments:      - start (starts inotifywait / restarts it, if needed)       #
+#                   - stop (stop inotifywait)                                   #
+#                   - GUI (log formated as html)                                #
+#   © 2022 by geimist                                                           #
+#################################################################################
 
 callFrom=shell
 exit_status=0
@@ -11,6 +17,7 @@ dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
 machinetyp=$(uname --machine)
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
 
+umask 0011   # so that files can also be edited by other users / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
 # create list (array need for tee) with all active log folders:
 # --------------------------------------------------------------
@@ -43,7 +50,7 @@ for i in "$@" ; do
                 # start, if not running:
                 if [ -z "$(inotify_process_id)" ] ;then
                     echo "does not run - start monitoring ..." | tee -a "${log_dir_list[@]}"
-                    sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}"
+                    sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}" 
                     /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start
                 else
                     # check if restart is necessary:
@@ -309,10 +316,8 @@ fi
         LOGDIR="${LOGDIR%/}/"
         LOGFILE="${LOGDIR}synOCR_$(date +%Y-%m-%d_%H-%M-%S).log"
 
-        umask 000   # so that files can also be edited by other users / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
-
         if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
-            ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1     # $LOGFILE is passed as a parameter to synOCR, since the file may be needed there for ERRORFILES
+            ./synOCR.sh "$profile_ID" "$LOGFILE" >> "$LOGFILE" 2>&1     # $LOGFILE is passed as a parameter to synOCR, since the file may be needed there for ERRORFILES
         elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$LOGDIR" | awk -F/ '{print $3}') ; then
                 if [ "$callFrom" = GUI ] ; then
@@ -326,7 +331,7 @@ fi
                 continue
             fi
             mkdir -p "$LOGDIR"
-            ./synOCR.sh "$profile_ID" "$LOGFILE" >> $LOGFILE 2>&1
+            ./synOCR.sh "$profile_ID" "$LOGFILE" >> "$LOGFILE" 2>&1
         else
             loglevel=0
             ./synOCR.sh "$profile_ID"
