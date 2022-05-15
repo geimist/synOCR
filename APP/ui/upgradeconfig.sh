@@ -411,6 +411,7 @@ fi
             ➜ ERROR: the DB column could not be created (clean_up_spaces)"
             error=1
         fi
+    fi
 
 
 # DB-update from v6 to v7:
@@ -420,7 +421,8 @@ fi
 
 
 
-        # accept_cpdf_license / maybe not necessary:
+
+        # accept_cpdf_license / maybe not needed:
         # ---------------------------------------------------------------------
 #        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
 #                                       ADD COLUMN \"accept_cpdf_license\" VARCHAR DEFAULT ('false')"
@@ -443,8 +445,6 @@ fi
 #            DB-Upgrade successfully processed (v5 ➜ v6)"
 #        fi
 #        error=0
-#    fi
-
 
 
 
