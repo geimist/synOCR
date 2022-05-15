@@ -1,7 +1,7 @@
 #!/bin/bash
 # /usr/syno/synoman/webman/3rdparty/synOCR/edit.sh
 
-dev_mode="true" # show field in development ...
+dev_mode="false" # show field in development ...
 
 OLDIFS=$IFS
 APPDIR=$(cd $(dirname $0);pwd)
@@ -1248,7 +1248,6 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
-    if [ "$dev_mode" = "true" ]; then
                     # Document split pattern
                     echo '
                     <div class="row mb-3">
@@ -1284,7 +1283,6 @@ if [[ "$page" == "edit" ]]; then
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
-    fi
 
                     # Taglist
                     echo '
