@@ -1,5 +1,10 @@
 #!/bin/bash
-# /usr/syno/synoman/webman/3rdparty/synOCR/main.sh
+
+#################################################################################
+#   description:    - generates the main page for the GUI                       #
+#   path:           /usr/syno/synoman/webman/3rdparty/synOCR/main.sh            #
+#   © 2022 by geimist                                                           #
+#################################################################################
 
 PATH=$PATH:/usr/local/bin:/opt/usr/bin
 
@@ -77,6 +82,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
         # check if the list of watched folders is still up to date:
         monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
         sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
+
         if [ "$(cat "$monitored_folders" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
             echo ' 
             <h5 class="text-center pulsate" style="font-size: 0.7rem;">
