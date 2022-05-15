@@ -3,7 +3,6 @@
 #################################################################################
 #   description:    - generates the configuration page for the GUI              #
 #   path:            /usr/syno/synoman/webman/3rdparty/synOCR/edit.sh           #
-#   © 2022 by geimist                                                           #
 #################################################################################
 
 dev_mode="false" # show field in development ...
