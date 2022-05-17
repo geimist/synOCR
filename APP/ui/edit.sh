@@ -1280,7 +1280,9 @@ if [[ "$page" == "edit" ]]; then
                             <div class="collapse" id="documentSplitPattern-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
-                                         '$lang_edit_set2_documentSplitPattern_help1'
+                                         '$lang_edit_set2_documentSplitPattern_help1'<br><br>
+                                         '$lang_edit_set2_documentSplitPattern_help2'<br><br>
+                                         '$lang_edit_set2_documentSplitPattern_help3 '<a href="https://geimist.eu/synOCR/SYNOCR_SEPARATOR_SHEET.pdf.html" onclick="window.open(this.href); return false;" style="color: #BD0010;"><b>(DOWNLOAD)</b></a>
                                     </span>
                                 </div>
                             </div>
