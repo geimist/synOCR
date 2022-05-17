@@ -121,6 +121,8 @@ lang_edit_set2_delsearchpref_help2="(hilfreich, sofern der Quellordner auch glei
 
 lang_edit_set2_documentSplitPattern_title="Suchmuster Dokumententrenner"
 lang_edit_set2_documentSplitPattern_help1="Hier kann ein Muster definiert werden um ein großes Dokument automatisiert in Teildokumente zu splitten. Das Quelldokument wird an den Seiten auf denen das angegebene Suchmuster gefunden wurde getrennt."
+lang_edit_set2_documentSplitPattern_help2="ACHTUNG: Seiten, die das Trennmuster enthalten, werden verworfen!"
+lang_edit_set2_documentSplitPattern_help3="Hier findest du eine Vorlage zum Ausdrucken:"
 
 lang_edit_set2_taglist_title="zu suchende Tags"
 lang_edit_set2_taglist_help1="Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung."
@@ -197,18 +199,18 @@ lang_edit_set2_filedate_help2="Ist OCR-Datum gewählt, wird aber keins gefunden,
 lang_edit_set2_ignoredDate_title="Daten ignorieren"
 lang_edit_set2_ignoredDate_help1="Angegebene Daten werden bei der Suche ignoriert. Es können mehrere Daten angegeben werden (getrennt durch Leerzeichen). Wichtig ist die richtige Formatangabe: YYY-MM-DD (z.B. 2021-02-29 2021-04-31)"
 
-lang_edit_set2_filedate_search_nearest_date_title="Suchergebnis Reihenfolge"
+lang_edit_set2_filedate_search_nearest_date_title="Datum Suchergebnis Reihenfolge"
 lang_edit_set2_filedate_search_nearest_firstfound="1. Treffer in Dokument"
 lang_edit_set2_filedate_search_nearest_nearest="jüngste Datum in Vergangenheit"
 lang_edit_set2_filedate_search_nearest_help1="Welcher Fund der Datumssuche soll verwendet werden?"
 lang_edit_set2_filedate_search_nearest_help2="Das erste im Dokument oder das nähste Datum in der Vergangenheit aller Funde? (greift nur bei der Python basierten Suche!)"
 
 lang_edit_set2_date_search_method_title="Methode der Datumsuche"
-lang_edit_set2_date_search_method_python="Python (standard)"
+lang_edit_set2_date_search_method_python="Python"
 lang_edit_set2_date_search_method_regex="RegEx"
 lang_edit_set2_date_search_method_help1="Folgende Möglichkeiten stehen für die Datumsuche zur Verfügung: Python-Skript und die Suche als regulärer Ausdruck."
 lang_edit_set2_date_search_method_help2="Das Pythonskrip sucht umfangreicher und findet z.B. auch ausgeschriebene Monate. Vorraussetzung ist ein installiertes Python3. Notwendige Module werden von synOCR nachinstalliert."
-lang_edit_set2_date_search_method_help3="Die Suche als regulärer Ausdruck findet nur Zahlenformate, ist aber von keiner weiteren Software abhängig."
+lang_edit_set2_date_search_method_help3="Die Suche als regulärer Ausdruck findet nur Zahlenformate, ist aber von keiner weiteren Software abhängig und ist schneller."
 
 lang_edit_set2_clean_up_spaces_title="Leerzeichen bereinigte Suche"
 lang_edit_set2_clean_up_spaces_true="Leerzeichen bereinigen"
