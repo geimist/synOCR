@@ -50,7 +50,7 @@ OLDIFS=$IFS
                         \"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,
                         \"NameSyntax\" varchar DEFAULT ('§yocr-§mocr-§docr_§tag_§tit') ,
                         \"ocropt\" varchar DEFAULT ('-srd -l deu+eng') ,
-                        \"dockercontainer\" varchar DEFAULT ('geimist/ocrmypdf-polyglot') ,
+                        \"dockercontainer\" varchar DEFAULT ('jbarlow83/ocrmypdf:v12.7.2') ,
                         \"PBTOKEN\" varchar ,
                         \"dsmtextnotify\" varchar DEFAULT ('on') ,
                         \"MessageTo\" varchar DEFAULT ('admin') ,
@@ -58,14 +58,14 @@ OLDIFS=$IFS
                         \"loglevel\" varchar DEFAULT ('1') ,
                         \"filedate\" VARCHAR DEFAULT ('ocr') ,
                         \"tagsymbol\" VARCHAR DEFAULT ('#') ,
-                        \"documentSplitPattern\" varchar ,
+                        \"documentSplitPattern\" varchar DEFAULT ('SYNOCR-SEPARATOR-SHEET') ,
                         \"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31') ,
                         \"backup_max\" VARCHAR ,
                         \"backup_max_type\" VARCHAR DEFAULT ('files') ,
                         \"pagecount\" VARCHAR DEFAULT ('0') ,
                         \"ocrcount\" VARCHAR  DEFAULT ('0') ,
                         \"search_nearest_date\" VARCHAR  DEFAULT ('false') ,
-                        \"date_search_method\" VARCHAR  DEFAULT ('python') ,
+                        \"date_search_method\" VARCHAR  DEFAULT ('regex') ,
                         \"clean_up_spaces\" VARCHAR  DEFAULT ('false') ,
                         \"accept_cpdf_license\" VARCHAR  DEFAULT ('false')
                     ) ;"
@@ -233,7 +233,7 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
             # documentSplitPattern:
             # ---------------------------------------------------------------------
             sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
-                                           ADD COLUMN \"documentSplitPattern\" varchar"
+                                           ADD COLUMN \"documentSplitPattern\" varchar DEFAULT ('SYNOCR-SEPARATOR-SHEET') "
             # check:
             if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q documentSplitPattern ) ; then
                 log="$log 
