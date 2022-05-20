@@ -1,7 +1,10 @@
 #!/bin/sh
-# /usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh
 
-###################################################################################
+#################################################################################
+#   description:    main script for running synOCR                              #
+#   path:           /usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh          #
+#   © 2022 by geimist                                                           #
+#################################################################################
 
     echo "    -----------------------------------"
     echo "    |    ==> installation info <==    |"
@@ -28,11 +31,12 @@
 # ---------------------------------------------------------------------------------
     niceness=15                 # The priority is in the range from -20 to +19 (in integer steps), where -20 is the highest priority (=most computing power) and 19 is the lowest priority (=lowest computing power). The default priority is 0. NEGATIVE VALUES SHOULD NEVER BE DEFAULTED!
     workprofile="$1"            # the profile submitted by the start script
-    LOGFILE="$2"                # current logfile / is submitted by start script
+    current_logfile="$2"        # current logfile / is submitted by start script
     shopt -s globstar           # enable 'globstar' shell option (to use ** for directionary wildcard)
     python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser python-dateutil PyPDF2 )
+    synOCR_python_module_list=( DateTime dateparser python-dateutil PyPDF2 Pillow )
+    python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     dashline="-----------------------------------------------------------------------------------"
 
 #    if ! echo "$PATH" | grep -q '/usr/local/bin\|/opt/usr/bin' ; then
@@ -111,7 +115,13 @@ fi
     search_nearest_date=$(echo "$sqlerg" | awk -F'\t' '{print $30}')
     date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
     clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
-    accept_cpdf_license=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
+
+
+#    img2pdf=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
+    img2pdf=true
+
+
+#   accept_cpdf_license=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
 
 # read global values:
     dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -793,15 +803,6 @@ prepare_python()
 #                                                                                       #
 #########################################################################################
 
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "check the python3 installation and the necessary modules:" "${dashline}"
-    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
-
-# check / install / activate python enviroment:
-# ---------------------------------------------------------------------
-    python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
-    [ ! -d "$python3_env" ] && python3 -m venv "$python3_env"
-    source "${python3_env}/bin/activate"
-    
 # check python3:
 # ---------------------------------------------------------------------
     [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check Python:\n"
@@ -1419,6 +1420,11 @@ collect_input_files()
 #########################################################################################
 
     source_dir="$1"
+    if [ "$2" = "image" ]; then # image or pdf
+        source_file_type=".jpg$|.png$|.tiff$|.jpeg$"
+    else
+        source_file_type=".pdf"
+    fi
     exclusion=false
     SearchSuffix=""     # defined in next step to correct rename splitted files
     SearchPraefix_tmp="$SearchPraefix"
@@ -1433,20 +1439,21 @@ collect_input_files()
         # is suffix
         SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
         if [ "$exclusion" = false ] ; then
-            files=$(find "${source_dir}" -maxdepth 1 -iname "*${SearchPraefix_tmp}.pdf" -type f)
+            files=$(find "${source_dir}" -maxdepth 1 -iname "*${SearchPraefix_tmp}.*" -type f | egrep -i "$source_file_type")
             SearchSuffix="$SearchPraefix_tmp"
         elif [ "$exclusion" = true ] ; then
-            files=$(find "${source_dir}" -maxdepth 1 -iname "*.pdf" -type f -not -iname "*${SearchPraefix_tmp}.pdf" -type f)
+            files=$(find "${source_dir}" -maxdepth 1 -iname "*" -type f -not -iname "*${SearchPraefix_tmp}.*" -type f | egrep -i "$source_file_type")
         fi
     else
         # is prefix
         SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
         if [ "$exclusion" = false ] ; then
-            files=$(find "${source_dir}" -maxdepth 1 -iname "${SearchPraefix_tmp}*.pdf" -type f)
+            files=$(find "${source_dir}" -maxdepth 1 -iname "${SearchPraefix_tmp}*" -type f | egrep -i "$source_file_type")
         elif [ "$exclusion" = true ] ; then
-            files=$(find "${source_dir}" -maxdepth 1 -iname "*.pdf" -type f -not -iname "${SearchPraefix_tmp}*.pdf" -type f)
+            files=$(find "${source_dir}" -maxdepth 1 -iname "*" -type f -not -iname "${SearchPraefix_tmp}*" -type f | egrep -i "$source_file_type")
         fi
     fi
+
 }
 
 
@@ -1463,20 +1470,74 @@ prepare_target_path()
 #                                                                                       #
 #########################################################################################
 
-    local target_dir_path="$1"
+    local target_dir_path="${1%/}/"
     local target_filename="$2"
+    local target_fileext="${2##*.}"
 
-    destfilecount=$(ls -t "${target_dir_path}" | grep -o "^${target_filename%.*}.*" | wc -l)
+    destfilecount=$(ls -t "${target_dir_path}" | grep -o "^${target_filename%.*}.*${target_fileext}" | wc -l)
     if [ "$destfilecount" -eq 0 ]; then
-        output="${target_dir_path}/${target_filename%.*}.pdf"
+        output="${target_dir_path}${target_filename%.*}.${target_fileext}"
     else
-        while [ -f "${target_dir_path}/${target_filename%.*} ($destfilecount).pdf" ]; do
+        while [ -f "${target_dir_path}${target_filename%.*} ($destfilecount).${target_fileext}" ]; do
             destfilecount=$(( $destfilecount + 1 ))
             echo "${log_indent}  ➜ continue counting … ($destfilecount)"
         done
-        output="${target_dir_path}/${target_filename%.*} ($destfilecount).pdf"
+        output="${target_dir_path}${target_filename%.*} ($destfilecount).${target_fileext}"
         echo "${log_indent}  ➜ File name already exists! Add counter ($destfilecount)"
     fi
+
+}
+
+
+py_img2pdf()
+{
+#########################################################################################
+# This function convert images to pdf                                                   #
+# https://datatofish.com/images-to-pdf-python/                                          #
+#########################################################################################
+
+printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "convert images to pdf" "${dashline}"
+
+collect_input_files "${INPUTDIR}" "image"
+
+while read input ; do
+
+    [ -z "$input" ] && continue
+
+    printf "\n"
+    filename=$(basename "$input")
+    title=${filename%.*}
+    echo "CURRENT FILE:   ➜ source: $filename"
+    date_start=$(date +%s)
+
+    # convert file
+    # ---------------------------------------------------------------------
+    prepare_target_path "${INPUTDIR}" "${title}${SearchSuffix}.pdf"
+    echo "${log_indent}➜ target: $output"
+    {   echo 'import  PIL as pillow'
+        echo 'from PIL import Image'
+        echo 'image_1 = Image.open(r"'$input'")'
+        echo "im_1 = image_1.convert('RGB')"
+        echo 'im_1.save(r"'$output'")'
+        echo 'exit()'
+    } | python3 
+
+    # backup source
+    # ---------------------------------------------------------------------
+   if [ $(stat -c %s "${output}") -ne 0 ] && [ -f "${output}" ];then
+        if [ "$backup" = true ]; then
+            echo "${log_indent}➜ backup source file" # to $output"
+            prepare_target_path "${BACKUPDIR}" "$filename"
+            mv "$input" "$output"
+        else
+            echo "${log_indent}➜ delete source file ($filename)"
+            rm -f "$input"
+        fi
+    else
+        echo "${log_indent}➜ ERROR with $output"
+    fi
+
+done <<<"${files}"
 
 }
 
@@ -1486,10 +1547,10 @@ main_1st_step()
 #########################################################################################
 # This function passes the files to docker / split files / …                            #
 #########################################################################################
+printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "STEP 1 - RUN OCR / SPLIT FILES, IF NEEDED:" "${dashline}"
+#echo "STEP 1 - RUN OCR / SPLIT FILES, IF NEEDED:"
 
-echo "STEP 1 - RUN OCR / SPLIT FILES, IF NEEDED:"
-
-collect_input_files "${INPUTDIR}"
+collect_input_files "${INPUTDIR}" "pdf"
 
 while read input ; do
 
@@ -1498,7 +1559,7 @@ while read input ; do
 # create temporary working directory
 # ---------------------------------------------------------------------
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
-    trap 'rm -rf "$work_tmp"; exit' EXIT
+   trap 'rm -rf "$work_tmp"; exit' EXIT
 
     printf "\n\n"
     filename=$(basename "$input")
@@ -1543,7 +1604,7 @@ while read input ; do
             prepare_target_path "${INPUTDIR}ERRORFILES" "${filename}"
 
             mv "$input" "$output"
-            [ "$loglevel" != 0 ] && cp "$LOGFILE" "${output}.log"
+            [ "$loglevel" != 0 ] && cp "$current_logfile" "${output}.log"
             echo "${log_indent}              ┖➜ move to ERRORFILES"
         fi
         rm -rf "$work_tmp"
@@ -1562,14 +1623,14 @@ while read input ; do
         page_count=$( py_page_count "${outputtmp}" )
         if grep -qwP "^[0-9]+$" <<<"$page_count" ; then
             p=1
-            splitpages=( )
+            splitPages=( )
             while [ $p -lt $page_count ]; do
                 if pdftotext "${outputtmp}" -f $p -l $p -layout - | grep -q "$documentSplitPattern" ; then
-                    splitpages+=($p)
+                    splitPages+=($p)
                 fi
                 p=$((p+1))
             done
-            numberSplitPages=${#splitpages[@]}
+            numberSplitPages=${#splitPages[@]}
         else
             echo "${log_indent}! ! ! error at counting PDF pages"
         fi
@@ -1619,32 +1680,22 @@ while read input ; do
         if (( "$numberSplitPages" > 0 )) && (( "$page_count" > 1 )); then
             currentPart=0
             startPage=1
-            for splitpage in ${splitpages[@]}; do
-                [ "$splitpage" -eq 1 ] && continue  # continue, if first page a splitpage
+            for splitPage in ${splitPages[@]}; do
+                [ "$splitPage" -eq 1 ] && continue  # continue, if first page a splitPage
                 let currentPart=$currentPart+1
-                let endPage=$splitpage-1
+                let endPage=$splitPage-1
                 
                 # run splitting current range:
-                split_pages "$currentPart" "$splitpage" "$startPage" "$endPage" "$SearchSuffix"
+                split_pages "$currentPart" "$splitPage" "$startPage" "$endPage" "$SearchSuffix"
     
                 # move splitted file to OUTPUTDIR_tmp
                 splitted_file_name="${title}_${currentPart}${SearchSuffix}.pdf"
                 splitted_file="$work_tmp/${splitted_file_name}"
                 if [ -f "$splitted_file" ]; then
-                    sourceFileCount=$(ls -t "${OUTPUTDIR_tmp}" | grep -o "^${splitted_file_name%.*}.*" | wc -l)
-                    if [ "$sourceFileCount" -eq 0 ]; then
-                        mv "$splitted_file" "${OUTPUTDIR_tmp}${splitted_file_name}"
-                        copy_attributes "${input}" "${OUTPUTDIR_tmp}${splitted_file_name}"
-                        echo "${log_indent}➜ move the split file to: ${OUTPUTDIR_tmp}${splitted_file_name}"
-                    else
-                        while [ -f "${OUTPUTDIR_tmp}${splitted_file_name%.*} ($sourceFileCount).pdf" ]; do
-                            sourceFileCount=$(( $sourceFileCount + 1 ))
-                            echo "${log_indent}  continue counting … ($sourceFileCount)"
-                        done
-                        mv "$splitted_file" "${OUTPUTDIR_tmp}${splitted_file_name%.*} ($sourceFileCount).pdf"
-                        copy_attributes "${input}" "${OUTPUTDIR_tmp}${splitted_file_name%.*} ($sourceFileCount).pdf"
-                        echo "${log_indent}➜ move the split file to: ${OUTPUTDIR_tmp}${splitted_file_name%.*} ($sourceFileCount).pdf"
-                    fi
+                    prepare_target_path "${OUTPUTDIR_tmp}" "${splitted_file_name}"
+                    mv "$splitted_file" "${output}"
+                    copy_attributes "${input}" "${output}"
+                    echo "${log_indent}➜ move the split file to: ${output}"
                     was_splitted=1
                 else
                     echo "${log_indent}! ! ! ERROR with splitting file"
@@ -1653,37 +1704,26 @@ while read input ; do
                 echo -e
 
                 # startpage for next range:
-                let startPage=$splitpage+1
+                let startPage=$splitPage+1
             done
         
-            # last range behind last splitpage:
-#            if (( "$page_count" > "${splitpages[@]:(-1)}" )); then
-            if (( "$page_count" > ${splitpages[@]:(-1)} )); then
+            # last range behind last splitPage:
+            if (( "$page_count" > ${splitPages[@]:(-1)} )); then
                 let currentPart=$currentPart+1
-                let startPage=${splitpages[@]:(-1)}+1
+                let startPage=${splitPages[@]:(-1)}+1
                 endPage=$page_count
         
                 # run splitting last range:
-                split_pages "$currentPart" "$splitpage" "$startPage" "$endPage" "$SearchSuffix"
+                split_pages "$currentPart" "$splitPage" "$startPage" "$endPage" "$SearchSuffix"
     
                 # move splitted file to OUTPUTDIR_tmp with override protection
                 splitted_file_name="${title}_${currentPart}${SearchSuffix}.pdf"
                 splitted_file="$work_tmp/${splitted_file_name}"
                 if [ -f "$splitted_file" ]; then
-                    sourceFileCount=$(ls -t "${OUTPUTDIR_tmp}" | grep -o "^${splitted_file_name%.*}.*" | wc -l)
-                    if [ "$sourceFileCount" -eq 0 ]; then
-                        mv "$splitted_file" "${OUTPUTDIR_tmp}${splitted_file_name}"
-                        copy_attributes "${input}" "${OUTPUTDIR_tmp}${splitted_file_name}"
-                        echo "${log_indent}➜ move the split file to: ${OUTPUTDIR_tmp}${splitted_file_name}"
-                    else
-                        while [ -f "${OUTPUTDIR_tmp}${splitted_file_name%.*} ($sourceFileCount).pdf" ]; do
-                            sourceFileCount=$(( $sourceFileCount + 1 ))
-                            echo "${log_indent}  continue counting … ($sourceFileCount)"
-                        done
-                        mv "$splitted_file" "${OUTPUTDIR_tmp}${splitted_file_name%.*} ($sourceFileCount).pdf"
-                        copy_attributes "${input}" "${OUTPUTDIR_tmp}${splitted_file_name%.*} ($sourceFileCount).pdf"
-                        echo "${log_indent}➜ move the split file to: ${OUTPUTDIR_tmp}${splitted_file_name%.*} ($sourceFileCount).pdf"
-                    fi
+                    prepare_target_path "${OUTPUTDIR_tmp}" "${splitted_file_name}"
+                    mv "$splitted_file" "${output}"
+                    copy_attributes "${input}" "${output}"
+                    echo "${log_indent}➜ move the split file to: ${output}"
                     was_splitted=1
                 else
                     echo "${log_indent}! ! ! ERROR with splitting file"
@@ -1706,26 +1746,16 @@ while read input ; do
     fi
 
     if [ "$backup" = true ]; then
-        sourceFileCount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
-        if [ "$sourceFileCount" -eq 0 ]; then
-            mv "$input" "${BACKUPDIR}${filename}"
-            echo "${log_indent}➜ move source file to: ${BACKUPDIR}${filename}"
-        else
-            while [ -f "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf" ]; do
-                sourceFileCount=$(( $sourceFileCount + 1 ))
-                echo "${log_indent}  continue counting … ($sourceFileCount)"
-            done
-            mv "$input" "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
-            echo "${log_indent}➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
-        fi
+        prepare_target_path "${BACKUPDIR}" "$filename"
+        mv "$input" "$output"
+        echo "${log_indent}➜ backup source file to: $output"
     else
         rm -f "$input"
-        echo "${log_indent}➜ delete source file"
+        echo "${log_indent}➜ delete source file ($filename)"
     fi
 
     if [ "$was_splitted" = 0 ] || [ "$split_error" = 1 ]; then
         mv "${outputtmp}" "${OUTPUTDIR_tmp}"
-#        "$input"
     fi
 
     rm -rfv "$work_tmp" | sed -e "s/^/${log_indent}/g"
@@ -1749,7 +1779,7 @@ main_2nd_step()
 
 printf "\n\nSTEP 2 - SEARCH TAGS / RENAME / SORT:\n\n"
 
-collect_input_files "${OUTPUTDIR_tmp}"
+collect_input_files "${OUTPUTDIR_tmp}" "pdf"
 
 # make special characters visible if necessary
 # ---------------------------------------------------------------------
@@ -1955,7 +1985,6 @@ while read input ; do
 
 done <<<"${files}"
 
-[ -n ${OUTPUTDIR_tmp} ] && rm -rfv "${OUTPUTDIR_tmp}" | sed -e "s/^/  /g"
 
 }
 
@@ -1967,19 +1996,35 @@ done <<<"${files}"
     echo "  ######################################"
 
     update_dockerimage
+    
+    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "check the python3 installation and the necessary modules:" "${dashline}"
+    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+
+    # check / install / activate python enviroment:
+    # ---------------------------------------------------------------------
+    [ ! -d "$python3_env" ] && python3 -m venv "$python3_env"
+    source "${python3_env}/bin/activate"
     prepare_python_log=$(prepare_python)
     if [ "$?" -eq 0 ]; then
         echo "$prepare_python_log"
-        printf "\n${log_indent}prepare_python: OK\n\n"
+        printf "${log_indent}prepare_python: OK\n\n"
     else
         echo "$prepare_python_log"
-        printf "\n${log_indent}prepare_python: ! ! ! ERROR ! ! ! \n\n"
+        printf "${log_indent}prepare_python: ! ! ! ERROR ! ! ! \n\n"
     fi
+
+    if [ "$img2pdf" = true ]; then
+        py_img2pdf
+    fi
+
     main_1st_step
     main_2nd_step
     purge_log
     purge_backup
 
+    #[ -n "${OUTPUTDIR_tmp}" ] && rm -rfv "${OUTPUTDIR_tmp}" | sed -e "s/^/  /g"
+    rmdir -v "${OUTPUTDIR_tmp}" | sed -e "s/^/  /g"
+    
     printf "\n\n\n"
 
 exit 0
