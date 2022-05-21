@@ -110,7 +110,7 @@ lang_edit_set2_dockerimageupdate_help1="Dockerimages mit :latest-Tag können akt
 
 lang_edit_set2_img2pdf_title="Konvertiere Bilder zu PDF"
 lang_edit_set2_img2pdf_no="Bilder überspringen"
-lang_edit_set2_img2pdf_yes="konvertier Bilder"
+lang_edit_set2_img2pdf_yes="konvertiere Bilder"
 lang_edit_set2_img2pdf_help1="Bilder im Quellordner können zu PDF-Dateien konvertiert werden. Sofern aktiviert, werden sie anschließend in den Backupordner verschoben."
 
 lang_edit_set2_searchpref_title="Suchmuster Quelldateiname"
