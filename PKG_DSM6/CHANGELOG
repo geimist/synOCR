@@ -18,6 +18,7 @@ DSM7 version you can found here: https://git.geimist.eu/geimist/synOCR/src/branc
     a pulsing status icon in the gui indicates an active monitoring
  -  🔥 new Python based date search implemented, which also finds written out months (gthorsten)
  -  🔥 support separator sheet - dokument split pattern can be configured in GUI (Python3 must be installed)
+ -  🔥 Pictures in the source folder can be converted automatically (Python3 must be installed)
  -  option to reduce multiple spaces to one (helpful with RegEx)
  -  logging deleted backup files in loglevel 2 
  -  notify about updates in main page (GUI)
