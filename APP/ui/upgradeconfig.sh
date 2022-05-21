@@ -67,7 +67,7 @@ OLDIFS=$IFS
                         \"search_nearest_date\" VARCHAR  DEFAULT ('false') ,
                         \"date_search_method\" VARCHAR  DEFAULT ('regex') ,
                         \"clean_up_spaces\" VARCHAR  DEFAULT ('false') ,
-                        \"accept_cpdf_license\" VARCHAR  DEFAULT ('false')
+                        \"img2pdf\" VARCHAR  DEFAULT ('false')
                     ) ;"
         sleep 1
 
@@ -421,38 +421,19 @@ fi
 
 # DB-update from v6 to v7:
 # ---------------------------------------------------------------------
-    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'") -eq 60000 ] ; then
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'") -eq 6 ] ; then
         echo ""
 
-
-
-
-        # accept_cpdf_license / maybe not needed:
+        # should convert images to pdf?:
         # ---------------------------------------------------------------------
-#        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
-#                                       ADD COLUMN \"accept_cpdf_license\" VARCHAR DEFAULT ('false')"
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"img2pdf\" VARCHAR DEFAULT ('false')"
         # check:
-#        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q accept_cpdf_license ) ; then
-#            log="$log 
-#            ➜ ERROR: the DB column could not be created (accept_cpdf_license)"
-#            error=1
-#        fi
-
-#        if [[ "$error" == "0" ]]; then
-            # lift DB version:
-#            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-#                                           SET value_1='6' 
-#                                           WHERE key='db_version'"
-#            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-#                                           SET value_1=(datetime('now','localtime')) 
-#                                           WHERE key='timestamp'"
-#            log="$log
-#            DB-Upgrade successfully processed (v5 ➜ v6)"
-#        fi
-#        error=0
-
-
-
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q img2pdf ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (img2pdf)"
+            error=1
+        fi
 
         if [[ "$error" == "0" ]]; then
             # lift DB version:
@@ -465,7 +446,7 @@ fi
             log="$log
             DB-Upgrade successfully processed (v6 ➜ v7)"
         fi
-#        error=0
+        error=0
     fi
 
 
@@ -482,6 +463,7 @@ exit 0
 # ➜ edit.sh: Parameter in 'Profil duplizieren' anpassen (bei Änderungen an Tabelle config)
 # ➜ edit.sh: Parameter in 'Datensatz in DB schreiben' anpassen
 # ➜ edit.sh: "$page" == "edit" Profil einlesen anpassen
+# ➜ edit.sh: GUI Element ggf. einfügen / anpassen
 
 # ➜ synOCR.sh: DB-Einlesen anpassen
 '
