@@ -216,12 +216,21 @@ fi
     fi
 
 # load configuration:
-    sSQL="SELECT profile_ID, INPUTDIR, OUTPUTDIR, LOGDIR, SearchPraefix, loglevel, profile FROM config WHERE active='1' "
-    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
+    sSQL="SELECT 
+            profile_ID, 
+            INPUTDIR, 
+            OUTPUTDIR, 
+            LOGDIR, 
+            SearchPraefix, 
+            loglevel, 
+            profile, 
+            img2pdf 
+        FROM 
+            config 
+        WHERE 
+            active='1' "
 
-    IFS=$'\012'
-    for entry in $sqlerg; do
-        IFS=$OLDIFS
+    while read entry; do
         profile_ID=$(echo "$entry" | awk -F'\t' '{print $1}')
         INPUTDIR=$(echo "$entry" | awk -F'\t' '{print $2}')
         OUTPUTDIR=$(echo "$entry" | awk -F'\t' '{print $3}')
@@ -229,6 +238,7 @@ fi
         SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $5}')
         loglevel=$(echo "$entry" | awk -F'\t' '{print $6}')
         profile=$(echo "$entry" | awk -F'\t' '{print $7}')
+        img2pdf=$(echo "$entry" | awk -F'\t' '{print $8}')
 
     # is the source directory present and is the path valid?
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
@@ -282,7 +292,13 @@ fi
 
     # only start (create LOG) if there is something to do:
         exclusion=false
-        count_inputpdf=0
+        count_input_file=0
+
+        if [ "$img2pdf" = true ]; then
+            source_file_type=".jpg$|.png$|.tiff$|.jpeg$|.pdf$"
+        else
+            source_file_type=".pdf$"
+        fi
 
         if echo "${SearchPraefix}" | grep -qE '^!' ; then
             # is the prefix / suffix an exclusion criterion?
@@ -294,21 +310,21 @@ fi
             # is suffix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             if [[ "$exclusion" = false ]] ; then
-                count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}.pdf$" | wc -l)
+                count_input_file=$(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}${source_file_type}" | wc -l)
             elif [[ "$exclusion" = true ]] ; then
-                count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l)
+                count_input_file=$(ls -t "${INPUTDIR}" | egrep -i "^.*${source_file_type}" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l)
             fi
         else
             # is prefix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             if [[ "$exclusion" = false ]] ; then
-                count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*.pdf$" | wc -l)
+                count_input_file=$(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*${source_file_type}" | wc -l)
             elif [[ "$exclusion" = true ]] ; then
-                count_inputpdf=$(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | egrep -iv "^${SearchPraefix}.*.pdf$" | wc -l)
+                count_input_file=$(ls -t "${INPUTDIR}" | egrep -i "^.*${source_file_type}" | egrep -iv "^${SearchPraefix}.*${source_file_type}" | wc -l)
             fi
         fi
 
-        if [ "$count_inputpdf" -eq 0 ] ;then
+        if [ "$count_input_file" -eq 0 ] ;then
             continue
         fi
 
@@ -353,7 +369,7 @@ fi
             echo "$lang_synOCR_start_loginfo: $LOGFILE"
             exit_status=ERROR
         fi
-    done
+    done <<<"$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")"
 
 if  [ "$exit_status" = "ERROR" ] ; then
     exit 1
