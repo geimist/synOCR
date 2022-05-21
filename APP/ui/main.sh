@@ -8,15 +8,21 @@
 
 PATH=$PATH:/usr/local/bin:/opt/usr/bin
 
-
 # Read file status:
 # ---------------------------------------------------------------------
     # Count of unfinished PDF files:
-    count_inputpdf=0
+    count_input_file=0
 
     while read entry ; do
         INPUTDIR=$(echo "$entry" | awk -F'\t' '{print $1}')
         SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $2}')
+        img2pdf=$(echo "$entry" | awk -F'\t' '{print $3}')
+
+        if [ "$img2pdf" = true ]; then
+            source_file_type=".jpg$|.png$|.tiff$|.jpeg$|.pdf$"
+        else
+            source_file_type=".pdf$"
+        fi
 
         exclusion=false
 
@@ -29,21 +35,21 @@ PATH=$PATH:/usr/local/bin:/opt/usr/bin
         if echo "${SearchPraefix}" | grep -q "\$"$ ; then
             # is suffix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
-            if [[ $exclusion = false ]] ; then
-                count_inputpdf=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}.pdf$" | wc -l) + $count_inputpdf ))
-            elif [[ $exclusion = true ]] ; then
-                count_inputpdf=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l) + $count_inputpdf ))
+            if [[ "$exclusion" = false ]] ; then
+                count_input_file=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}${source_file_type}" | wc -l) + $count_input_file ))
+            elif [[ "$exclusion" = true ]] ; then
+                count_input_file=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*${source_file_type}" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l) + $count_input_file ))
             fi
         else
             # is prefix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
-            if [[ $exclusion = false ]] ; then
-                count_inputpdf=$(( $(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf ))
-            elif [[ $exclusion = true ]] ; then
-                count_inputpdf=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*.pdf$" | egrep -iv "^${SearchPraefix}.*.pdf$" | wc -l) + $count_inputpdf ))
+            if [[ "$exclusion" = false ]] ; then
+                count_input_file=$(( $(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*${source_file_type}" | wc -l) + $count_input_file ))
+            elif [[ "$exclusion" = true ]] ; then
+                count_input_file=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*${source_file_type}" | egrep -iv "^${SearchPraefix}.*${source_file_type}" | wc -l) + $count_input_file ))
             fi
         fi
-    done <<<"$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT INPUTDIR, SearchPraefix FROM config WHERE active='1' ")"
+    done <<<"$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT INPUTDIR, SearchPraefix, img2pdf FROM config WHERE active='1' ")"
 
 # manual synOCR start:
 # ---------------------------------------------------------------------
@@ -130,7 +136,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
         <div class="float-end">
             <img src="images/status_error@geimist.svg" height="120" width="120" style=";padding: 10px">
         </div>'
-    elif [[ "$count_inputpdf" == 0 ]]; then
+    elif [[ "$count_input_file" == 0 ]]; then
         echo '
         <div class="float-end">
             <img src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px" '$css_pulsate' '$monitoring_title'>
@@ -178,14 +184,14 @@ echo '
                     </thead>
                     <tbody>
                         <tr>'
-                            if [[ "$count_inputpdf" == 0 ]]; then
+                            if [[ "$count_input_file" == 0 ]]; then
                                 echo '
                                 <td class="synocr-text-blue">'$lang_main_openfilecount':</td>
                                 <td class="synocr-text-green">'$lang_main_alldone'</td>'
                             else
                                 echo '
                                 <td class="synocr-text-blue">'$lang_main_openfilecount': </td>
-                                <td class="synocr-text-red">'$count_inputpdf'</td>'
+                                <td class="synocr-text-red">'$count_input_file'</td>'
                             fi
                             echo '
                         </tr>
