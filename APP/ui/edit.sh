@@ -405,11 +405,11 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
                             if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
                                 sqlite3 ./etc/synOCR.sqlite "INSERT INTO config 
                                     ( 
-                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, accept_cpdf_license
+                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf
                                     ) 
                                         VALUES 
                                     ( 
-                                        '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type', '$search_nearest_date', '$date_search_method', '$clean_up_spaces', '$accept_cpdf_license' 
+                                        '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type', '$search_nearest_date', '$date_search_method', '$clean_up_spaces', '$img2pdf' 
                                     )"
 
                                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
@@ -590,7 +590,7 @@ if [[ "$page" == "edit-save" ]]; then
                                 search_nearest_date='$search_nearest_date',
                                 date_search_method='$date_search_method',
                                 clean_up_spaces='$clean_up_spaces',
-                                accept_cpdf_license='$accept_cpdf_license'
+                                img2pdf='$img2pdf'
                             WHERE 
                                 profile_ID='$profile_ID' "
 
@@ -629,7 +629,7 @@ if [[ "$page" == "edit" ]]; then
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
                 NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, accept_cpdf_license
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf
             FROM 
                 config 
             WHERE 
@@ -638,7 +638,7 @@ if [[ "$page" == "edit" ]]; then
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
                 NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, accept_cpdf_license
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf
             FROM 
                 config 
             WHERE 
@@ -678,7 +678,7 @@ if [[ "$page" == "edit" ]]; then
         search_nearest_date=$(echo "$sqlerg" | awk -F'\t' '{print $29}')
         date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $30}')
         clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
-        accept_cpdf_license=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
+        img2pdf=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
 
     # read global values:
         dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -1126,7 +1126,7 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
-                    # docker container
+                    # update docker image?:
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
@@ -1162,6 +1162,49 @@ if [[ "$page" == "edit" ]]; then
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set2_dockerimageupdate_help1'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # convert images to pdf?:
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="img2pdf">'$lang_edit_set2_img2pdf_title'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="img2pdf" id="img2pdf" class="form-select form-select-sm">'
+
+                                if [[ "$img2pdf" == "false" ]]; then
+                                    echo '<option value="false" selected>'$lang_edit_set2_img2pdf_no'</option>'
+                                else
+                                    echo '<option value="false">'$lang_edit_set2_img2pdf_no'</option>'
+                                fi
+                                if [[ "$img2pdf" == "true" ]]; then
+                                    echo '<option value="true" selected>'$lang_edit_set2_img2pdf_yes'</option>'
+                                else
+                                    echo '<option value="true">'$lang_edit_set2_img2pdf_yes'</option>'
+                                fi
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#img2pdf-info" role="button" aria-expanded="false" aria-controls="img2pdf-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="img2pdf-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set2_img2pdf_help1'
                                     </span>
                                 </div>
                             </div>
@@ -1658,7 +1701,7 @@ if [[ "$page" == "edit" ]]; then
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="search_nearest_date">'$lang_edit_set2_filedate_search_nearest_date_title':</label>
+                            <label for="search_nearest_date">'$lang_edit_set2_filedate_search_nearest_date_title'</label>
                         </div>
                         <div class="col-sm-5">
                             <select name="search_nearest_date" id="search_nearest_date" class="form-select form-select-sm">'
@@ -1702,7 +1745,7 @@ if [[ "$page" == "edit" ]]; then
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="date_search_method">'$lang_edit_set2_date_search_method_title':</label>
+                            <label for="date_search_method">'$lang_edit_set2_date_search_method_title'</label>
                         </div>
                         <div class="col-sm-5">
                             <select name="date_search_method" id="date_search_method" class="form-select form-select-sm">'
@@ -1747,7 +1790,7 @@ if [[ "$page" == "edit" ]]; then
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="clean_up_spaces">'$lang_edit_set2_clean_up_spaces_title':</label>
+                            <label for="clean_up_spaces">'$lang_edit_set2_clean_up_spaces_title'</label>
                         </div>
                         <div class="col-sm-5">
                             <select name="clean_up_spaces" id="clean_up_spaces" class="form-select form-select-sm">'
