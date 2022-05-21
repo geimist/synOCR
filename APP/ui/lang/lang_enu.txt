@@ -103,10 +103,15 @@ lang_edit_set2_dockerimage_help2="is the default image, but currently only conta
 lang_edit_set2_dockerimage_help3="Polyglot images contain all possible languages, but are bigger!"
 lang_edit_set2_dockerimage_help4="Manually downloaded or self-created images are also available for selection if &quot;ocrmypdf&quot; is included in the name."     # keep html-tag
 
-lang_edit_set2_dockerimageupdate_title="Keep Dockerimage up-to-date?"
+lang_edit_set2_dockerimageupdate_title="Keep Dockerimage up-to-date"
 lang_edit_set2_dockerimageupdate_yes="autoupdate (standard)"
 lang_edit_set2_dockerimageupdate_no="keep version"
 lang_edit_set2_dockerimageupdate_help1="Dockerimages with :latest-tag can be updated."
+
+lang_edit_set2_img2pdf_title="Convert pictures to PDF"
+lang_edit_set2_img2pdf_no="Skip pictures"
+lang_edit_set2_img2pdf_yes="Convert pictures"
+lang_edit_set2_img2pdf_help1="Pictures in the source folder can be converted to PDF files. If enabled, they will be moved to the backup folder afterwards."
 
 lang_edit_set2_searchpref_title="Search pattern source file name"
 lang_edit_set2_searchpref_help1="Process only PDFs with defined prefix (e.g. &quot;SCAN_&quot;)"       # keep html-tag
