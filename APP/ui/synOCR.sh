@@ -75,7 +75,7 @@ fi
             profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
             dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate, 
-            backup_max, backup_max_type, pagecount, ocrcount, search_nearest_date, date_search_method, clean_up_spaces, accept_cpdf_license 
+            backup_max, backup_max_type, pagecount, ocrcount, search_nearest_date, date_search_method, clean_up_spaces, img2pdf 
         FROM 
             config 
         WHERE 
@@ -115,13 +115,7 @@ fi
     search_nearest_date=$(echo "$sqlerg" | awk -F'\t' '{print $30}')
     date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
     clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
-
-
-#    img2pdf=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
-    img2pdf=true
-
-
-#   accept_cpdf_license=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
+    img2pdf=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
 
 # read global values:
     dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
