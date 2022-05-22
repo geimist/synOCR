@@ -202,7 +202,7 @@ lang_edit_set2_filedate_help1="How should the date of the target file be adjuste
 lang_edit_set2_filedate_help2="If OCR date is selected but none is found, the date of the source file is used."
 
 lang_edit_set2_ignoredDate_title="Ignore dates"
-lang_edit_set2_ignoredDate_help1="Specified dates will be ignored during the search. More than one date can be specified (separated by spaces). It is important to specify the correct format: YYY-MM-DD (e.g. 2021-02-29 2021-04-31)"
+lang_edit_set2_ignoredDate_help1="Specified dates will be ignored during the search. More than one date can be specified (separated by spaces). It is important to specify the correct format: YYYY-MM-DD (e.g. 2021-02-29 2021-04-31)"
 
 lang_edit_set2_filedate_search_nearest_date_title="Date search result order"
 lang_edit_set2_filedate_search_nearest_firstfound="1st hit in document"
