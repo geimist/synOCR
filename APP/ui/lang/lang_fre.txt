@@ -21,7 +21,7 @@ lang_buttonsave="Enregistrer"
 lang_buttonchange="Changer"
 lang_foot_buttonsavetimer="Sauvegarder l'emploi du temps"
 lang_foot_buttonnewprofile="Nouveau profil"
-lang_foot_buttoncloneprof="Cloner un profil".
+lang_foot_buttoncloneprof="Cloner un profil"
 lang_foot_buttoncloneprof_tit="crée un nouveau profil avec la configuration du profil actuel ..."
 lang_foot_buttondownDB="Télécharger"
 lang_foot_buttondownDB_tit="Télécharger la base de données de configuration ..."
@@ -210,7 +210,7 @@ lang_edit_set2_filedate_search_nearest_nearest="date la plus récente dans le pa
 lang_edit_set2_filedate_search_nearest_help1="Quelle découverte de recherche de date utiliser ?"
 lang_edit_set2_filedate_search_nearest_help2="La première date du document ou la date la plus proche dans le passé de toutes les trouvailles ? (ne s'applique qu'à la recherche basée sur Python !)"
 
-lang_edit_set2_date_search_method_title="Méthode de recherche par date".
+lang_edit_set2_date_search_method_title="Méthode de recherche par date"
 lang_edit_set2_date_search_method_python="Python"
 lang_edit_set2_date_search_method_regex="RegEx"
 lang_edit_set2_date_search_method_help1="Les possibilités suivantes sont disponibles pour la recherche de dates : Script Python et recherche par expression régulière"
@@ -243,7 +243,7 @@ lang_edit_set3_dsmtextnotify_help1="on ➜ Notification par texte active dans le
 lang_edit_set3_dsmtextnotify_help2="désactivé ➜ pas de notification par texte"
 
 lang_edit_set3_MessageTo_title="Notification à l'utilisateur"
-lang_edit_set3_MessageTo_help1="Utilisateur auquel les notifications sont envoyées".
+lang_edit_set3_MessageTo_help1="Utilisateur auquel les notifications sont envoyées"
 lang_edit_set3_MessageTo_help2="De cette façon, en combinaison avec le paquet &quot;Notification Forwarder&quot; on peut être averti des événements synOCR, par exemple via un service push."   # keep html-tag
 lang_edit_set3_MessageTo_help3="Si la valeur reste vide, le groupe &quot;administrators&quot; sera notifié."
 
@@ -336,7 +336,7 @@ lang_main_monitor_restart_necessary_1="La liste des dossiers d'entrée surveill�
 lang_main_monitor_restart_necessary_2="Veuillez redémarrer la surveillance dans le planificateur de tâches"
 lang_main_monitor_restart_necessary_3="(cela correspond à l'appel normal dans le planificateur de tâches avec le paramètre start)"
 lang_main_dockerfailed="A T T E N T I O N:<br>Docker n'a pas été trouvé.<br>Veuillez vérifier si le paquet Docker est installé !"    # keep html-tag
-lang_main_permissions_failed="A T T E N T I O N:<br>synOCR ne dispose pas encore des autorisations nécessaires!<br>Veuillez créer une tâche dans le planificateur de tâches avec le script ci-dessous (en tant que root)<br>(la tâche doit être exécutée au moins une fois)".    # keep html-tag
+lang_main_permissions_failed="A T T E N T I O N:<br>synOCR ne dispose pas encore des autorisations nécessaires!<br>Veuillez créer une tâche dans le planificateur de tâches avec le script ci-dessous (en tant que root)<br>(la tâche doit être exécutée au moins une fois)"    # keep html-tag
 lang_main_desc1="SynOCR fournit une interface graphique simple pour le conteneur Docker OCRmyPDF. Une configuration dans Docker n'est pas nécessaire"
 lang_main_desc2="Actuellement, il n'est probablement pas possible d'utiliser tous les paramètres en relation avec OCRmyPDF, mais les plus importants le sont. Il suffit de saisir le dossier source et le dossier cible dans la configuration. Maintenant, une exécution manuelle du programme est déjà possible via le bouton ci-dessous. L'exécution automatique du programme doit être réglée (comme décrit dans l'aide) soit via le planificateur, soit via le planificateur de tâches DSM"
 lang_main_buttonrun="lancer maintenant l'exécution manuelle synOCR"
@@ -350,12 +350,12 @@ lang_main_pages="Pages"
 #-------------------------------------------
 # page help:
 #-------------------------------------------
-lang_help_title_QS="Démarrage rapide".
+lang_help_title_QS="Démarrage rapide"
 lang_help_QS_1_beforelink="Commencez par ajuster votre installation dans le"
-lang_help_QS_1_afterlink="personnaliser".
+lang_help_QS_1_afterlink="personnaliser"
 lang_help_QS_1b="(facultatif) : Pour surveiller automatiquement les dossiers d'entrée, le paquet inotify-tools doit être installé"
 lang_help_QS_2="Pour que synOCR fonctionne correctement, une nouvelle tâche doit être créée dans le planificateur de tâches DSM."
-lang_help_QS_sub1_tit="Pour ce faire, ouvrez le panneau de configuration dans DSM".
+lang_help_QS_sub1_tit="Pour ce faire, ouvrez le panneau de configuration dans DSM"
 lang_help_QS_sub1_1="Planificateur de tâches"                                    # ensure exact translation from the DSM!
 lang_help_QS_sub1_2="Bouton <i>Créer</i>"                     # keep html-tag
 lang_help_QS_sub1_3="tâche planifiée"
@@ -369,7 +369,7 @@ lang_help_QS_sub3_1="ici l'intervalle souhaité (par ex. toutes les heures)"
 lang_help_QS_sub4_tit="Onglet &quot;Paramètres de tâches&quot;:"  # keep coded dublequotes: &quot;
 lang_help_QS_sub4_1="copier ici le chemin d'accès ci-dessous :"
 lang_help_title_FAQ="FAQ"
-lang_help_FAQ_sub1_tit="Options OCRmyPDF".
+lang_help_FAQ_sub1_tit="Options OCRmyPDF"
 lang_help_FAQ_sub1_1_beforelink="Pour une aide plus détaillée sur OCRmyPDF, voir"
 lang_help_FAQ_sub1_1_linktitle="Page d'aide OCRmyPDF"
 lang_help_FAQ_sub1_1_afterlink="."
@@ -377,13 +377,13 @@ lang_help_FAQ_sub2_tit="lorsque j'appelle synOCR, je suis déconnecté du DSM"
 lang_help_FAQ_sub2_1="Pour y remédier, il suffit d'activer &quot;<i>Augmenter la compatibilité du navigateur en refusant le contrôle IP</i>&quot; sous Panneau de configuration DSM > Sécurité"              # keep coded dublequotes: &quot; / keep html-tag
 lang_help_FAQ_sub3_tit="le conseiller en sécurité met en garde contre synOCR"
 lang_help_FAQ_sub3_1="La raison de l'avertissement n'est pas un danger de synOCR, mais le fait que le conseiller en sécurité ne connaît pas le changement dans la crontab"
-lang_help_FAQ_sub3_2="Pour y remédier, il suffit d'utiliser &quot;Ignorer&quot; dans le conseiller en sécurité ou d'effectuer une tâche manuelle dans le planificateur de tâches DSM".                                                        # keep coded dublequotes: &quot;
-lang_help_FAQ_sub4_tit="aucun fichier n'est traité alors qu'il y en a".
+lang_help_FAQ_sub3_2="Pour y remédier, il suffit d'utiliser &quot;Ignorer&quot; dans le conseiller en sécurité ou d'effectuer une tâche manuelle dans le planificateur de tâches DSM"                                                        # keep coded dublequotes: &quot;
+lang_help_FAQ_sub4_tit="aucun fichier n'est traité alors qu'il y en a"
 lang_help_FAQ_sub4_1="Cela peut être le cas si le &quot;préfixe de recherche OCR&quot; a été indiqué, mais ne correspond pas aux fichiers"                                                   # keep coded dublequotes: &quot;
 lang_help_FAQ_sub4_2="vérifie que le profil souhaité pour le dossier source est également activé dans la configuration"                                                                          # keep coded dublequotes: &quot;
 lang_help_FAQ_sub5_tit="ma question n'y figure pas ..."
 lang_help_FAQ_sub5_beforelink="Pour toute autre question ou problème, veuillez utiliser le forum de support :"
-lang_help_FAQ_sub5_linktitle="forum de support synOCR".
+lang_help_FAQ_sub5_linktitle="forum de support synOCR"
 lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="à propos de synOCR"
 lang_help_about_1="Le projet dépend avant tout du temps, de l'énergie et de l'envie que je peux y consacrer.<br> Commencé pour faciliter mon flux de travail avec les documents PDF, c'est aussi un plaisir pour moi de voir ce projet aider les autres. Je n'attends donc rien en retour !" # keep html-tag
@@ -395,24 +395,24 @@ lang_help_about_3=""
 #-------------------------------------------
 lang_synOCR_start_is_running="synOCR déjà en cours d'exécution !"
 lang_synOCR_start_req_kill="Forcer l'arrêt ?"
-lang_synOCR_start_runs="synOCR a été lancé".
+lang_synOCR_start_runs="synOCR a été lancé"
 lang_synOCR_start_wait1="Veuillez attendre que les fichiers<br> soient prêts."           # keep html-tag
 lang_synOCR_start_wait2="Veuillez attendre que les fichiers soient prêts."
-lang_synOCR_start_lost_input="Vérifier le répertoire source ou l'autorisation dans la configuration".
-lang_synOCR_start_abort="L'exécution du programme s'arrête".
+lang_synOCR_start_lost_input="Vérifier le répertoire source ou l'autorisation dans la configuration"
+lang_synOCR_start_abort="L'exécution du programme s'arrête"
 lang_synOCR_start_umount_target="Dossier cible chiffré non monté"
-lang_synOCR_start_check_target="Vérifier le répertoire cible dans la configuration".
-lang_synOCR_start_target_created="Le répertoire cible a été créé".
-lang_synOCR_start_umount_log="dossier LOG crypté non monté".
+lang_synOCR_start_check_target="Vérifier le répertoire cible dans la configuration"
+lang_synOCR_start_target_created="Le répertoire cible a été créé"
+lang_synOCR_start_umount_log="dossier LOG crypté non monté"
 lang_synOCR_start_errorexit="synOCR s'est terminé avec des erreurs !"
-lang_synOCR_start_loginfo="plus d'informations dans le LOG".
+lang_synOCR_start_loginfo="plus d'informations dans le LOG"
 
 #-------------------------------------------
 # WIZARD_UIFILES:
 #-------------------------------------------
 lang_wizui_install_title="Remarque sur l'installation :"
-lang_wizui_install_desc="La seule condition préalable est que le paquet Docker soit installé. Normalement, aucune autre configuration n'est nécessaire dans Docker".
-lang_wizui_uninstall_title="Note de désinstallation".
+lang_wizui_install_desc="La seule condition préalable est que le paquet Docker soit installé. Normalement, aucune autre configuration n'est nécessaire dans Docker"
+lang_wizui_uninstall_title="Note de désinstallation"
 lang_wizui_uninstall_desc="Tous les paramètres sont supprimés lors de la désinstallation. Le cas échéant, fais une sauvegarde avec HyperBackup avant la désinstallation.</p><p><br>Une tâche créée manuellement via le planificateur de tâches DSM doit être supprimée manuellement, le cas échéant."
 lang_wizui_upgrade_title="Remarque importante lors d'une mise à niveau !"
 lang_wizui_upgrade_desc="En raison d'un problème dans DiskStationManager, synOCR ne peut pas être ouvert après une mise à niveau. Par conséquent, <u>après une mise à niveau, il est nécessaire d'actualiser ou de recharger la page DSM (F5)</u> ou d'ouvrir synOCR dans une nouvelle fenêtre."
