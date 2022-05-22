@@ -2,7 +2,7 @@
 #
 #######
 project="synOCR"
-languages=( enu ger )   # for automated insert language strings to WIZARD_UIFILES
+languages=( enu ger fre )   # for automated insert language strings to WIZARD_UIFILES
 #######
 #----------------------------------------------------------------------------------------
 # Folder structure:
