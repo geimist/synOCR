@@ -156,20 +156,53 @@ printf "\n - INFO: insert language strings to WIZARD_UIFILES ...\n"
         [[ ! $TargetDSM = 6 ]] && synosetkeyvalue "$build_tmp/$PKG/INFO" description_${lang} $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)
 
         # PKG_DSMx/scripts/lang/${lang}
-        synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART1 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART1)
-        synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART2 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART2)
-        synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_NOINSTALL_ERROR_PART3 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART3)
-        synosetkeyvalue "$build_tmp/$PKG/scripts/lang/${lang}" PKG_DELETE_TIMER $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_DELETE_TIMER)
+        scripts_lang_lang="$build_tmp/$PKG/scripts/lang/${lang}"
+        if [ ! -f "${scripts_lang_lang}" ]; then
+            echo 'PKG_NOINSTALL_ERROR_PART1="lang_PKG_NOINSTALL_ERROR_PART1"' > "${scripts_lang_lang}"
+            echo 'PKG_NOINSTALL_ERROR_PART2="lang_PKG_NOINSTALL_ERROR_PART2"' >> "${scripts_lang_lang}"
+            echo 'PKG_NOINSTALL_ERROR_PART3="lang_PKG_NOINSTALL_ERROR_PART3"' >> "${scripts_lang_lang}"
+            echo 'PKG_DELETE_TIMER="lang_PKG_DELETE_TIMER"' >> "${scripts_lang_lang}"
+        fi
+        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART1 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART1)
+        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART2 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART2)
+        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART3 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART3)
+        synosetkeyvalue "${scripts_lang_lang}" PKG_DELETE_TIMER $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_DELETE_TIMER)
 
-        # install_uifile
-        sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
-        sed -i "s|lang_wizui_install_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_desc)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
+        # install_uifile:
+        install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
+        if [ ! -f "${install_uifile_lang}" ]; then
+            echo '[' > "${install_uifile_lang}"
+            echo '   {' >> "${install_uifile_lang}"
+            echo '      "step_title" : "lang_wizui_install_title",' >> "${install_uifile_lang}"
+            echo '      "items" : [' >> "${install_uifile_lang}"
+            echo '         {' >> "${install_uifile_lang}"
+            echo '            "desc" : "<p>lang_wizui_install_desc</p>"' >> "${install_uifile_lang}"
+            echo '         }' >> "${install_uifile_lang}"
+            echo '      ]' >> "${install_uifile_lang}"
+            echo '   }' >> "${install_uifile_lang}"
+            echo ']' >> "${install_uifile_lang}"
+        fi
+        sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_title)|" "${install_uifile_lang}"
+        sed -i "s|lang_wizui_install_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_desc)|" "${install_uifile_lang}"
 
-        # uninstall_uifile
-        sed -i "s|lang_wizui_uninstall_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile_${lang}"
-        sed -i "s|lang_wizui_uninstall_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc)|" "$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile_${lang}"
+        # uninstall_uifile:
+        uninstall_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile_${lang}"
+        if [ ! -f "${uninstall_uifile_lang}" ]; then
+            echo '[' > "${uninstall_uifile_lang}"
+            echo '   {' >> "${uninstall_uifile_lang}"
+            echo '      "step_title" : "lang_wizui_uninstall_title",' >> "${uninstall_uifile_lang}"
+            echo '      "items" : [' >> "${uninstall_uifile_lang}"
+            echo '         {' >> "${uninstall_uifile_lang}"
+            echo '            "desc" : "<p>lang_wizui_uninstall_desc</p>"' >> "${uninstall_uifile_lang}"
+            echo '         }' >> "${uninstall_uifile_lang}"
+            echo '      ]' >> "${uninstall_uifile_lang}"
+            echo '   }' >> "${uninstall_uifile_lang}"
+            echo ']' >> "${uninstall_uifile_lang}"
+        fi
+        sed -i "s|lang_wizui_uninstall_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_title)|" "${uninstall_uifile_lang}"
+        sed -i "s|lang_wizui_uninstall_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc)|" "${uninstall_uifile_lang}"
  
-        # upgrade_uifile
+        # upgrade_uifile:
         [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}"
         [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_desc)|" "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}"
     done
