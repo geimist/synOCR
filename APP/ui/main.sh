@@ -36,17 +36,17 @@ PATH=$PATH:/usr/local/bin:/opt/usr/bin
             # is suffix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             if [[ "$exclusion" = false ]] ; then
-                count_input_file=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}${source_file_type}" | wc -l) + $count_input_file ))
+                count_input_file=$(( $(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^.*${SearchPraefix}${source_file_type}" | wc -l) + $count_input_file ))
             elif [[ "$exclusion" = true ]] ; then
-                count_input_file=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*${source_file_type}" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l) + $count_input_file ))
+                count_input_file=$(( $(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^.*${source_file_type}" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l) + $count_input_file ))
             fi
         else
             # is prefix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             if [[ "$exclusion" = false ]] ; then
-                count_input_file=$(( $(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*${source_file_type}" | wc -l) + $count_input_file ))
+                count_input_file=$(( $(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^${SearchPraefix}.*${source_file_type}" | wc -l) + $count_input_file ))
             elif [[ "$exclusion" = true ]] ; then
-                count_input_file=$(( $(ls -t "${INPUTDIR}" | egrep -i "^.*${source_file_type}" | egrep -iv "^${SearchPraefix}.*${source_file_type}" | wc -l) + $count_input_file ))
+                count_input_file=$(( $(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^.*${source_file_type}" | egrep -iv "^${SearchPraefix}.*${source_file_type}" | wc -l) + $count_input_file ))
             fi
         fi
     done <<<"$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT INPUTDIR, SearchPraefix, img2pdf FROM config WHERE active='1' ")"
