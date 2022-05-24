@@ -310,17 +310,17 @@ fi
             # is suffix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             if [[ "$exclusion" = false ]] ; then
-                count_input_file=$(ls -t "${INPUTDIR}" | egrep -i "^.*${SearchPraefix}${source_file_type}" | wc -l)
+                count_input_file=$(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^.*${SearchPraefix}${source_file_type}" | wc -l)
             elif [[ "$exclusion" = true ]] ; then
-                count_input_file=$(ls -t "${INPUTDIR}" | egrep -i "^.*${source_file_type}" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l)
+                count_input_file=$(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^.*${source_file_type}" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l)
             fi
         else
             # is prefix
             SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             if [[ "$exclusion" = false ]] ; then
-                count_input_file=$(ls -t "${INPUTDIR}" | egrep -i "^${SearchPraefix}.*${source_file_type}" | wc -l)
+                count_input_file=$(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^${SearchPraefix}.*${source_file_type}" | wc -l)
             elif [[ "$exclusion" = true ]] ; then
-                count_input_file=$(ls -t "${INPUTDIR}" | egrep -i "^.*${source_file_type}" | egrep -iv "^${SearchPraefix}.*${source_file_type}" | wc -l)
+                count_input_file=$(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^.*${source_file_type}" | egrep -iv "^${SearchPraefix}.*${source_file_type}" | wc -l)
             fi
         fi
 
