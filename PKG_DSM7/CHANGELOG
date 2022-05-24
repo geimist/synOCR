@@ -27,7 +27,7 @@ known issues / limitations:
  -  option to reduce multiple spaces to one (helpful with RegEx)
  -  the number of pages is now determined with Python - Exiftool and pdfinfo become obsolete
  -  Metadata will be add with Python - Exiftool become obsolete
-    - set author (get author information from ocr options if set ```--author john doe``` )
+    - set author (get author information from ocr options if set [--author john doe])
     - set creation date
     - set keywords
  -  logging deleted backup files in loglevel 2 
