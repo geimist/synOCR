@@ -33,11 +33,13 @@
     workprofile="$1"            # the profile submitted by the start script
     current_logfile="$2"        # current logfile / is submitted by start script
     shopt -s globstar           # enable 'globstar' shell option (to use ** for directionary wildcard)
+    date_start_all=$(date +%s)
     python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
     synOCR_python_module_list=( DateTime dateparser python-dateutil PyPDF2 Pillow )
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
-    dashline="-----------------------------------------------------------------------------------"
+    dashline1="-----------------------------------------------------------------------------------"
+    dashline2="●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
 
 #    if ! echo "$PATH" | grep -q '/usr/local/bin\|/opt/usr/bin' ; then
 #        PATH=$PATH:/usr/local/bin:/opt/usr/bin
@@ -56,14 +58,14 @@
 
 # check DSM version:
 # ---------------------------------------------------------------------
-dsm_version=6
-if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
-    dsm_version=7
-fi
+    dsm_version=6
+    if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
+        dsm_version=7
+    fi
 
 # read out and change into the working directory:
 # ---------------------------------------------------------------------
-    OLDIFS=$IFS                 # Save original field separator
+    SAVED_IFS=$IFS                 # Save original field separator
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
 
@@ -295,7 +297,7 @@ update_dockerimage()
 
     check_date=$(date +%Y-%m-%d)
     if echo $dockercontainer | grep -qE "latest$" && [ "$dockerimageupdate" = 1 ] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='$dockercontainer' ") = "$check_date" ]];then
-        printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "checks for ocrmypdf image update:" "${dashline}"
+        printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "checks for ocrmypdf image update:" "${dashline1}"
         echo -n "${log_indent}➜ update image [$dockercontainer] ➜ "
         updatelog=$(docker pull $dockercontainer 2>/dev/null)
 
@@ -354,8 +356,11 @@ OCRmyPDF()
 
 tag_search()
 {
-renameTag=""
-renameCat=""
+unset renameTag
+unset renameCat
+
+#keyword_array=()
+#unset $keyword_array
 
 # is it an external text file for the tags or a YAML rules file?
 type_of_rule=standard   # standard rules or advanced rules (YAML file)
@@ -631,8 +636,11 @@ if [ "$type_of_rule" = advanced ]; then
         fi
 
     done
-    # make tags unique:
-    renameTag=$(echo "$renameTag" | tr ' ' '\n' | uniq | tr '\n' ' ' | sed -e "s/ //g" )
+    # meta_keyword_list: unique / without tagsymbol / separated with komma and space >, <:
+    meta_keyword_list=$(echo "$renameTag" | tr ' ' '\n' | awk '!x[$0]++' | sed -e "s/^%20//g;s/^${tagsymbol}//g" | tr '\n' ' ' | sed -e "s/ /, /g;s/%20/ /g;s/, $//g")
+    # ranameTag: unique / spaces masked with %20:
+    renameTag=$(echo "$renameTag" | tr ' ' '\n' | awk '!x[$0]++' | tr '\n' ' ' | sed -e "s/ //g" )
+
 else
 # process simple tag rules:
     taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # encode spaces in tags and convert semicolons to spaces (for array)
@@ -687,8 +695,13 @@ else
 fi
 
 renameTag=${renameTag% }
-renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')    # remove starting and ending spaces, or all spaces if no destination folder is defined
-renameTag_raw="$renameTag"                                  # unmodified for tag folder / tag folder with spaces otherwise not possible
+# remove starting and ending spaces, or all spaces if no destination folder is defined:
+renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')
+# unmodified for tag folder / tag folder with spaces otherwise not possible:
+renameTag_raw="$renameTag"
+# # meta_keyword_list: without tagsymbol / separated with komma and space >, <:
+meta_keyword_list=$(echo "$renameTag" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g;s/%20/ /g")
+    
 echo "${log_indent}rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
 
 echo -e
@@ -704,10 +717,12 @@ sub_jq()
 {
 #########################################################################################
 # This function extract yaml-values                                                     #
+# https://starkandwayne.com/blog/bash-for-loop-over-json-array-using-jq/                #
+#                                                                                       #
 #########################################################################################
 
-# https://starkandwayne.com/blog/bash-for-loop-over-json-array-using-jq/
     echo "${sub_jq_value}" | base64 -i --decode | jq -r ${1}
+
 }
 
 
@@ -717,7 +732,7 @@ yaml_validate()
 # This function validate the integrity of yaml-file                                     #
 #########################################################################################
 
-#    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "validate the integrity of yaml-file:" "${dashline}"
+#    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "validate the integrity of yaml-file:" "${dashline1}"
 
     yamlcheck=$(yq v "${taglist}" 2>&1)
 
@@ -727,8 +742,8 @@ yaml_validate()
         # ToDo: cancel run to preserve PDF source file / possibly move to Errorfiles? (rather not)
     fi
 
-# check & adjust the rule names (only numbers and letters / no number at the beginning):
-# ---------------------------------------------------------------------
+    # check & adjust the rule names (only numbers and letters / no number at the beginning):
+    # ---------------------------------------------------------------------
     rulenames=$(cat "${taglisttmp}" | egrep -v '^[[:space:]]|^#|^$' | egrep ':[[:space:]]?$')
     for i in ${rulenames} ; do
         i2=$(echo "${i}" | sed -e 's/[^a-zA-Z0-9_:]/_/g')    # replace all nonconfom chars / only latin letters!
@@ -742,15 +757,15 @@ yaml_validate()
         fi
     done
 
-# check uniqueness of parent nodes:
-# ---------------------------------------------------------------------
+    # check uniqueness of parent nodes:
+    # ---------------------------------------------------------------------
     if [ $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l ) -ge 1 ] ; then # check for the number of duplicate lines
         echo "${log_indent}main keywords are not unique!"
         echo "${log_indent}dublicats are: $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d)"
     fi
 
-# check parameter validity:
-# ---------------------------------------------------------------------
+    # check parameter validity:
+    # ---------------------------------------------------------------------
     # check, if value of condition is "all" OR "any" OR "none":
     while read line ; do
         if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
@@ -787,6 +802,7 @@ yaml_validate()
     done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^casesensitive:")"
 
     echo -e
+
 }
 
 
@@ -797,8 +813,8 @@ prepare_python()
 #                                                                                       #
 #########################################################################################
 
-# check python3:
-# ---------------------------------------------------------------------
+    # check python3:
+    # ---------------------------------------------------------------------
     [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check Python:\n"
     if [ ! $(which python3) ]; then
         echo "${log_indent}  (Python3 is not installed / use fallback search with regex"
@@ -808,8 +824,8 @@ prepare_python()
     elif [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "$python_env_version" ]; then
         [ "$loglevel" = "2" ] && printf "${log_indent}  python3 already installed ($(which python3))\n"
 
-# check / install pip:
-# ---------------------------------------------------------------------
+        # check / install pip:
+        # ---------------------------------------------------------------------
         [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check pip:\n"
         if ! python3 -m pip --version > /dev/null  2>&1 ; then
             printf "${log_indent}  Python3 pip was not found and will be now installed ➜ "
@@ -844,8 +860,8 @@ prepare_python()
 
         [ "$loglevel" = "2" ] && echo "$module_list" | sed -e "s/^/${log_indent}  /g"
 
-# check / install python modules:
-# ---------------------------------------------------------------------
+        # check / install python modules:
+        # ---------------------------------------------------------------------
         echo -e
         for module in ${synOCR_python_module_list[@]}; do
             unset tmp_log1
@@ -879,6 +895,7 @@ prepare_python()
     [ "$loglevel" = "2" ] && printf "\n${log_indent}  module list:\n" && python3 -m pip list | sed -e "s/^/${log_indent}  /g"
 
     return 0
+
 }
 
 
@@ -1004,19 +1021,19 @@ adjust_attributes()
 # This function adjusts the attributes of the target file                               #
 #########################################################################################
 
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "adjusts the attributes of the target file:" "${dashline}"
+    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "adjusts the attributes of the target file:" "${dashline1}"
 
     local source_file="$1"
     local target_file="$2"
 
-# adjust file permissions;
-# ---------------------------------------------------------------------
+    # adjust file permissions;
+    # ---------------------------------------------------------------------
     cp --attributes-only -p "${source_file}" "${target_file}"
     chmod 664 "${target_file}"
     synoacltool -enforce-inherit "${target_file}"
 
-# adjust file date;
-# ---------------------------------------------------------------------
+    # adjust file date;
+    # ---------------------------------------------------------------------
     echo -n "${log_indent}➜ Adapt file date (Source: "
 
     if [ "$filedate" == "ocr" ]; then
@@ -1037,12 +1054,13 @@ adjust_attributes()
         touch --reference="${source_file}" "${target_file}"
     fi
 
-# File permissions-Log:
-# ---------------------------------------------------------------------
+    # File permissions-Log:
+    # ---------------------------------------------------------------------
     if [ "$loglevel" = "2" ] ; then
         echo "${log_indent}➜ File permissions target file:"
         echo "${log_indent}  $(ls -l "${target_file}")"
     fi
+
 }
 
 
@@ -1052,7 +1070,7 @@ copy_attributes()
 # This function copy the attributes from source to target file                          #
 #########################################################################################
 
-#    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "adjusts the attributes of the target file:" "${dashline}"
+#    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "adjusts the attributes of the target file:" "${dashline1}"
 
     local source_file="$1"
     local target_file="$2"
@@ -1063,6 +1081,7 @@ copy_attributes()
     touch --reference="${source_file}" "${target_file}"
     chmod 664 "${target_file}"
     synoacltool -enforce-inherit "${target_file}"
+
 }
 
 
@@ -1073,6 +1092,7 @@ replace_variables()
      | sed "s~§mnow~$(date +%m)~g;s~§ynow2~$(date +%y)~g;s~§ynow4~$(date +%Y)~g;s~§ynow~$(date +%Y)~g;s~§hhnow~$(date +%H)~g;s~§mmnow~$(date +%M)~g;s~§ssnow~$(date +%S)~g" \
      | sed "s~§pagecount~${pagecount_latest}~g;s~§pagecounttotal~${global_pagecount_new}~g;s~§filecounttotal~${global_ocrcount_new}~g;s~§pagecountprofile~${pagecount_profile_new}~g;s~§filecountprofile~${ocrcount_profile_new}~g" \
      | sed "s~§docr~${date_dd}~g;s~§mocr~${date_mm}~g;s~§yocr2~${date_yy:2}~g;s~§yocr4~${date_yy}~g;s~§yocr~${date_yy}~g" 
+
 }
 
 
@@ -1119,12 +1139,54 @@ echo "$NewName"
 
 # set metadata:
 # ---------------------------------------------------------------------
-echo -n "${log_indent}➜ edit metadata "
-if which exiftool > /dev/null  2>&1 ; then
+echo -n "${log_indent}➜ insert metadata "
+
+if [ "$python_check" = "ok" ]; then
+    echo "(use python PyPDF2)"
+    unset py_meta
+
+    py_meta="'/Author': \'$document_author\',"
+    py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
+    py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\'")"
+    
+    get_previous_meta(){
+        {   echo "import pprint"
+            echo "from PyPDF2 import PdfFileReader, PdfFileMerger"
+            echo "if __name__ == '__main__':"
+            echo "    file_in = open('${outputtmp}', 'rb')"
+            echo "    pdf_reader = PdfFileReader(file_in)"
+            echo "    metadata = pdf_reader.getDocumentInfo()"
+            echo "    pprint.pprint(metadata)"
+            echo "    file_in.close()"
+        } | python3
+    }
+    # get previous metadata - maybe for feature use:
+    #    previous_meta=$(get_previous_meta)
+
+    {   echo "import pprint"
+    
+        echo "from PyPDF2 import PdfFileReader, PdfFileMerger"
+    
+        echo "if __name__ == '__main__':"
+        echo "    file_in = open('${outputtmp}', 'rb')"
+        echo "    pdf_reader = PdfFileReader(file_in)"
+        echo "    metadata = pdf_reader.getDocumentInfo()"
+    
+        echo "    pdf_merger = PdfFileMerger()"
+        echo "    pdf_merger.append(file_in)"
+        echo "    pdf_merger.addMetadata({$py_meta})"
+        echo "    file_out = open('${outputtmp}', 'wb')"
+        echo "    pdf_merger.write(file_out)"
+    
+        echo "    file_in.close()"
+        echo "    file_out.close()"
+    } | python3
+
+elif which exiftool > /dev/null  2>&1 ; then
     echo -n "(exiftool ok) "
     exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
 else
-    echo "FAILED! - exiftool not found! Please install it over cphub.net if you need it"
+    echo "FAILED! - exiftool not found / Python-check failed! Please install it when you need it and when you want to insert metadata"
 fi
 
 [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
@@ -1352,6 +1414,7 @@ purge_log()
             [ -f "${LOGDIR}$line" ] && rm "${LOGDIR}$line"
         done <<<"$(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} )"
     fi
+
 }
 
 
@@ -1404,6 +1467,7 @@ py_page_count()
         echo '        print(number_of_pages)'
         echo 'exit()'
     } | python3 
+
 }
 
 
@@ -1415,13 +1479,15 @@ collect_input_files()
 
     source_dir="$1"
     if [ "$2" = "image" ]; then # image or pdf
-        source_file_type=".jpg$|.png$|.tiff$|.jpeg$"
+        source_file_type="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\)"
     else
-        source_file_type=".pdf"
+        source_file_type="\(PDF\|pdf\)"
     fi
+
     exclusion=false
-    SearchSuffix=""     # defined in next step to correct rename splitted files
     SearchPraefix_tmp="$SearchPraefix"
+    unset SearchSuffix     # defined in next step to correct rename splitted files
+    unset files
 
     if echo "${SearchPraefix_tmp}" | grep -qE '^!' ; then
         # is the prefix / suffix an exclusion criteria?
@@ -1430,21 +1496,23 @@ collect_input_files()
     fi
 
     if echo "${SearchPraefix_tmp}" | grep -q "\$"$ ; then
-        # is suffix
         SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
         if [ "$exclusion" = false ] ; then
-            files=$(find "${source_dir}" -maxdepth 1 -iname "*${SearchPraefix_tmp}.*" -type f | egrep -i "$source_file_type")
+            # is suffix
+            files=$(find "${source_dir}" -maxdepth 1 -regex ".*${SearchPraefix_tmp}\.${source_file_type}$" )
             SearchSuffix="$SearchPraefix_tmp"
         elif [ "$exclusion" = true ] ; then
-            files=$(find "${source_dir}" -maxdepth 1 -iname "*" -type f -not -iname "*${SearchPraefix_tmp}.*" -type f | egrep -i "$source_file_type")
+            # is exclusion suffix
+            files=$(find "${source_dir}" -maxdepth 1 -regex ".*\.${source_file_type}$" -not -iname "*${SearchPraefix_tmp}.*" -type f )
         fi
     else
-        # is prefix
         SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
         if [ "$exclusion" = false ] ; then
-            files=$(find "${source_dir}" -maxdepth 1 -iname "${SearchPraefix_tmp}*" -type f | egrep -i "$source_file_type")
+            # is prefix
+            files=$(find "${source_dir}" -maxdepth 1 -regex "${SearchPraefix_tmp}.*\.${source_file_type}$" )
         elif [ "$exclusion" = true ] ; then
-            files=$(find "${source_dir}" -maxdepth 1 -iname "*" -type f -not -iname "${SearchPraefix_tmp}*" -type f | egrep -i "$source_file_type")
+            # is exclusion prefix
+            files=$(find "${source_dir}" -maxdepth 1 -regex ".*\.${source_file_type}$" -not -iname "${SearchPraefix_tmp}*" -type f )
         fi
     fi
 
@@ -1490,14 +1558,14 @@ py_img2pdf()
 # https://datatofish.com/images-to-pdf-python/                                          #
 #########################################################################################
 
-printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "convert images to pdf" "${dashline}"
+printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "convert images to pdf" "${dashline1}"
 
 collect_input_files "${INPUTDIR}" "image"
 
+[ -z "${files}" ] && echo "${log_indent}nothing to do ..." && return 0
+
 while read input ; do
-
-    [ -z "$input" ] && continue
-
+    [ ! -f "$input" ] && continue
     printf "\n"
     filename=$(basename "$input")
     title=${filename%.*}
@@ -1541,21 +1609,20 @@ main_1st_step()
 #########################################################################################
 # This function passes the files to docker / split files / …                            #
 #########################################################################################
-printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "STEP 1 - RUN OCR / SPLIT FILES, IF NEEDED:" "${dashline}"
-#echo "STEP 1 - RUN OCR / SPLIT FILES, IF NEEDED:"
+printf "\n"
+printf "\n  %s\n  ● %-80s●\n  %s\n\n" "${dashline2}" "STEP 1 - RUN OCR / SPLIT FILES, IF NEEDED:" "${dashline2}"
 
 collect_input_files "${INPUTDIR}" "pdf"
 
 while read input ; do
+    [ ! -f "$input" ] && continue
 
-    [ -z "$input" ] && continue
-
-# create temporary working directory
-# ---------------------------------------------------------------------
+    # create temporary working directory
+    # ---------------------------------------------------------------------
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
-   trap 'rm -rf "$work_tmp"; exit' EXIT
+    trap 'rm -rf "$work_tmp"; exit' EXIT
 
-    printf "\n\n"
+    printf "\n"
     filename=$(basename "$input")
     title=${filename%.*}
     echo "CURRENT FILE:   ➜ $filename"
@@ -1566,14 +1633,12 @@ while read input ; do
     outputtmp="${work_tmp}/${title}.pdf"
     echo "${log_indent}  temp. target file: ${outputtmp}"
 
-# OCRmyPDF:
-# ---------------------------------------------------------------------
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "processing PDF @ OCRmyPDF:" "${dashline}"
+    # OCRmyPDF:
+    # ---------------------------------------------------------------------
+    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "processing PDF @ OCRmyPDF:" "${dashline1}"
     [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
-#    sleep 1
     dockerlog=$(OCRmyPDF 2>&1)
-#    sleep 1
 
     echo "${log_indent}➜ OCRmyPDF-LOG:"
     echo "$dockerlog" | sed -e "s/^/${log_indent}  /g"
@@ -1583,9 +1648,9 @@ while read input ; do
     [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 
-# check if target file is valid (not empty), otherwise continue / 
-# defective source files are moved to ERROR including LOG:
-# ---------------------------------------------------------------------
+    # check if target file is valid (not empty), otherwise continue / 
+    # defective source files are moved to ERROR including LOG:
+    # ---------------------------------------------------------------------
     if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
         echo "${log_indent}  ┖➜ failed! (target file is empty or not available)"
         rm "${outputtmp}"
@@ -1607,10 +1672,10 @@ while read input ; do
         printf "${log_indent}target file (OK): ${outputtmp}\n\n"
     fi
 
-# document split handling
-# ---------------------------------------------------------------------
-    if [ -n "${documentSplitPattern}" ]; then
-        printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "document split handling:" "${dashline}"
+    # document split handling
+    # ---------------------------------------------------------------------
+    if [ -n "${documentSplitPattern}" ] && [ "$python_check" = "ok" ]; then
+        printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "document split handling:" "${dashline1}"
 
         # identify split pages / write to an array:
         # ---------------------------------------------------------------------
@@ -1649,6 +1714,7 @@ while read input ; do
             echo "${log_indent}used pages:      $pageRange"
 
             # https://learndataanalysis.org/how-to-extract-pdf-pages-and-save-as-a-separate-pdf-file-using-python/
+            # ---------------------------------------------------------------------
             {   echo "from PyPDF2 import PdfFileReader, PdfFileWriter"
         
                 echo 'pdf_file_path = "'$outputtmp'"'
@@ -1728,12 +1794,12 @@ while read input ; do
             echo "${log_indent}no separator sheet found, or number of pages too small"
         fi
     else
-        echo "${log_indent}no split pattern defined"
+        echo "${log_indent}no split pattern defined or splitting not possible"
     fi
 
-# delete / save source file (takes into account existing files with the same name):
-# ---------------------------------------------------------------------
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "handle source file:" "${dashline}"
+    # delete / save source file (takes into account existing files with the same name):
+    # ---------------------------------------------------------------------
+    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "handle source file:" "${dashline1}"
 
     if [ "$was_splitted" = 0 ] || [ "$split_error" = 1 ]; then
         copy_attributes "${input}" "${outputtmp}"
@@ -1754,8 +1820,8 @@ while read input ; do
 
     rm -rfv "$work_tmp" | sed -e "s/^/${log_indent}/g"
 
-# Stats:
-# ---------------------------------------------------------------------
+    # Stats:
+    # ---------------------------------------------------------------------
     echo -e
     echo "Stats:"
     echo "  runtime last file:    ➜ $(sec_to_time $(( $(date +%s) - ${date_start} )))"
@@ -1770,20 +1836,18 @@ main_2nd_step()
 #########################################################################################
 # This function search for tags / rename / sort to target folder                        #
 #########################################################################################
-
-printf "\n\nSTEP 2 - SEARCH TAGS / RENAME / SORT:\n\n"
+printf "\n  %s\n  ● %-80s●\n  %s\n\n" "${dashline2}" "STEP 2 - SEARCH TAGS / RENAME / SORT:" "${dashline2}"
 
 collect_input_files "${OUTPUTDIR_tmp}" "pdf"
 
-# make special characters visible if necessary
-# ---------------------------------------------------------------------
+    # make special characters visible if necessary
+    # ---------------------------------------------------------------------
     [ "$loglevel" = "2" ] && printf "\n${log_indent}list files in INPUT with transcoded special characters:\n" && ls "${OUTPUTDIR_tmp}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
 
 # count pages / files:
 # ---------------------------------------------------------------------
 while read input ; do
-
-    [ -z "$input" ] && continue
+    [ ! -f "$input" ] && continue
 
     if [ "$python_check" = ok ]; then
         pagecount_latest=$( py_page_count "${input}" ) 
@@ -1798,14 +1862,15 @@ while read input ; do
 
     [ -z "$pagecount_latest" ] && pagecount_latest=0 && echo "${log_indent}! ! ! ERROR - with pdfinfo / exiftool / PyPDF2 - \$pagecount was set to 0"
 
-# adapt counter:
+    # adapt counter:
+    # ---------------------------------------------------------------------
     global_pagecount_new=$(( $global_pagecount_new + $pagecount_latest))
     global_ocrcount_new=$(( $global_ocrcount_new + 1))
     pagecount_profile_new=$(( $pagecount_profile_new + $pagecount_latest))
     ocrcount_profile_new=$(( $ocrcount_profile_new + 1))
 
-# create temporary working directory
-# ---------------------------------------------------------------------
+    # create temporary working directory
+    # ---------------------------------------------------------------------
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
     trap 'rm -rf "$work_tmp"; exit' EXIT
 
@@ -1821,33 +1886,33 @@ while read input ; do
         title=$( echo "${title}" | sed s/${SearchPraefix_tmp}//g )
     fi
 
-# temporary output destination with seconds for uniqueness 
-# (otherwise there will be duplication if renaming syntax is missing)
-# ---------------------------------------------------------------------
+    # temporary output destination with seconds for uniqueness 
+    # (otherwise there will be duplication if renaming syntax is missing)
+    # ---------------------------------------------------------------------
     output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
 
-# move temporary file to destination folder:
-# ---------------------------------------------------------------------
+    # move temporary file to destination folder:
+    # ---------------------------------------------------------------------
 #    mv "${input}" "${output}"
     cp "${input}" "${output}"
 #    input="${output}"           # path, for copy attributes 
 
-# source file permissions-Log:
-# ---------------------------------------------------------------------
+    # source file permissions-Log:
+    # ---------------------------------------------------------------------
     if [ "$loglevel" = "2" ] ; then
         echo "${log_indent}➜ File permissions source file:"
         echo -n "${log_indent}  "
         ls -l "$input"
     fi
 
-# exact text
-# ---------------------------------------------------------------------
+    # exact text
+    # ---------------------------------------------------------------------
     searchfile="${work_tmp}/synOCR.txt"
     searchfilename="${work_tmp}/synOCR_filename.txt"    # for search in file name
     echo "${title}" > "${searchfilename}"
 
-# Search in the whole documents, or only on the first page?:
-# ---------------------------------------------------------------------
+    # Search in the whole documents, or only on the first page?:
+    # ---------------------------------------------------------------------
     if [ "$searchAll" = no ]; then
         pdftotextOpt="-l 1"
     else
@@ -1864,14 +1929,14 @@ while read input ; do
 
     [ "$loglevel" = "2" ] && cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
 
-# search by tags:
-# ---------------------------------------------------------------------
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "search tags in ocr text:" "${dashline}"
+    # search by tags:
+    # ---------------------------------------------------------------------
+    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "search tags in ocr text:" "${dashline1}"
     tag_search
 
-# search by date:
-# ---------------------------------------------------------------------
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "search for a valid date in ocr text:" "${dashline}"
+    # search by date:
+    # ---------------------------------------------------------------------
+    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "search for a valid date in ocr text:" "${dashline1}"
     dateIsFound=no
     find_date 1
 
@@ -1892,36 +1957,15 @@ while read input ; do
         echo "${log_indent}  year: ${date_yy}"
     fi
 
-# compose and rename file names / move to target:
-# ---------------------------------------------------------------------
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "rename and sort to target folder:" "${dashline}"
+    # compose and rename file names / move to target:
+    # ---------------------------------------------------------------------
+    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "rename and sort to target folder:" "${dashline1}"
     rename
 
-# delete / save source file (takes into account existing files with the same name): ${filename%.*}
-# ---------------------------------------------------------------------
-#    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "handle source file:" "${dashline}"
-#    if [ "$backup" = true ]; then
-#        sourceFileCount=$(ls -t "${BACKUPDIR}" | grep -o "^${filename%.*}.*" | wc -l)
-#        if [ "$sourceFileCount" -eq 0 ]; then
-#            mv "$input" "${BACKUPDIR}${filename}"
-#            echo "${log_indent}➜ move source file to: ${BACKUPDIR}${filename}"
-#        else
-#            while [ -f "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf" ]; do
-#                sourceFileCount=$(( $sourceFileCount + 1 ))
-#                echo "${log_indent}  continue counting … ($sourceFileCount)"
-#            done
-#            mv "$input" "${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
-#            echo "${log_indent}➜ move source file to: ${BACKUPDIR}${filename%.*} ($sourceFileCount).pdf"
-#        fi
-#    else
-#        rm -f "$input"
-#        echo "${log_indent}➜ delete source file"
-#    fi
+    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "final tasks:" "${dashline1}"
 
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "final tasks:" "${dashline}"
-
-# Notification:
-# ---------------------------------------------------------------------
+    # Notification:
+    # ---------------------------------------------------------------------
     # ToDo: the automatic language setting should be included here:
     if [ "$dsmtextnotify" = "on" ] ; then
         file_notify=$(basename "${output}")
@@ -1953,14 +1997,14 @@ while read input ; do
         echo "${log_indent}  INFO: (PushBullet-TOKEN not set)"
     fi
 
-# ---------------------------------------------------------------------
+    # update file count profile:
+    # ---------------------------------------------------------------------
     echo -e
     echo "Stats:"
 
     sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$global_pagecount_new' WHERE key='global_pagecount'"
     sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$global_ocrcount_new' WHERE key='global_ocrcount'"
 
-# update file count profile:
     sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET pagecount='$pagecount_profile_new' WHERE profile_ID='$profile_ID'"
     sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET ocrcount='$ocrcount_profile_new' WHERE profile_ID='$profile_ID'"
 
@@ -1971,8 +2015,8 @@ while read input ; do
     echo -e
     echo "cleanup:"
 
-# delete temporary working directory:
-# ---------------------------------------------------------------------
+    # delete temporary working directory:
+    # ---------------------------------------------------------------------
     echo "  delete tmp-files ..."
     rm -rfv "$work_tmp" | sed -e "s/^/  /g"
     rm -rfv "${input}" | sed -e "s/^/  /g"   # rm ocred version - source file is backuped after ocrmypdf processing 
@@ -1989,24 +2033,28 @@ done <<<"${files}"
     echo "  # ---------------------------------- #"
     echo "  ######################################"
 
+    
+    # prepare steps (check / install / activate python enviroment & check docker):
+    # --------------------------------------------------------------------
     update_dockerimage
     
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline}" "check the python3 installation and the necessary modules:" "${dashline}"
+    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
     [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
-
-    # check / install / activate python enviroment:
-    # ---------------------------------------------------------------------
     [ ! -d "$python3_env" ] && python3 -m venv "$python3_env"
     source "${python3_env}/bin/activate"
+
     prepare_python_log=$(prepare_python)
+
     if [ "$?" -eq 0 ]; then
-        echo "$prepare_python_log"
-        printf "${log_indent}prepare_python: OK\n\n"
+        [ -n "$prepare_python_log" ] && echo "$prepare_python_log"
+        printf "${log_indent}prepare_python: OK\n"
     else
-        echo "$prepare_python_log"
-        printf "${log_indent}prepare_python: ! ! ! ERROR ! ! ! \n\n"
+        [ -n "$prepare_python_log" ] && echo "$prepare_python_log"
+        printf "${log_indent}prepare_python: ! ! ! ERROR ! ! ! \n"
     fi
 
+    # main steps:
+    # ---------------------------------------------------------------------
     if [ "$img2pdf" = true ]; then
         py_img2pdf
     fi
@@ -2016,9 +2064,10 @@ done <<<"${files}"
     purge_log
     purge_backup
 
-    #[ -n "${OUTPUTDIR_tmp}" ] && rm -rfv "${OUTPUTDIR_tmp}" | sed -e "s/^/  /g"
     rmdir -v "${OUTPUTDIR_tmp}" | sed -e "s/^/  /g"
-    
+
+    printf "\n  runtime all files:    ➜ $(sec_to_time $(( $(date +%s) - ${date_start_all} )))"
+
     printf "\n\n\n"
 
 exit 0
