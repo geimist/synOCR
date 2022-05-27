@@ -24,7 +24,7 @@ DSM7 version you can found here: https://git.geimist.eu/geimist/synOCR/src/branc
     - set creation date (depending on which one was defined: OCR, file date, now)
     - set keywords
  -  logging deleted backup files in loglevel 2 
- -  [GUI] notify about updates in main page
+ -  [GUI] notify about updates in main page (because cphub.net is not working)
  -  [GUI] support for french language (machine translated)
 
 1.2.0 [2022-01-11]
