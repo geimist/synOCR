@@ -29,6 +29,7 @@ known issues / limitations:
     - set author (get author information from ocr options if set [--author john doe])
     - set creation date (depending on which one was defined: OCR, file date, now)
     - set keywords
+ -  the conversion from YAML to JSON is no longer done with the binary yq but by Python
  -  logging deleted backup files in loglevel 2 
  -  [GUI] notify about updates in main page (because cphub.net is not working)
  -  [GUI] support for french language (machine translated)
