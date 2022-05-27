@@ -21,7 +21,7 @@ DSM7 version you can found here: https://git.geimist.eu/geimist/synOCR/src/branc
  -  the number of pages is now determined with Python - Exiftool and pdfinfo become obsolete (Python3 must be installed)
  -  Metadata will be add with Python - Exiftool become obsolete (Python3 must be installed)
     - set author (get author information from ocr options if set [--author john doe])
-    - set creation date
+    - set creation date (depending on which one was defined: OCR, file date, now)
     - set keywords
  -  logging deleted backup files in loglevel 2 
  -  [GUI] notify about updates in main page
