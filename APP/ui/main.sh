@@ -112,7 +112,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     if [[ "$local_version" != "$highest_version" ]] ; then
         echo ' 
         <h5 class="text-center">
-            <a href="https://git.geimist.eu/geimist/synOCR/releases/" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">UPDATE TO VERSION '$online_version' AVAILABLE!</a>
+            <a href="https://git.geimist.eu/geimist/synOCR/releases/" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">UPDATE TO VERSION '$online_version' AVAILABLE! [KLICK]</a>
         </h5>'
     fi
 
