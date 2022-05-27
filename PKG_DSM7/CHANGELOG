@@ -12,10 +12,9 @@ known issues / limitations:
 1.3.0 [2022-xx-xx]
   BUGFIXES:
  -  counting of log and backup files to be deleted was not correct under certain situations
- -  
+ -  catching an error message if there are no docker images to be cleaned up
   IMPROVEMENT:
  -  YAML rules: if the value for condition not set - fallback to any
- -  
   IMPLEMENTATIONS:
  -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
     to use this: call synOCR-start.sh with parameter start in DSM task scheduler:
