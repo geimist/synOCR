@@ -17,7 +17,7 @@ dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
 machinetyp=$(uname --machine)
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
 
-umask 0011   # so that files can also be edited by other users / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
+umask 0011   # so that creaded files can also be edited by other users / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
 # create list (array need for tee) with all active log folders:
 # --------------------------------------------------------------
