@@ -24,5 +24,5 @@ silent_upgrade="yes"
 silent_uninstall="no"
 dsmappname=SYNO.SDS.synOCR.Application
 helpurl="https://www.synology-forum.de/showthread.html?99647-synOCR-GUI-f%C3%BCr-OCRmyPDF"
-beta="no"
+beta="yes"
 report_url="https://www.synology-forum.de/showthread.html?99647-synOCR-GUI-f%C3%BCr-OCRmyPDF"
