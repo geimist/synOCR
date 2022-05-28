@@ -921,26 +921,26 @@ find_date()
 #########################################################################################
 
 founddatestr=""
+arg_searchnearest=""
 format=$1   # for regex search: 1 = dd mm [yy]yy
             #                   2 = [yy]yy mm dd
             #                   3 = mm[./-]dd[./-]yy(yy) american
 
-# regex fallback, if needed
+# python search and set regex fallback, if needed
 # ---------------------------------------------------------------------
 if [ "$tmp_date_search_method" = "python" ] && [ "$python_check" = "ok" ]; then
+    format=2
     if [ "$search_nearest_date" = "nearest" ]; then
         arg_searchnearest='-searchnearest="on"'
     fi
 
-    founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" 2>&1)
+#   founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" 2>&1)
+    founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" 2>&1)
 
-#    [ "$loglevel" = "2" ] && 
-    echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
-
-    format=2
+    [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
     
-# test and maybe fallback to RegEx search, if result of python search not valid:
-# ---------------------------------------------------------------------
+    # test and maybe fallback to RegEx search, if result of python search not valid:
+    # ---------------------------------------------------------------------
     date "+%d/%m/%Y" -d $(awk -F- '{print $2}' <<<"$founddatestr" )/$(awk -F- '{print $3}' <<<"$founddatestr" )/$(awk -F- '{print $1}' <<<"$founddatestr" ) > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
     if [ $? -ne 0 ]; then
         printf "\n${log_indent}! ! ! failed ...\n${log_indent}fallback to RegEx search\n\n"
@@ -964,6 +964,10 @@ if [ "$tmp_date_search_method" = "regex" ]; then
     fi
 fi
 
+# Select and separate date:
+# (the loop to filter & check multiple results is obsolete 
+# in the current version)
+# ---------------------------------------------------------------------
 if [ ! -z "$founddatestr" ]; then
     readarray -t founddates <<<"$founddatestr"
     cntDatesFound=${#founddates[@]}
@@ -1591,6 +1595,7 @@ while read input ; do
     printf "\n"
     filename=$(basename "$input")
     title=${filename%.*}
+#   echo "${dashline2}"
     echo "CURRENT FILE:   ➜ source: $filename"
     date_start=$(date +%s)
 
@@ -1647,6 +1652,7 @@ while read input ; do
     printf "\n"
     filename=$(basename "$input")
     title=${filename%.*}
+    echo "${dashline2}"
     echo "CURRENT FILE:   ➜ $filename"
     date_start=$(date +%s)
     was_splitted=0
@@ -1902,7 +1908,8 @@ while read input ; do
     echo -e
     filename=$(basename "$input")
     title=${filename%.*}
-    echo -n "PROCESSING:     ➜ $filename"
+    echo "${dashline2}"
+    echo "CURRENT FILE:   ➜ $filename"
     date_start=$(date +%s)
     tmp_date_search_method="$date_search_method"    # able to use a temporary fallback to regex for each file
 
@@ -2046,16 +2053,14 @@ while read input ; do
 
 done <<<"${files}"
 
-
 }
 
     printf "\n\n\n"
-    echo "  ######################################"
-    echo "  # ---------------------------------- #"
-    echo "  # |    ==> RUN THE FUNCTIONS <==   | #"
-    echo "  # ---------------------------------- #"
-    echo "  ######################################"
-
+    echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
+    echo "  ● ---------------------------------- ●"
+    echo "  ● |    ==> RUN THE FUNCTIONS <==   | ●"
+    echo "  ● ---------------------------------- ●"
+    echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
     
     # prepare steps (check / install / activate python enviroment & check docker):
     # --------------------------------------------------------------------
