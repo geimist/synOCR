@@ -354,17 +354,18 @@ fi
         fi
 
         if (( $? == 0 )); then
-            echo "  ######################################" >> $LOGFILE
-            echo "  # ---------------------------------- #" >> $LOGFILE
-            echo "  # |    ==> END OF FUNCTIONS <==    | #" >> $LOGFILE
-            echo "  # ---------------------------------- #" >> $LOGFILE
-            echo "  ######################################" >> $LOGFILE
+            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" >> $LOGFILE
+            echo "  ● ---------------------------------- ●" >> $LOGFILE
+            echo "  ● |    ==> END OF FUNCTIONS <==    | ●" >> $LOGFILE
+            echo "  ● ---------------------------------- ●" >> $LOGFILE
+            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" >> $LOGFILE
         else
-            echo "  ######################################" >> $LOGFILE
-            echo "  # ---------------------------------- #" >> $LOGFILE
-            echo "  # |    ==> EXIT WITH ERROR! <==    | #" >> $LOGFILE
-            echo "  # ---------------------------------- #" >> $LOGFILE
-            echo "  ######################################" >> $LOGFILE
+            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" >> $LOGFILE
+            echo "  ● ---------------------------------- ●" >> $LOGFILE
+            echo "  ● |    ==> EXIT WITH ERROR! <==    | ●" >> $LOGFILE
+            echo "  ● ---------------------------------- ●" >> $LOGFILE
+            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" >> $LOGFILE
+
             echo "$lang_synOCR_start_errorexit"
             echo "$lang_synOCR_start_loginfo: $LOGFILE"
             exit_status=ERROR
