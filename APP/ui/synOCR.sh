@@ -1525,20 +1525,20 @@ collect_input_files()
         SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
         if [ "$exclusion" = false ] ; then
             # is suffix
-            files=$(find "${source_dir}" -regex "${source_dir}.*${SearchPraefix_tmp}\.${source_file_type}$" )
+            files=$(find "${source_dir}" -maxdepth 1 -regex "${source_dir}.*${SearchPraefix_tmp}\.${source_file_type}$" )
             SearchSuffix="$SearchPraefix_tmp"
         elif [ "$exclusion" = true ] ; then
             # is exclusion suffix
-            files=$(find "${source_dir}" -regex "${source_dir}.*\.${source_file_type}$" -not -iname "*${SearchPraefix_tmp}.*" -type f )
+            files=$(find "${source_dir}" -maxdepth 1 -regex "${source_dir}.*\.${source_file_type}$" -not -iname "*${SearchPraefix_tmp}.*" -type f )
         fi
     else
         SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
         if [ "$exclusion" = false ] ; then
             # is prefix
-            files=$(find "${source_dir}" -regex "${source_dir}${SearchPraefix_tmp}.*\.${source_file_type}$" )
+            files=$(find "${source_dir}" -maxdepth 1 -regex "${source_dir}${SearchPraefix_tmp}.*\.${source_file_type}$" )
         elif [ "$exclusion" = true ] ; then
             # is exclusion prefix
-            files=$(find "${source_dir}" -regex "${source_dir}.*\.${source_file_type}$" -not -iname "${SearchPraefix_tmp}*" -type f )
+            files=$(find "${source_dir}" -maxdepth 1 -regex "${source_dir}.*\.${source_file_type}$" -not -iname "${SearchPraefix_tmp}*" -type f )
         fi
     fi
 
