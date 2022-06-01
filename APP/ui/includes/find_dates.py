@@ -1,5 +1,3 @@
-#!/usr/local/bin/python3
-
 #######################################################################
 #  Parse Textfiles for valid dates.
 #  Check if dates were not listed in a blacklist and/or were not in the future
@@ -12,8 +10,30 @@
 #     0.1, 24.03.2022
 #     0.2, 01.04.2022
 #          remove exit on error for call ArgumentParser(exit_on_error=False)
+#     0.3, 03.05.2022
+#          splitt_dates: Bugfix for dateformar YMD
+#     0.4, 13.05.2022
+#          add correct timezone to dateparser calls to prevent PEP Message
+#          enable alphanumeric date search ( needed parts month, year)
+#          actual behaviour:
+#          - search all alpha-numeric date
+#          - search all numeric dates and append
+#          - if not search nearest first found alphanumeric date ist returned
+#          - if no alpha date is found first numeric date is returned
+#
+#     0.5, 30.05.2022
+#          enable logging things happens during date search
+#          new parameter: dbg_lvl and dbg_file
+#                         dbg_lvl = 0 (off), 1=info, 2=debug
+#                         dbg_file = filename with path to write logging info
+#          rework alphanumeric date search.
+#          - prescan every line with regex, otherwise date_search was to bad
+#
+#     0.6, BugFix search_alpha_numeric_dates
+#          Regex \a-zA-Z -> a-zA-z
 #
 #
+#search_alpha_numeric_dates
 import datetime
 
 from dateparser.search import search_dates
@@ -22,6 +42,8 @@ import re
 import os
 import sys
 import argparse
+import logging
+from pathlib import Path
 
 class FindDates:
 
@@ -32,7 +54,10 @@ class FindDates:
         self.searchtextstr = None
         self.founddatelist = []
         self.searchnearest = False
-
+        self.dbg_lvl = 0
+        self.dbg_file = None
+        self.numeric_dates_cnt = 0
+        self.alphanumeric_dates_cnt = 0
 
     def setfindmode(self, searchnearest):
         if searchnearest.casefold() == "on":
@@ -41,8 +66,9 @@ class FindDates:
     def add_file_with_text_findings(self, filewithtextfindings):
 
         try:
-            with open(filewithtextfindings) as f:
+            with open(filewithtextfindings, 'r', encoding='UTF-8') as f:
                 self.searchtextstr = " ".join([line.rstrip() for line in f])
+                self.fileWithTextFindings = filewithtextfindings
         except FileNotFoundError:
             print(f"ERROR: File {filewithtextfindings} not accesible")
             print("File is not accessible", file=sys.stderr)
@@ -66,9 +92,13 @@ class FindDates:
             while startpos < len(date_string):
                 result = re.search(singleregex, date_string[startpos:])
                 if result:  # , settings={'DATE_ORDER': 'DMY'}
-                    parseresult = dateparser.parse(result.group(0), settings={'DATE_ORDER': 'DMY', 'TIMEZONE': 'Europe/Berlin'})
-                    # founddatelist.append(f"{parseresult.day:02d}.{parseresult.month:02d}.{parseresult.year:4d}")
-                    founddatelist.append(parseresult)
+                    parseresult = dateparser.parse(result.group(0), settings={'DATE_ORDER': 'DMY', 'TIMEZONE': 'CEST'})
+                    if not parseresult:
+                        parseresult = dateparser.parse(result.group(0), settings={'DATE_ORDER': 'YMD', 'TIMEZONE': 'CEST'})
+
+                    if parseresult:
+                        # founddatelist.append(f"{parseresult.day:02d}.{parseresult.month:02d}.{parseresult.year:4d}")
+                        founddatelist.append(parseresult)
                     startpos += result.end()
                 else:
                     break
@@ -80,14 +110,18 @@ class FindDates:
         :param dateblacklist:
         :return:
         """
+        logging.info('start checking blacklist')
         blackListDates = self.splitt_dates(dateblacklist)
         if blackListDates:
             for blackListDate in blackListDates:
                 founddate = f"{blackListDate.year:04d}.{blackListDate.month:02d}.{blackListDate.day:02d}"
+                logging.debug(f'Blacklistdate {founddate}')
                 #print(founddate)
                 self.dateBlackList_YMD.append(founddate)
                 founddate = f"{blackListDate.day:02d}.{blackListDate.month:02d}.{blackListDate.year:04d}"
                 self.dateBlackList_DMY.append(founddate)
+
+        logging.info('end checking blacklist')
 
     def search_all_numeric_dates(self):
         """
@@ -98,40 +132,42 @@ class FindDates:
         # reg für zahlendatums
         # 12.12.2022
         # 12.12.20     (DD.MM.YY)
-
-        #(0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}(\s|\.|\,)
+        # (0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}(\s|\.|\,)
         # DD-|.|/MM-|.|/YYYY
         # DD-|.|/MM-|.|/YY
-        #s(0[1-9]|[12][0-9]|3[01])(\s?)(-|\.|/)(\s?)(0[1-9]|1[0-2])(\s?)(-|\.|/)(\s?)(\d{4}|\d{2})(\s|\.|\,)
-        #
+        # !!!!! \s?(0[1-9]|[12][0-9]|3[01])(\s?)(-|\.|\/)(\s?)(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)
+        # /(0[1-9]|[12][0-9]|3[01])(-|\.|\/)(0[1-9]|1[0-2])(-|\.|\/)\d{4}/gm
         # YYYY-|.|/MM-|.|/DD
-        #\s(((\d{4})(\s?)(-|\.|/)(\s?))|((\d{2})(\s?)(-|\.|/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)
-
+        # !!!!! \s?(((\d{4})(\s?)(-|\.|\/)(\s?))|((\d{2})(\s?)(-|\.|\/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)
 
         regex = r"(0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}"
 
-        maxlen = len(self.searchtextstr)
-        startpos = 0
-        while startpos < maxlen:
-            res = re.search(regex,self.searchtextstr[startpos:])
+        max_len = len(self.searchtextstr)
+        start_pos = 0
+        while start_pos < max_len:
+            res = re.search(regex, self.searchtextstr[start_pos:])
             if res:
-                actValue = res.group(0)
-                dateobj = dateparser.parse(actValue, settings={'TIMEZONE': 'Europe/Berlin','DATE_ORDER': 'DMY'})
-                actValue = f"{dateobj.day:02d}.{dateobj.month:02d}.{dateobj.year:04d}"
+                act_value = res.group(0)
+                date_obj = dateparser.parse(act_value, settings={'TIMEZONE': 'CEST', 'DATE_ORDER': 'DMY'})
+                act_value = f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year:04d}"
                 if len(self.dateBlackList_DMY):
-                    if actValue not in self.dateBlackList_DMY:
-                        self.founddatelist.append(dateobj)
+                    if act_value not in self.dateBlackList_DMY:
+                        self.founddatelist.append(date_obj)
+                        logging.debug(f'{date_obj}')
                 else:
-                    self.founddatelist.append(dateobj)
+                    self.founddatelist.append(date_obj)
+                    logging.debug(f'{date_obj}')
 
-                startpos = startpos + res.end()
-                #Check if startpos > maxlen of searchstring
-                if startpos > maxlen:
-                    #return None
+                start_pos = start_pos + res.end()
+                # Check if start_pos > max_len of searchstring
+                if start_pos > max_len:
+                    self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
+                    logging.info(f'found {self.numeric_dates_cnt} numeric dates')
                     return self.founddatelist
             else:
+                self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
+                logging.info(f'found {self.numeric_dates_cnt} numeric dates')
                 return self.founddatelist
-
 
     def searchnearestdate(self):
         """
@@ -140,17 +176,101 @@ class FindDates:
         """
         # find nearest day from today that is not in the future
         datenow = datetime.datetime.now()
+
+        logging.info(f'start searchnearest')
+        logging.debug(f'datelist not  ordered')
+        for singleDate in self.founddatelist:
+            logging.debug(f'{singleDate}')
+
         self.founddatelist.sort(reverse=True)
+        logging.debug(f'date now')
+        logging.debug(f'{datenow}')
+
+        logging.debug(f'datelist ordered')
+        for singleDate in self.founddatelist:
+            logging.debug(f'{singleDate}')
+
         for actdate in self.founddatelist:
             if actdate <= datenow:
+                logging.info(f'end searchnearest')
                 return actdate
+
+        logging.info(f'end searchnearest')
         return None
 
     def search_alpha_numeric_dates(self):
+        # \s(([\a-zA-Z]{3}\.)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
+
+        #\s(([\a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
+
+        #\s(((0[1-9]|[12][0-9]|3[01])\.?)?)\s(([\a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
+
+        founddatelist = []
+        regexlist = [
+            r"\s?(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
+        ]
+
+
         founddate = None
+
+        with open(self.fileWithTextFindings, 'r', encoding='UTF-8') as f:
+            for line in f:
+                logging.debug(f'Line from File: {line}')
+                for singleregex in regexlist:
+                    startpos = 0
+                    while startpos < len(line):
+                        result = re.search(singleregex, line[startpos:])
+                        if result:  # , settings={'DATE_ORDER': 'DMY'}
+                            found_dates = search_dates(result.group(0).rstrip(),
+                                                       settings={'TIMEZONE': 'CEST', 'REQUIRE_PARTS': ['month', 'year'],
+                                                                 'PREFER_DAY_OF_MONTH': 'first'})
+                            if found_dates:
+                                founddatelist.append(found_dates)
+                                self.founddatelist.append(found_dates[0][1])
+                                logging.debug(f'{found_dates[0][1]}')
+                            startpos += result.end()
+                        else:
+                            break
+
+                #print(found_dates)
+                #if found_dates:
+                #    logging.debug(f'{found_dates[0][1]}')
+                #    logging.debug('end')
+
+        f.close()
+        self.alphanumeric_dates_cnt = len(self.founddatelist)
+        logging.info(f'found {self.alphanumeric_dates_cnt} alphanumeric dates')
+
         return founddate
 
+    def search_alpha_numeric_dates1(self):
+        # \s(([\a-zA-Z]{3}\.)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
 
+        #\s(([\a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
+
+        #\s(((0[1-9]|[12][0-9]|3[01])\.?)?)\s(([\a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
+
+        founddate = None
+
+        with open(self.fileWithTextFindings, 'r', encoding='UTF-8') as f:
+            for line in f:
+                #print(line)
+                found_dates = search_dates(line.rstrip(), settings={'TIMEZONE': 'CEST', 'REQUIRE_PARTS': ['month', 'year'], 'PREFER_DAY_OF_MONTH': 'first'})
+                #print(found_dates)
+                if found_dates:
+                    self.founddatelist.append(found_dates[0][1])
+                    logging.debug(f'Line from File: {line}')
+                    logging.debug(f'{found_dates[0][1]}')
+
+        f.close()
+        self.alphanumeric_dates_cnt = len(self.founddatelist)
+        logging.info(f'found {self.alphanumeric_dates_cnt} alphanumeric dates')
+
+        #found_dates = search_dates(self.searchtextstr,settings={'REQUIRE_PARTS': ['month', 'year'], 'PREFER_DAY_OF_MONTH': 'first'})
+        #if found_dates:
+        #    self.founddatelist.append(found_dates[0][1])
+
+        return founddate
 
     def search_dates(self):
         """
@@ -158,10 +278,21 @@ class FindDates:
         """
         found_one_date = None
 
+        logging.info('start search alphanumeric dates')
+        self.search_alpha_numeric_dates()
+        if not self.founddatelist:
+            logging.info('no alphanumeric dates found')
+        logging.info('end search alphanumeric dates')
+        #if self.founddatelist:
+        #    return f"{self.founddatelist[0].year:04d}-{self.founddatelist[0].month:02d}-{self.founddatelist[0].day:02d}"
+
+        logging.info('start search numeric dates')
         self.search_all_numeric_dates()
         if not self.founddatelist:
+            logging.info('no numeric dates found')
             return None
         else:
+            logging.info('end search numeric dates')
             if not self.searchnearest:
                 return f"{self.founddatelist[0].year:04d}-{self.founddatelist[0].month:02d}-{self.founddatelist[0].day:02d}"
             else:
@@ -174,29 +305,59 @@ class FindDates:
 
 
 if __name__ == '__main__':
+
     acceptedvalue = ['on','off']
     parser = argparse.ArgumentParser()
     parser.add_argument('-fileWithTextFindings', type=str)
     parser.add_argument('-dateBlackList', type=str, required=False)
     parser.add_argument('-searchnearest', type=str, required=False)
 
+    # debug arguments
+    parser.add_argument('-dbg_file', type=str, required=False)
+    parser.add_argument('-dbg_lvl', type=int, required=False, choices=range(0, 3))
+
     findDate = FindDates()
-    # findDate.add_file_with_text_findings("searchdate.txt")
-    # findDate.add_black_list("BlackList")
     try:
         args = parser.parse_args()
     except argparse.ArgumentError:
         print('Catching an argumentError', file=sys.stderr)
 
+    if args.dbg_lvl:
+        # 0 = aus, 1=standard, 2=debug
+        findDate.dbg_lvl=args.dbg_lvl
+
+    if args.dbg_file:
+        dbg_file = Path(args.dbg_file)
+        if dbg_file.is_file():
+            findDate.dbg_file = args.dbg_file
+
+    if args.dbg_lvl >= 1 and dbg_file.is_file():
+        if args.dbg_lvl == 1:
+            dbg_lvl = logging.INFO
+        elif args.dbg_lvl == 0:
+            dbg_lvl = logging.NOTSET
+        else:
+            dbg_lvl = logging.DEBUG
+
+        logging.basicConfig(filename=findDate.dbg_file, filemode='a', format='%(asctime)s - %(message)s', level=dbg_lvl)
+        logging.info('Date scanning started')
+
     if args.searchnearest:
         if args.searchnearest in acceptedvalue:
+            logging.info(f'Parameter searchnearest = {args.searchnearest}')
             findDate.setfindmode(args.searchnearest)
 
     if args.fileWithTextFindings:
+        logging.info(f'Parameter fileWithTextFindings = {args.fileWithTextFindings}')
         findDate.add_file_with_text_findings(args.fileWithTextFindings)
     if args.dateBlackList:
+        logging.info(f'Parameter dateBlackLIst = {args.dateBlackList}')
         findDate.add_black_list(args.dateBlackList)
 
-
     foundDate = findDate.search_dates()
+
     print(f"{foundDate}")
+    if args.dbg_lvl >= 1 and dbg_file.is_file():
+        logging.info(f'found date {foundDate}')
+        logging.info('Date scanning ended')
+
