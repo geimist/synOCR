@@ -86,7 +86,7 @@ OLDIFS=$IFS
         # write default data:
         # ---------------------------------------------------------------------
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '7')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '6')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('checkmon', '')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0')"
@@ -415,6 +415,18 @@ fi
             log="$log 
             ➜ ERROR: the DB column could not be created (clean_up_spaces)"
             error=1
+        fi
+
+        if [[ "$error" == "0" ]]; then
+            # lift DB version:
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET value_1='6' 
+                                           WHERE key='db_version'"
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                           SET value_1=(datetime('now','localtime')) 
+                                           WHERE key='timestamp'"
+            log="$log
+            DB-Upgrade successfully processed (v5 ➜ v6)"
         fi
     fi
 
