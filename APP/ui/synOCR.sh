@@ -201,6 +201,15 @@
     echo "date found order:         ${search_nearest_date}"
     echo "source for filedate:      ${filedate}"
     echo "ignored dates by search:  ${ignoredDate}"
+
+    echo "ignored dates by search:  ${ignoredDate}"
+    echo "ignored dates by search:  ${ignoredDate}"
+
+#    search_range_ago=99
+#    search_range_ahead=99
+#    echo "search range from year:   ${search_range_ago} years ago (currently hard coded)"
+#    echo "search range up to year:  ${search_range_ahead} years ahead (currently hard coded)"
+    
     [ "$loglevel" = "2" ] && \
     echo "PATH-Variable:            $PATH"
     echo -n "Docker test:              "
@@ -383,7 +392,6 @@ elif [ -f "$taglist" ]; then
                 return 1  # file not further processable
                 # ToDo: cancel run to preserve PDF source file / possibly move to Errorfiles? (rather not)
             fi
-            echo "$tag_rule_content" > "${LOGDIR}${taglist}.python.json"
         else
             [ "$loglevel" = "2" ] && echo "${log_indent}check and convert yaml 2 json with yq_bin"
             yamlcheck=$(yq_bin v "${taglist}" 2>&1)
@@ -936,6 +944,7 @@ if [ "$tmp_date_search_method" = "python" ] && [ "$python_check" = "ok" ]; then
 
 #   founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" 2>&1)
     founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" 2>&1)
+#   founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl -MinYear "$search_range_ago" -MaxYear "$search_range_ahead" "$loglevel" 2>&1)
 
     [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
     
@@ -2067,7 +2076,7 @@ done <<<"${files}"
     update_dockerimage
     
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
-    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start_all} )))]\n\n"
     [ ! -d "$python3_env" ] && python3 -m venv "$python3_env"
     source "${python3_env}/bin/activate"
 
