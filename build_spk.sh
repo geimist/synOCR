@@ -202,22 +202,25 @@ printf "\n - INFO: insert language strings to WIZARD_UIFILES ...\n"
         sed -i "s|lang_wizui_uninstall_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_title)|" "${uninstall_uifile_lang}"
         sed -i "s|lang_wizui_uninstall_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc)|" "${uninstall_uifile_lang}"
  
-        # upgrade_uifile:
-        upgrade_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}"
-        if [ ! -f "${upgrade_uifile_lang}" ]; then
-            echo '[' > "${upgrade_uifile_lang}"
-            echo '   {' >> "${upgrade_uifile_lang}"
-            echo '      "step_title" : "lang_wizui_upgrade_title",' >> "${upgrade_uifile_lang}"
-            echo '      "items" : [' >> "${upgrade_uifile_lang}"
-            echo '         {' >> "${upgrade_uifile_lang}"
-            echo '            "desc" : "<p>lang_wizui_upgrade_desc</p>"' >> "${upgrade_uifile_lang}"
-            echo '         }' >> "${upgrade_uifile_lang}"
-            echo '      ]' >> "${upgrade_uifile_lang}"
-            echo '   }' >> "${upgrade_uifile_lang}"
-            echo ']' >> "${upgrade_uifile_lang}"
+        # upgrade_uifile (only for refresh notify after upgrade):
+        # (currently without fallback to plain english file)
+        if [ "$TargetDSM" = 6 ]; then
+            upgrade_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}"
+            if [ ! -f "${upgrade_uifile_lang}" ]; then
+                echo '[' > "${upgrade_uifile_lang}"
+                echo '   {' >> "${upgrade_uifile_lang}"
+                echo '      "step_title" : "lang_wizui_upgrade_title",' >> "${upgrade_uifile_lang}"
+                echo '      "items" : [' >> "${upgrade_uifile_lang}"
+                echo '         {' >> "${upgrade_uifile_lang}"
+                echo '            "desc" : "<p>lang_wizui_upgrade_desc</p>"' >> "${upgrade_uifile_lang}"
+                echo '         }' >> "${upgrade_uifile_lang}"
+                echo '      ]' >> "${upgrade_uifile_lang}"
+                echo '   }' >> "${upgrade_uifile_lang}"
+                echo ']' >> "${upgrade_uifile_lang}"
+            fi
+            [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_title)|" "${upgrade_uifile_lang}"
+            [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_desc)|" "${upgrade_uifile_lang}"
         fi
-        [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_title)|" "${upgrade_uifile_lang}"
-        [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_desc)|" "${upgrade_uifile_lang}"
     done
 
     build_version=$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
