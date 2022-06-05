@@ -193,13 +193,19 @@ fi
         fi
     fi
 
-# check for update:
+# monthly check for updates:
     if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -ne $(date +%m) ]]; then
         local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
+        if [ "$(grep "^beta" /var/packages/synOCR/INFO | cut -d '"' -f2)" = yes ]; then
+            release_channel=beta
+        else
+            release_channel=release
+        fi
         sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon'"
         if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -eq $(date +%m) ]]; then
-            server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION_DSM${dsm_version}&version=${local_version}&arch=$machinetyp" )
-            online_version=$(echo "$server_info" | sed -n "2p")
+            server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}" )
+            online_version=$(echo "$server_info" | jq -r .dsm.dsm${dsm_version}.${release_channel}.version)
+ 
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${online_version}' WHERE key='online_version'"
             if [[ $(echo "$server_info" | sed -n "1p" ) != "ok" ]]; then
                 sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date -d "-1 month" +%m)' WHERE key='checkmon'"
