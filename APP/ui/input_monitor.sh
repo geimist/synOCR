@@ -24,7 +24,7 @@ inotify_start() {
 # start monitoring:
 # --------------------------------------------------------------
     printf "\n---------- START MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
-    nohup inotifywait --fromfile "${monitored_folders}" -e moved_to -e create --monitor --timeout -1 | 
+    nohup inotifywait --fromfile "${monitored_folders}" -e moved_to -e close_write --monitor --timeout -1 | 
         while read line ; do 
             printf "\n---------------- EVENT --------------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n"
             printf "detected event: $line\n"
