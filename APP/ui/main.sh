@@ -107,12 +107,21 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
 #   notify about update, if necessary:
 # ---------------------------------------------------------------------
     online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
+    if [ "$(grep "^beta" /var/packages/synOCR/INFO | cut -d '"' -f2)" = yes ]; then
+        release_channel=beta
+    else
+        release_channel=release
+    fi
+    server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION" )
+    online_version=$(echo "$server_info" | jq -r .dsm.dsm$(synogetkeyvalue /etc.defaults/VERSION majorversion).${release_channel}.version )
+    downloadUrl=$(echo "$server_info" | jq -r .dsm.dsm$(synogetkeyvalue /etc.defaults/VERSION majorversion).${release_channel}.downloadUrl )
+    
     local_version=$(grep "^version" /var/packages/synOCR/INFO  | cut -d '"' -f2)
     highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
     if [[ "$local_version" != "$highest_version" ]] ; then
         echo ' 
         <h5 class="text-center">
-            <a href="https://git.geimist.eu/geimist/synOCR/releases/" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">UPDATE TO VERSION '$online_version' AVAILABLE! [KLICK]</a>
+            <a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">UPDATE TO VERSION '$online_version' AVAILABLE! [KLICK]</a>
         </h5>'
     fi
 
