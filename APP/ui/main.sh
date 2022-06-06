@@ -7,6 +7,7 @@
 #################################################################################
 
 PATH=$PATH:/usr/local/bin:/opt/usr/bin
+dsmMajorVersion=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
 
 # Read file status:
 # ---------------------------------------------------------------------
@@ -113,15 +114,15 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
         release_channel=release
     fi
     server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION" )
-    online_version=$(echo "$server_info" | jq -r .dsm.dsm$(synogetkeyvalue /etc.defaults/VERSION majorversion).${release_channel}.version )
-    downloadUrl=$(echo "$server_info" | jq -r .dsm.dsm$(synogetkeyvalue /etc.defaults/VERSION majorversion).${release_channel}.downloadUrl )
+    online_version=$(echo "$server_info" | jq -r .dsm.dsm${dsmMajorVersion}.${release_channel}.version )
+    downloadUrl=$(echo "$server_info" | jq -r .dsm.dsm${dsmMajorVersion}.${release_channel}.downloadUrl )
     
     local_version=$(grep "^version" /var/packages/synOCR/INFO  | cut -d '"' -f2)
     highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
     if [[ "$local_version" != "$highest_version" ]] ; then
         echo ' 
         <h5 class="text-center">
-            <a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">UPDATE TO VERSION '$online_version' AVAILABLE! [KLICK]</a>
+            <a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">UPDATE TO VERSION '$online_version' AVAILABLE! [DOWNLOAD]</a>
         </h5>'
     fi
 
@@ -137,7 +138,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
         <div class="float-end">
             <img src="images/status_error@geimist.svg" height="120" width="120" style="padding: 10px">
         </div>'
-    elif [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ] && $(! cat /etc/group | grep ^administrators | grep -q synOCR || ! cat /etc/group | grep ^docker: | grep -q synOCR ); then
+    elif [ "${dsmMajorVersion}" -ge 7 ] && $(! cat /etc/group | grep ^administrators | grep -q synOCR || ! cat /etc/group | grep ^docker: | grep -q synOCR ); then
         echo '
         <p class="text-center synocr-text-red">'$lang_main_permissions_failed'
             <code class="mb-5">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</code>
@@ -166,7 +167,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     <p>&nbsp;</p>'
 
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
-    if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 6 ] || (cat /etc/group | grep ^administrators | grep -q synOCR && cat /etc/group | grep ^docker | grep -q synOCR) ; then
+    if [ "${dsmMajorVersion}" -eq 6 ] || (cat /etc/group | grep ^administrators | grep -q synOCR && cat /etc/group | grep ^docker | grep -q synOCR) ; then
         echo '
         <p class="text-center">
             <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'$lang_main_buttonrun'</button>
@@ -222,4 +223,3 @@ echo '
         <br><div class="tab"><p>'$dbinfo'</p></div>-->'
 
 fi
-
