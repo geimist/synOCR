@@ -211,7 +211,8 @@ lang_edit_set2_ignoredDate_help1="Les dates spécifiées sont ignorées lors de 
 
 lang_edit_set2_DateSearchMinYear_title="Zone de recherche dans le passé"
 lang_edit_set2_DateSearchMinYear_help1="Indique ici l'année absolue ou un nombre relatif d'années à prendre en compte comme date valable dans le passé."
-lang_edit_set2_DateSearchMinYear_help2="Une valeur vide ou 0 est considérée comme illimitée."
+lang_edit_set2_DateSearchMinYear_help2="Un nombre à quatre chiffres est considéré comme une année absolue. Moins de quatre chiffres comme écart annuel relatif."
+lang_edit_set2_DateSearchMinYear_help3="Une valeur vide ou 0 est considérée comme illimitée."
 
 lang_edit_set2_DateSearchMaxYear_title="Zone de recherche dans le futur"
 lang_edit_set2_DateSearchMaxYear_help1="Indique ici l'année absolue ou un nombre relatif d'années à prendre en compte comme date valable dans le futur."
