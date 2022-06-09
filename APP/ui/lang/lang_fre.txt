@@ -128,6 +128,11 @@ lang_edit_set2_documentSplitPattern_title="Motif de recherche Séparateur de doc
 lang_edit_set2_documentSplitPattern_help1="Un modèle peut être défini ici pour diviser automatiquement un grand document en sous-documents. Le document source est séparé aux pages où le motif de recherche spécifié a été trouvé"
 lang_edit_set2_documentSplitPattern_help2="ATTENTION : les pages contenant le motif de séparation seront rejetées !"
 lang_edit_set2_documentSplitPattern_help3="Tu trouveras ici un modèle à imprimer :"
+lang_edit_set2_splitpagehandling_title="Manipulation de l'intercalaire"
+lang_edit_set2_splitpagehandling_discard="rejeter"
+lang_edit_set2_splitpagehandling_isLastPage="est la dernière page"
+lang_edit_set2_splitpagehandling_isFirstPage="est la première page"
+lang_edit_set2_splitpagehandling_help1="L'intercalaire peut être rejeté (= par défaut) ou attribué à la zone précédente, respectivement à la zone suivante."
 
 lang_edit_set2_taglist_title="balises à rechercher"
 lang_edit_set2_taglist_help1="Les balises indiquées ici sont recherchées dans le document et sont disponibles pour le renommage"
@@ -203,6 +208,14 @@ lang_edit_set2_filedate_help2="Si la date OCR est sélectionnée mais qu'aucune 
 
 lang_edit_set2_ignoredDate_title="Ignorer les dates"
 lang_edit_set2_ignoredDate_help1="Les dates spécifiées sont ignorées lors de la recherche. Plusieurs dates peuvent être indiquées (séparées par des espaces). L'important est d'indiquer le format correct : AAAA-MM-JJ (par ex. 2021-02-29 2021-04-31)"
+
+lang_edit_set2_DateSearchMinYear_title="Zone de recherche dans le passé"
+lang_edit_set2_DateSearchMinYear_help1="Indique ici l'année absolue ou un nombre relatif d'années à prendre en compte comme date valable dans le passé."
+lang_edit_set2_DateSearchMinYear_help2="Une valeur vide ou 0 est considérée comme illimitée."
+
+lang_edit_set2_DateSearchMaxYear_title="Zone de recherche dans le futur"
+lang_edit_set2_DateSearchMaxYear_help1="Indique ici l'année absolue ou un nombre relatif d'années à prendre en compte comme date valable dans le futur."
+lang_edit_set2_DateSearchMaxYear_help2="Une valeur vide ou 0 est considérée comme illimitée."
 
 lang_edit_set2_filedate_search_nearest_date_title="Date Résultats de la recherche Ordre"
 lang_edit_set2_filedate_search_nearest_firstfound="1ère occurrence dans le document"
