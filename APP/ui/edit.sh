@@ -405,11 +405,11 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
                             if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
                                 sqlite3 ./etc/synOCR.sqlite "INSERT INTO config 
                                     ( 
-                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf
+                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling
                                     ) 
                                         VALUES 
                                     ( 
-                                        '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type', '$search_nearest_date', '$date_search_method', '$clean_up_spaces', '$img2pdf' 
+                                        '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type', '$search_nearest_date', '$date_search_method', '$clean_up_spaces', '$img2pdf', '$DateSearchMinYear', '$DateSearchMaxYear', '$splitpagehandling' 
                                     )"
 
                                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
@@ -590,7 +590,10 @@ if [[ "$page" == "edit-save" ]]; then
                                 search_nearest_date='$search_nearest_date',
                                 date_search_method='$date_search_method',
                                 clean_up_spaces='$clean_up_spaces',
-                                img2pdf='$img2pdf'
+                                img2pdf='$img2pdf',
+                                DateSearchMinYear='$DateSearchMinYear',
+                                DateSearchMaxYear='$DateSearchMaxYear',
+                                splitpagehandling='$splitpagehandling'
                             WHERE 
                                 profile_ID='$profile_ID' "
 
@@ -629,7 +632,7 @@ if [[ "$page" == "edit" ]]; then
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
                 NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling
             FROM 
                 config 
             WHERE 
@@ -638,7 +641,7 @@ if [[ "$page" == "edit" ]]; then
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
                 NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling
             FROM 
                 config 
             WHERE 
@@ -679,6 +682,9 @@ if [[ "$page" == "edit" ]]; then
         date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $30}')
         clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
         img2pdf=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
+        DateSearchMinYear=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
+        DateSearchMaxYear=$(echo "$sqlerg" | awk -F'\t' '{print $34}')
+        splitpagehandling=$(echo "$sqlerg" | awk -F'\t' '{print $35}')
 
     # read global values:
         dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -692,8 +698,8 @@ if [[ "$page" == "edit" ]]; then
     <p>'$lang_edit_summary3'</p>
     <p>'$lang_edit_summary4'</p>'
 
-        if [ ! -z "$DBupgradelog" ] ; then
-            DBupgradelog=$(echo "$DBupgradelog" | sed ':a;N;$!ba;s/\n/<br />/g')
+        if [ -n "$DBupgradelog" ] ; then
+            DBupgradelog=$(echo "$DBupgradelog" | tr "\n" "@" | sed -e "s/@/<br>/g")
             if echo "$DBupgradelog" | grep -q ERROR ; then
                 message_color="color: #BD0010;"
             else
@@ -1169,6 +1175,8 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
+                    echo '<hr><br>'
+
                     # convert images to pdf?:
                     echo '
                     <div class="row mb-3">
@@ -1211,6 +1219,8 @@ if [[ "$page" == "edit" ]]; then
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
+
+                    echo '<hr><br>'
 
                     # SearchPraefix
                     echo '
@@ -1332,6 +1342,59 @@ if [[ "$page" == "edit" ]]; then
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
+
+    if [ "$dev_mode" = "true" ]; then
+                    # splitpagehandling
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="splitpagehandling">'$lang_edit_set2_splitpagehandling_title'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="splitpagehandling" id="splitpagehandling" class="form-select form-select-sm">'
+
+                                if [[ "$splitpagehandling" == "discard" ]]; then
+                                    echo '<option value="discard" selected>'$lang_edit_set2_splitpagehandling_discard'</option>'
+                                else
+                                    echo '<option value="discard">'$lang_edit_set2_splitpagehandling_discard'</option>'
+                                fi
+                                if [[ "$splitpagehandling" == "isLastPage" ]]; then
+                                    echo '<option value="isLastPage" selected>'$lang_edit_set2_splitpagehandling_isLastPage'</option>'
+                                else
+                                    echo '<option value="isLastPage">'$lang_edit_set2_splitpagehandling_isLastPage'</option>'
+                                fi
+                                if [[ "$splitpagehandling" == "isFirstPage" ]]; then
+                                    echo '<option value="isFirstPage" selected>'$lang_edit_set2_splitpagehandling_isFirstPage'</option>'
+                                else
+                                    echo '<option value="isFirstPage">'$lang_edit_set2_splitpagehandling_isFirstPage'</option>'
+                                fi
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#filedate_nearest-info" role="button" aria-expanded="false" aria-controls="filedate_nearest-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="filedate_nearest-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set2_splitpagehandling_help1'<br>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+    fi
+
+
+                    echo '<hr><br>'
 
                     # Taglist
                     echo '
@@ -1611,6 +1674,8 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
+                    echo '<hr><br>'
+
                     # Filedate
                     echo '
                     <div class="row mb-3">
@@ -1664,7 +1729,7 @@ if [[ "$page" == "edit" ]]; then
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="tagsymbol">'$lang_edit_set2_ignoredDate_title'</label>
+                            <label for="ignoredDate">'$lang_edit_set2_ignoredDate_title'</label>
                         </div>
                         <div class="col-sm-5">'
 
@@ -1678,24 +1743,100 @@ if [[ "$page" == "edit" ]]; then
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
-                                <a data-bs-toggle="collapse" href="#fignoredDate-info" role="button" aria-expanded="false" aria-controls="fignoredDate-info">
+                                <a data-bs-toggle="collapse" href="#ignoredDate-info" role="button" aria-expanded="false" aria-controls="ignoredDate-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-sm-10">
-                            <div class="collapse" id="fignoredDate-info">
+                            <div class="collapse" id="ignoredDate-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set2_ignoredDate_help1'<br /><br />
-                                        <strong>'$lang_edit_set2_ignoredDate_help2'</strong>
                                     </span>
                                 </div>
                             </div>
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
+
+
+                    # DateSearchMinYear
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="DateSearchMinYear">'$lang_edit_set2_DateSearchMinYear_title'</label>
+                        </div>
+                        <div class="col-sm-5">'
+
+                            if [ -n "$DateSearchMinYear" ]; then
+                                echo '<input type="text" name="DateSearchMinYear" id="DateSearchMinYear" class="form-control form-control-sm" value="'$DateSearchMinYear'" />'
+                            else
+                                echo '<input type="text" name="DateSearchMinYear" id="DateSearchMinYear" class="form-control form-control-sm" value="" />'
+                            fi
+
+                            echo '
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#DateSearchMinYear-info" role="button" aria-expanded="false" aria-controls="DateSearchMinYear-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="DateSearchMinYear-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set2_DateSearchMinYear_help1'<br />
+                                        '$lang_edit_set2_DateSearchMinYear_help2'<br /><br />
+                                        '$lang_edit_set2_DateSearchMinYear_help3'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # DateSearchMaxYear
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="DateSearchMaxYear">'$lang_edit_set2_DateSearchMaxYear_title'</label>
+                        </div>
+                        <div class="col-sm-5">'
+
+                            if [ -n "$DateSearchMaxYear" ]; then
+                                echo '<input type="text" name="DateSearchMaxYear" id="DateSearchMaxYear" class="form-control form-control-sm" value="'$DateSearchMaxYear'" />'
+                            else
+                                echo '<input type="text" name="DateSearchMaxYear" id="DateSearchMaxYear" class="form-control form-control-sm" value="" />'
+                            fi
+
+                            echo '
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#DateSearchMaxYear-info" role="button" aria-expanded="false" aria-controls="DateSearchMaxYear-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="DateSearchMaxYear-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set2_DateSearchMaxYear_help1'<br /><br />
+                                        '$lang_edit_set2_DateSearchMaxYear_help2'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
 
                     # search_nearest_date
                     echo '
@@ -1785,6 +1926,8 @@ if [[ "$page" == "edit" ]]; then
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
+
+                    echo '<hr><br>'
 
                     # clean_up_spaces
                     echo '
