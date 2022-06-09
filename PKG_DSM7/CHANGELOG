@@ -21,6 +21,8 @@ known issues / limitations:
     /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
     a pulsing status icon in the gui indicates an active monitoring
  -  🔥 new Python based date search implemented, which also finds written out months (gthorsten)
+    - a start year for date search can defined in GUI
+    - a year in future can be defined in GUI as latest year for search
  -  🔥 support separator sheet - dokument split pattern can be configured in GUI
  -  🔥 Pictures in the source folder can be converted automatically
  -  option to reduce multiple spaces to one (helpful with RegEx)
