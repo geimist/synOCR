@@ -73,7 +73,8 @@
             profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
             delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
             dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate, 
-            backup_max, backup_max_type, pagecount, ocrcount, search_nearest_date, date_search_method, clean_up_spaces, img2pdf 
+            backup_max, backup_max_type, pagecount, ocrcount, search_nearest_date, date_search_method, clean_up_spaces, 
+            img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling
         FROM 
             config 
         WHERE 
@@ -114,6 +115,9 @@
     date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
     clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
     img2pdf=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
+    DateSearchMinYear=$(echo "$sqlerg" | awk -F'\t' '{print $34}')
+    DateSearchMaxYear=$(echo "$sqlerg" | awk -F'\t' '{print $35}')
+    splitpagehandling=$(echo "$sqlerg" | awk -F'\t' '{print $36}')
 
 # read global values:
     dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -189,6 +193,8 @@
     echo "Symbol for tag marking:   ${tagsymbol}"
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "Document split pattern:   ${documentSplitPattern}"
+#   echo "split page handling:      ${splitpagehandling}"
+
     echo "clean up spaces:          ${clean_up_spaces}"
 
     echo -n "Date search method:       "
@@ -202,14 +208,41 @@
     echo "source for filedate:      ${filedate}"
     echo "ignored dates by search:  ${ignoredDate}"
 
-    echo "ignored dates by search:  ${ignoredDate}"
-    echo "ignored dates by search:  ${ignoredDate}"
+    validate_date_range() {
+        local year="$( echo "$1" | tr -cd [:alnum:] )" # filter special characters
+        local length=$( printf "$year" | wc -c )
+        local functionType="$2"
 
-#    search_range_ago=99
-#    search_range_ahead=99
-#    echo "search range from year:   ${search_range_ago} years ago (currently hard coded)"
-#    echo "search range up to year:  ${search_range_ahead} years ahead (currently hard coded)"
-    
+        if [ "$year" = 0 ] || [ -z "$year" ]; then
+            # value is zero or not set
+            printf 0
+            return
+        elif [[ $(echo "$year" | grep -E ^[[:digit:]]+$ ) ]]; then
+            # value is a digit
+            if [ "$length" -eq 4 ]; then
+                # is absolute year
+                printf "$year"
+                return
+            elif [ "$length" -lt 4 ]; then
+                printf "$(($(date +%Y) $functionType $year))"
+                return
+            else
+                # more than 4 digits not supported
+                printf 0
+                return
+            fi
+        else
+            # value is not a digit
+            printf 0
+            return
+        fi
+    }
+
+    minYear=$( validate_date_range "$DateSearchMinYear" "-" )
+    echo "date range in past:       ${DateSearchMinYear} [absolute: $minYear]"
+    maxYear=$( validate_date_range "$DateSearchMaxYear" "+" )
+    echo "date range in future:     ${DateSearchMaxYear} [absolute: $maxYear]"
+
     [ "$loglevel" = "2" ] && \
     echo "PATH-Variable:            $PATH"
     echo -n "Docker test:              "
@@ -942,9 +975,7 @@ if [ "$tmp_date_search_method" = "python" ] && [ "$python_check" = "ok" ]; then
         arg_searchnearest='-searchnearest="on"'
     fi
 
-#   founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" 2>&1)
-    founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" 2>&1)
-#   founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl -MinYear "$search_range_ago" -MaxYear "$search_range_ahead" "$loglevel" 2>&1)
+   founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
 
     [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
     
@@ -960,6 +991,10 @@ fi
 
 if [ "$tmp_date_search_method" = "regex" ]; then
     # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
+    
+    # alphanum example:
+    # (?i)\b(([0-9]?[0-9])[. ][ ]?([0-9]?[0-9][. ]|Jan.*|Feb.*|Mär.*|Apr.*|Mai|Jun.*|Jul.*|Aug.*|Sep.*|Okt.*|Nov.*|Dez.*)[ ]?([0-9]?[0-9]?[0-9][0-9]))\b
+    
     echo "${log_indent}run RegEx date search - search for date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
     if [ "$format" -eq 1 ]; then
         # search by format: dd[./-]mm[./-]yy(yy)
@@ -1771,7 +1806,9 @@ while read input ; do
                 echo "    f.close()"
             } | python3
         }
-        
+
+# individual handling of split pages is currently not implemented / discard is used
+    # ${splitpagehandling} (discard isLastPage isFirstPage)
         
         # compute site ranges for splitting
         # ---------------------------------------------------------------------
