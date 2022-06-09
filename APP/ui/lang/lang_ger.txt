@@ -211,7 +211,8 @@ lang_edit_set2_ignoredDate_help1="Angegebene Daten werden bei der Suche ignorier
 
 lang_edit_set2_DateSearchMinYear_title="Suchbereich in Vergangenheit"
 lang_edit_set2_DateSearchMinYear_help1="Gib hier das absolute Jahr oder eine relative Anzahl an Jahren an, die in der Vergangenheit als gültiges Datum beachtet werden sollen."
-lang_edit_set2_DateSearchMinYear_help2="Ein leerer Wert oder 0 werden als unbegrenzt gewertet."
+lang_edit_set2_DateSearchMinYear_help2="Eine vierstellige Zahl wird als absolutes Jahr gewertet. Weniger als vier Stellen als relative Jahresabweichung."
+lang_edit_set2_DateSearchMinYear_help3="Ein leerer Wert oder 0 werden als unbegrenzt gewertet."
 
 lang_edit_set2_DateSearchMaxYear_title="Suchbereich in Zukunft"
 lang_edit_set2_DateSearchMaxYear_help1="Gib hier das absolute Jahr oder eine relative Anzahl an Jahren an, die in der Zukunft als gültiges Datum beachtet werden sollen."
