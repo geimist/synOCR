@@ -26,6 +26,22 @@ OLDIFS=$IFS
         sqliteinfo=$(sqlite3 ./etc/synOCR.sqlite "INSERT INTO config ( profile ) VALUES ( '$1' )")
     }
 
+    lift_db ()
+    {
+    # this function lift DB version
+    # Call: lift_db "old Version" "new Version"
+    # --------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                       SET value_1='$2' 
+                                       WHERE key='db_version'"
+        sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+                                       SET value_1=(datetime('now','localtime')) 
+                                       WHERE key='timestamp'"
+        log="$log
+        DB-Upgrade successfully processed ( v$1 ➜ v$2)"
+    }
+
+
 # Create DB if necessary:
 # ---------------------------------------------------------------------
     if [ $(stat -c %s "./etc/synOCR.sqlite") -eq 0 ] || [ ! -f "./etc/synOCR.sqlite" ]; then
@@ -67,7 +83,10 @@ OLDIFS=$IFS
                         \"search_nearest_date\" VARCHAR  DEFAULT ('false') ,
                         \"date_search_method\" VARCHAR  DEFAULT ('regex') ,
                         \"clean_up_spaces\" VARCHAR  DEFAULT ('false') ,
-                        \"img2pdf\" VARCHAR  DEFAULT ('false')
+                        \"img2pdf\" VARCHAR  DEFAULT ('false') ,
+                        \"DateSearchMinYear\" varchar DEFAULT ('0') ,
+                        \"DateSearchMaxYear\" varchar DEFAULT ('0') ,
+                        \"splitpagehandling\" VARCHAR DEFAULT ('discard')
                     ) ;"
         sleep 1
 
@@ -86,7 +105,7 @@ OLDIFS=$IFS
         # write default data:
         # ---------------------------------------------------------------------
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '6')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '8')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('checkmon', '')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0')"
@@ -367,14 +386,7 @@ if $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{pri
 
         if [[ "$error" == "0" ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-                                           SET value_1='5' 
-                                           WHERE key='db_version'"
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-                                           SET value_1=(datetime('now','localtime')) 
-                                           WHERE key='timestamp'"
-            log="$log
-            DB-Upgrade successfully processed (v4 ➜ v5)"
+            lift_db 4 5
         fi
         error=0
     fi
@@ -419,15 +431,9 @@ fi
 
         if [[ "$error" == "0" ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-                                           SET value_1='6' 
-                                           WHERE key='db_version'"
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-                                           SET value_1=(datetime('now','localtime')) 
-                                           WHERE key='timestamp'"
-            log="$log
-            DB-Upgrade successfully processed (v5 ➜ v6)"
+            lift_db 5 6
         fi
+        error=0
     fi
 
 
@@ -449,18 +455,56 @@ fi
 
         if [[ "$error" == "0" ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-                                           SET value_1='7' 
-                                           WHERE key='db_version'"
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
-                                           SET value_1=(datetime('now','localtime')) 
-                                           WHERE key='timestamp'"
-            log="$log
-            DB-Upgrade successfully processed (v6 ➜ v7)"
+            lift_db 6 7
         fi
         error=0
     fi
 
+
+# DB-update from v7 to v8:
+# ---------------------------------------------------------------------
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'") -eq 7 ] ; then
+        echo ""
+
+        # DateSearchMinYear:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"DateSearchMinYear\" VARCHAR DEFAULT ('0')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q DateSearchMinYear ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (DateSearchMinYear)"
+            error=1
+        fi
+
+        # DateSearchMaxYear: 
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"DateSearchMaxYear\" VARCHAR DEFAULT ('0')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q DateSearchMaxYear ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (DateSearchMaxYear)"
+            error=1
+        fi
+
+        # splitpage handling: 
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"splitpagehandling\" VARCHAR DEFAULT ('discard')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q splitpagehandling ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (splitpagehandling)"
+            error=1
+        fi
+
+        if [[ "$error" == "0" ]]; then
+            # lift DB version:
+            lift_db 7 8
+        fi
+        error=0
+    fi
 
 # adjust permissions:
 # ---------------------------------------------------------------------
