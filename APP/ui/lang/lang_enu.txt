@@ -211,7 +211,8 @@ lang_edit_set2_ignoredDate_help1="Specified dates will be ignored during the sea
 
 lang_edit_set2_DateSearchMinYear_title="Search range in past"
 lang_edit_set2_DateSearchMinYear_help1="Specify here the absolute year or a relative number of years to be observed as a valid date in the past."
-lang_edit_set2_DateSearchMinYear_help2="An empty value or 0 are considered as unlimited."
+lang_edit_set2_DateSearchMinYear_help2="A four-digit number is counted as an absolute year. Less than four digits as a relative year deviation."
+lang_edit_set2_DateSearchMinYear_help3="An empty value or 0 are considered as unlimited."
 
 lang_edit_set2_DateSearchMaxYear_title="Search area in the future"
 lang_edit_set2_DateSearchMaxYear_help1="Specify here the absolute year or a relative number of years to be observed as a valid date in the future."
