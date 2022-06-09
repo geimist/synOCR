@@ -128,6 +128,11 @@ lang_edit_set2_documentSplitPattern_title="Suchmuster Dokumententrenner"
 lang_edit_set2_documentSplitPattern_help1="Hier kann ein Muster definiert werden um ein großes Dokument automatisiert in Teildokumente zu splitten. Das Quelldokument wird an den Seiten, auf denen das angegebene Suchmuster gefunden wurde, getrennt."
 lang_edit_set2_documentSplitPattern_help2="ACHTUNG: Seiten, die das Trennmuster enthalten, werden verworfen!"
 lang_edit_set2_documentSplitPattern_help3="Hier findest du eine Vorlage zum Ausdrucken:"
+lang_edit_set2_splitpagehandling_title="Handhabung des Trennblattes"
+lang_edit_set2_splitpagehandling_discard="verwerfen"
+lang_edit_set2_splitpagehandling_isLastPage="ist die letzte Seite"
+lang_edit_set2_splitpagehandling_isFirstPage="ist die erste Seite"
+lang_edit_set2_splitpagehandling_help1="Das Trennblatt kann verworfen werden (= Standard) oder dem vorausgehenden, bzw. nachfolgenden Bereich zugeordnet werden."
 
 lang_edit_set2_taglist_title="zu suchende Tags"
 lang_edit_set2_taglist_help1="Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung."
@@ -203,6 +208,14 @@ lang_edit_set2_filedate_help2="Ist OCR-Datum gewählt, wird aber keins gefunden,
 
 lang_edit_set2_ignoredDate_title="Daten ignorieren"
 lang_edit_set2_ignoredDate_help1="Angegebene Daten werden bei der Suche ignoriert. Es können mehrere Daten angegeben werden (getrennt durch Leerzeichen). Wichtig ist die richtige Formatangabe: YYYY-MM-DD (z.B. 2021-02-29 2021-04-31)"
+
+lang_edit_set2_DateSearchMinYear_title="Suchbereich in Vergangenheit"
+lang_edit_set2_DateSearchMinYear_help1="Gib hier das absolute Jahr oder eine relative Anzahl an Jahren an, die in der Vergangenheit als gültiges Datum beachtet werden sollen."
+lang_edit_set2_DateSearchMinYear_help2="Ein leerer Wert oder 0 werden als unbegrenzt gewertet."
+
+lang_edit_set2_DateSearchMaxYear_title="Suchbereich in Zukunft"
+lang_edit_set2_DateSearchMaxYear_help1="Gib hier das absolute Jahr oder eine relative Anzahl an Jahren an, die in der Zukunft als gültiges Datum beachtet werden sollen."
+lang_edit_set2_DateSearchMaxYear_help2="Ein leerer Wert oder 0 werden als unbegrenzt gewertet."
 
 lang_edit_set2_filedate_search_nearest_date_title="Datum Suchergebnis Reihenfolge"
 lang_edit_set2_filedate_search_nearest_firstfound="1. Treffer in Dokument"
