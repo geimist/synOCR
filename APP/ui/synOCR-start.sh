@@ -207,7 +207,8 @@ fi
             online_version=$(echo "$server_info" | jq -r .dsm.dsm${dsm_version}.${release_channel}.version)
  
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${online_version}' WHERE key='online_version'"
-            if [[ $(echo "$server_info" | sed -n "1p" ) != "ok" ]]; then
+            # reset checkmon if failed get version:
+            if grep -qvE ^[0-9.]+$ <<<"$online_version"; then
                 sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date -d "-1 month" +%m)' WHERE key='checkmon'"
             fi
             highest_version=$(printf "${online_version}\n${local_version}" | sort -V | tail -n1)
