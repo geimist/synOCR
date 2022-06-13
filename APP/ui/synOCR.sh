@@ -1211,6 +1211,9 @@ if [ "$python_check" = "ok" ]; then
     py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
     py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\'")"
 
+    # set pdf standard to PDF/A:
+    py_meta="$(printf "$py_meta\nu'/Version': 'PDF-1.7'")"
+
     echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
 
     get_previous_meta(){
