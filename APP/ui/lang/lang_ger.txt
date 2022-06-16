@@ -126,7 +126,6 @@ lang_edit_set2_delsearchpref_help2="(hilfreich, sofern der Quellordner auch glei
 
 lang_edit_set2_documentSplitPattern_title="Suchmuster Dokumententrenner"
 lang_edit_set2_documentSplitPattern_help1="Hier kann ein Muster definiert werden um ein großes Dokument automatisiert in Teildokumente zu splitten. Das Quelldokument wird an den Seiten, auf denen das angegebene Suchmuster gefunden wurde, getrennt."
-lang_edit_set2_documentSplitPattern_help2="ACHTUNG: Seiten, die das Trennmuster enthalten, werden verworfen!"
 lang_edit_set2_documentSplitPattern_help3="Hier findest du eine Vorlage zum Ausdrucken:"
 lang_edit_set2_splitpagehandling_title="Handhabung des Trennblattes"
 lang_edit_set2_splitpagehandling_discard="verwerfen"
