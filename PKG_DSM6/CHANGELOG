@@ -19,7 +19,7 @@ DSM7 version you can found here: https://git.geimist.eu/geimist/synOCR/src/branc
     - a start year for date search can defined in GUI
     - a year in future can be defined in GUI as latest year for search
  -  🔥 support separator sheet - dokument split pattern can be configured in GUI (Python3 must be installed)
-    - in GUI user can defined: splitpage is first page, is last page or discard
+    - in GUI user can define: splitpage is first page, is last page or discard
  -  🔥 Pictures in the source folder can be converted automatically (Python3 must be installed)
  -  option to reduce multiple spaces to one (helpful with RegEx)
  -  the number of pages is now determined with Python - Exiftool and pdfinfo become obsolete (Python3 must be installed)
