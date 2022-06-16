@@ -24,6 +24,7 @@ known issues / limitations:
     - a start year for date search can defined in GUI
     - a year in future can be defined in GUI as latest year for search
  -  🔥 support separator sheet - dokument split pattern can be configured in GUI
+    - in GUI user can defined: splitpage is first page, is last page or discard
  -  🔥 Pictures in the source folder can be converted automatically
  -  option to reduce multiple spaces to one (helpful with RegEx)
  -  the number of pages is now determined with Python - Exiftool and pdfinfo become obsolete
