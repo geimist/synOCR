@@ -126,7 +126,6 @@ lang_edit_set2_delsearchpref_help2="(utile si le dossier source est aussi le dos
 
 lang_edit_set2_documentSplitPattern_title="Motif de recherche Séparateur de document"
 lang_edit_set2_documentSplitPattern_help1="Un modèle peut être défini ici pour diviser automatiquement un grand document en sous-documents. Le document source est séparé aux pages où le motif de recherche spécifié a été trouvé"
-lang_edit_set2_documentSplitPattern_help2="ATTENTION : les pages contenant le motif de séparation seront rejetées !"
 lang_edit_set2_documentSplitPattern_help3="Tu trouveras ici un modèle à imprimer :"
 lang_edit_set2_splitpagehandling_title="Manipulation de l'intercalaire"
 lang_edit_set2_splitpagehandling_discard="rejeter"
