@@ -126,7 +126,6 @@ lang_edit_set2_delsearchpref_help2="(helpful, if the source folder is also the d
 
 lang_edit_set2_documentSplitPattern_title="Document split pattern"
 lang_edit_set2_documentSplitPattern_help1="To split a pdf into multiple parts you can specify a page split pattern. Pages where the defined pattern is found are used to split the source file. The separator pages are not part of the resulting documents."
-lang_edit_set2_documentSplitPattern_help2="ATTENTION: Pages containing the separation pattern will be discarded!"
 lang_edit_set2_documentSplitPattern_help3="Here you can find a template to print:"
 lang_edit_set2_splitpagehandling_title="Handling the separator sheet"
 lang_edit_set2_splitpagehandling_discard="discard"
