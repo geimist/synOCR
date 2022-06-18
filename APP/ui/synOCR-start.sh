@@ -203,7 +203,7 @@ fi
         fi
         sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon'"
         if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") -eq $(date +%m) ]]; then
-            server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}" )
+            server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}&device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")" )
             online_version=$(echo "$server_info" | jq -r .dsm.dsm${dsm_version}.${release_channel}.version)
  
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${online_version}' WHERE key='online_version'"
