@@ -39,6 +39,15 @@
 #              range 0, 1900-2200, 0:means unlimited
 #          rework alphanumeric search and add long dates 11. April 2002 and short dates April 2022
 #
+#     0.8, 19.06.2022
+#          rework numeric date search
+#          supported following formats:
+#           1.  DD-|.|/MM-|.|/YYYY
+#           2.  DD-|.|/MM-|.|/YY
+#           3.  YYYY-|.|/MM-|.|/DD
+#           4.  YY-|.|/MM-|.|/DD
+#
+#
 #
 # search_alpha_numeric_dates
 import datetime
@@ -137,6 +146,21 @@ class FindDates:
 
         logging.info('end checking blacklist')
 
+    def check_year_range(self, regex_result, date_order):
+        date_obj = dateparser.parse(regex_result.group(0), settings={'TIMEZONE': 'CEST', 'DATE_ORDER': date_order})
+        act_value = f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year:04d}"
+        logging.debug(f'Found numeric date {act_value}')
+        if date_obj:
+            if (self.minYear == 0 or date_obj.year > self.minYear) \
+                    and (self.maxYear == 0 or date_obj.year < self.maxYear):
+                if len(self.dateBlackList_DMY):
+                    if act_value not in self.dateBlackList_DMY:
+                        self.founddatelist.append(date_obj)
+                        logging.debug(f'add {date_obj} because not in blacklist')
+                else:
+                    self.founddatelist.append(date_obj)
+                    logging.debug(f'add anyway {date_obj}. no blacklist present')
+
     def search_all_numeric_dates(self):
         """
         Search for numeric dates in self.searchtextstr
@@ -153,41 +177,52 @@ class FindDates:
         # !!!!! \s?(0[1-9]|[12][0-9]|3[01])(\s?)(-|\.|\/)(\s?)(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)
         # /(0[1-9]|[12][0-9]|3[01])(-|\.|\/)(0[1-9]|1[0-2])(-|\.|\/)\d{4}/gm
         # YYYY-|.|/MM-|.|/DD
+        # YY-|.|/MM-|.|/DD
         #
         # !!!!! \s?(((\d{4})(\s?)(-|\.|\/)(\s?))|((\d{2})(\s?)(-|\.|\/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)
 
         regex = r"(0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}"
-
+        regex_DMY = r"\s(0[1-9]|[12][0-9]|3[01])(\s?)(-|\.|\/)(\s?)(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)"
+        regex_YMD = r"\s?(((\d{4})(\s?)(-|\.|\/)(\s?))|((\d{2})(\s?)(-|\.|\/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)"
         max_len = len(self.searchtextstr)
-        start_pos = 0
-        while start_pos < max_len:
-            res = re.search(regex, self.searchtextstr[start_pos:])
-            if res:
-                act_value = res.group(0)
-                date_obj = dateparser.parse(act_value, settings={'TIMEZONE': 'CEST', 'DATE_ORDER': 'DMY'})
-                act_value = f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year:04d}"
 
-                if res:
-                    if (self.minYear == 0 or date_obj.year > self.minYear) \
-                            and (self.maxYear == 0 or date_obj.year < self.maxYear):
-                        if len(self.dateBlackList_DMY):
-                            if act_value not in self.dateBlackList_DMY:
-                                self.founddatelist.append(date_obj)
-                                logging.debug(f'{date_obj}')
-                        else:
-                            self.founddatelist.append(date_obj)
-                            logging.debug(f'{date_obj}')
+        with open(self.fileWithTextFindings, 'r', encoding='UTF-8') as f:
+            for line in f:
+                start_pos = 0
+                while start_pos < len(line):
+                    # start_pos = 0
+                    # while start_pos < max_len:
+                    res1 = re.search(regex_DMY, line[start_pos:])
+                    res2 = re.search(regex_YMD, line[start_pos:])
+                    if res1:
+                        self.check_year_range(res1, 'DMY')
 
-                start_pos = start_pos + res.end()
-                # Check if start_pos > max_len of searchstring
-                if start_pos > max_len:
-                    self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
-                    logging.info(f'found {self.numeric_dates_cnt} numeric dates')
-                    return self.founddatelist
-            else:
-                self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
-                logging.info(f'found {self.numeric_dates_cnt} numeric dates')
-                return self.founddatelist
+                        start_pos = start_pos + res1.end()
+                        # Check if start_pos > max_len of searchstring
+                        #if start_pos > max_len:
+                        #    self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
+                        #    logging.info(f'found {self.numeric_dates_cnt} numeric dates')
+                        #    return self.founddatelist
+                    if res2:
+                        self.check_year_range(res2, 'YMD')
+
+                        start_pos = start_pos + res2.end()
+                        # Check if start_pos > max_len of searchstring
+                        #if start_pos > max_len:
+                        #    self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
+                        #    logging.info(f'found {self.numeric_dates_cnt} numeric dates')
+                        #    return self.founddatelist
+
+                    # if not res1 and not res2:
+                    #    self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
+                    #    logging.info(f'found {self.numeric_dates_cnt} numeric dates')
+                    #    return self.founddatelist
+                    if not res1 and not res2:
+                        break
+
+        f.close()
+        self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
+        logging.info(f'found {self.numeric_dates_cnt} numeric dates')
 
     def searchnearestdate(self):
         """
