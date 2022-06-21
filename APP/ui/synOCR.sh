@@ -36,7 +36,8 @@
     date_start_all=$(date +%s)
     python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser python-dateutil PyPDF2 Pillow yq )
+    synOCR_python_module_list=( DateTime dateparser "PyPDF2==2.3.1" Pillow yq PyYAML )
+                                # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     dashline1="-----------------------------------------------------------------------------------"
     dashline2="●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
@@ -159,8 +160,8 @@
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
     echo "used image (created):     $dockercontainer ($(docker inspect -f '{{ .Created }}' "$dockercontainer" 2>/dev/null | awk -F. '{print $1}'))"
 
-    document_author=$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" $ocropt" | grep "\-\-author" | sed -e 's/--author //')
-    echo "document author:          $document_author"
+    documentAuthor=$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" $ocropt" | grep "\-\-author" | sed -e 's/--author //')
+    echo "document author:          $documentAuthor"
 
     echo "used ocr-parameter (raw): $ocropt"
     # arguments with spaces must be submit as array (https://github.com/ocrmypdf/OCRmyPDF/issues/878)
@@ -193,7 +194,7 @@
     echo "Symbol for tag marking:   ${tagsymbol}"
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "Document split pattern:   ${documentSplitPattern}"
-#   echo "split page handling:      ${splitpagehandling}"
+    echo "split page handling:      ${splitpagehandling}"
 
     echo "clean up spaces:          ${clean_up_spaces}"
 
@@ -419,7 +420,7 @@ elif [ -f "$taglist" ]; then
 
         if [ "$python_check" = "ok" ]; then
             [ "$loglevel" = "2" ] && echo "${log_indent}check and convert yaml 2 json with python"
-            tag_rule_content=$(python3 -c 'import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin.read()), indent=2, sort_keys=False))' < "${taglisttmp}")
+            tag_rule_content=$( ${python3_env}/bin/python3 -c 'import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin.read()), indent=2, sort_keys=False))' < "${taglisttmp}")
             if [ $? != 0 ]; then
                 printf "${log_indent}ERROR - YAML-check failed!"
                 return 1  # file not further processable
@@ -872,80 +873,86 @@ prepare_python()
         echo "${log_indent}  for more precise search results Python3 is required)"
         python_check=failed
         return 1
-    elif [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "$python_env_version" ]; then
-        [ "$loglevel" = "2" ] && printf "${log_indent}  python3 already installed ($(which python3))\n"
+    else
+        [ ! -d "$python3_env" ] && python3 -m venv "$python3_env"
+        source "${python3_env}/bin/activate"
 
-        # check / install pip:
-        # ---------------------------------------------------------------------
-        [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check pip:\n"
-        if ! python3 -m pip --version > /dev/null  2>&1 ; then
-            printf "${log_indent}  Python3 pip was not found and will be now installed ➜ "
-            # install pip:
-            tmp_log1=$(python3 -m ensurepip --default-pip)
-            # upgrade pip:
-            tmp_log2=$(python3 -m pip install --upgrade pip)
+        if [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "$python_env_version" ]; then
+            [ "$loglevel" = "2" ] && printf "${log_indent}  python3 already installed ($(which python3))\n"
 
-            # check install:
-            if python3 -m pip --version > /dev/null  2>&1 ; then
-                echo "ok"
-            else
-                echo "failed ! ! ! (please install Python3 pip manually)"
-                echo "${log_indent}  install log:"
-                echo "$tmp_log1" | sed -e "s/^/${log_indent}  /g"
-                echo "$tmp_log2" | sed -e "s/^/${log_indent}  /g"
-                python_check=failed
-                return 1
-            fi
-        else
-            if python3 -m pip list 2>&1 | grep -q "version.*is available" ; then
-                printf "${log_indent}  pip already installed ($(python3 -m pip --version)) / upgrade available ...\n"
-                python3 -m pip install --upgrade pip | sed -e "s/^/${log_indent}  /g"
-            else
-                [ "$loglevel" = "2" ] && printf "${log_indent}  pip already installed ($(python3 -m pip --version))\n"
-            fi
-        fi
-
-        [ "$loglevel" = "2" ] && printf "\n${log_indent}  read installed python modules:\n"
-
-        module_list=$(python3 -m pip list 2>/dev/null)
-
-        [ "$loglevel" = "2" ] && echo "$module_list" | sed -e "s/^/${log_indent}  /g"
-
-        # check / install python modules:
-        # ---------------------------------------------------------------------
-        echo -e
-        for module in ${synOCR_python_module_list[@]}; do
-            unset tmp_log1
-            printf "${log_indent}  ➜ check python module \"$module\": ➜ "
-            if !  grep -qi "$module" <<<"$module_list"; then
-                printf "$module was not found and will be installed ➜ "
-
-                # install module:
-                tmp_log1=$(python3 -m pip install "$module")
-
+            # check / install pip:
+            # ---------------------------------------------------------------------
+            [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check pip:\n"
+            if ! python3 -m pip --version > /dev/null  2>&1 ; then
+                printf "${log_indent}  Python3 pip was not found and will be now installed ➜ "
+                # install pip:
+                tmp_log1=$(python3 -m ensurepip --default-pip)
+                # upgrade pip:
+                tmp_log2=$(python3 -m pip install --upgrade pip)
                 # check install:
-                if grep -qi "$module" <<<"$(python3 -m pip list 2>/dev/null)" ; then
+                if python3 -m pip --version > /dev/null  2>&1 ; then
                     echo "ok"
                 else
-                    echo "failed ! ! ! (please install $module manually)"
-                    echo "${log_indent}  install log:" && echo "$tmp_log1" | sed -e "s/^/${log_indent}  /g"
+                    echo "failed ! ! ! (please install Python3 pip manually)"
+                    echo "${log_indent}  install log:"
+                    echo "$tmp_log1" | sed -e "s/^/${log_indent}  /g"
+                    echo "$tmp_log2" | sed -e "s/^/${log_indent}  /g"
                     python_check=failed
                     return 1
                 fi
             else
-                printf "ok\n"
+                if python3 -m pip list 2>&1 | grep -q "version.*is available" ; then
+                    printf "${log_indent}  pip already installed ($(python3 -m pip --version)) / upgrade available ...\n"
+                    python3 -m pip install --upgrade pip | sed -e "s/^/${log_indent}  /g"
+                else
+                    [ "$loglevel" = "2" ] && printf "${log_indent}  pip already installed ($(python3 -m pip --version))\n"
+                fi
             fi
-        done
 
-        echo "$python_env_version" > "${python3_env}/synOCR_python_env_version"
+            [ "$loglevel" = "2" ] && printf "\n${log_indent}  read installed python modules:\n"
 
-        [ "$synOCR_user" = root ] && chown -R synOCR:administrators /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
-        [ "$synOCR_user" = root ] && chmod -R 755 /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
+            moduleList=$(python3 -m pip list 2>/dev/null)
 
-        printf "\n"
+            [ "$loglevel" = "2" ] && echo "$moduleList" | sed -e "s/^/${log_indent}  /g"
+
+            # check / install python modules:
+            # ---------------------------------------------------------------------
+            echo -e
+            for module in ${synOCR_python_module_list[@]}; do
+                moduleName=$(echo "$module" | awk -F'=' '{print $1}' )
+
+                unset tmp_log1
+                printf "${log_indent}  ➜ check python module \"$module\": ➜ "
+                if !  grep -qi "$moduleName" <<<"$moduleList"; then
+                    printf "$module was not found and will be installed ➜ "
+
+                    # install module:
+                    tmp_log1=$(python3 -m pip install "$module")
+
+                    # check install:
+                    if grep -qi "$moduleName" <<<"$(python3 -m pip list 2>/dev/null)" ; then
+                        echo "ok"
+                    else
+                        echo "failed ! ! ! (please install $module manually)"
+                        echo "${log_indent}  install log:" && echo "$tmp_log1" | sed -e "s/^/${log_indent}  /g"
+                        python_check=failed
+                        return 1
+                    fi
+                else
+                    printf "ok\n"
+                fi
+            done
+
+            echo "$python_env_version" > "${python3_env}/synOCR_python_env_version"
+
+            [ "$synOCR_user" = root ] && chown -R synOCR:administrators /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
+            [ "$synOCR_user" = root ] && chmod -R 755 /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
+
+            printf "\n"
+        fi
     fi
 
-    [ "$loglevel" = "2" ] && printf "\n${log_indent}  module list:\n" && python3 -m pip list | sed -e "s/^/${log_indent}  /g"
+    [ "$loglevel" = "2" ] && printf "\n${log_indent}  module list:\n" && python3 -m pip list | sed -e "s/^/${log_indent}  /g" && printf "\n"
 
     return 0
 
@@ -975,7 +982,7 @@ if [ "$tmp_date_search_method" = "python" ] && [ "$python_check" = "ok" ]; then
         arg_searchnearest='-searchnearest="on"'
     fi
 
-   founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
+    founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
 
     [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
     
@@ -1207,14 +1214,19 @@ if [ "$python_check" = "ok" ]; then
     echo "(use python PyPDF2)"
     unset py_meta
 
-    py_meta="'/Author': \'$document_author\',"
+    py_meta="'/Author': '$documentAuthor',"
     py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
+#py_meta="$(printf "$py_meta\n'/Keywords': \'John, Doe\',")"
     py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\'")"
+#    py_meta="'/Author': \'$documentAuthor\',"
+#    py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
+#    py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
 
-    # set pdf standard to PDF/A:
-    py_meta="$(printf "$py_meta\nu'/Version': 'PDF-1.7'")"
+    # reset pdf standard to PDF/A (https://stackoverflow.com/a/35042680/10763442):
+#    py_meta="$(printf "$py_meta\n'/Version': 'PDF-1.7'")"
 
     echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
+
 
     get_previous_meta(){
         {   echo "import pprint"
@@ -1228,26 +1240,56 @@ if [ "$python_check" = "ok" ]; then
         } | python3
     }
     # get previous metadata - maybe for feature use:
-    #    previous_meta=$(get_previous_meta)
+#     previous_meta=$(get_previous_meta)
+
+    outputtmpMeta="${outputtmp}_meta.pdf"
+#    {   echo "import pprint"
+#    
+#        echo "from PyPDF2 import PdfFileReader, PdfFileMerger"
+    
+#        echo "if __name__ == '__main__':"
+#        echo "    file_in = open('${outputtmp}', 'rb')"
+#        echo "    pdf_reader = PdfFileReader(file_in)"
+#        echo "    metadata = pdf_reader.getDocumentInfo()"
+    
+#        echo "    pdf_merger = PdfFileMerger()"
+#        echo "    pdf_merger.append(file_in)"
+#        echo "    pdf_merger.addMetadata({$py_meta})"
+       #echo "    file_out = open('${outputtmp}', 'wb')"
+#        echo "    file_out = open('${outputtmpMeta}', 'wb')"
+#        echo "    pdf_merger.write(file_out)"
+
+#        echo "    file_in.close()"
+#        echo "    file_out.close()"
+#    } | python3
+
 
     {   echo "import pprint"
     
-        echo "from PyPDF2 import PdfFileReader, PdfFileMerger"
+        echo "from PyPDF2 import PdfReader, PdfMerger"
     
         echo "if __name__ == '__main__':"
-        echo "    file_in = open('${outputtmp}', 'rb')"
-        echo "    pdf_reader = PdfFileReader(file_in)"
-        echo "    metadata = pdf_reader.getDocumentInfo()"
+        echo "    reader = PdfReader('$outputtmp')"
+        echo "    metadata = reader.metadata"
     
-        echo "    pdf_merger = PdfFileMerger()"
-        echo "    pdf_merger.append(file_in)"
-        echo "    pdf_merger.addMetadata({$py_meta})"
-        echo "    file_out = open('${outputtmp}', 'wb')"
-        echo "    pdf_merger.write(file_out)"
-    
-        echo "    file_in.close()"
-        echo "    file_out.close()"
+        echo "    merger = PdfMerger()"
+        echo "    merger.append(reader)"
+        echo "    merger.add_metadata({$py_meta})"
+        echo "    with open('$outputtmpMeta', 'wb') as fp:"
+        echo "        merger.write(fp)"
     } | python3
+
+
+
+
+
+    if [ $? != 0 ] || [ $(stat -c %s "${outputtmpMeta}") -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
+#   if [ $(stat -c %s "${outputtmpMeta}") -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
+        echo "${log_indent}  ⚠️ ERROR with writing metadata ... "
+    else
+        mv "${outputtmpMeta}" "${outputtmp}"
+    fi
+    unset outputtmpMeta
 
 elif which exiftool > /dev/null  2>&1 ; then
     echo -n "(exiftool ok) "
@@ -1530,17 +1572,11 @@ py_page_count()
 # This function receives a PDF file path and give back number of pages                  #
 #########################################################################################
 
-    {   echo 'from PyPDF2 import PdfFileReader'
-        echo 'pdf_path=r"'$1'"'
-        echo "with open(pdf_path, 'rb') as f:"
-        echo '        pdf = PdfFileReader(f)'
-#       echo '        information = pdf.getDocumentInfo()'
-        echo '        number_of_pages = pdf.getNumPages()'
-#       echo '        print(information)'
-        echo '        print(number_of_pages)'
-        echo 'exit()'
-    } | python3 
-
+    {   echo 'from PyPDF2 import PdfReader'
+        echo 'reader = PdfReader("'"$1"'")'
+        echo 'number_of_pages = len(reader.pages)'
+        echo 'print(number_of_pages)'
+    } | python3
 }
 
 
@@ -1755,11 +1791,12 @@ while read input ; do
 
         # identify split pages / write to an array:
         # ---------------------------------------------------------------------
-        page_count=$( py_page_count "${outputtmp}" )
-        if grep -qwP "^[0-9]+$" <<<"$page_count" ; then
+        pageCount=$( py_page_count "${outputtmp}" )
+
+        if grep -qwP "^[0-9]+$" <<<"$pageCount" ; then
             p=1
             splitPages=( )
-            while [ $p -lt $page_count ]; do
+            while [ $p -le $pageCount ]; do
                 if pdftotext "${outputtmp}" -f $p -l $p -layout - | grep -q "$documentSplitPattern" ; then
                     splitPages+=($p)
                 fi
@@ -1773,90 +1810,147 @@ while read input ; do
         # split document:
         # ---------------------------------------------------------------------
         split_pages(){
-            
-    #        if [ "$loglevel" = 2 ] ;then
-                echo "${log_indent}part:            $1"
-                echo "${log_indent}separator page:  $2"
-                echo "${log_indent}first page:      $3"
-                echo "${log_indent}last page:       $4"
-                echo "${log_indent}search suffix:   $5"
-    #        fi
-    
-            PyPDF2StartPage=$(($3-1))
-            PyPDF2EndPage=$(($4-1))
+
+            echo "${log_indent}part:            $1"
+            echo "${log_indent}first page:      $2"
+            echo "${log_indent}last page:       $3"
+            echo "${log_indent}search suffix:   $4"
+
+            PyPDF2StartPage=$(($2-1))
+            PyPDF2EndPage=$(($3-1))
             pageRange=$(seq -s ", " $PyPDF2StartPage 1 $PyPDF2EndPage )
-        
-    #        [ "$loglevel" = 2 ] && 
-            echo "${log_indent}used pages:      $pageRange"
+
+            echo "${log_indent}used pages:      $pageRange  (zero based)"
 
             # https://learndataanalysis.org/how-to-extract-pdf-pages-and-save-as-a-separate-pdf-file-using-python/
             # ---------------------------------------------------------------------
-            {   echo "from PyPDF2 import PdfFileReader, PdfFileWriter"
+            {  #echo "from PyPDF2 import PdfFileReader, PdfFileWriter"
+                echo "from PyPDF2 import PdfReader, PdfWriter"
         
                 echo 'pdf_file_path = "'$outputtmp'"'
                 echo "file_base_name = pdf_file_path.replace('.pdf', '')"
                 
-                echo "pdf = PdfFileReader(pdf_file_path)"
+               #echo "pdf = PdfFileReader(pdf_file_path)"
+                echo "pdf = PdfReader(pdf_file_path)"
                 
                 echo "pages = [$pageRange]" # page 1, 3, 5
-                echo "pdfWriter = PdfFileWriter()"
+               #echo "pdfWriter = PdfFileWriter()"
+                echo "pdf_Writer = PdfWriter()"
                 
                 echo "for page_num in pages:"
-                echo "    pdfWriter.addPage(pdf.getPage(page_num))"
+               #echo "    pdfWriter.addPage(pdf.getPage(page_num))"
+                echo "    pdf_Writer.addPage(pdf.getPage(page_num))"
                 
-                echo "with open('{0}_${1}${5}.pdf'.format(file_base_name), 'wb') as f:"
-                echo "    pdfWriter.write(f)"
+                echo "with open('{0}_${1}${4}.pdf'.format(file_base_name), 'wb') as f:"
+               #echo "    pdfWriter.write(f)"
+                echo "    pdf_Writer.write(f)"
                 echo "    f.close()"
             } | python3
         }
 
-# individual handling of split pages is currently not implemented / discard is used
-    # ${splitpagehandling} (discard isLastPage isFirstPage)
-        
-        # compute site ranges for splitting
+        # calculate site ranges for splitting
         # ---------------------------------------------------------------------
-        if (( "$numberSplitPages" > 0 )) && (( "$page_count" > 1 )); then
+        SplitPageCount=${#splitPages[@]}
+        [ "$loglevel" = 2 ] && echo "split page count: $SplitPageCount"
+
+        if (( "$SplitPageCount" > 0 )) && (( "$pageCount" > 1 )); then
             currentPart=0
             startPage=1
-            for splitPage in ${splitPages[@]}; do
-                [ "$splitPage" -eq 1 ] && continue  # continue, if first page a splitPage
-                let currentPart=$currentPart+1
-                let endPage=$splitPage-1
-                
-                # run splitting current range:
-                split_pages "$currentPart" "$splitPage" "$startPage" "$endPage" "$SearchSuffix"
-    
-                # move splitted file to OUTPUTDIR_tmp
-                splitted_file_name="${title}_${currentPart}${SearchSuffix}.pdf"
-                splitted_file="$work_tmp/${splitted_file_name}"
-                if [ -f "$splitted_file" ]; then
-                    prepare_target_path "${OUTPUTDIR_tmp}" "${splitted_file_name}"
-                    mv "$splitted_file" "${output}"
-                    copy_attributes "${input}" "${output}"
-                    echo "${log_indent}➜ move the split file to: ${output}"
-                    was_splitted=1
-                else
-                    echo "${log_indent}! ! ! ERROR with splitting file"
-                    split_error=1
-                fi
-                echo -e
+            page=1
+            unset arrayIndex
 
-                # startpage for next range:
-                let startPage=$splitPage+1
-            done
-        
-            # last range behind last splitPage:
-            if (( "$page_count" > ${splitPages[@]:(-1)} )); then
-                let currentPart=$currentPart+1
-                let startPage=${splitPages[@]:(-1)}+1
-                endPage=$page_count
-        
-                # run splitting last range:
-                split_pages "$currentPart" "$splitPage" "$startPage" "$endPage" "$SearchSuffix"
+            getIndex() {
+                # to calculate the end point of current range we need the current index in array:
+                local page=$1
+
+                for i in "${!splitPages[@]}"; do
+                    if [[ "${splitPages[$i]}" = "${page}" ]]; then
+                        echo ${i}
+                        break
+                   fi
+                done
+            }
+
+            if [ "$splitpagehandling" = isFirstPage ]; then
+                # method for 'FirstPage':
+                while (( page <= pageCount )); do
+                    arrayIndex=$( getIndex $page )
     
+                    # page is 1 OR (ArrayIndex is not empty AND page corresponds to splitpage with corresponding index)
+                    if [ "$page" -eq 1 ] || ([ -n "$arrayIndex" ] && [ "$page" -eq "${splitPages[$arrayIndex]}"  ]); then
+                        let currentPart=$currentPart+1
+
+                        # set startPage:
+                        startPage=$page
+    
+                        # set endpage:
+                        if [ "$arrayIndex" = $(($SplitPageCount-1)) ]; then
+                            # if last splitpage:
+                            endPage=$pageCount
+                        elif [ -z "$arrayIndex" ]; then
+                            # e.g. the first page is not a split page
+                            let endPage=${splitPages[0]}-1
+                        else
+                            let endPage=${splitPages[(($arrayIndex+1))]}-1
+                        fi
+                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
+                    fi
+    
+                    let page=$page+1
+                done
+            else
+                # method for 'lastPage' & 'discard':
+                for splitPage in ${splitPages[@]}; do
+                    if [ "$splitpagehandling" = discard ]; then
+                        [ "$splitPage" -eq 1 ] && let startPage=$splitPage+1 && continue  # continue, if first page a splitPage
+                        let currentPart=$currentPart+1
+                        let endPage=$splitPage-1
+                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
+                    elif [ "$splitpagehandling" = isLastPage ]; then
+                        let currentPart=$currentPart+1
+                        endPage=$splitPage
+                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
+                    fi
+    
+                    # startPage for next range:
+                    if [ "$splitpagehandling" = discard ]; then
+                        let startPage=$splitPage+1
+                    elif [ "$splitpagehandling" = isLastPage ]; then
+                        let startPage=$endPage+1
+                    fi
+                done
+        
+                # last range behind last splitPage:
+                if (( "$pageCount" > ${splitPages[@]:(-1)} )); then
+
+                    if [ "$splitpagehandling" = discard ]; then
+                        let currentPart=$currentPart+1
+                        let startPage=${splitPages[@]:(-1)}+1
+                        endPage=$pageCount
+
+                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
+                    elif [ "$splitpagehandling" = isLastPage ]; then
+                        let currentPart=$currentPart+1
+                        let startPage=$endPage+1
+                        endPage=$pageCount
+
+                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
+                    fi
+                fi
+            fi
+
+            # run splitting:
+            while read line; do
+                currentPart=$(echo "$line" | awk -F' ' '{print $1}')
+                startPage=$(echo "$line" | awk -F' ' '{print $2}')
+                endPage=$(echo "$line" | awk -F' ' '{print $3}')
+
+                split_pages "$currentPart" "$startPage" "$endPage" "$SearchSuffix"
+
                 # move splitted file to OUTPUTDIR_tmp with override protection
                 splitted_file_name="${title}_${currentPart}${SearchSuffix}.pdf"
                 splitted_file="$work_tmp/${splitted_file_name}"
+
                 if [ -f "$splitted_file" ]; then
                     prepare_target_path "${OUTPUTDIR_tmp}" "${splitted_file_name}"
                     mv "$splitted_file" "${output}"
@@ -1867,7 +1961,7 @@ while read input ; do
                     echo "${log_indent}! ! ! ERROR with splitting file"
                     split_error=1
                 fi
-            fi
+            done <<<"$(sort <<<"$splitJob")"
         else
             echo "${log_indent}no separator sheet found, or number of pages too small"
         fi
@@ -2117,14 +2211,12 @@ done <<<"${files}"
     
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
     [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start_all} )))]\n\n"
-    [ ! -d "$python3_env" ] && python3 -m venv "$python3_env"
-    source "${python3_env}/bin/activate"
 
     prepare_python_log=$(prepare_python)
-
     if [ "$?" -eq 0 ]; then
         [ -n "$prepare_python_log" ] && echo "$prepare_python_log"
         printf "${log_indent}prepare_python: OK\n"
+        source "${python3_env}/bin/activate"
     else
         [ -n "$prepare_python_log" ] && echo "$prepare_python_log"
         printf "${log_indent}prepare_python: ! ! ! ERROR ! ! ! \n"
