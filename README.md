@@ -16,7 +16,9 @@ auto translate:
 
 ## synOCR macht deine Synology DiskStation zum papierlosen Büro
 
-Damit kannst du einfach OCR auf PDF-Dokumente anwenden. synOCR kann anschließend nach Tags und Datum in den Dokumenten suchen, diese nach einem individuellen Muster umbenennen und nach Kategorien in Unterordner einsortieren. Durch Verwendung von Hardlinks entsteht kein erhöhter Speicherplatzbedarf, wenn ein Dokument in mehrere Kategorieordner einsortiert werden muss. Alle Dokumente verbleiben im Benutzerdateisystem und du bist mit der Nutzung von synOCR nicht an eine propitäre Datenbank für deine Dokumente gebunden.
+Damit kannst du einfach OCR auf PDF-Dokumente anwenden. synOCR kann anschließend nach Tags und Datum in den Dokumenten suchen, diese nach einem individuellen Muster umbenennen und nach Kategorien in Unterordner einsortieren. Durch Verwendung von Hardlinks entsteht kein erhöhter Speicherplatzbedarf, wenn ein Dokument in mehrere Kategorieordner einsortiert werden muss.   
+   
+Alle Dokumente verbleiben im Benutzerdateisystem und du bist mit der Nutzung von synOCR nicht an eine propitäre Datenbank für deine Dokumente gebunden.
 
 ### *Hauptfunktionen:*   
 - konvertiert Bilder nach PDF
@@ -34,7 +36,9 @@ ___
 
 ## synOCR turns your Synology DiskStation into a paperless office
 
-It allows you to easily apply OCR to PDF documents. synOCR can then search for tags and dates in the documents, rename them according to a custom pattern, and sort them into subfolders by category. By using hardlinks, there is no increased memory requirement if a document has to be sorted into multiple category folders. All documents remain in the user file system and you are not bound to a proprietary database for your documents when using synOCR.
+It allows you to easily apply OCR to PDF documents. synOCR can then search for tags and dates in the documents, rename them according to a custom pattern, and sort them into subfolders by category. By using hardlinks, there is no increased memory requirement if a document has to be sorted into multiple category folders.   
+   
+All documents remain in the user file system and you are not bound to a proprietary database for your documents when using synOCR.
 
 ### *Main features:*   
 - converts images to PDF
