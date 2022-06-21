@@ -16,15 +16,15 @@ For questions: synocr [@] geimist.eu
 - .[/APP/ui/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/APP/ui/lang)lang_\<language\_code\>.txt
   
 **The following languages are possible:**
-- ger = German
-- enu = English US
+- ger = German ✅
+- enu = English US ✅
 - chs = Chinese simplified
 - cht = Chinese traditional
 - csy = Czech
 - jpn = Japanese
 - krn = Korean
 - dan = Danish
-- fre = French
+- fre = French (✅)
 - ita = Italian
 - nld = Dutch
 - nor = Norwegian
