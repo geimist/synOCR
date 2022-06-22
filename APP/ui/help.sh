@@ -24,21 +24,21 @@ echo '
                         <h6 class="synocr-text-blue">'$lang_help_QS_sub1_tit'</h6>
                         <ul class="li_standard">
                             <li>'$lang_help_QS_sub1_1'</li>
-                            <li>'$lang_help_QS_sub1_2'</li>
+                            <li>'$lang_button' <i>'$lang_help_QS_sub1_2'</i></li>
                             <li><i>'$lang_help_QS_sub1_3'</i></li>
                             <li><i>'$lang_help_QS_sub1_4'</i></li>
                         </ul><br />
-                        <h6 class="synocr-text-blue">'$lang_help_QS_sub2_tit'</h6>
+                        <h6 class="synocr-text-blue">'$lang_tab' &quot;'$lang_help_QS_sub2_tit'&quot;:</h6>
                         <ul class="li_standard">
                             <li>'$lang_help_QS_sub2_1' <i>root</i></li>
                             <li>'$lang_help_QS_sub2_2'</li>
                             <li>'$lang_help_QS_sub2_3'</li>
                         </ul><br />
-                        <h6 class="synocr-text-blue">'$lang_help_QS_sub3_tit'</h6>
+                        <h6 class="synocr-text-blue">'$lang_tab' &quot;'$lang_help_QS_sub3_tit'&quot;:</h6>
                         <ul class="li_standard">
                             <li>'$lang_help_QS_sub3_1'</li>
                         </ul><br />
-                        <h6 class="synocr-text-blue">'$lang_help_QS_sub4_tit'</h6>
+                        <h6 class="synocr-text-blue">'$lang_tab' &quot;'$lang_help_QS_sub4_tit'&quot;:</h6>
                         <ul class="li_standard">
                             <li>'$lang_help_QS_sub4_1'</li><br />
                             <code><span style="background-color:#cccccc;font-hight:1.1em;">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start</span></code>
