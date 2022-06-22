@@ -69,7 +69,7 @@ echo '
 
                 <h6 class="synocr-text-blue">'$lang_help_FAQ_sub2_tit'</h6>
                 <ul>
-                    <li>'$lang_help_FAQ_sub2_1'</li>
+                    <li>'$lang_help_FAQ_sub2_1': &quot;<i>'$lang_help_FAQ_sub2_2'</i>&quot; ('$lang_help_FAQ_sub2_3')</li>
                 </ul>
                 <br />
 
@@ -111,6 +111,7 @@ echo '
                 <p>
                     '$lang_help_about_1'<br />
                     '$lang_help_about_2'<br />
+                    '$lang_help_about_3'<br />
                     <a href="https://www.paypal.me/geimist" onclick="window.open(this.href); return false;">
                         <img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="200"/>
                     </a><br />
