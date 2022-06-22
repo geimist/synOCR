@@ -182,14 +182,14 @@ fi
                             <img class="float-start" alt="status_loading" src="images/status_loading.gif">
                         </th>
                         <th style="width: 85%;">
-                            <p class="text-center mt-2"><span style="color: #424242; font-weight:normal;">'$lang_synOCR_start_wait1'</span></p>
+                            <p class="text-center mt-2"><span style="color: #424242; font-weight:normal;">'$lang_synOCR_start_wait1'<br>'$lang_synOCR_start_wait2'</span></p>
                         </th>
                     </tr>
                 </table>
             </center>'
         else
             echo "$lang_synOCR_start_runs ..."
-            echo "$lang_synOCR_start_wait2"
+            echo "$lang_synOCR_start_wait1 $lang_synOCR_start_wait2"
         fi
     fi
 
