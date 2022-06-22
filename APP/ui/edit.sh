@@ -698,7 +698,7 @@ if [[ "$page" == "edit" ]]; then
     <p>'$lang_edit_summary1'</p>
     <p>'$lang_edit_summary2'</p>
     <p>'$lang_edit_summary3'</p>
-    <p>'$lang_edit_summary4'</p>'
+    <p>'$lang_edit_summary4' ('$lang_example' <code>/volume1/…</code>)</p>'
 
         if [ -n "$DBupgradelog" ] ; then
             DBupgradelog=$(echo "$DBupgradelog" | tr "\n" "@" | sed -e "s/@/<br>/g")
@@ -785,7 +785,7 @@ if [[ "$page" == "edit" ]]; then
                             <div class="collapse" id="profile-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
-                                        '$lang_edit_set1_profilename_help'
+                                        '$lang_edit_set1_profilename_help' ('$lang_example' Shop, John)
                                     </span>
                                 </div>
                             </div>
@@ -874,7 +874,7 @@ if [[ "$page" == "edit" ]]; then
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set1_sourcedir_help1'<br />
-                                        '$lang_edit_set1_sourcedir_help2'
+                                        '$lang_edit_set1_sourcedir_help2' ('$lang_example' /volume1/homes/username/scan/input/)
                                     </span>
                                 </div>
                             </div>
@@ -918,7 +918,7 @@ if [[ "$page" == "edit" ]]; then
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set1_targetdir_help1'<br />
-                                        '$lang_edit_set1_targetdir_help2'
+                                        '$lang_edit_set1_targetdir_help2' ('$lang_example' /volume1/homes/username/scan/input/)
                                     </span>
                                 </div>
                             </div>
@@ -963,7 +963,7 @@ if [[ "$page" == "edit" ]]; then
                                     <span>
                                         '$lang_edit_set1_backupdir_help1'<br />
                                         '$lang_edit_set1_backupdir_help2'<br />
-                                        '$lang_edit_set1_backupdir_help3'
+                                        '$lang_edit_set1_backupdir_help3' ('$lang_example' /volume1/homes/username/scan/input/)
                                     </span>
                                 </div>
                             </div>
@@ -1007,7 +1007,7 @@ if [[ "$page" == "edit" ]]; then
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set1_logdir_help1'<br />
-                                        '$lang_edit_set1_logdir_help2'
+                                        '$lang_edit_set1_logdir_help2' ('$lang_example' /volume1/homes/username/scan/input/)
                                     </span>
                                 </div>
                             </div>
@@ -1124,9 +1124,9 @@ if [[ "$page" == "edit" ]]; then
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set2_dockerimage_help1'<br />
-                                        jbarlow83/ocrmypdf '$lang_edit_set2_dockerimage_help2'<br />
+                                        jbarlow83/ocrmypdf '$lang_edit_set2_dockerimage_help2' chi_sim,deu,eng,fra,osd,por,spa.<br />
                                         '$lang_edit_set2_dockerimage_help3'<br />
-                                        '$lang_edit_set2_dockerimage_help4'
+                                        '$lang_edit_set2_dockerimage_help4'&quot;ocrmypdf&quot;
                                     </span>
                                 </div>
                             </div>
@@ -1252,7 +1252,7 @@ if [[ "$page" == "edit" ]]; then
                             <div class="collapse" id="SearchPraefix-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
-                                        '$lang_edit_set2_searchpref_help1'<br />
+                                        '$lang_edit_set2_searchpref_help1'  ('$lang_example' &quot;SCAN_&quot;)<br />
                                         '$lang_edit_set2_searchpref_help2'<br />
                                         <code>!</code> '$lang_edit_set2_searchpref_help3' ( <code>!value</code> )<br />
                                         <code>$</code> '$lang_edit_set2_searchpref_help4' ( <code>value$</code> )
@@ -1453,13 +1453,13 @@ if [[ "$page" == "edit" ]]; then
                                         <strong>'$lang_edit_set2_taglist_help3'</strong><br />
                                         '$lang_edit_set2_taglist_help4'<br />
                                         '$lang_edit_set2_taglist_help5'<br /><br />
-                                        '$lang_edit_set2_taglist_help6'<br />
+                                        '$lang_example' <b>'$lang_edit_set2_taglist_help6'</b><br />
                                         <br />
                                         '$lang_edit_set2_taglist_help7'<br /><br />
-                                        '$lang_edit_set2_taglist_help8'<br /><br />
+                                        '$lang_example' <b>'$lang_edit_set2_taglist_help8'</b><br /><br />
                                         '$lang_edit_set2_taglist_help9'<br />
                                         '$lang_edit_set2_taglist_help10'<br />
-                                        '$lang_edit_set2_taglist_help11'<br /><br />
+                                        ('$lang_example' /volume1/ocr/taglist.txt)<br /><br />
                                         <strong>'$lang_edit_yamlsample_button_help_headline'</strong>
                                     </span>
                                 </div>
@@ -1563,6 +1563,11 @@ if [[ "$page" == "edit" ]]; then
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set2_moveTaggedFiles_help1'
+                                        <br>-&nbsp;'$lang_edit_set2_moveTaggedFiles_help2'
+                                        <br>-&nbsp;'$lang_edit_set2_moveTaggedFiles_help3'
+                                        <br>-&nbsp;'$lang_edit_set2_moveTaggedFiles_help4'
+                                        <br>-&nbsp;'$lang_edit_set2_moveTaggedFiles_help5'
+                                        <br><br>'$lang_edit_set2_moveTaggedFiles_help6'
                                     </span>
                                 </div>
                             </div>
@@ -1627,7 +1632,7 @@ if [[ "$page" == "edit" ]]; then
                                         <strong>§pagecountprofile</strong> ('$lang_edit_set2_renamesyntax_help20')<br />
                                         <strong>§filecountprofile</strong> ('$lang_edit_set2_renamesyntax_help21')<br /><br />
                                         >><strong>§yocr4-§mocr-§docr_§tag_§tit</strong><< '$lang_edit_set2_renamesyntax_help15'<br />
-                                        '$lang_edit_set2_renamesyntax_help16' >><strong>2018-12-09_#Rechnung_00376.pdf</strong><<<br />
+                                        '$lang_example' >><strong>2018-12-09_#Rechnung_00376.pdf</strong><<<br />
                                         <br />'$lang_edit_set2_renamesyntax_help17'
                                     </span>
                                 </div>
@@ -1664,7 +1669,7 @@ if [[ "$page" == "edit" ]]; then
                             <div class="collapse" id="tagsymbol-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
-                                        '$lang_edit_set2_tagsymbol_help1'<br />
+                                        '$lang_edit_set2_tagsymbol_help1' ('$lang_example': #)<br />
                                         '$lang_edit_set2_tagsymbol_help2'
                                     </span>
                                 </div>
