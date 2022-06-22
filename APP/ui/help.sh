@@ -115,7 +115,7 @@ echo '
                     <a href="https://www.paypal.me/geimist" onclick="window.open(this.href); return false;">
                         <img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="200"/>
                     </a><br />
-                    '$lang_help_about_3'
+                    '$lang_help_about_4'
                 </p><br>
             </div>
         </div>
