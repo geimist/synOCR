@@ -134,13 +134,13 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
 # check Docker:
     if [ ! $(which docker) ]; then
         echo '
-        <p class="text-center synocr-text-red mb-5">'$lang_main_dockerfailed'</p>
+        <p class="text-center synocr-text-red mb-5">'lang_attention':<br>'$lang_main_dockerfailed1'<br>'$lang_main_dockerfailed2'</p>
         <div class="float-end">
             <img src="images/status_error@geimist.svg" height="120" width="120" style="padding: 10px">
         </div>'
     elif [ "${dsmMajorVersion}" -ge 7 ] && $(! cat /etc/group | grep ^administrators | grep -q synOCR || ! cat /etc/group | grep ^docker: | grep -q synOCR ); then
         echo '
-        <p class="text-center synocr-text-red">'$lang_main_permissions_failed'
+        <p class="text-center synocr-text-red">'lang_attention':<br>'$lang_main_permissions_failed1'<br>'$lang_main_permissions_failed2'<br>('$lang_main_permissions_failed3')
             <code class="mb-5">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</code>
         </p>
         <div class="float-end">
