@@ -27,7 +27,7 @@ For questions: synocr [@] geimist.eu
 - csy = Czech ✔️
 - jpn = Japanese ✔️
 - krn = Korean ❌
-- dan = Danish ✔
+- dan = Danish ✔️
 - fre = French ✔️
 - ita = Italian ✔️
 - nld = Dutch ✔️
@@ -36,8 +36,8 @@ For questions: synocr [@] geimist.eu
 - rus = Russian ✔️
 - spn = Spanish ✔️
 - sve = Swedish ✔️
-- hun = Hungarian ✔
+- hun = Hungarian ✔️
 - tha = Tai ❌
-- trk = Turkish ✔
-- ptg = Portuguese European ✔
-- ptb = Portuguese Brazilian ✔
+- trk = Turkish ✔️
+- ptg = Portuguese European ✔️
+- ptb = Portuguese Brazilian ✔️
