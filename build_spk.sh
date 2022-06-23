@@ -2,7 +2,7 @@
 #
 #######
 project="synOCR"
-languages=( enu ger fre )   # for automated insert language strings to WIZARD_UIFILES
+beta_status=""              # will be set by script
 #######
 #----------------------------------------------------------------------------------------
 # Folder structure:
@@ -12,6 +12,7 @@ languages=( enu ger fre )   # for automated insert language strings to WIZARD_UI
 #
 #buildversion=
 # git fetch --all;git reset --hard origin/DSM_unibuild;git checkout DSM_unibuild
+
 
 # Usage info
 # ---------------------------------------------------------------------
@@ -61,6 +62,7 @@ exit 1
     echo "requested synOCR version: $buildversion"
     echo "target DSM version:       $TargetDSM"
 
+
 # preparation:
 # ---------------------------------------------------------------------
     set -euo pipefail
@@ -90,6 +92,7 @@ exit 1
         FAKEROOT=$(command -v fakeroot)
     fi
 
+
 # read working directory and change into it:
 # ---------------------------------------------------------------------
     APPDIR=$(cd "$(dirname $0)";pwd)
@@ -100,9 +103,9 @@ exit 1
 #   buildversion=${1:-latest}
     taggedversions=$(git tag)
 
-printf "\n-----------------------------------------------------------------------------------\n"
-printf " - INFO: Create the temporary build folder and copy sources into it ..."
-printf "\n-----------------------------------------------------------------------------------\n\n"
+    printf "\n-----------------------------------------------------------------------------------\n"
+    printf " - INFO: Create the temporary build folder and copy sources into it ..."
+    printf "\n-----------------------------------------------------------------------------------\n\n"
 
     git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
     pushd "$build_tmp"
@@ -118,42 +121,117 @@ printf "\n----------------------------------------------------------------------
         echo "The $(git rev-parse --abbrev-ref HEAD)-branch will be used!"
     fi
 
-printf "\n - INFO: collect the DSM specific files ...\n"
+    printf "\n - INFO: collect the DSM specific files ...\n"
     if [ $TargetDSM -eq 7 ]; then
         PKG=PKG_DSM7
         mv $build_tmp/APP/ui/config_DSM7 $build_tmp/APP/ui/config
         rm -f $build_tmp/APP/ui/config_DSM6
         mv $build_tmp/APP/ui/images_DSM7 $build_tmp/APP/ui/images
         rm -rf $build_tmp/APP/ui/images_DSM6
-#       sed -i 's/VERSION_DSM/VERSION_DSM7/' "$build_tmp/APP/ui/synOCR-start.sh"
     else
         PKG=PKG_DSM6
         mv $build_tmp/APP/ui/config_DSM6 $build_tmp/APP/ui/config
         rm -f $build_tmp/APP/ui/config_DSM7
         mv $build_tmp/APP/ui/images_DSM6 $build_tmp/APP/ui/images
         rm -rf $build_tmp/APP/ui/images_DSM7
-#       sed -i 's/VERSION_DSM/VERSION_DSM6/' "$build_tmp/APP/ui/synOCR-start.sh"
     fi
 
-printf "\n - INFO: insert language strings to WIZARD_UIFILES ...\n"
+
+    create_notify_file() {
+        {   echo '[app]'
+            echo 'app_name="synOCR"'
+            echo 'job_successful="lang_notify_file_job_successful"'
+            echo 'update_available="lang_notify_file_update_available (https://geimist.eu/synocr)"'
+        } > "$1"
+    }
+
+    create_install_uifile() {
+        {   echo '['
+            echo '   {'
+            echo '      "step_title" : "lang_wizui_install_title",'
+            echo '      "items" : ['
+            echo '         {'
+            echo '            "desc" : "<p>lang_wizui_install_desc</p>"'
+            echo '         }'
+            echo '      ]'
+            echo '   }'
+            echo ']'
+        } > "$1"
+    }
+
+    create_uninstall_uifile() {
+        {   echo '['
+            echo '   {'
+            echo '      "step_title" : "lang_wizui_uninstall_title",'
+            echo '      "items" : ['
+            echo '         {'
+            echo '            "desc" : "<p>lang_wizui_uninstall_desc_1</p><p><br>lang_wizui_uninstall_desc_2</p>"'
+            echo '         }'
+            echo '      ]'
+            echo '   }'
+            echo ']'
+       }  > "$1"
+    
+    }
+
+    create_upgrade_uifile() {
+        {   echo '['
+            echo '   {'
+            echo '      "step_title" : "lang_wizui_upgrade_title",'
+            echo '      "items" : ['
+            echo '         {'
+            echo '            "desc" : "<p>lang_wizui_upgrade_desc</p>"'
+            echo '         }'
+            echo '      ]'
+            echo '   }'
+            echo ']'
+        } > "$1"
+    }
+
+    printf "\n - INFO: create diverse files and insert language strings ...\n"
+    languages=()
+    while read line; do
+        languages+=($line)
+    done <<<"$(ls -tp "$build_tmp/APP/ui/lang/" | egrep -v '/$' | cut -f 1 -d '.' | cut -f 2 -d '_')"
+    echo "         dedected languages: ${languages[@]}"
+
+    defaultSourceLang="$build_tmp/APP/ui/lang/lang_enu.txt"
     # PKG_DSMx/INFO
-    [[ ! $TargetDSM = 6 ]] && synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_INFO_description)
+    [[ ! $TargetDSM = 6 ]] && synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$defaultSourceLang" lang_INFO_description)
 
     # install_uifile
-    sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_install_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
-    sed -i "s|lang_wizui_install_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_install_desc)|" "$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
+    install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
+    create_install_uifile "$install_uifile_lang"
+    sed -i "s|lang_wizui_install_title|$(get_key_value "$defaultSourceLang" lang_wizui_install_title)|"  "$install_uifile_lang"
+    sed -i "s|lang_wizui_install_desc|$(get_key_value "$defaultSourceLang" lang_wizui_install_desc)|"  "$install_uifile_lang"
 
     # uninstall_uifile
-    sed -i "s|lang_wizui_uninstall_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_uninstall_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile"
-    sed -i "s|lang_wizui_uninstall_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_uninstall_desc)|" "$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile"
+    uninstall_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile"
+    create_uninstall_uifile "$uninstall_uifile_lang"
+    sed -i "s|lang_wizui_uninstall_title|$(get_key_value "$defaultSourceLang" lang_wizui_uninstall_title)|" "$uninstall_uifile_lang"
+    sed -i "s|lang_wizui_uninstall_desc_1|$(get_key_value "$defaultSourceLang" lang_wizui_uninstall_desc_1)|" "$uninstall_uifile_lang"
+    sed -i "s|lang_wizui_uninstall_desc_2|$(get_key_value "$defaultSourceLang" lang_wizui_uninstall_desc_2)|" "$uninstall_uifile_lang"
 
     # upgrade_uifile
-    [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile" ] && sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_upgrade_title)|" "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile"
-    [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile" ] && sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_wizui_upgrade_desc)|" "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile"
+    if [ "$TargetDSM" = 6 ]; then
+        upgrade_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile"
+        create_upgrade_uifile "$upgrade_uifile_lang"
+        sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$defaultSourceLang" lang_wizui_upgrade_title)|" "$upgrade_uifile_lang"
+        sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$defaultSourceLang" lang_wizui_upgrade_desc)|" "$upgrade_uifile_lang"
+    fi
 
     for lang in ${languages[@]}; do
         # PKG_DSMx/INFO
         [[ ! $TargetDSM = 6 ]] && synosetkeyvalue "$build_tmp/$PKG/INFO" description_${lang} $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)
+        
+        # i18n notification files
+        langDir="$build_tmp/APP/ui/texts/${lang}"
+        notifyFileLang="$build_tmp/APP/ui/texts/${lang}/strings"
+        mkdir -p "$langDir"
+        create_notify_file "$notifyFileLang"
+
+        sed -i "s|lang_notify_file_job_successful|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_job_successful)|" "${notifyFileLang}"
+        sed -i "s|lang_notify_file_update_available|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_update_available)|" "${notifyFileLang}"
 
         # PKG_DSMx/scripts/lang/${lang}
         scripts_lang_lang="$build_tmp/$PKG/scripts/lang/${lang}"
@@ -170,84 +248,90 @@ printf "\n - INFO: insert language strings to WIZARD_UIFILES ...\n"
 
         # install_uifile:
         install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
-        if [ ! -f "${install_uifile_lang}" ]; then
-            echo '[' > "${install_uifile_lang}"
-            echo '   {' >> "${install_uifile_lang}"
-            echo '      "step_title" : "lang_wizui_install_title",' >> "${install_uifile_lang}"
-            echo '      "items" : [' >> "${install_uifile_lang}"
-            echo '         {' >> "${install_uifile_lang}"
-            echo '            "desc" : "<p>lang_wizui_install_desc</p>"' >> "${install_uifile_lang}"
-            echo '         }' >> "${install_uifile_lang}"
-            echo '      ]' >> "${install_uifile_lang}"
-            echo '   }' >> "${install_uifile_lang}"
-            echo ']' >> "${install_uifile_lang}"
-        fi
+        create_install_uifile "${install_uifile_lang}"
+#        if [ ! -f "${install_uifile_lang}" ]; then
+#            {   echo '['
+#                echo '   {'
+#                echo '      "step_title" : "lang_wizui_install_title",'
+#                echo '      "items" : ['
+#                echo '         {'
+#                echo '            "desc" : "<p>lang_wizui_install_desc</p>"'
+#                echo '         }'
+#                echo '      ]'
+#                echo '   }'
+#                echo ']'
+#            } > "${install_uifile_lang}"
+#            fi
         sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_title)|" "${install_uifile_lang}"
         sed -i "s|lang_wizui_install_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_desc)|" "${install_uifile_lang}"
 
         # uninstall_uifile:
         uninstall_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile_${lang}"
-        if [ ! -f "${uninstall_uifile_lang}" ]; then
-            echo '[' > "${uninstall_uifile_lang}"
-            echo '   {' >> "${uninstall_uifile_lang}"
-            echo '      "step_title" : "lang_wizui_uninstall_title",' >> "${uninstall_uifile_lang}"
-            echo '      "items" : [' >> "${uninstall_uifile_lang}"
-            echo '         {' >> "${uninstall_uifile_lang}"
-            echo '            "desc" : "<p>lang_wizui_uninstall_desc</p>"' >> "${uninstall_uifile_lang}"
-            echo '         }' >> "${uninstall_uifile_lang}"
-            echo '      ]' >> "${uninstall_uifile_lang}"
-            echo '   }' >> "${uninstall_uifile_lang}"
-            echo ']' >> "${uninstall_uifile_lang}"
-        fi
+        create_uninstall_uifile "${uninstall_uifile_lang}"
+#        if [ ! -f "${uninstall_uifile_lang}" ]; then
+#            {   echo '['
+#                echo '   {'
+#                echo '      "step_title" : "lang_wizui_uninstall_title",'
+#                echo '      "items" : ['
+#                echo '         {'
+#                echo '            "desc" : "<p>lang_wizui_uninstall_desc</p>"'
+#                echo '         }'
+#                echo '      ]'
+#                echo '   }'
+#                echo ']'
+#           }  > "${uninstall_uifile_lang}"
+#        fi
         sed -i "s|lang_wizui_uninstall_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_title)|" "${uninstall_uifile_lang}"
-        sed -i "s|lang_wizui_uninstall_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc)|" "${uninstall_uifile_lang}"
+        sed -i "s|lang_wizui_uninstall_desc_1|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc_1)|" "${uninstall_uifile_lang}"
+        sed -i "s|lang_wizui_uninstall_desc_2|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc_2)|" "${uninstall_uifile_lang}"
  
         # upgrade_uifile (only for refresh notify after upgrade):
         # (currently without fallback to plain english file)
         if [ "$TargetDSM" = 6 ]; then
             upgrade_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}"
-            if [ ! -f "${upgrade_uifile_lang}" ]; then
-                echo '[' > "${upgrade_uifile_lang}"
-                echo '   {' >> "${upgrade_uifile_lang}"
-                echo '      "step_title" : "lang_wizui_upgrade_title",' >> "${upgrade_uifile_lang}"
-                echo '      "items" : [' >> "${upgrade_uifile_lang}"
-                echo '         {' >> "${upgrade_uifile_lang}"
-                echo '            "desc" : "<p>lang_wizui_upgrade_desc</p>"' >> "${upgrade_uifile_lang}"
-                echo '         }' >> "${upgrade_uifile_lang}"
-                echo '      ]' >> "${upgrade_uifile_lang}"
-                echo '   }' >> "${upgrade_uifile_lang}"
-                echo ']' >> "${upgrade_uifile_lang}"
-            fi
+            create_upgrade_uifile "${upgrade_uifile_lang}"
+#            if [ ! -f "${upgrade_uifile_lang}" ]; then
+#                {   echo '['
+#                    echo '   {'
+#                    echo '      "step_title" : "lang_wizui_upgrade_title",'
+#                    echo '      "items" : ['
+#                    echo '         {'
+#                    echo '            "desc" : "<p>lang_wizui_upgrade_desc</p>"'
+#                    echo '         }'
+#                    echo '      ]'
+#                    echo '   }'
+#                    echo ']'
+#                } > "${upgrade_uifile_lang}"
+#            fi
             [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_title)|" "${upgrade_uifile_lang}"
             [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_desc)|" "${upgrade_uifile_lang}"
         fi
     done
 
     build_version=$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
-    beta_status=""  #$(grep beta "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
     [[ $(grep beta "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}') == yes ]] && beta_status="_BETA"
 
-printf "\n-----------------------------------------------------------------------------------\n"
-printf "   SPK will be created ..."
-printf "\n-----------------------------------------------------------------------------------\n\n"
+    printf "\n-----------------------------------------------------------------------------------\n"
+    printf "   SPK will be created ..."
+    printf "\n-----------------------------------------------------------------------------------\n\n"
     printf "\n - INFO: The following version is loaded and built:\n"
     echo "    $set_spk_version - BUILD-Version (INFO-File): $build_version"
 
 # Falls versteckter Ordners /.helptoc vorhanden, diesen nach /helptoc umbenennen
-printf "\n - INFO: handle .helptoc files ...\n"
+    printf "\n - INFO: handle .helptoc files ...\n"
     if test -d "${build_tmp}/.helptoc"; then
         echo ""
         echo " - INFO: Versteckter Ordner /.helptoc wurde lokalisiert und nach /helptoc umbenannt"
         mv "${build_tmp}/.helptoc" "${build_tmp}/helptoc"
     fi
 
-printf "\n - INFO: create empty dirs ...\n"
+    printf "\n - INFO: create empty dirs ...\n"
     [ ! -d "${build_tmp}/APP/cfg" ] && echo "    create dir ${build_tmp}/APP/cfg" && mkdir "${build_tmp}/APP/cfg"
     [ ! -d "${build_tmp}/APP/log" ] && echo "    create dir ${build_tmp}/APP/log" && mkdir "${build_tmp}/APP/log"
     [ ! -d "${build_tmp}/APP/ui/etc" ] && echo "    create dir ${build_tmp}/APP/ui/etc" && mkdir "${build_tmp}/APP/ui/etc"
  #  [ ! -d "${build_tmp}/APP/ui/usersettings" ] && echo "    create dir ${build_tmp}/APP/ui/usersettings" && mkdir "${build_tmp}/APP/ui/usersettings"
 
-printf "\n - INFO: adjust permissions ...\n"
+    printf "\n - INFO: adjust permissions ...\n"
     chmod -R 755 "${build_tmp}/APP/"
     chmod -R 755 "${build_tmp}/$PKG/"
     chmod -R 644 "${build_tmp}/APP/ui/texts/"
@@ -273,12 +357,4 @@ printf "\n - INFO: adjust permissions ...\n"
     printf "   ${APPDIR}/$TargetName\n"
 
 exit 0
-
-
-
-
-
-
-
-
 
