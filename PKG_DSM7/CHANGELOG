@@ -35,7 +35,7 @@ known issues / limitations:
  -  the conversion from YAML to JSON is no longer done with the binary yq but by Python
  -  logging deleted backup files in loglevel 2 
  -  [GUI] notify about updates in main page (because cphub.net is not working)
- -  [GUI] support for follow machine translated languages
+ -  [GUI] support for follow machine translated languages (by DeepL)
     - Chinese simplified
     - Czech
     - Japanese
