@@ -11,6 +11,7 @@ For questions: synocr [@] geimist.eu
 
 ✅  ➜ translate by human / verified
 ✔️  ➜ machine translate
+❌  ➜ missing language
 
 -----
 
@@ -22,21 +23,21 @@ For questions: synocr [@] geimist.eu
 - ger = German ✅
 - enu = English US ✅
 - chs = Chinese simplified ✔️
-- cht = Chinese traditional
+- cht = Chinese traditional ❌
 - csy = Czech ✔️
 - jpn = Japanese ✔️
-- krn = Korean
+- krn = Korean ❌
 - dan = Danish ✔
 - fre = French ✔️
 - ita = Italian ✔️
 - nld = Dutch ✔️
-- nor = Norwegian
+- nor = Norwegian ❌
 - plk = Polish ✔️
 - rus = Russian ✔️
 - spn = Spanish ✔️
 - sve = Swedish ✔️
 - hun = Hungarian ✔
-- tha = Tai
+- tha = Tai ❌
 - trk = Turkish ✔
 - ptg = Portuguese European ✔
 - ptb = Portuguese Brazilian ✔
