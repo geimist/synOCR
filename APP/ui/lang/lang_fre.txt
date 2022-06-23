@@ -1,6 +1,7 @@
 # french language file for synOCR-GUI
 # /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_fre.txt
 # translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
+machinetranslate=1
 
 #-------------------------------------------
 # general:
@@ -14,12 +15,15 @@ lang_no="non"
 lang_and="et"
 lang_delete="Supprimer"
 lang_popup_note="Note"
+lang_button="Bouton"
+lang_tab="Onglet"
 lang_button_abort="Annuler"
 lang_buttonback="retour"
 lang_buttonnext="suivant"
 lang_buttonsave="Enregistrer"
 lang_buttonchange="Changer"
-lang_foot_buttonsavetimer="Sauvegarder l'emploi du temps"
+lang_attention="A T T E N T I O N"
+lang_example="par ex."
 lang_foot_buttonnewprofile="Nouveau profil"
 lang_foot_buttoncloneprof="Cloner un profil"
 lang_foot_buttoncloneprof_tit="crée un nouveau profil avec la configuration du profil actuel ..."
@@ -54,14 +58,14 @@ lang_edit_savefin="Les modifications ont été enregistrées"
 lang_edit_summary1="Trage hier deine Einstellungen ein und passe die Pfade an."
 lang_edit_summary2="Tu peux obtenir de l'aide pour les différents champs en cliquant sur l'icône d'information bleue dans la marge de droite"
 lang_edit_summary3="Avec les profils, tu peux créer autant de configurations que tu veux, qui seront toutes traitées à chaque exécution du programme. On peut aussi désactiver chaque profil via le champ correspondant"
-lang_edit_summary4="Veille absolument à saisir les chemins d'accès complets, y compris le volume (par ex. <code>/volume1/...</code>) et fais attention aux majuscules et minuscules. Le plus sûr est de chercher le dossier souhaité dans la station de fichiers et d'afficher les propriétés par un clic droit. Dans ce dialogue, tu peux copier le chemin correct"                                        # keep html-tag
+lang_edit_summary4="Veille absolument à saisir les chemins d'accès complets, y compris le volume et fais attention aux majuscules et minuscules. Le plus sûr est de chercher le dossier souhaité dans la station de fichiers et d'afficher les propriétés par un clic droit. Dans ce dialogue, tu peux copier le chemin correct"
 
 lang_edit_dbupdate="résultat de la mise à jour de la base de données"
 lang_edit_change_profile="changer de profil"
 
 lang_edit_set1_title="Généralités"
 
-lang_edit_set1_profilename_help="Les profils peuvent être nommés individuellement (ex. business, Boris)"
+lang_edit_set1_profilename_help="Les profils peuvent être nommés individuellement"
 
 lang_edit_set1_profile_activ_title="Activer / désactiver le profil"
 lang_edit_set1_profile_activ="Profil activé"
@@ -71,20 +75,20 @@ lang_edit_set1_profile_activ_help2="Les profils désactivés peuvent être modif
 
 lang_edit_set1_sourcedir_title="Répertoire source"
 lang_edit_set1_sourcedir_help1="Les fichiers PDF sont recherchés dans ce répertoire (pas de manière récursive)"
-lang_edit_set1_sourcedir_help2="Utiliser le chemin complet (par ex. /volume1/homes/admin/scan/input/)"
+lang_edit_set1_sourcedir_help2="Utiliser le chemin complet"
 
 lang_edit_set1_targetdir_title="Répertoire cible"
 lang_edit_set1_targetdir_help1="Répertoire de sortie des fichiers PDF finaux (sera créé le cas échéant)."
-lang_edit_set1_targetdir_help2="Utiliser le chemin complet (par ex. /volume1/homes/admin/scan/output/)"
+lang_edit_set1_targetdir_help2="Utiliser le chemin complet"
 
 lang_edit_set1_backupdir_title="Répertoire de sauvegarde"
 lang_edit_set1_backupdir_help1="Si un chemin d'accès valide est saisi ici, les fichiers originaux seront sauvegardés ici (sera créé le cas échéant)"
 lang_edit_set1_backupdir_help2="Si aucun répertoire valide n'est enregistré, les fichiers originaux seront définitivement supprimés."
-lang_edit_set1_backupdir_help3="Utiliser le chemin complet (par ex. /volume1/homes/admin/scan/Backup/)"
+lang_edit_set1_backupdir_help3="Utiliser le chemin complet"
 
 lang_edit_set1_logdir_title="Répertoire pour les fichiers LOG"
 lang_edit_set1_logdir_help1="Répertoire des fichiers LOG (sera créé le cas échéant)"
-lang_edit_set1_logdir_help2="Utiliser le chemin complet (par ex. /volume1/homes/admin/scan/LOG/)"
+lang_edit_set1_logdir_help2="Utiliser le chemin complet"
 
 lang_edit_set2_title="Options OCR et changement de nom"
 
@@ -99,9 +103,9 @@ lang_edit_set2_ocropt_help7="aide complète"
 
 lang_edit_set2_dockerimage_title="image docker à utiliser"
 lang_edit_set2_dockerimage_help1="Quelle image de docker utiliser ?"
-lang_edit_set2_dockerimage_help2="est l'image par défaut, mais ne contient actuellement que les langues : English, German and Simplified Chinese"
+lang_edit_set2_dockerimage_help2="est l'image par défaut, mais ne contient actuellement que les langues :"
 lang_edit_set2_dockerimage_help3="Les Polyglot-Images contiennent toutes les langues possibles, mais sont plus grandes !"
-lang_edit_set2_dockerimage_help4="Les images téléchargées manuellement ou créées par l'utilisateur sont également disponibles, à condition que &quot;ocrmypdf&quot; soit inclus dans le nom."
+lang_edit_set2_dockerimage_help4="Les images téléchargées manuellement ou créées par l'utilisateur peuvent également être sélectionnées, à condition que ce qui suit soit inclus dans le nom :"
 
 lang_edit_set2_dockerimageupdate_title="Maintenir l'image Docker à jour"
 lang_edit_set2_dockerimageupdate_yes="garder à jour (par défaut)"
@@ -114,7 +118,7 @@ lang_edit_set2_img2pdf_yes="convertir des images"
 lang_edit_set2_img2pdf_help1="Les images du dossier source peuvent être converties en fichiers PDF. Si elles sont activées, elles sont ensuite déplacées vers le dossier de sauvegarde"
 
 lang_edit_set2_searchpref_title="Modèle de recherche Nom du fichier source"
-lang_edit_set2_searchpref_help1="Ne traiter que les PDF avec un préfixe défini (par exemple &quot;SCAN_&quot;)"       # keep html-tag
+lang_edit_set2_searchpref_help1="Ne traiter que les PDF avec un préfixe défini"
 lang_edit_set2_searchpref_help2="laisser vide si tous les documents doivent être traités"
 lang_edit_set2_searchpref_help3="au début, inverse la recherche"
 lang_edit_set2_searchpref_help4="à la fin définit le terme comme suffixe"
@@ -140,12 +144,11 @@ lang_edit_set2_taglist_help2_1="Il est également possible de définir un chemin
 lang_edit_set2_taglist_help3=" ! ! ! NE PAS UTILISER DE SAUT DE LIGNE ! ! !"
 lang_edit_set2_taglist_help4="Les balises et les catégories peuvent également contenir des espaces."
 lang_edit_set2_taglist_help5="Si une balise doit être trouvée seule, elle doit être précédée du signe paragraphe (une recherche sur &quot;<code>§Rechnung</code>&quot; ne trouve donc pas, à tort &quot;<code>Rechnungsstellung</code>&quot;)"   # keep html-tag
-lang_edit_set2_taglist_help6="p.ex.: <b>facture;travail;assurance</b>."                                    # keep html-tag
+lang_edit_set2_taglist_help6="facture;travail;assurance"
 lang_edit_set2_taglist_help7="Les balises peuvent également être affectées à une catégorie (pour les sous-dossiers) par un signe égal (ne s'applique que si vous utilisez également des dossiers définis par des règles [option ci-dessous])."
-lang_edit_set2_taglist_help8="par exemple: <b>facture;HUK24=assurance;Allianz=assurance</b>."                # keep html-tag
+lang_edit_set2_taglist_help8="facture;HUK24=assurance;Allianz=assurance"
 lang_edit_set2_taglist_help9="Les balises étendues peuvent également être enregistrées dans un fichier texte séparé."
 lang_edit_set2_taglist_help10="Dans ce cas, le chemin absolu doit être saisi ici."
-lang_edit_set2_taglist_help11="(p.ex.: /volume1/ocr/taglist.txt)"
 
 lang_edit_set2_searchall_title="Zone de recherche des tags."
 lang_edit_set2_searchall_1page="première page seulement."
@@ -159,7 +162,12 @@ lang_edit_set2_moveTaggedFiles_useCatDir="utiliser les dossiers définis par les
 lang_edit_set2_moveTaggedFiles_useTagDir="utiliser les dossiers basés sur les balises"
 lang_edit_set2_moveTaggedFiles_useYearDir="utiliser les dossiers annuels"
 lang_edit_set2_moveTaggedFiles_useYearMonthDir="utiliser les dossiers annuels et les sous-dossiers mensuels"
-lang_edit_set2_moveTaggedFiles_help1="Quel type de classement doit être utilisé : <br>- Sous-répertoires de tags ou dossiers de catégories <br>- Dossiers définis par des règles <br>- Dossiers annuels <br>- Dossiers annuels/mois <br><br>Si plusieurs tags s'appliquent, des Hardlinks sont mis en place."                # keep html-tag
+lang_edit_set2_moveTaggedFiles_help1="Quel classement utiliser :"
+lang_edit_set2_moveTaggedFiles_help2="Sous-répertoires de tags, ou dossiers de catégories"
+lang_edit_set2_moveTaggedFiles_help3="Dossiers définis par des règles"
+lang_edit_set2_moveTaggedFiles_help4="Dossier par an"
+lang_edit_set2_moveTaggedFiles_help5="Année/dossier mensuel"
+lang_edit_set2_moveTaggedFiles_help6="Si plusieurs balises s'appliquent, des liens en dur sont créés."
 
 lang_edit_set2_renamesyntax_title="Syntaxe de renommage OCR"
 lang_edit_set2_renamesyntax_help1="Renommer les PDF terminés avec une syntaxe spécifique. Les variables peuvent également être utilisées dans les chemins de destination dans les règles YAML (sauf §tit)."
@@ -191,11 +199,10 @@ lang_edit_set2_renamesyntax_help19="Compteur de fichiers (total)"
 lang_edit_set2_renamesyntax_help20="Compteur de pages (profil utilisé)"
 lang_edit_set2_renamesyntax_help21="Compteur de fichiers (profil utilisé)"
 lang_edit_set2_renamesyntax_help15="généré"
-lang_edit_set2_renamesyntax_help16="par exemple"
 lang_edit_set2_renamesyntax_help17="Les dates sont d'abord recherchées dans le document. Si elle est infructueuse, la date du fichier est utilisée"
 
 lang_edit_set2_tagsymbol_title="marquer les balises dans le nom du fichier"
-lang_edit_set2_tagsymbol_help1="les tags trouvés peuvent être marqués dans le nom de fichier (par ex. avec #)"
+lang_edit_set2_tagsymbol_help1="les tags trouvés peuvent être marqués dans le nom de fichier"
 lang_edit_set2_tagsymbol_help2="(les caractères spéciaux peuvent avoir des conséquences imprévisibles !)"
 
 lang_edit_set2_filedate_title="Corriger la date du fichier"
@@ -348,8 +355,11 @@ lang_main_title2="Description"
 lang_main_monitor_restart_necessary_1="La liste des dossiers d'entrée surveillés n'est plus à jour !"
 lang_main_monitor_restart_necessary_2="Veuillez redémarrer la surveillance dans le planificateur de tâches"
 lang_main_monitor_restart_necessary_3="(cela correspond à l'appel normal dans le planificateur de tâches avec le paramètre start)"
-lang_main_dockerfailed="A T T E N T I O N:<br>Docker n'a pas été trouvé.<br>Veuillez vérifier si le paquet Docker est installé !"    # keep html-tag
-lang_main_permissions_failed="A T T E N T I O N:<br>synOCR ne dispose pas encore des autorisations nécessaires!<br>Veuillez créer une tâche dans le planificateur de tâches avec le script ci-dessous (en tant que root)<br>(la tâche doit être exécutée au moins une fois)"    # keep html-tag
+lang_main_dockerfailed1="Docker n'a pas été trouvé."
+lang_main_dockerfailed2="Veuillez vérifier si le paquet Docker est installé !"
+lang_main_permissions_failed1="synOCR ne dispose pas encore des autorisations nécessaires!"
+lang_main_permissions_failed2="Veuillez créer une tâche dans le planificateur de tâches avec le script ci-dessous (en tant que root)"
+lang_main_permissions_failed3="la tâche doit être exécutée au moins une fois"
 lang_main_desc1="SynOCR fournit une interface graphique simple pour le conteneur Docker OCRmyPDF. Une configuration dans Docker n'est pas nécessaire"
 lang_main_desc2="Actuellement, il n'est probablement pas possible d'utiliser tous les paramètres en relation avec OCRmyPDF, mais les plus importants le sont. Il suffit de saisir le dossier source et le dossier cible dans la configuration. Maintenant, une exécution manuelle du programme est déjà possible via le bouton ci-dessous. L'exécution automatique du programme doit être réglée (comme décrit dans l'aide) soit via le planificateur, soit via le planificateur de tâches DSM"
 lang_main_buttonrun="lancer maintenant l'exécution manuelle synOCR"
@@ -368,18 +378,19 @@ lang_help_QS_1_beforelink="Commencez par ajuster votre installation dans le"
 lang_help_QS_1_afterlink="personnaliser"
 lang_help_QS_1b="(facultatif) : Pour surveiller automatiquement les dossiers d'entrée, le paquet inotify-tools doit être installé"
 lang_help_QS_2="Pour que synOCR fonctionne correctement, une nouvelle tâche doit être créée dans le planificateur de tâches DSM."
+# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="Pour ce faire, ouvrez le panneau de configuration dans DSM"
-lang_help_QS_sub1_1="Planificateur de tâches"                                    # ensure exact translation from the DSM!
-lang_help_QS_sub1_2="Bouton <i>Créer</i>"                     # keep html-tag
+lang_help_QS_sub1_1="Planificateur de tâches"
+lang_help_QS_sub1_2="Créer"
 lang_help_QS_sub1_3="tâche planifiée"
 lang_help_QS_sub1_4="Script défini par l'utilisateur"
-lang_help_QS_sub2_tit="Onglet &quot;Général&quot;:"            # keep coded dublequotes: &quot;
+lang_help_QS_sub2_tit="Général"
 lang_help_QS_sub2_1="Utilisateur"
-lang_help_QS_sub2_2="un nom quelconque pour <i>Tâche</i>"          # keep html-tag
-lang_help_QS_sub2_3="Crochet à <i>activé</i>"                        # keep html-tag
-lang_help_QS_sub3_tit="Onglet &quot;Programmer&quot;:"             # keep coded dublequotes: &quot;
+lang_help_QS_sub2_2="un nom quelconque pour <i>Tâche</i>"
+lang_help_QS_sub2_3="Crochet à <i>activé</i>"
+lang_help_QS_sub3_tit="Programmer"
 lang_help_QS_sub3_1="ici l'intervalle souhaité (par ex. toutes les heures)"
-lang_help_QS_sub4_tit="Onglet &quot;Paramètres de tâches&quot;:"  # keep coded dublequotes: &quot;
+lang_help_QS_sub4_tit="Paramètres de tâches"
 lang_help_QS_sub4_1="copier ici le chemin d'accès ci-dessous :"
 lang_help_title_FAQ="FAQ"
 lang_help_FAQ_sub1_tit="Options OCRmyPDF"
@@ -387,21 +398,24 @@ lang_help_FAQ_sub1_1_beforelink="Pour une aide plus détaillée sur OCRmyPDF, vo
 lang_help_FAQ_sub1_1_linktitle="Page d'aide OCRmyPDF"
 lang_help_FAQ_sub1_1_afterlink="."
 lang_help_FAQ_sub2_tit="lorsque j'appelle synOCR, je suis déconnecté du DSM"
-lang_help_FAQ_sub2_1="Pour y remédier, il suffit d'activer &quot;<i>Augmenter la compatibilité du navigateur en refusant le contrôle IP</i>&quot; sous Panneau de configuration DSM > Sécurité"              # keep coded dublequotes: &quot; / keep html-tag
+lang_help_FAQ_sub2_1="Pour y remédier, il suffit d'activer le paramètre suivant"
+lang_help_FAQ_sub2_2="Augmenter la compatibilité du navigateur en refusant le contrôle IP"
+lang_help_FAQ_sub2_3="(à trouver ici : Panneau de configuration DSM ➜ Sécurité)"
 lang_help_FAQ_sub3_tit="le conseiller en sécurité met en garde contre synOCR"
 lang_help_FAQ_sub3_1="La raison de l'avertissement n'est pas un danger de synOCR, mais le fait que le conseiller en sécurité ne connaît pas le changement dans la crontab"
-lang_help_FAQ_sub3_2="Pour y remédier, il suffit d'utiliser &quot;Ignorer&quot; dans le conseiller en sécurité ou d'effectuer une tâche manuelle dans le planificateur de tâches DSM"                                                        # keep coded dublequotes: &quot;
+lang_help_FAQ_sub3_2="Pour y remédier, il suffit d'utiliser Ignorer dans le conseiller en sécurité ou d'effectuer une tâche manuelle dans le planificateur de tâches DSM"
 lang_help_FAQ_sub4_tit="aucun fichier n'est traité alors qu'il y en a"
-lang_help_FAQ_sub4_1="Cela peut être le cas si le &quot;préfixe de recherche OCR&quot; a été indiqué, mais ne correspond pas aux fichiers"                                                   # keep coded dublequotes: &quot;
-lang_help_FAQ_sub4_2="vérifie que le profil souhaité pour le dossier source est également activé dans la configuration"                                                                          # keep coded dublequotes: &quot;
+lang_help_FAQ_sub4_1="Cela peut être le cas si le préfixe de recherche OCR a été indiqué, mais ne correspond pas aux fichiers"
+lang_help_FAQ_sub4_2="vérifie que le profil souhaité pour le dossier source est également activé dans la configuration"
 lang_help_FAQ_sub5_tit="ma question n'y figure pas ..."
 lang_help_FAQ_sub5_beforelink="Pour toute autre question ou problème, veuillez utiliser le forum de support :"
 lang_help_FAQ_sub5_linktitle="forum de support synOCR"
 lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="à propos de synOCR"
-lang_help_about_1="Le projet dépend avant tout du temps, de l'énergie et de l'envie que je peux y consacrer.<br> Commencé pour faciliter mon flux de travail avec les documents PDF, c'est aussi un plaisir pour moi de voir ce projet aider les autres. Je n'attends donc rien en retour !" # keep html-tag
-lang_help_about_2="Si toutefois quelqu'un voulait me faire plaisir financièrement, il peut le faire en cliquant sur ce bouton - MERCI :"
-lang_help_about_3=""
+lang_help_about_1="Le projet dépend avant tout du temps, de l'énergie et de l'envie que je peux y consacrer."
+lang_help_about_2="Commencé pour faciliter mon flux de travail avec les documents PDF, c'est aussi un plaisir pour moi de voir ce projet aider les autres. Je n'attends donc rien en retour !"
+lang_help_about_3="Si toutefois quelqu'un voulait me faire plaisir financièrement, il peut le faire en cliquant sur ce bouton - MERCI :"
+lang_help_about_4=""
 
 #-------------------------------------------
 # script synOCR-start.sh:
@@ -409,8 +423,8 @@ lang_help_about_3=""
 lang_synOCR_start_is_running="synOCR déjà en cours d'exécution !"
 lang_synOCR_start_req_kill="Forcer l'arrêt ?"
 lang_synOCR_start_runs="synOCR a été lancé"
-lang_synOCR_start_wait1="Veuillez attendre que les fichiers<br> soient prêts."           # keep html-tag
-lang_synOCR_start_wait2="Veuillez attendre que les fichiers soient prêts."
+lang_synOCR_start_wait1="Veuillez attendre que les"
+lang_synOCR_start_wait2="fichiers soient prêts."
 lang_synOCR_start_lost_input="Vérifier le répertoire source ou l'autorisation dans la configuration"
 lang_synOCR_start_abort="L'exécution du programme s'arrête"
 lang_synOCR_start_umount_target="Dossier cible chiffré non monté"
@@ -426,11 +440,18 @@ lang_synOCR_start_loginfo="plus d'informations dans le LOG"
 lang_wizui_install_title="Remarque sur l'installation :"
 lang_wizui_install_desc="La seule condition préalable est que le paquet Docker soit installé. Normalement, aucune autre configuration n'est nécessaire dans Docker"
 lang_wizui_uninstall_title="Note de désinstallation"
-lang_wizui_uninstall_desc="Tous les paramètres sont supprimés lors de la désinstallation. Le cas échéant, fais une sauvegarde avec HyperBackup avant la désinstallation.</p><p><br>Une tâche créée manuellement via le planificateur de tâches DSM doit être supprimée manuellement, le cas échéant."
+lang_wizui_uninstall_desc_1="Tous les paramètres sont supprimés lors de la désinstallation. Le cas échéant, fais une sauvegarde avec HyperBackup avant la désinstallation ."
+lang_wizui_uninstall_desc_2="Une tâche créée manuellement via le planificateur de tâches DSM doit être supprimée manuellement, le cas échéant."
 lang_wizui_upgrade_title="Remarque importante lors d'une mise à niveau !"
-lang_wizui_upgrade_desc="En raison d'un problème dans DiskStationManager, synOCR ne peut pas être ouvert après une mise à niveau. Par conséquent, <u>après une mise à niveau, il est nécessaire d'actualiser ou de recharger la page DSM (F5)</u> ou d'ouvrir synOCR dans une nouvelle fenêtre."
+lang_wizui_upgrade_desc="En raison d'un problème dans DiskStationManager, synOCR ne peut pas être ouvert après une mise à niveau . Par conséquent, <u>après une mise à niveau, il est nécessaire d'actualiser ou de recharger la page DSM (F5)</u> ou d'ouvrir synOCR dans une nouvelle fenêtre."
 lang_PKG_NOINSTALL_ERROR_PART1="Ton appareil"
 lang_PKG_NOINSTALL_ERROR_PART2="avec l'architecture du CPU"
 lang_PKG_NOINSTALL_ERROR_PART3="n'est pas pris en charge par synOCR, car le paquet nécessaire Docker ne peut pas être installé (x86_64 / aarch64 uniquement)"
 lang_PKG_DELETE_TIMER="Le planificateur intégré des anciennes versions n'est plus disponible. Veuillez utiliser le planificateur de tâches DSM !"
 lang_INFO_description="synOCR est une interface graphique simple pour le conteneur Docker OCRmyPDF. Il te permet d'appliquer facilement l'OCR aux documents PDF. synOCR peut ensuite rechercher les balises et les dates dans les documents, les renommer selon un modèle individuel et les classer par catégories dans des sous-dossiers. En utilisant des liens en dur, il n'y a pas d'augmentation de l'espace de stockage lorsqu'un document doit être classé dans plusieurs dossiers de catégories"
+
+#-------------------------------------------
+# miscellaneous:
+#-------------------------------------------
+lang_notify_file_job_successful="Le PDF a été traité avec succès."
+lang_notify_file_update_available="Mise à jour disponible !"
