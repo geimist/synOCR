@@ -1,7 +1,7 @@
 # german language file for synOCR-GUI
 # /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_spn.txt
 # translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
-machinetranslate="0"
+machinetranslate="1"
 
 #-------------------------------------------
 # general:
