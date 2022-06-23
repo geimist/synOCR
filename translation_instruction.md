@@ -9,8 +9,8 @@ It is also important that special characters remain in the same place. (e.g. \<b
 
 For questions: synocr [@] geimist.eu
 
-✅  ➜ translate by human / verified
-✔️  ➜ machine translate
+✅  ➜ translate by human / verified   
+✔️  ➜ machine translate   
 ❌  ➜ missing language
 
 -----
