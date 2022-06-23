@@ -274,17 +274,17 @@ echo '
                         if [ -z "$mainpage" ]; then
                             echo 'The page could not be found!'
                         else
-                            script="$mainpage.sh"
+                            script="GUI_${mainpage}.sh"
                             if [ -f "$script" ]; then
                                 . ./"$script"
                             else
-                                . ./main.sh
+                                . ./GUI_main.sh
                             fi
                         fi
 
                         # Footer
-                        if [ -f "footer.sh" ] && [ ! -f "$stop" ]; then
-                            . ./footer.sh
+                        if [ -f "GUI_footer.sh" ] && [ ! -f "$stop" ]; then
+                            . ./GUI_footer.sh
                         fi
                         echo '
 
