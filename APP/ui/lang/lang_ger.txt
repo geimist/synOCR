@@ -1,6 +1,7 @@
 # german language file for synOCR-GUI
 # /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_ger.txt
 # translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
+machinetranslate=0
 
 #-------------------------------------------
 # general:
@@ -14,12 +15,15 @@ lang_no="nein"
 lang_and="und"
 lang_delete="löschen"
 lang_popup_note="Hinweis"
+lang_button="Schaltfläche"
+lang_tab="Registerkarte"
 lang_button_abort="Abbruch"
 lang_buttonback="zurück"
 lang_buttonnext="weiter"
 lang_buttonsave="Speichern"
 lang_buttonchange="wechseln"
-lang_foot_buttonsavetimer="Zeitplan speichern"
+lang_attention="A C H T U N G"
+lang_example="z.B."
 lang_foot_buttonnewprofile="neues Profil"
 lang_foot_buttoncloneprof="Profil klonen"
 lang_foot_buttoncloneprof_tit="erstellt ein neues Profil mit der Konfiguration des aktuellen Profils …"
@@ -54,14 +58,14 @@ lang_edit_savefin="Änderungen wurden gespeichert"
 lang_edit_summary1="Trage hier deine Einstellungen ein und passe die Pfade an."
 lang_edit_summary2="Hilfe für die einzelnen Felder erhältst du über das blaue Info-Symbol am rechten Rand."
 lang_edit_summary3="Über die Profile kannst du beliebig viele Konfigurationen anlegen, welche alle bei jedem Programmlauf abgearbeitet werden. Man kann jedes Profil über das entsprechende Feld auch deaktivieren."
-lang_edit_summary4="Achte unbedingt darauf, die kompletten Pfade inkl. Volume (z.B. <code>/volume1/…</code>) einzutragen und achte auf korrekte Groß- und Kleinschreibung. Das sicherste ist, wenn du in der Filestation den gewünschten Ordner suchst und du dir über Rechtsklick die Eigenschaften anzeigen lässt. In diesem Dialog kannst du dir den korrekten Pfad kopieren."                                        # keep html-tag
+lang_edit_summary4="Achte unbedingt darauf, die kompletten Pfade inkl. Volume einzutragen und achte auf korrekte Groß- und Kleinschreibung. Das sicherste ist, wenn du in der Filestation den gewünschten Ordner suchst und du dir über Rechtsklick die Eigenschaften anzeigen lässt. In diesem Dialog kannst du dir den korrekten Pfad kopieren."
 
 lang_edit_dbupdate="Ergebnis von DB-Update"
 lang_edit_change_profile="wechsle zu Profil"
 
 lang_edit_set1_title="Allgemein"
 
-lang_edit_set1_profilename_help="Profile können individuell benannt werden (z.B. Geschäft, Max)"
+lang_edit_set1_profilename_help="Profile können individuell benannt werden"
 
 lang_edit_set1_profile_activ_title="Profil aktivieren / deaktivieren"
 lang_edit_set1_profile_activ="Profil aktiviert"
@@ -71,20 +75,20 @@ lang_edit_set1_profile_activ_help2="Deaktivierte Profile können zwar modifizier
 
 lang_edit_set1_sourcedir_title="Quellverzeichnis"
 lang_edit_set1_sourcedir_help1="In diesem Verzeichnis wird nach PDF-Dateien gesucht (nicht rekursiv)."
-lang_edit_set1_sourcedir_help2="Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/input/)"
+lang_edit_set1_sourcedir_help2="Verwende den vollständigen Pfad"
 
 lang_edit_set1_targetdir_title="Zielverzeichnis"
 lang_edit_set1_targetdir_help1="Ausgabeverzeichnis der fertigen PDF-Dateien (wird ggf. erstellt)."
-lang_edit_set1_targetdir_help2="Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/output/)"
+lang_edit_set1_targetdir_help2="Verwende den vollständigen Pfad"
 
 lang_edit_set1_backupdir_title="Backup-Verzeichnis"
 lang_edit_set1_backupdir_help1="Sofern hier ein gültiger Pfad eingetragen wird, werden die Originaldateien hier gesichert (wird ggf. erstellt)."
 lang_edit_set1_backupdir_help2="Ist kein gültiges Verzeichnis hinterlegt, werden die Originaldateien endgültig gelöscht."
-lang_edit_set1_backupdir_help3="Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/Backup/)"
+lang_edit_set1_backupdir_help3="Verwende den vollständigen Pfad"
 
 lang_edit_set1_logdir_title="Verzeichnis für LOG-Dateien"
 lang_edit_set1_logdir_help1="Verzeichnis der LOG-Dateien (wird ggf. erstellt)"
-lang_edit_set1_logdir_help2="Verwende den vollständigen Pfad (z.B. /volume1/homes/admin/scan/LOG/)" 
+lang_edit_set1_logdir_help2="Verwende den vollständigen Pfad" 
 
 lang_edit_set2_title="OCR Optionen und Umbenennung"
 
@@ -99,9 +103,9 @@ lang_edit_set2_ocropt_help7="vollständige Hilfe"
 
 lang_edit_set2_dockerimage_title="zuverwendendes Dockerimage"
 lang_edit_set2_dockerimage_help1="Welches Dockerimage soll verwendet werden?"
-lang_edit_set2_dockerimage_help2="ist das Standardimage, enthält aktuell aber nur die Sprachen: English, German and Simplified Chinese."
+lang_edit_set2_dockerimage_help2="ist das Standardimage, enthält aktuell aber nur die Sprachen:"
 lang_edit_set2_dockerimage_help3="Polyglot-Images enthalten alle möglichen Sprachen, sind aber größer!"
-lang_edit_set2_dockerimage_help4="Manuell heruntergeladene oder selbst erstellte Images stehen ebenfalls zur Auswahl, sofern &quot;ocrmypdf&quot; im Namen enthalten ist."
+lang_edit_set2_dockerimage_help4="Manuell heruntergeladene oder selbst erstellte Images stehen ebenfalls zur Auswahl, sofern folgendes im Namen enthalten ist:"
 
 lang_edit_set2_dockerimageupdate_title="Dockerimage aktuell halten"
 lang_edit_set2_dockerimageupdate_yes="aktuell halten (standard)"
@@ -114,7 +118,7 @@ lang_edit_set2_img2pdf_yes="konvertiere Bilder"
 lang_edit_set2_img2pdf_help1="Bilder im Quellordner können zu PDF-Dateien konvertiert werden. Sofern aktiviert, werden sie anschließend in den Backupordner verschoben."
 
 lang_edit_set2_searchpref_title="Suchmuster Quelldateiname"
-lang_edit_set2_searchpref_help1="Nur PDFs mit definiertem Präfix bearbeiten (z.B. &quot;SCAN_&quot;)"       # keep html-tag
+lang_edit_set2_searchpref_help1="Nur PDFs mit definiertem Präfix bearbeiten"
 lang_edit_set2_searchpref_help2="leerlassen, wenn alle Dokumente verarbeitet werden sollen"
 lang_edit_set2_searchpref_help3="am Anfang invertiert die Suche"
 lang_edit_set2_searchpref_help4="am Ende definiert den Begriff als Suffix"
@@ -131,7 +135,7 @@ lang_edit_set2_splitpagehandling_title="Handhabung des Trennblattes"
 lang_edit_set2_splitpagehandling_discard="verwerfen"
 lang_edit_set2_splitpagehandling_isLastPage="ist die letzte Seite"
 lang_edit_set2_splitpagehandling_isFirstPage="ist die erste Seite"
-lang_edit_set2_splitpagehandling_help1="Das Trennblatt kann verworfen werden (= Standard) oder dem vorausgehenden, bzw. nachfolgenden Bereich zugeordnet werden."
+lang_edit_set2_splitpagehandling_help1="Das Trennblatt kann verworfen werden (Standardeinstellung) oder dem vorausgehenden, bzw. nachfolgenden Bereich zugeordnet werden."
 
 lang_edit_set2_taglist_title="zu suchende Tags"
 lang_edit_set2_taglist_help1="Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung."
@@ -139,13 +143,12 @@ lang_edit_set2_taglist_help2="Einzelne Tags werdendurch Semikolon getrennt."
 lang_edit_set2_taglist_help2_1="Es kann auch ein Pfad zu einer Regeldatei gesetzt werden."
 lang_edit_set2_taglist_help3="! ! ! KEINEN ZEILENUMBRUCH VERWENDEN ! ! !"
 lang_edit_set2_taglist_help4="Tags und Kategorien können auch Leerzeichen enthalten."
-lang_edit_set2_taglist_help5="Soll ein Tag nur alleinstehend gefunden werden, ist ein Paragrafenzeichen voranzustellen (eine Suche nach &quot;<code>§Rechnung</code>&quot; findet so nicht fälschlicherweise &quot;<code>Rechnungsstellung</code>&quot;)"   # keep html-tag
-lang_edit_set2_taglist_help6="z.B.: <b>Rechnung;Arbeit;Versicherung</b>"                                    # keep html-tag
+lang_edit_set2_taglist_help5="Soll ein Tag nur alleinstehend gefunden werden, ist ein Paragrafenzeichen voranzustellen (eine Suche nach &quot;<code>§Rechnung</code>&quot; findet so nicht fälschlicherweise &quot;<code>Rechnungsstellung</code>&quot;)"
+lang_edit_set2_taglist_help6="Rechnung;Arbeit;Versicherung"
 lang_edit_set2_taglist_help7="Tags können auch durch ein Gleichheitszeichen einer Kategorie (für Unterordner) zugeordnet werden (greift nur, sofern man auch Regel-definierte Ordner [nachstehende Option] verwendet)."
-lang_edit_set2_taglist_help8="z.B.: <b>Rechnung;HUK24=Versicherung;Allianz=Versicherung</b>"                # keep html-tag
+lang_edit_set2_taglist_help8="Rechnung;HUK24=Versicherung;Allianz=Versicherung"
 lang_edit_set2_taglist_help9="Umfangreiche Tags können auch in einer separaten Textdatei gespeichert werden."
 lang_edit_set2_taglist_help10="In diesem Fall ist hier der absolute Pfad einzutragen."
-lang_edit_set2_taglist_help11="(z.B. /volume1/ocr/taglist.txt)"
 
 lang_edit_set2_searchall_title="Suchbereich für Tags"
 lang_edit_set2_searchall_1page="nur erste Seite"
@@ -159,7 +162,12 @@ lang_edit_set2_moveTaggedFiles_useCatDir="verwende Regel-definierte Ordner"
 lang_edit_set2_moveTaggedFiles_useTagDir="verwende Tag basierte Ordner"
 lang_edit_set2_moveTaggedFiles_useYearDir="verwende Jahresordner"
 lang_edit_set2_moveTaggedFiles_useYearMonthDir="verwende Jahrordner & Monatssubordner"
-lang_edit_set2_moveTaggedFiles_help1="Welche Einsortierung soll genutzt werden: <br>- Tag-Unterverzeichnisse, bzw. Kategorieordner <br>- Regel-definierte Ordner <br>- Jahresordner <br>- Jahr/Monatsordner <br><br>Bei mehreren zutreffenden Tags werden Hardlinks gesetzt."                # keep html-tag
+lang_edit_set2_moveTaggedFiles_help1="Welche Einsortierung soll genutzt werden:"
+lang_edit_set2_moveTaggedFiles_help2="Tag-Unterverzeichnisse, bzw. Kategorieordner"
+lang_edit_set2_moveTaggedFiles_help3="Regel-definierte Ordner"
+lang_edit_set2_moveTaggedFiles_help4="Jahresordner"
+lang_edit_set2_moveTaggedFiles_help5="Jahr/Monatsordner"
+lang_edit_set2_moveTaggedFiles_help6="Bei mehreren zutreffenden Tags werden Hardlinks gesetzt."
 
 lang_edit_set2_renamesyntax_title="OCR Rename-Syntax"
 lang_edit_set2_renamesyntax_help1="Fertige PDFs mit einer bestimmten Syntax umbenennen. Die Variablen können auch in Zielpfaden in YAML-Regeln verwendet werden (bis auf §tit)."
@@ -191,11 +199,10 @@ lang_edit_set2_renamesyntax_help19="Dateizähler (gesamt)"
 lang_edit_set2_renamesyntax_help20="Seitenzähler (genutztes Profil)"
 lang_edit_set2_renamesyntax_help21="Dateizähler (genutztes Profil)"
 lang_edit_set2_renamesyntax_help15="erzeugt"
-lang_edit_set2_renamesyntax_help16="z.B."
 lang_edit_set2_renamesyntax_help17="Datumsangaben werden zuerst im Dokument gesucht. Wenn erfolglos, wird das Dateidatum verwendet."
 
 lang_edit_set2_tagsymbol_title="Tags im Dateinamen kennzeichnen"
-lang_edit_set2_tagsymbol_help1="gefundene tags können im Dateinamen gekennzeichnet werden (z.B. mit #)"
+lang_edit_set2_tagsymbol_help1="gefundene tags können im Dateinamen gekennzeichnet werden"
 lang_edit_set2_tagsymbol_help2="(Sonderzeichen können unvorhersehbare Folgen haben!)"
 
 lang_edit_set2_filedate_title="Dateidatum korrigieren"
@@ -257,7 +264,7 @@ lang_edit_set3_dsmtextnotify_help2="aus ➜ keine Textbenachrichtigung"
 
 lang_edit_set3_MessageTo_title="Benachrichtigung an User"
 lang_edit_set3_MessageTo_help1="User, an den die Benachrichtigungen gesendet werden."
-lang_edit_set3_MessageTo_help2="Auf diese Art kann man sich in Verbindung mit dem Paket &quot;Notification Forwarder&quot; über synOCR-Ereignisse z.B. über einen Pushdienst benachrichtigen lassen."   # keep html-tag
+lang_edit_set3_MessageTo_help2="Auf diese Art kann man sich in Verbindung mit dem Paket &quot;Notification Forwarder&quot; über synOCR-Ereignisse z.B. über einen Pushdienst benachrichtigen lassen."
 lang_edit_set3_MessageTo_help3="Bleibt der Wert leer, so wird die Gruppe &quot;administrators&quot; benachrichtigt."
 
 lang_edit_set3_PBTOKEN_title="PushBullet-Token"
@@ -348,8 +355,11 @@ lang_main_title2="Beschreibung"
 lang_main_monitor_restart_necessary_1="Die Liste der überwachten Input-Ordner ist nicht mehr aktuell!"
 lang_main_monitor_restart_necessary_2="Bitte führe im Aufgabenplaner einen Neustart der Überwachung durch."
 lang_main_monitor_restart_necessary_3="(das entspricht dem normalen Aufruf im Aufgabenplaner mit Parameter start)"
-lang_main_dockerfailed="A C H T U N G:<br>Docker wurde nicht gefunden.<br>Bitte prüfe, ob das Paket Docker installiert ist!"    # keep html-tag
-lang_main_permissions_failed="A C H T U N G:<br>synOCR verfügt noch nicht über die notwendigen Berechtigungen!<br>Bitte erstelle im Aufgabenplaner eine Aufgabe mit nachstehenden Skript (als root)<br>(die Aufgabe muss mindestens einmal ausgeführt werden)"    # keep html-tag
+lang_main_dockerfailed1="Docker wurde nicht gefunden."
+lang_main_dockerfailed2="Bitte prüfe, ob das Paket Docker installiert ist!"
+lang_main_permissions_failed1="synOCR verfügt noch nicht über die notwendigen Berechtigungen!"
+lang_main_permissions_failed2="Bitte erstelle im Aufgabenplaner eine Aufgabe mit nachstehenden Skript (als root)"
+lang_main_permissions_failed3="die Aufgabe muss mindestens einmal ausgeführt werden"
 lang_main_desc1="SynOCR liefert eine einfache GUI für den Dockercontainer OCRmyPDF. Eine Konfiguration in Docker ist nicht erforderlich."
 lang_main_desc2="Es können derzeit wahrscheinlich nicht alle Parameter in Verbindung mit OCRmyPDF genutzt werden, aber die wichtigsten. Einfach in der Konfiguration den Quell- und Zielordner eintragen. Jetzt ist schon über den Button unten ein manueller Programmlauf möglich. Der automatische Programmlauf ist (wie in der Hilfe beschrieben) entweder über den Zeitplaner oder den DSM-Aufgabenplaner einzustellen."
 lang_main_buttonrun="jetzt manuellen synOCR Durchlauf starten"
@@ -367,19 +377,20 @@ lang_help_title_QS="Schnellstart"
 lang_help_QS_1_beforelink="Passe zunächst deine Installation in der"
 lang_help_QS_1_afterlink="an."
 lang_help_QS_1b="(optional): Um Input-Ordner automatisch zu überwachen, muss das Paket inotify-tools installiert sein"
-lang_help_QS_2="Für einen ordnungsgemäßen Betrieb von synOCR muss im DSM Aufgabenplaner eine neue Aufgabe erstellt werden."                                                # keep html-tag
+lang_help_QS_2="Für einen ordnungsgemäßen Betrieb von synOCR muss im DSM Aufgabenplaner eine neue Aufgabe erstellt werden."
+# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="Öffne dazu im DSM die Systemsteuerung"
-lang_help_QS_sub1_1="Aufgabenplaner"                                    # ensure exact translation from the DSM!
-lang_help_QS_sub1_2="Schaltfläche <i>Erstellen</i>"                     # keep html-tag
+lang_help_QS_sub1_1="Aufgabenplaner"
+lang_help_QS_sub1_2="Erstellen"
 lang_help_QS_sub1_3="geplante Aufgabe"
 lang_help_QS_sub1_4="Benutzerdefiniertes Skript"
-lang_help_QS_sub2_tit="Registerkarte &quot;Allgemein&quot;:"            # keep coded dublequotes: &quot;
+lang_help_QS_sub2_tit="Allgemein"
 lang_help_QS_sub2_1="Benutzer"
-lang_help_QS_sub2_2="ein beliebiger Name unter <i>Vorgang</i>"          # keep html-tag
-lang_help_QS_sub2_3="Haken bei <i>aktiviert</i>"                        # keep html-tag
-lang_help_QS_sub3_tit="Registerkarte &quot;Zeitplan&quot;:"             # keep coded dublequotes: &quot;
+lang_help_QS_sub2_2="ein beliebiger Name unter <i>Vorgang</i>"
+lang_help_QS_sub2_3="Haken bei <i>aktiviert</i>"
+lang_help_QS_sub3_tit="Zeitplan"
 lang_help_QS_sub3_1="hier gewünschtes Intervall (z.B. stündlich)"
-lang_help_QS_sub4_tit="Registerkarte &quot;Aufgabeneinstellung&quot;:"  # keep coded dublequotes: &quot;
+lang_help_QS_sub4_tit="Aufgabeneinstellung"
 lang_help_QS_sub4_1="hier den nachstehenden Pfad hineinkopieren:"
 lang_help_title_FAQ="FAQ"
 lang_help_FAQ_sub1_tit="OCRmyPDF Optionen"
@@ -387,21 +398,24 @@ lang_help_FAQ_sub1_1_beforelink="Detailiertere Hilfe zu OCRmyPDF findest du auf 
 lang_help_FAQ_sub1_1_linktitle="OCRmyPDF Hilfeseite"
 lang_help_FAQ_sub1_1_afterlink="."
 lang_help_FAQ_sub2_tit="beim Aufruf von synOCR werde ich vom DSM ausgeloggt"
-lang_help_FAQ_sub2_1="Abhilfe schafft die Aktivierung von &quot;<i>Browserkompatibilität durch Verzeicht auf IP-Prüfung erhöhen</i>&quot; unter DSM-Systemsteuerung > Sicherheit."              # keep coded dublequotes: &quot; / keep html-tag
+lang_help_FAQ_sub2_1="Abhilfe schafft die Aktivierung von folgender Einstellung"
+lang_help_FAQ_sub2_2="Browserkompatibilität durch Verzeicht auf IP-Prüfung erhöhen"
+lang_help_FAQ_sub2_3="(hier zu finden: DSM-Systemsteuerung ➜ Sicherheit)"
 lang_help_FAQ_sub3_tit="der Sicherheitsberater warnt vor synOCR"
 lang_help_FAQ_sub3_1="Der Grund für die Warnung liegt nicht in einer Gefahr von synOCR, sondern darin, dass dem Sicherheitsberater die Änderung in der crontab unbekannt ist."
-lang_help_FAQ_sub3_2="Abhilfe schafft das &quot;überspringen&quot; im Sicherheitsberater oder ein manueller Task im DSM-Aufgabenplaner."                                                        # keep coded dublequotes: &quot;
+lang_help_FAQ_sub3_2="Abhilfe schafft das überspringen im Sicherheitsberater oder ein manueller Task im DSM-Aufgabenplaner."
 lang_help_FAQ_sub4_tit="es werden keine Dateien verarbeitet, obwohl welche vorhanden sind."
-lang_help_FAQ_sub4_1="Das kann der Fall sein, wenn der &quot;OCR Such-Präfix&quot; angegeben wurde, aber nicht mit den Dateien übereinstimmt"                                                   # keep coded dublequotes: &quot;
-lang_help_FAQ_sub4_2="überprüfe, ob das gewünschte Profil für den Quellordner in der Konfiguration auch aktiviert ist"                                                                          # keep coded dublequotes: &quot;
+lang_help_FAQ_sub4_1="Das kann der Fall sein, wenn der OCR Such-Präfix angegeben wurde, aber nicht mit den Dateien übereinstimmt"
+lang_help_FAQ_sub4_2="überprüfe, ob das gewünschte Profil für den Quellordner in der Konfiguration auch aktiviert ist"
 lang_help_FAQ_sub5_tit="meine Frage ist nicht dabei …"
 lang_help_FAQ_sub5_beforelink="Für alle weiteren Fragen und Probeme nutze bitte das Supportforum:"
 lang_help_FAQ_sub5_linktitle="synOCR Supportforum"
 lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="über synOCR"
-lang_help_about_1="Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ich dafür bereitstellen kann.<br> Begonnen, um meinen Arbeitsablauf mit PDF Dokumenten einfacher zu machen, ist es auch eine Freude für mich, wenn anderen dieses Projekt hilft. Daher erwarte ich keine Gegenleistung!" # keep html-tag
-lang_help_about_2="Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen - DANKE:"
-lang_help_about_3=""
+lang_help_about_1="Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ich dafür bereitstellen kann."
+lang_help_about_2="Begonnen, um meinen Arbeitsablauf mit PDF Dokumenten einfacher zu machen, ist es auch eine Freude für mich, wenn anderen dieses Projekt hilft. Daher erwarte ich keine Gegenleistung!"
+lang_help_about_3="Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen - DANKE:"
+lang_help_about_4=""
 
 #-------------------------------------------
 # script synOCR-start.sh:
@@ -409,8 +423,8 @@ lang_help_about_3=""
 lang_synOCR_start_is_running="synOCR läuft bereits!"
 lang_synOCR_start_req_kill="Beenden erzwingen?"
 lang_synOCR_start_runs="synOCR wurde gestartet"
-lang_synOCR_start_wait1="Bitte warten, bis die Dateien<br>fertig abgearbeitet wurden."           # keep html-tag
-lang_synOCR_start_wait2="Bitte warten, bis die Dateien fertig abgearbeitet wurden."
+lang_synOCR_start_wait1="Bitte warten, bis die Dateien"
+lang_synOCR_start_wait2="fertig abgearbeitet wurden."
 lang_synOCR_start_lost_input="Quellverzeichnis oder Berechtigung in der Konfiguration prüfen"
 lang_synOCR_start_abort="Programmlauf wird beendet."
 lang_synOCR_start_umount_target="verschlüsselter Zielordner nicht eingehangen"
@@ -426,7 +440,8 @@ lang_synOCR_start_loginfo="weitere Informationen im LOG"
 lang_wizui_install_title="Hinweis zur Installation:"
 lang_wizui_install_desc="Einzige Vorraussetzung ist das installierte Paket Docker. Im Normalfall ist keine weitere Konfiguration in Docker notwendig."
 lang_wizui_uninstall_title="Deinstallationshinweis"
-lang_wizui_uninstall_desc="Bei der Deinstallation werden alle Einstellungen gelöscht. Erstelle ggf. vor der Deinstallation eine Sicherung mit HyperBackup.</p><p><br>Ein manuell erstellter Task über den DSM-Aufgabenplaner muss ggf. manuell gelöscht werden."
+lang_wizui_uninstall_desc_1="Bei der Deinstallation werden alle Einstellungen gelöscht. Erstelle ggf. vor der Deinstallation eine Sicherung mit HyperBackup."
+lang_wizui_uninstall_desc_2="Ein manuell erstellter Task über den DSM-Aufgabenplaner muss ggf. manuell gelöscht werden."
 lang_wizui_upgrade_title="Wichtiger Hinweis bei einem Upgrade!"
 lang_wizui_upgrade_desc="Aufgrund eines Problems im DiskStationManager kann synOCR nach einem Upgrade nicht geöffnet werden. Daher ist es <u>nach einem Upgrage notwenig die DSM-Seite zu aktualisieren oder neuzuladen (F5)</u> oder synOCR in einem neuen Fenster zu öffnen."
 lang_PKG_NOINSTALL_ERROR_PART1="Dein Gerät"
@@ -434,3 +449,9 @@ lang_PKG_NOINSTALL_ERROR_PART2="mit der CPU-Architektur"
 lang_PKG_NOINSTALL_ERROR_PART3="wird von synOCR nicht unterstützt, da das benötigte Paket Docker nicht installiert werden kann (nur x86_64 / aarch64)"
 lang_PKG_DELETE_TIMER="Der eingebaute Zeitplaner aus älteren Versionen ist nicht länger verfügbar. Bitte nutze den DSM Aufgabenplaner!"
 lang_INFO_description="synOCR ist eine einfache GUI für den Dockercontainer OCRmyPDF. Damit kannst du einfach OCR auf PDF-Dokumente anwenden. synOCR kann anschließend nach Tags und Datum in den Dokumenten suchen, diese nach einem individuellen Muster umbennenn und nach Kategorien in Unterordner einsortieren. Durch Verwendung von Hardlinks entsteht kein erhöhter Speicherplatzbedarf, wenn ein Dokument in mehrere Kategorieordner einsortiert werden muss."
+
+#-------------------------------------------
+# miscellaneous:
+#-------------------------------------------
+lang_notify_file_job_successful="PDF wurde erfolgreich verarbeitet."
+lang_notify_file_update_available="Update verfügbar!"
