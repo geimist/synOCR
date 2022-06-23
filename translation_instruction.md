@@ -9,7 +9,7 @@ It is also important that special characters remain in the same place. (e.g. \<b
 
 For questions: synocr [@] geimist.eu
 
-✅  ➜ translate by human   
+✅  ➜ translate by human / verified
 ✔️  ➜ machine translate
 
 -----
@@ -21,22 +21,22 @@ For questions: synocr [@] geimist.eu
 **The following languages are possible:**
 - ger = German ✅
 - enu = English US ✅
-- chs = Chinese simplified
+- chs = Chinese simplified ✔️
 - cht = Chinese traditional
-- csy = Czech
-- jpn = Japanese
+- csy = Czech ✔️
+- jpn = Japanese ✔️
 - krn = Korean
-- dan = Danish
+- dan = Danish ✔
 - fre = French ✔️
-- ita = Italian
-- nld = Dutch
+- ita = Italian ✔️
+- nld = Dutch ✔️
 - nor = Norwegian
-- plk = Polish
-- rus = Russian
-- spn = Spanish
-- sve = Swedish
-- hun = Hungarian
+- plk = Polish ✔️
+- rus = Russian ✔️
+- spn = Spanish ✔️
+- sve = Swedish ✔️
+- hun = Hungarian ✔
 - tha = Tai
-- trk = Turkish
-- ptg = Portuguese European
-- ptb = Portuguese Brazilian
+- trk = Turkish ✔
+- ptg = Portuguese European ✔
+- ptb = Portuguese Brazilian ✔
