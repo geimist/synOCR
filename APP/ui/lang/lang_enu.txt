@@ -1,6 +1,7 @@
 # english language file for synOCR-GUI
 # /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_enu.txt
 # translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
+machinetranslate=0
 
 #-------------------------------------------
 # general:
@@ -14,12 +15,15 @@ lang_no="no"
 lang_and="and"
 lang_delete="delete"
 lang_popup_note="Notice"
+lang_button="Button"
+lang_tab="Tab"
 lang_button_abort="Cancel"
 lang_buttonback="back"
 lang_buttonnext="next"
 lang_buttonsave="save"
 lang_buttonchange="change"
-lang_foot_buttonsavetimer="save schedule"
+lang_attention="A T T E N T I O N"
+lang_example="e.g."
 lang_foot_buttonnewprofile="new profile"
 lang_foot_buttoncloneprof="clone profile"
 lang_foot_buttoncloneprof_tit="creates a new profile with the configuration of the current profile …"
@@ -54,14 +58,14 @@ lang_edit_savefin="Changes are saved"
 lang_edit_summary1="Enter your settings here and adjust the paths."
 lang_edit_summary2="You can get help for the individual fields by mouseover on the blue info symbol on the right side."
 lang_edit_summary3="With the profiles you can create as many configurations as you like, which are all available at every program run. You can also deactivate each profile using the corresponding field."
-lang_edit_summary4="Make sure to enter the complete paths including volume (e.g. <code>/volume1/...</code>) and pay attention to correct upper and lower case. The safest way is to search for the right folder in the Filestation and right click to view the properties. In this dialog you can copy the correct path."                  # keep html-tag
+lang_edit_summary4="Make sure to enter the complete paths including volume and pay attention to correct upper and lower case. The safest way is to search for the right folder in the Filestation and right click to view the properties. In this dialog you can copy the correct path."
 
 lang_edit_dbupdate="Result of DB update"
 lang_edit_change_profile="switch to profile"
 
 lang_edit_set1_title="General"
 
-lang_edit_set1_profilename_help="Profiles can be named individually (e.g. Shop, Max …)"
+lang_edit_set1_profilename_help="Profiles can be named individually"
 
 lang_edit_set1_profile_activ_title="activate / deactivate profile"
 lang_edit_set1_profile_activ="Profile active"
@@ -71,20 +75,20 @@ lang_edit_set1_profile_activ_help2="Deactivated profiles can be modified, but ar
 
 lang_edit_set1_sourcedir_title="Source directory"
 lang_edit_set1_sourcedir_help1="This directory is searched for PDF files (not recursive)."
-lang_edit_set1_sourcedir_help2="Use the full path (e.g. /volume1/homes/admin/scan/input/)"
+lang_edit_set1_sourcedir_help2="Use the full path"
 
 lang_edit_set1_targetdir_title="Target directory"
 lang_edit_set1_targetdir_help1="Output directory of the finished PDF files (will be created if necessary)."
-lang_edit_set1_targetdir_help2="Use the full path (e.g. /volume1/homes/admin/scan/output/)"
+lang_edit_set1_targetdir_help2="Use the full path"
 
 lang_edit_set1_backupdir_title="Backup directory"
 lang_edit_set1_backupdir_help1="If a valid path is entered here, the original files are saved here (created if necessary)."
 lang_edit_set1_backupdir_help2="If no valid directory is stored, the original files are permanently deleted."
-lang_edit_set1_backupdir_help3="Use the full path (e.g./volume1/homes/admin/scan/Backup/)"
+lang_edit_set1_backupdir_help3="Use the full path"
 
 lang_edit_set1_logdir_title="Directory for LOG files"
 lang_edit_set1_logdir_help1="Directory of the LOG files (will be created if necessary)."
-lang_edit_set1_logdir_help2="Use the full path (e.g. /volume1/homes/admin/scan/LOG/)" 
+lang_edit_set1_logdir_help2="Use the full path" 
 
 lang_edit_set2_title="OCR options and renaming"
 
@@ -99,9 +103,9 @@ lang_edit_set2_ocropt_help7="full help"
 
 lang_edit_set2_dockerimage_title="Docker image to be used"
 lang_edit_set2_dockerimage_help1="Which docker image should be used?"
-lang_edit_set2_dockerimage_help2="is the default image, but currently only contains the languages: English, German and Simplified Chinese."
+lang_edit_set2_dockerimage_help2="is the default image, but currently only contains the languages:"
 lang_edit_set2_dockerimage_help3="Polyglot images contain all possible languages, but are bigger!"
-lang_edit_set2_dockerimage_help4="Manually downloaded or self-created images are also available for selection if &quot;ocrmypdf&quot; is included in the name."     # keep html-tag
+lang_edit_set2_dockerimage_help4="Manually downloaded or self-created images are also available for selection, provided the following is included in the name:"
 
 lang_edit_set2_dockerimageupdate_title="Keep Dockerimage up-to-date"
 lang_edit_set2_dockerimageupdate_yes="autoupdate (standard)"
@@ -114,7 +118,7 @@ lang_edit_set2_img2pdf_yes="Convert pictures"
 lang_edit_set2_img2pdf_help1="Pictures in the source folder can be converted to PDF files. If enabled, they will be moved to the backup folder afterwards."
 
 lang_edit_set2_searchpref_title="Search pattern source file name"
-lang_edit_set2_searchpref_help1="Process only PDFs with defined prefix (e.g. &quot;SCAN_&quot;)"       # keep html-tag
+lang_edit_set2_searchpref_help1="Process only PDFs with defined prefix"
 lang_edit_set2_searchpref_help2="leave blank if all documents are to be processed"
 lang_edit_set2_searchpref_help3="at the beginning inverts the search"
 lang_edit_set2_searchpref_help4="at the end defines the term as a suffix"
@@ -140,12 +144,11 @@ lang_edit_set2_taglist_help2_1="You can also set a path to a rule file."
 lang_edit_set2_taglist_help3="! ! ! CURRENTLY DO NOT USE A LINE BREAK ! ! !"
 lang_edit_set2_taglist_help4="Tags and categories can also contain spaces."
 lang_edit_set2_taglist_help5="If a tag is only to be found alone, a paragraph sign is to be placed in front (a search for &quot;<code>§invoice</code>&quot; does not erroneously find &quot;<code>invoices</code>&quot;)"   # keep html-tag
-lang_edit_set2_taglist_help6="e.g.: <b>Billing, work, insurance </b>"                                    # keep html-tag
+lang_edit_set2_taglist_help6="Billing, work, insurance"
 lang_edit_set2_taglist_help7="Tags can also be assigned to a category (for subfolders) using an equal sign (only applies if you also use the rule-defined folders [option below])."
-lang_edit_set2_taglist_help8="e.g.: <b>Invoice;HUK24=Insurance;Allianz=Insurance</b>"                # keep html-tag
+lang_edit_set2_taglist_help8="Invoice;HUK24=Insurance;Allianz=Insurance"
 lang_edit_set2_taglist_help9="Extensive tags can also be stored in a separate text file."
 lang_edit_set2_taglist_help10="In this case the absolute path must be entered here."
-lang_edit_set2_taglist_help11="(e.g. /volume1/ocr/taglist.txt)"
 
 lang_edit_set2_searchall_title="Search range for tags"
 lang_edit_set2_searchall_1page="first page only"
@@ -159,7 +162,12 @@ lang_edit_set2_moveTaggedFiles_useCatDir="Sort target PDF into category folder"
 lang_edit_set2_moveTaggedFiles_useTagDir="Sort target PDF into tag folder"
 lang_edit_set2_moveTaggedFiles_useYearDir="Sort target PDF into folder for each Year"
 lang_edit_set2_moveTaggedFiles_useYearMonthDir="Sort target PDF into folder for each Year/Month"
-lang_edit_set2_moveTaggedFiles_help1="Should be used:<br>- tag subdirectories or category folders <br>- rule-defined folders be used <br>- folder for each year <br>- folders for each year/month? <br><br>If multiple tags apply, hard links are set."                # keep html-tag
+lang_edit_set2_moveTaggedFiles_help1="Which sorting should be used:"
+lang_edit_set2_moveTaggedFiles_help2="Tag subdirectories, or category folders"
+lang_edit_set2_moveTaggedFiles_help3="Rule-defined folders"
+lang_edit_set2_moveTaggedFiles_help4="Folder per year"
+lang_edit_set2_moveTaggedFiles_help5="Year/Month Folder"
+lang_edit_set2_moveTaggedFiles_help6="If multiple tags apply, hard links are set."
 
 lang_edit_set2_renamesyntax_title="OCR Rename-Syntax"
 lang_edit_set2_renamesyntax_help1="Rename finished PDFs with a specific syntax. The variables can also be used in target paths in YAML rules (except for §tit)."
@@ -191,11 +199,10 @@ lang_edit_set2_renamesyntax_help19="File count (total)"
 lang_edit_set2_renamesyntax_help20="Page count (used profile)"
 lang_edit_set2_renamesyntax_help21="File count (used profile)"
 lang_edit_set2_renamesyntax_help15="generated"
-lang_edit_set2_renamesyntax_help16="e.g."
 lang_edit_set2_renamesyntax_help17="Dates are searched for in the document first. If unsuccessful, the file date is used."
 
 lang_edit_set2_tagsymbol_title="Marking tags in the file name"
-lang_edit_set2_tagsymbol_help1="found tags can be marked in the file name (e.g. with #)"
+lang_edit_set2_tagsymbol_help1="found tags can be marked in the file name"
 lang_edit_set2_tagsymbol_help2="(Special characters can have unforeseeable consequences!)"
 
 lang_edit_set2_filedate_title="Correcting the file date"
@@ -348,8 +355,11 @@ lang_main_title2="Description"
 lang_main_monitor_restart_necessary_1="The list of monitored input folders is out of date!"
 lang_main_monitor_restart_necessary_2="Please restart the monitoring in the DSM task scheduler."
 lang_main_monitor_restart_necessary_3="(this corresponds to the normal call in the DSM task scheduler with parameter start):"
-lang_main_dockerfailed="W A R N I N G:<br>Docker could not be found.<br>Please check if the Docker package has been installed!"
-lang_main_permissions_failed="W A R N I N G:<br>synOCR does not yet have the necessary permissions!<br>Please create a task in the DSM task planner with the following script (as root)<br>(the task must be executed at least once)"    # keep html-tag
+lang_main_dockerfailed1="Docker could not be found."
+lang_main_dockerfailed2="Please check if the Docker package has been installed!"
+lang_main_permissions_failed1="synOCR does not yet have the necessary permissions!"
+lang_main_permissions_failed2="Please create a task in the DSM task planner with the following script (as root)"
+lang_main_permissions_failed3="the task must be executed at least once"
 lang_main_desc1="SynOCR provides a simple GUI for the docker container OCRmyPDF. No configuration in Docker is necessary."
 lang_main_desc2="At the moment probably not all parameters can be used in combination with OCRmyPDF, but the most important ones. Just enter the source and target folder in the configuration. Now a manual program run is already possible with the button below. The automatic program run can be set (as described in the help) either via the Scheduler or the DSM Task Scheduler."
 lang_main_buttonrun="start manual synOCR run now"
@@ -368,18 +378,19 @@ lang_help_QS_1_beforelink="First adjust your installation in the"
 lang_help_QS_1_afterlink="."
 lang_help_QS_1b="(optional): To monitor input folders automatically, the package inotify-tools must be installed"
 lang_help_QS_2="For proper operation of synOCR, a new task must be created in the DSM task scheduler:"
+# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="Open the DSM control panel"
-lang_help_QS_sub1_1="Task Scheduler"                                    # please use the exact translation from the DSM!
-lang_help_QS_sub1_2="Button <i>Create</i>"                              # keep html-tag
+lang_help_QS_sub1_1="Task Scheduler"
+lang_help_QS_sub1_2="Create"
 lang_help_QS_sub1_3="scheduled Task"
 lang_help_QS_sub1_4="User-defined script"
-lang_help_QS_sub2_tit="tab &quot;General&quot;:"                        # keep coded dublequotes: &quot;
+lang_help_QS_sub2_tit="General"
 lang_help_QS_sub2_1="User"
-lang_help_QS_sub2_2="any name under <i>Task</i>"                        # keep html-tag
-lang_help_QS_sub2_3="set <i>Enabled</i> active"                         # keep html-tag
-lang_help_QS_sub3_tit="tab &quot;Schedule&quot;:"                       # keep coded dublequotes: &quot;
+lang_help_QS_sub2_2="any name under <i>Task</i>"
+lang_help_QS_sub2_3="set <i>Enabled</i> active"
+lang_help_QS_sub3_tit="Schedule"
 lang_help_QS_sub3_1="here desired interval (e.g. hourly)"
-lang_help_QS_sub4_tit="tab &quot;Task Settings&quot;:"                  # keep coded dublequotes: &quot;
+lang_help_QS_sub4_tit="Task Settings"
 lang_help_QS_sub4_1="insert here the following path:"
 lang_help_title_FAQ="FAQ"
 lang_help_FAQ_sub1_tit="OCRmyPDF Options"
@@ -387,12 +398,14 @@ lang_help_FAQ_sub1_1_beforelink="More detailed help for OCRmyPDF can be found on
 lang_help_FAQ_sub1_1_linktitle="OCRmyPDF Help page"
 lang_help_FAQ_sub1_1_afterlink="."
 lang_help_FAQ_sub2_tit="when starting synOCR I will be logged out from DSM"
-lang_help_FAQ_sub2_1="This can be solved by activating &quot;<i>Enhance browser compatibility by skipping IP checking</i>&quot; under DSM Control Panel > Security."        # keep coded dublequotes: &quot; / keep html-tag
+lang_help_FAQ_sub2_1="The remedy is to activate the following setting"
+lang_help_FAQ_sub2_2="Enhance browser compatibility by skipping IP checking"
+lang_help_FAQ_sub2_3="(to be found here: DSM Control Panel ➜ Security)"
 lang_help_FAQ_sub3_tit="the DSM Security Advisor warns against synOCR"
 lang_help_FAQ_sub3_1="The reason for the warning is not that synOCR is dangerous, but that the security advisor is unknown about the change in the crontab."
-lang_help_FAQ_sub3_2="This can be solved by &quot;skipping&quot; this in the Security Advisor or a manual task in the DSM Task Scheduler."                                  # keep coded dublequotes: &quot;
+lang_help_FAQ_sub3_2="This can be solved by skipping this in the Security Advisor or a manual task in the DSM Task Scheduler."
 lang_help_FAQ_sub4_tit="no files are processed, although there are some."
-lang_help_FAQ_sub4_1="This can happen if the &quot;OCR search prefix&quot; is specified but does not match the files."                                                      # keep coded dublequotes: &quot;
+lang_help_FAQ_sub4_1="This can happen if the OCR search prefix is specified but does not match the files."
 lang_help_FAQ_sub4_2="check whether the desired profile for the source folder is also activated in the configuration"
 lang_help_FAQ_sub5_tit="I have another problem …"
 lang_help_FAQ_sub5_beforelink="For all further questions and problems please use the support forum:"
@@ -400,8 +413,9 @@ lang_help_FAQ_sub5_linktitle="synOCR Supportforum"
 lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="about synOCR"
 lang_help_about_1="The project depends mainly on my time, strength and desire to provide it." 
-lang_help_about_2="Started to make my own workflow with PDF documents easier, it is also a pleasure for me when this project helps others. Therefore I do not expect anything in return!" # keep html-tag
+lang_help_about_2="Started to make my own workflow with PDF documents easier, it is also a pleasure for me when this project helps others. Therefore I do not expect anything in return!"
 lang_help_about_3="However, if somebody wants to make me a financial pleasure, he can do so by clicking this button - THANK YOU:"
+lang_help_about_4=""
 
 #-------------------------------------------
 # script synOCR-start.sh:
@@ -409,8 +423,8 @@ lang_help_about_3="However, if somebody wants to make me a financial pleasure, h
 lang_synOCR_start_is_running="synOCR is already running!"
 lang_synOCR_start_req_kill="Force quit?"
 lang_synOCR_start_runs="synOCR is running"
-lang_synOCR_start_wait1="Please wait until the files<br>have been processed."           # keep html-tag
-lang_synOCR_start_wait2="Please wait until the files have been processed."
+lang_synOCR_start_wait1="Please wait until the files"
+lang_synOCR_start_wait2="have been processed."
 lang_synOCR_start_lost_input="Check source directory or permission in the configuration"
 lang_synOCR_start_abort="Program run is terminated."
 lang_synOCR_start_umount_target="encrypted taget folder not mounted"
@@ -426,7 +440,8 @@ lang_synOCR_start_loginfo="more information in the LOG"
 lang_wizui_install_title="Note on installation:"
 lang_wizui_install_desc="The only prerequisite is the installed Docker package. Normally, no further configuration in Docker is necessary."
 lang_wizui_uninstall_title="Uninstallation hint"
-lang_wizui_uninstall_desc="All settings are deleted during uninstallation. If necessary, create a backup with HyperBackup before uninstalling.</p><p><br>A manually created task via the DSM task scheduler may have to be deleted manually."
+lang_wizui_uninstall_desc_1="All settings are deleted during uninstallation. If necessary, create a backup with HyperBackup before uninstalling."
+lang_wizui_uninstall_desc_2="A manually created task via the DSM task scheduler may have to be deleted manually."
 lang_wizui_upgrade_title="Important note when upgrading!"
 lang_wizui_upgrade_desc="Due to a problem in DiskStationManager synOCR cannot be opened after an upgrade. Therefore <u>it is necessary to reload the DSM page (F5)</u> or open synOCR in a new window after an upgrade."
 lang_PKG_NOINSTALL_ERROR_PART1="Your device"
@@ -434,3 +449,9 @@ lang_PKG_NOINSTALL_ERROR_PART2="with CPU architecture"
 lang_PKG_NOINSTALL_ERROR_PART3="is not supported by synOCR because the required Docker package cannot be installed (x86_64 only)"
 lang_PKG_DELETE_TIMER="The build in task scheduler in older installations is no longer available. Please use the DSM task scheduler!"
 lang_INFO_description="synOCR is a simple GUI for the Dockercontainer OCRmyPDF. This allows you to easily apply OCR to PDF documents. synOCR can then search for tags and dates in the documents, rename them according to an individual pattern and sort them by categories in subfolders. Using hard links does not increase the amount of storage space required if a document has to be sorted into several category folders."
+
+#-------------------------------------------
+# miscellaneous:
+#-------------------------------------------
+lang_notify_file_job_successful="PDF was processed successfully."
+lang_notify_file_update_available="Update available!"
