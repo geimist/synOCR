@@ -9,17 +9,18 @@ It is also important that special characters remain in the same place. (e.g. \<b
 
 For questions: synocr [@] geimist.eu
 
-✅  ➜ translate by human / verified   
-✔️  ➜ machine translate   
-❌  ➜ missing language
-
 -----
 
 **The only file are needed to translate:**
 
 - .[/APP/ui/lang/](https://git.geimist.eu/geimist/synOCR/src/branch/master/APP/ui/lang)lang_\<language\_code\>.txt
   
-**The following languages are possible:**
+**The following languages are possible by DSM:**
+
+✅  ➜ translate by human / verified   
+✔️  ➜ machine translate   
+❌  ➜ missing language   
+
 - ger = German ✅
 - enu = English US ✅
 - chs = Chinese simplified ✔️
