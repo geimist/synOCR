@@ -9,6 +9,9 @@ It is also important that special characters remain in the same place. (e.g. \<b
 
 For questions: synocr [@] geimist.eu
 
+✅  ➜ translate by human   
+✔️  ➜ machine translate
+
 -----
 
 **The only file are needed to translate:**
@@ -24,7 +27,7 @@ For questions: synocr [@] geimist.eu
 - jpn = Japanese
 - krn = Korean
 - dan = Danish
-- fre = French (✅)
+- fre = French ✔️
 - ita = Italian
 - nld = Dutch
 - nor = Norwegian
