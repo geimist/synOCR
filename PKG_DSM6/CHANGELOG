@@ -30,7 +30,22 @@ DSM7 version you can found here: https://git.geimist.eu/geimist/synOCR/src/branc
  -  the conversion from YAML to JSON is no longer done with the binary yq but by Python (Python3 must be installed)
  -  logging deleted backup files in loglevel 2 
  -  [GUI] notify about updates in main page (because cphub.net is not working)
- -  [GUI] support for french language (machine translated)
+ -  [GUI] support for follow machine translated languages (by DeepL)
+    - Chinese simplified
+    - Czech
+    - Japanese
+    - Danish
+    - French
+    - Italian
+    - Dutch
+    - Polish
+    - Russian
+    - Spanish
+    - Swedish
+    - Hungarian
+    - Turkish
+    - Portuguese European
+    - Portuguese Brazilian
 
 1.2.0 [2022-01-11]
   IMPORTANT:
