@@ -197,7 +197,7 @@ exit 1
 
     defaultSourceLang="$build_tmp/APP/ui/lang/lang_enu.txt"
     # PKG_DSMx/INFO
-    [[ ! $TargetDSM = 6 ]] && synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$defaultSourceLang" lang_INFO_description)
+    synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$defaultSourceLang" lang_INFO_description)
 
     # install_uifile
     install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
@@ -222,7 +222,7 @@ exit 1
 
     for lang in ${languages[@]}; do
         # PKG_DSMx/INFO
-        [[ ! $TargetDSM = 6 ]] && synosetkeyvalue "$build_tmp/$PKG/INFO" description_${lang} $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)
+        synosetkeyvalue "$build_tmp/$PKG/INFO" description_${lang} $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)
         
         # i18n notification files
         langDir="$build_tmp/APP/ui/texts/${lang}"
