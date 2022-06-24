@@ -336,7 +336,7 @@ if [[ "$page" == "edit-del_profile-query" ]] || [[ "$page" == "edit-del_profile"
                         if [ $(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='$profile_ID' ") = "0" ] ; then
                             echo '
                             <p>
-                                '$lang_edit_profname' <strong>'$profile'</strong> '$lang_edit_delfin2'
+                                '$lang_edit_delfin1' <strong>'$profile'</strong> '$lang_edit_delfin2'
                             </p>'
                         else
                             echo '
