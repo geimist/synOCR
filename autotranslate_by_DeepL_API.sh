@@ -2,7 +2,7 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.0 © 2022 by geimist                                                                          #
+    #     v1.0.1 © 2022 by geimist                                                                        #
     #                                                                                                     #
     #######################################################################################################
 
@@ -17,6 +17,7 @@ masterFile="/volume1/@appstore/synOCR/ui/lang/lang_ger.txt"
 # Pfad für die Sprach-DB
 # - in dieser DB werden alle Strings aufbewahrt.
 # - die benötigten Sprachdateien für das SPK werden daraus generiert (Funktion: export_langfiles)
+# - ist die DB nicht vorhanden, so wird sie neu erstellt
 i18n_DB="/volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n.sqlite"
     
 # die Version wird für die Mastertabelle gesetzt und zeigt, ob einzelne Übersetzungs-Strings aktuell oder veraltet sind
@@ -31,7 +32,14 @@ exportLangFiles=1
 exportPath="/volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n/"
 
 # sollen bereits vorhandene Sprachdateien überschrieben werden?:
-overwrite=0
+overwrite=1
+
+# manueller Import bereist vorhandener Sprachdateien
+# das Masterfile "masterFile" für die Variablendefinition sollte dennoch oben angegeben werden
+manuellImpmort=0
+
+# Ordner mit den zu importierenden Sprachdateien - dieser Pfad ist anzupassen:
+langPath="/volume1/@appstore/synOCR/ui/lang/"
 
 ####################################################################################################
 
@@ -96,6 +104,8 @@ create_db() {
 # diese Funktion erstellt die Datenbank, sofern sie nicht vorhandne ist oder leer ist
 
 if [ $(stat -c %s "$i18n_DB") -eq 0 ] || [ ! -f "$i18n_DB" ]; then
+    printf "\n\nEs wurde keine Datenbank gefunden - sie wird jetzt erstellt ...\n\n"
+
     sqlite3 "$i18n_DB" "BEGIN TRANSACTION;
                         DROP TABLE IF EXISTS \"strings\";
                         CREATE TABLE IF NOT EXISTS \"strings\" (
@@ -163,7 +173,7 @@ create_master() {
     # sind Variablennamen bereits vorhanden, werden die Werte aktualisiert und der Versionszähler der Variable um 1 erhöht
 
     # set progressbar:
-    echo "Importiere / aktualisiere Mastertabelle ..."
+    printf "\n\nImportiere / aktualisiere Mastertabelle ...\n\n"
     progress_start=0
 #   progress_end=$(cat "$masterFile" | grep -v "^$" | grep -v "^#" | wc -l)
     progress_end=$(cat "$masterFile" | grep -v "^$" | grep -v ^[[:space:]]*# | wc -l)
@@ -231,6 +241,7 @@ create_master() {
 }
 
 import_manuell() {
+
     # Diese Funktion ist nicht Teil des regulären Workflows, sondern dient dem erstmaligen Befüllen der DB, 
     # sofern bereits übersetzte Sprachdateien vorhanden sind.
     # liest alle Dateien im angegebenen Ordner ($langPath) ein und speichert deren Werte in der DB.
@@ -240,11 +251,7 @@ import_manuell() {
     # ToDo:
     # sollten manuell importierte Werte den Status 'verified' erhalten?
     
-    # set progressbar:
-    echo "\nImportiere / aktualisiere bestehende Sprachdateien ..."
-    
-    # dieser Pfad ist anzupassen.
-    langPath="/volume1/@appstore/synOCR/ui/lang/"
+    printf "\n\nImportiere / aktualisiere bestehende Sprachdateien ... \n\n"
     
     while read file; do
         masterFile="${langPath}${file}"
@@ -322,6 +329,8 @@ translate() {
     # diese Funktion list die Musterübersetzung und übersetzt sie, sofern sie in der Zielsprache fehlt 
     # oder deren Version nicht mit der Version in der Mastertabelle übereinstimmt
 
+    printf "\n\nPrüfe auf fehlende oder veraltete Übersetzungen und aktualisiere sie ggf. ... \n\n"
+
     echo "Master Sprach-ID:     $masterLangID [$masterLongName"]
 
     while read langID; do
@@ -347,8 +356,7 @@ translate() {
         progress_start=0
         progress_end="$(printf %s "$diffNew" | grep -v "^$" | wc -l)"
         cCount=0
-        [ "$progress_end" -eq 0 ] && echo "weiter" && continue
-
+        [ "$progress_end" -eq 0 ] && continue
 
         if [ "$masterLangID" = "$langID" ]; then
             # keine Übersetzung nötig - kopiere die Sprache aus der Mastertabelle in die Übersetzungstabelle:
@@ -434,13 +442,11 @@ translate() {
         fi
     done <<<"$(sqlite3 "$i18n_DB" "SELECT langID FROM languages WHERE deeplshortname IS NOT ''")"
 
-    limitState=$(curl -sH "Authorization: DeepL-Auth-Key $DeepLapiKey" https://api-free.deepl.com/v2/usage)
-    printf "\n\nFür die Übersetzung wurden $(( $(jq -r .character_count <<<"$limitState" )-$(jq -r .character_count <<<"$limitStateStart" ))) Zeichen berechnet.\n"
-    echo "Im aktuellen Zeitraum wurden $(jq -r .character_count <<<"$limitState" ) Zeichen von $(jq -r .character_limit <<<"$limitState" ) verbraucht."
 }
 
 export_langfiles() {
     # Diese Funktion exportiert alle Werte aus der Übersetzungstabelle der DB in die entsprechenden Sprachdateien im Format: lang_<synoLangCode>.txt
+    printf "\n\nExportiere die Sprachdateien ... \n"
 
     while read langID; do
         languages=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT synoshortname, longname FROM languages WHERE langID='$langID'")
@@ -450,7 +456,7 @@ export_langfiles() {
         printf "\nverarbeite Sprach-ID: $langID [$targetLongName]\n"
 
         if [ "$overwrite" = 0 ] && [ -f "$langFile" ]; then
-            echo "Sprachdatei ist bereits vorhanden und das Überschreiben ist deaktiviert ..."
+            echo "    ➜ Sprachdatei ist bereits vorhanden und das Überschreiben ist deaktiviert ..."
             continue
         fi
 
@@ -490,10 +496,12 @@ masterLongName="$(echo "$languages" | awk -F'\t' '{print $3}')"
 # Funktionsaufrufe:
     create_db
     create_master
+    [ "$manuellImpmort" = 1 ] && import_manuell
     translate
-#   import_manuell
-    if [ "$exportLangFiles" = 1 ]; then
-        export_langfiles
-    fi
+    [ "$exportLangFiles" = 1 ] && export_langfiles
+#######################
 
-printf "\n"
+printf "\n\nStatistik:\n"
+limitState=$(curl -sH "Authorization: DeepL-Auth-Key $DeepLapiKey" https://api-free.deepl.com/v2/usage)
+printf "    Für die Übersetzung wurden $(( $(jq -r .character_count <<<"$limitState" )-$(jq -r .character_count <<<"$limitStateStart" ))) Zeichen berechnet.\n"
+printf "    Im aktuellen Zeitraum wurden $(jq -r .character_count <<<"$limitState" ) Zeichen von $(jq -r .character_limit <<<"$limitState" ) verbraucht.\n    "
