@@ -1,11 +1,16 @@
-# german language file for synOCR-GUI
-# /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_csy.txt
-# translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
-machinetranslate="1"
+    #######################################################################################################
+    # Czech language file for synOCR-GUI                                                                  #
+    #                                                                                                     #
+    # Path:                                                                                               #
+    #     /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_csy.txt                                      #
+    #                                                                                                     #
+    # translation instructions can you found here:                                                        #
+    #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
+    #                                                                                                     #
+    #     © 2022 by geimist                                                                               #
+    #######################################################################################################
 
-#-------------------------------------------
-# general:
-#-------------------------------------------
+machinetranslate="0"
 lang_page1="Přehled"
 lang_page2="Konfigurace"
 lang_page3="Jízdní řád"
@@ -31,13 +36,9 @@ lang_foot_buttondownDB="Stáhnout"
 lang_foot_buttondownDB_tit="Stáhněte si konfigurační databázi ..."
 lang_foot_buttondelprof="Smazat profil"
 lang_foot_buttondelprof_tit="po potvrzovací výzvě odstraní aktuální profil ..."
-
-#-------------------------------------------
-# page settings:
-#-------------------------------------------
 lang_edit_delques_1="Pokud by aktuální profil"
 lang_edit_delques_2="být vymazána?"
-lang_edit_profname="Profil"
+lang_edit_delfin1="Profil"
 lang_edit_delfin2="byl odstraněn"
 lang_edit_deler="Chyba při mazání profilu"
 lang_edit_dup1="Zadejte prosím název duplikovaného profilu."
@@ -53,44 +54,33 @@ lang_edit_new2="Nový profil s názvem"
 lang_edit_new3="byl vytvořen"
 lang_edit_new4="Chyba při vytváření profilu!"
 lang_edit_savefin="Změny byly uloženy"
-
 lang_edit_summary1="Zde zadejte svá nastavení a upravte cesty."
 lang_edit_summary2="Nápovědu k jednotlivým polím získáte kliknutím na modrý informační symbol na pravém okraji."
 lang_edit_summary3="Prostřednictvím profilů můžete vytvořit libovolný počet konfigurací, které se zpracovávají při každém spuštění programu. Každý profil můžete také deaktivovat prostřednictvím příslušného pole."
 lang_edit_summary4="Ujistěte se, že zadáváte kompletní cesty včetně svazku a že používáte správná velká a malá písmena. Nejbezpečnější je vyhledat požadovanou složku ve Filestation a zobrazit její vlastnosti kliknutím pravým tlačítkem myši. V tomto dialogu můžete zkopírovat správnou cestu."
-
 lang_edit_dbupdate="Výsledek aktualizace DB"
 lang_edit_change_profile="přepnout na profil"
-
 lang_edit_set1_title="Obecné"
-
 lang_edit_set1_profilename_help="Profily lze pojmenovat jednotlivě"
-
 lang_edit_set1_profile_activ_title="Aktivace / deaktivace profilu"
 lang_edit_set1_profile_activ="Aktivovaný profil"
 lang_edit_set1_profile_inactiv="Profil deaktivován"
 lang_edit_set1_profile_activ_help1="Profily lze aktivovat nebo deaktivovat."
 lang_edit_set1_profile_activ_help2="Zakázané profily lze upravovat, ale synOCR je neprovede."
-
 lang_edit_set1_sourcedir_title="Zdrojový adresář"
 lang_edit_set1_sourcedir_help1="V tomto adresáři se vyhledávají soubory PDF (ne rekurzivně)."
 lang_edit_set1_sourcedir_help2="Použijte celou cestu"
-
 lang_edit_set1_targetdir_title="Cílový adresář"
 lang_edit_set1_targetdir_help1="Výstupní adresář hotových souborů PDF (bude vytvořen v případě potřeby)."
 lang_edit_set1_targetdir_help2="Použijte celou cestu"
-
 lang_edit_set1_backupdir_title="Záložní adresář"
 lang_edit_set1_backupdir_help1="Pokud je zde zadána platná cesta, uloží se sem původní soubory (v případě potřeby se vytvoří)."
 lang_edit_set1_backupdir_help2="Pokud není uložen žádný platný adresář, původní soubory se trvale odstraní."
 lang_edit_set1_backupdir_help3="Použijte celou cestu"
-
 lang_edit_set1_logdir_title="Adresář pro soubory LOG"
 lang_edit_set1_logdir_help1="Adresář souborů LOG (v případě potřeby bude vytvořen)"
 lang_edit_set1_logdir_help2="Použijte celou cestu"
-
 lang_edit_set2_title="Možnosti OCR a přejmenování"
-
 lang_edit_set2_ocropt_title="Možnosti OCR"
 lang_edit_set2_ocropt_help1="Zde lze zadat jednotlivé parametry pro OCRmyPDF."
 lang_edit_set2_ocropt_help2="Nepoužívejte znovu soubory PDF s existující textovou vrstvou."
@@ -99,34 +89,28 @@ lang_edit_set2_ocropt_help4="automatické otáčení stránek"
 lang_edit_set2_ocropt_help5="Kód jazyka"
 lang_edit_set2_ocropt_help6="oprava zkreslených skenů"
 lang_edit_set2_ocropt_help7="kompletní pomoc"
-
 lang_edit_set2_dockerimage_title="Obraz Docker, který se má použít"
 lang_edit_set2_dockerimage_help1="Který obraz Docker by měl být použit?"
 lang_edit_set2_dockerimage_help2="je standardní obrázek, ale v současné době obsahuje pouze jazyky:"
 lang_edit_set2_dockerimage_help3="Polyglotské obrázky obsahují všechny možné jazyky, ale jsou větší!"
 lang_edit_set2_dockerimage_help4="K výběru jsou k dispozici také ručně stažené nebo vlastnoručně vytvořené obrázky, pokud je v názvu uveden následující údaj:"
-
 lang_edit_set2_dockerimageupdate_title="Udržování aktuální bitové kopie nástroje Docker"
 lang_edit_set2_dockerimageupdate_yes="aktualizovat (standard)"
 lang_edit_set2_dockerimageupdate_no="Udržovat verzi"
 lang_edit_set2_dockerimageupdate_help1="Obrazy dockerů se značkou :latest lze aktualizovat."
-
 lang_edit_set2_img2pdf_title="Převod obrázků do PDF"
 lang_edit_set2_img2pdf_no="Přeskočit obrázky"
 lang_edit_set2_img2pdf_yes="Převod obrázků"
 lang_edit_set2_img2pdf_help1="Obrázky ve zdrojové složce lze převést do souborů PDF. Pokud jsou aktivovány, přesunou se do záložní složky."
-
 lang_edit_set2_searchpref_title="Hledaný vzor Název zdrojového souboru"
 lang_edit_set2_searchpref_help1="Upravovat pouze soubory PDF s definovanou předponou"
 lang_edit_set2_searchpref_help2="Nevyplňujte, pokud mají být zpracovány všechny dokumenty"
 lang_edit_set2_searchpref_help3="na začátku invertuje hledání"
 lang_edit_set2_searchpref_help4="na konci definuje termín jako přívlastek"
-lang_edit_set2_delsearchpref_title=""
 lang_edit_set2_delsearchpref_keep="Zachování vzoru vyhledávání"
 lang_edit_set2_delsearchpref_delete="Odstranění vzoru vyhledávání"
 lang_edit_set2_delsearchpref_help1="Měl by být vyhledávací výraz následně odstraněn?"
 lang_edit_set2_delsearchpref_help2="(užitečné, pokud je zdrojová složka zároveň cílovou složkou)."
-
 lang_edit_set2_documentSplitPattern_title="Oddělovač dokumentů s vyhledávacím vzorem"
 lang_edit_set2_documentSplitPattern_help1="Zde lze definovat vzor pro automatické rozdělení velkého dokumentu na dílčí dokumenty. Zdrojový dokument je rozdělen na stránky, na kterých byl nalezen zadaný vyhledávací vzor."
 lang_edit_set2_documentSplitPattern_help3="Zde najdete šablonu k vytištění:"
@@ -135,39 +119,35 @@ lang_edit_set2_splitpagehandling_discard="vyřazení"
 lang_edit_set2_splitpagehandling_isLastPage="je poslední stránka"
 lang_edit_set2_splitpagehandling_isFirstPage="je první stránka"
 lang_edit_set2_splitpagehandling_help1="Oddělovací list může být vyřazen (výchozí nastavení) nebo přiřazen k předchozí nebo následující oblasti."
-
 lang_edit_set2_taglist_title="Značky pro vyhledávání"
 lang_edit_set2_taglist_help1="Zde zadané značky se v dokumentu vyhledají a jsou k dispozici pro přejmenování."
 lang_edit_set2_taglist_help2="Jednotlivé značky jsou odděleny středníkem."
 lang_edit_set2_taglist_help2_1="Lze také nastavit cestu k souboru s pravidly."
 lang_edit_set2_taglist_help3="! ! ! NEPOUŽÍVEJTE ZALOMENÍ ŘÁDKŮ ! ! !"
 lang_edit_set2_taglist_help4="Značky a kategorie mohou obsahovat i mezery."
-lang_edit_set2_taglist_help5="Pokud má být značka nalezena pouze jednotlivě, musí jí předcházet znak odstavce (hledání pro "
+lang_edit_set2_taglist_help5="Pokud má být značka nalezena pouze jednotlivě, musí jí předcházet znak odstavce (hledání pro"
 lang_edit_set2_taglist_help6="Faktura;Práce;Pojištění"
 lang_edit_set2_taglist_help7="Značky lze také přiřadit ke kategorii (pro podsložky) pomocí znaménka rovnosti (platí pouze v případě, že používáte také složky definované pravidly [možnost níže])."
 lang_edit_set2_taglist_help8="Faktura;HUK24=pojištění;Allianz=pojištění"
 lang_edit_set2_taglist_help9="Rozsáhlé značky lze také uložit do samostatného textového souboru."
 lang_edit_set2_taglist_help10="V tomto případě je třeba zadat absolutní cestu."
-
 lang_edit_set2_searchall_title="Rozsah vyhledávání značek"
 lang_edit_set2_searchall_1page="Pouze první strana"
 lang_edit_set2_searchall_all="celý dokument"
 lang_edit_set2_searchall_help1="V jaké oblasti mám hledat značky?"
 lang_edit_set2_searchall_help2="Standard je pouze na první stránce. Čím větší je oblast vyhledávání, tím více je falešně pozitivních výsledků."
-
 lang_edit_set2_moveTaggedFiles_title="Použití podadresářů značek"
 lang_edit_set2_moveTaggedFiles_targetdir="Uchovávejte v cílové složce"
 lang_edit_set2_moveTaggedFiles_useCatDir="Použití složek definovaných pravidly"
 lang_edit_set2_moveTaggedFiles_useTagDir="používat složky založené na značkách"
 lang_edit_set2_moveTaggedFiles_useYearDir="Použití ročních složek"
-lang_edit_set2_moveTaggedFiles_useYearMonthDir="použít ročník složky "
+lang_edit_set2_moveTaggedFiles_useYearMonthDir="použít ročník složky"
 lang_edit_set2_moveTaggedFiles_help1="Které třídění by mělo být použito:"
 lang_edit_set2_moveTaggedFiles_help2="Označení podadresářů nebo složek kategorií"
 lang_edit_set2_moveTaggedFiles_help3="Složky definované pravidly"
 lang_edit_set2_moveTaggedFiles_help4="Roční soubor"
 lang_edit_set2_moveTaggedFiles_help5="Rok/měsíc Složka"
 lang_edit_set2_moveTaggedFiles_help6="Pokud se použije více značek, nastaví se pevné odkazy."
-
 lang_edit_set2_renamesyntax_title="Syntaxe přejmenování OCR"
 lang_edit_set2_renamesyntax_help1="Přejmenování hotových souborů PDF pomocí specifické syntaxe. Proměnné lze také použít v cílových cestách v pravidlech YAML (kromě §tit)."
 lang_edit_set2_renamesyntax_help2="V kombinaci se souvislým textem je možné použít následující proměnné"
@@ -199,83 +179,66 @@ lang_edit_set2_renamesyntax_help20="Počítadlo stránek (použitý profil)"
 lang_edit_set2_renamesyntax_help21="Počítadlo souborů (použitý profil)"
 lang_edit_set2_renamesyntax_help15="generuje"
 lang_edit_set2_renamesyntax_help17="V dokumentu se nejprve vyhledají data. Pokud se to nepodaří, použije se datum souboru."
-
 lang_edit_set2_tagsymbol_title="Označení značek v názvu souboru"
 lang_edit_set2_tagsymbol_help1="nalezené značky lze označit v názvu souboru"
 lang_edit_set2_tagsymbol_help2="(Speciální znaky mohou mít nepředvídatelné následky!)"
-
 lang_edit_set2_filedate_title="Správné datum souboru"
 lang_edit_set2_filedate_now="aktuální čas"
 lang_edit_set2_filedate_ocr="Použití nalezeného data OCR"
 lang_edit_set2_filedate_source="Použití data zdrojového souboru"
 lang_edit_set2_filedate_help1="Jak se má upravit datum cílového souboru?"
 lang_edit_set2_filedate_help2="Pokud je vybráno datum OCR, ale žádné není nalezeno, použije se datum zdrojového souboru."
-
 lang_edit_set2_ignoredDate_title="Ignorování údajů"
 lang_edit_set2_ignoredDate_help1="Zadaná data jsou při vyhledávání ignorována. Lze zadat několik dat (oddělených mezerami). Důležitý je správný formát: RRRR-MM-DD (např. 2021-02-29 2021-04-31)."
-
 lang_edit_set2_DateSearchMinYear_title="Rozsah vyhledávání v minulosti"
 lang_edit_set2_DateSearchMinYear_help1="Zde zadejte absolutní rok nebo relativní počet let, který má být dodržen jako platné datum v minulosti."
 lang_edit_set2_DateSearchMinYear_help2="Čtyřmístné číslo se počítá jako absolutní rok. Méně než čtyři číslice jako relativní odchylka roku."
 lang_edit_set2_DateSearchMinYear_help3="Prázdná hodnota nebo 0 je považována za neomezenou."
-
 lang_edit_set2_DateSearchMaxYear_title="Oblast vyhledávání v budoucnosti"
 lang_edit_set2_DateSearchMaxYear_help1="Zde zadejte absolutní rok nebo relativní počet let, který má být dodržen jako platné datum v budoucnosti."
 lang_edit_set2_DateSearchMaxYear_help2="Prázdná hodnota nebo 0 je považována za neomezenou."
-
 lang_edit_set2_filedate_search_nearest_date_title="Datum Pořadí výsledků vyhledávání"
 lang_edit_set2_filedate_search_nearest_firstfound="1. zásah v dokumentu"
 lang_edit_set2_filedate_search_nearest_nearest="Poslední datum v minulosti"
 lang_edit_set2_filedate_search_nearest_help1="Které zjištění z vyhledávání dat by mělo být použito?"
 lang_edit_set2_filedate_search_nearest_help2="První v dokumentu nebo nejbližší datum v minulosti všech nálezů? (platí pouze pro vyhledávání v jazyce Python!)"
-
 lang_edit_set2_date_search_method_title="Způsob vyhledávání data"
 lang_edit_set2_date_search_method_python="Python"
 lang_edit_set2_date_search_method_regex="RegEx"
 lang_edit_set2_date_search_method_help1="Pro vyhledávání data jsou k dispozici následující možnosti: Skript jazyka Python a vyhledávání jako regulární výraz."
 lang_edit_set2_date_search_method_help2="Skript v jazyce Python prohledává rozsáhleji a najde například i vypsané měsíce. Předpokladem je nainstalovaný Python3. Potřebné moduly nainstaluje synOCR."
 lang_edit_set2_date_search_method_help3="Vyhledávání pomocí regulárního výrazu vyhledává pouze formáty čísel, ale není závislé na žádném jiném softwaru a je rychlejší."
-
 lang_edit_set2_clean_up_spaces_title="Vyčištěný prostor Vyhledávání"
 lang_edit_set2_clean_up_spaces_true="Úklid prostor"
 lang_edit_set2_clean_up_spaces_false="Hledání v původním textu"
 lang_edit_set2_clean_up_spaces_help1="Pokud je aktivováno čištění prostoru, zmenší se více prostorů na jeden. Někdy OCR nerozpozná původní počet mezer nebo není vždy stejný. Zejména při vyhledávání pomocí RegEx může být užitečné, pokud je definováno přesné číslo."
 lang_edit_set2_clean_up_spaces_help2="Toto nastavení ovlivňuje všechna vyhledávání v dokumentu (datum, značky, ...). Původní dokument se nezmění, pouze dočasný výpis textu."
-
 lang_edit_set3_title="Oznámení DSM a další nastavení"
-
 lang_edit_set3_backuprotate_title="Omezení zálohování souborů"
 lang_edit_set3_backuprotate_help1="Přebytečné zálohy lze automaticky odstranit."
 lang_edit_set3_backuprotate_help2="Jako jednotku vyberte dny nebo soubory."
 lang_edit_set3_backuprotate_help3="Prázdný záznam odstraní omezení."
-lang_edit_set3_backuprotatetype_title=""
 lang_edit_set3_backuprotatetype_files="Soubory"
 lang_edit_set3_backuprotatetype_days="Dny"
-
 lang_edit_set3_logmax_title="Maximální počet souborů LOG"
 lang_edit_set3_logmax_help="Maximální počet souborů LOG (prázdné protokoly se okamžitě odstraní)"
-
 lang_edit_set3_dsmtextnotify_title="Systémové oznámení (text)"
 lang_edit_set3_dsmtextnotify_on="a"
 lang_edit_set3_dsmtextnotify_off="z"
 lang_edit_set3_dsmtextnotify_help1="a ➜ Oznámení textem aktivní v oznamovacím centru"
 lang_edit_set3_dsmtextnotify_help2="vypnuto ➜ žádné textové upozornění"
-
 lang_edit_set3_MessageTo_title="Oznámení uživateli"
 lang_edit_set3_MessageTo_help1="Uživatel, kterému jsou oznámení zasílána."
-lang_edit_set3_MessageTo_help2="Tímto způsobem, v kombinaci s balíčkem "
-lang_edit_set3_MessageTo_help3="Pokud hodnota zůstane prázdná, skupina je "
-
+lang_edit_set3_MessageTo_help2="Tímto způsobem, v kombinaci s balíčkem"
+lang_edit_set3_MessageTo_help3="Pokud hodnota zůstane prázdná, skupina je"
 lang_edit_set3_PBTOKEN_title="Token PushBullet"
 lang_edit_set3_PBTOKEN_help1="Váš osobní token PushBullet."
 lang_edit_set3_PBTOKEN_help2="Oznámení jsou zasílána na příslušný účet."
 lang_edit_set3_PBTOKEN_help3="Pokud se nepoužívá, nechte ji prázdnou."
-
 lang_edit_set3_dsmbeepnotify_title="Systémové oznámení (pípnutí)"
 lang_edit_set3_dsmbeepnotify_on="a"
 lang_edit_set3_dsmbeepnotify_off="z"
 lang_edit_set3_dsmbeepnotify_help1="Krátké pípnutí, jakmile je soubor PDF dokončen."
-
 lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
 lang_edit_set3_loglevel_off="0 (vypnuto)"
 lang_edit_set3_loglevel_1="1 (standardní)"
@@ -283,20 +246,18 @@ lang_edit_set3_loglevel_2="2 (režim ladění)"
 lang_edit_set3_loglevel_help1="0 ➜ není vytvořen žádný soubor protokolu"
 lang_edit_set3_loglevel_help2="1 ➜ normální log (standardní)"
 lang_edit_set3_loglevel_help3="2 ➜ protokol ladění"
-
 lang_edit_set3_accept_cpdf_license_title="Podmínky licence"
 lang_edit_set3_accept_cpdf_license_no="Zamítnutí licence"
 lang_edit_set3_accept_cpdf_license_yes="Licenci přijímám"
 lang_edit_set3_accept_cpdf_license_help1="cpdf je nástroj příkazového řádku, který synOCR může používat k poskytování dalších funkcí (např. oddělovačů stránek)."
 lang_edit_set3_accept_cpdf_license_help2="cpdf lze používat pouze bezplatně pro nekomerční účely. O tom může rozhodnout uživatel."
 lang_edit_set3_accept_cpdf_license_help3="Původní znění:"
-
 lang_edit_yamlsample_01="V požadovaném profilu je třeba do pole pro značky zadat následující cestu"
 lang_edit_yamlsample_02="POSTUPUJTE PODLE TĚCHTO POKYNŮ"
 lang_edit_yamlsample_03="je velmi důležité vložit správné odsazení."
 lang_edit_yamlsample_04="nepoužívejte zarážky - pouze mezery!"
 lang_edit_yamlsample_05="Použijte přesný počet mezer, jak je uvedeno v příkladu."
-lang_edit_yamlsample_06="Tip: kopírování "
+lang_edit_yamlsample_06="Tip: kopírování"
 lang_edit_yamlsample_07="nepoužívejte zalomení řádků systému Windows!"
 lang_edit_yamlsample_08="musí být v souboru uvedeno následující klíčové slovo:"
 lang_edit_yamlsample_09="níže je uveden popis klíčových slov:"
@@ -307,7 +268,7 @@ lang_edit_yamlsample_12b="název nesmí začínat číslicí"
 lang_edit_yamlsample_13="na konci musí být dvojtečka"
 lang_edit_yamlsample_14="každý blok definuje JEDNU značku a JEDNU akci (pohyb), pokud je definována."
 lang_edit_yamlsample_15="Syntaxe:"
-lang_edit_yamlsample_16="mezera mezi dvojtečkou "
+lang_edit_yamlsample_16="mezera mezi dvojtečkou"
 lang_edit_yamlsample_17="VALUE se používá jako značka, když je pravidlo splněno."
 lang_edit_yamlsample_17a="Pouze latinka / žádné speciální znaky!"
 lang_edit_yamlsample_17b="pokud není VALUE nalezena, slouží tagname jako náhradní řešení"
@@ -317,7 +278,6 @@ lang_edit_yamlsample_20="VALUE je cesta, pokud je pravidlo splněno."
 lang_edit_yamlsample_21="může to být absolutní cesta"
 lang_edit_yamlsample_22a="pokud se nejedná o absolutní cestu, bude to"
 lang_edit_yamlsample_22b="vytvořen vzhledem k cílové složce definované v grafickém uživatelském rozhraní."
-lang_edit_yamlsample_23=""
 lang_edit_yamlsample_24="kolik pravidel vyhledávání musí být splněno, aby bylo pravidlo splněno."
 lang_edit_yamlsample_25="VALUE je"
 lang_edit_yamlsample_26="musí být splněna všechna pravidla vyhledávání"
@@ -345,10 +305,6 @@ lang_edit_yamlsample_button_help_03="- ve vstupním adresáři se vytvoří zál
 lang_edit_yamlsample_gui_01="Soubor s pravidly již existuje!"
 lang_edit_yamlsample_gui_02="Odstraňte prosím stávající soubor a zkuste to znovu"
 lang_edit_yamlsample_gui_03="Soubor s pravidly byl úspěšně vytvořen."
-
-#-------------------------------------------
-# page main:
-#-------------------------------------------
 lang_main_title1="OCR na Synology DSM"
 lang_main_title2="Popis"
 lang_main_monitor_restart_necessary_1="Seznam sledovaných vstupních složek již není aktuální!"
@@ -368,16 +324,11 @@ lang_main_openfilecount="Úprava souborů"
 lang_main_alldone="Vše hotovo"
 lang_main_totalsince="Celkem od"
 lang_main_pages="Stránky"
-
-#-------------------------------------------
-# page help:
-#-------------------------------------------
 lang_help_title_QS="Rychlý start"
 lang_help_QS_1_beforelink="Nejprve upravte instalaci v"
 lang_help_QS_1_afterlink="an."
 lang_help_QS_1b="(nepovinné): Pro automatické sledování vstupních složek je třeba nainstalovat balíček inotify-tools."
 lang_help_QS_2="Pro správnou funkci synOCR je třeba vytvořit novou úlohu v plánovači úloh DSM."
-# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="Za tímto účelem otevřete ovládací panel v systému DSM."
 lang_help_QS_sub1_1="Plánovač úkolů"
 lang_help_QS_sub1_2="Vytvořit"
@@ -409,16 +360,10 @@ lang_help_FAQ_sub4_2="Zkontrolujte, zda je v konfiguraci aktivován také požad
 lang_help_FAQ_sub5_tit="moje otázka tam není ..."
 lang_help_FAQ_sub5_beforelink="Pro všechny ostatní dotazy a problémy použijte fórum podpory:"
 lang_help_FAQ_sub5_linktitle="Fórum podpory synOCR"
-lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="o synOCR"
 lang_help_about_1="Projekt závisí především na čase, energii a chuti, které mu mohu věnovat."
 lang_help_about_2="Začal jsem, abych si usnadnil práci s dokumenty PDF, a také mě potěší, pokud tento projekt bude užitečný i pro ostatní. Proto neočekávám nic na oplátku!"
 lang_help_about_3="Pokud mi však někdo chce udělat finanční radost, může tak učinit kliknutím na toto tlačítko - DĚKUJI:"
-lang_help_about_4=""
-
-#-------------------------------------------
-# script synOCR-start.sh:
-#-------------------------------------------
 lang_synOCR_start_is_running="synOCR již běží!"
 lang_synOCR_start_req_kill="Vynutit odchod?"
 lang_synOCR_start_runs="synOCR byla spuštěna"
@@ -432,10 +377,6 @@ lang_synOCR_start_target_created="Cílový adresář byl vytvořen."
 lang_synOCR_start_umount_log="Šifrovaná složka LOG není připojena"
 lang_synOCR_start_errorexit="synOCR byl ukončen s chybami!"
 lang_synOCR_start_loginfo="Další informace v LOGu"
-
-#-------------------------------------------
-# WIZARD_UIFILES:
-#-------------------------------------------
 lang_wizui_install_title="Poznámka k instalaci:"
 lang_wizui_install_desc="Jedinou podmínkou je nainstalovaný balíček Docker. Za normálních okolností není třeba provádět žádnou další konfiguraci v nástroji Docker."
 lang_wizui_uninstall_title="Oznámení o odinstalaci"
@@ -448,9 +389,11 @@ lang_PKG_NOINSTALL_ERROR_PART2="s architekturou procesoru"
 lang_PKG_NOINSTALL_ERROR_PART3="není podporován synOCR, protože nelze nainstalovat požadovaný balíček Docker (pouze x86_64 / aarch64)."
 lang_PKG_DELETE_TIMER="Integrovaný plánovač ze starších verzí již není k dispozici. Používejte plánovač úkolů DSM!"
 lang_INFO_description="synOCR je jednoduché grafické rozhraní pro kontejner Docker OCRmyPDF. Pomocí něj můžete snadno aplikovat OCR na dokumenty PDF. synOCR pak dokáže v dokumentech vyhledávat značky a data, přejmenovávat je podle individuálního vzoru a třídit je do podsložek podle kategorií. Při použití pevných odkazů se nezvyšují nároky na úložný prostor, pokud je třeba dokument roztřídit do několika složek kategorií."
-
-#-------------------------------------------
-# miscellaneous:
-#-------------------------------------------
 lang_notify_file_job_successful="PDF bylo úspěšně zpracováno."
 lang_notify_file_update_available="Aktualizace je k dispozici!"
+lang_edit_profname="Název profilu"
+lang_edit_set2_delsearchpref_title=""
+lang_edit_set3_backuprotatetype_title=""
+lang_edit_yamlsample_23=""
+lang_help_FAQ_sub5_afterlink=""
+lang_help_about_4=""

@@ -1,11 +1,16 @@
-# german language file for synOCR-GUI
-# /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_hun.txt
-# translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
-machinetranslate="1"
+    #######################################################################################################
+    # Hungarian language file for synOCR-GUI                                                              #
+    #                                                                                                     #
+    # Path:                                                                                               #
+    #     /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_hun.txt                                      #
+    #                                                                                                     #
+    # translation instructions can you found here:                                                        #
+    #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
+    #                                                                                                     #
+    #     © 2022 by geimist                                                                               #
+    #######################################################################################################
 
-#-------------------------------------------
-# general:
-#-------------------------------------------
+machinetranslate="1"
 lang_page1="Áttekintés"
 lang_page2="Konfiguráció"
 lang_page3="Menetrend"
@@ -31,13 +36,9 @@ lang_foot_buttondownDB="Letöltés"
 lang_foot_buttondownDB_tit="A konfigurációs adatbázis letöltése ..."
 lang_foot_buttondelprof="Profil törlése"
 lang_foot_buttondelprof_tit="törli az aktuális profilt egy megerősítő kérés után ..."
-
-#-------------------------------------------
-# page settings:
-#-------------------------------------------
 lang_edit_delques_1="Amennyiben az aktuális profil"
 lang_edit_delques_2="törlésre kerül?"
-lang_edit_profname="Egy profil"
+lang_edit_delfin1="Egy profil"
 lang_edit_delfin2="törölték"
 lang_edit_deler="Hiba a profil törlésénél"
 lang_edit_dup1="Kérjük, adjon meg egy nevet a duplikált profilhoz."
@@ -53,44 +54,33 @@ lang_edit_new2="Egy új profil a következő névvel"
 lang_edit_new3="létrehozták"
 lang_edit_new4="Hiba a profil létrehozásakor!"
 lang_edit_savefin="A módosítások mentésre kerültek"
-
 lang_edit_summary1="Itt adja meg a beállításokat, és állítsa be az útvonalakat."
 lang_edit_summary2="Az egyes mezőkhöz segítséget kaphat, ha a jobb szélén lévő kék információs szimbólumra kattint."
 lang_edit_summary3="A profilokon keresztül tetszőleges számú konfigurációt hozhat létre, amelyek mindegyike minden egyes programfuttatáskor feldolgozásra kerül. Az egyes profilokat a megfelelő mezőn keresztül is kikapcsolhatja."
 lang_edit_summary4="Győződjön meg róla, hogy a teljes elérési utat adja meg, beleértve a kötetet is, és hogy a helyes kis- és nagybetűket használja. A legbiztosabb, ha megkeresi a kívánt mappát a Filestationben, és a jobb gombbal kattintva megjeleníti a tulajdonságokat. Ebben a párbeszédpanelben másolhatja a megfelelő elérési utat."
-
 lang_edit_dbupdate="A DB frissítés eredménye"
 lang_edit_change_profile="profilra váltás"
-
 lang_edit_set1_title="Általános"
-
 lang_edit_set1_profilename_help="A profilok egyedileg nevezhetők el"
-
 lang_edit_set1_profile_activ_title="Profil aktiválása / deaktiválása"
 lang_edit_set1_profile_activ="Profil aktiválva"
 lang_edit_set1_profile_inactiv="Profil kikapcsolva"
 lang_edit_set1_profile_activ_help1="A profilok aktiválhatók vagy deaktiválhatók."
 lang_edit_set1_profile_activ_help2="A letiltott profilok módosíthatók, de a synOCR nem hajtja végre őket."
-
 lang_edit_set1_sourcedir_title="Forráskönyvtár"
 lang_edit_set1_sourcedir_help1="Ebben a könyvtárban keresi a PDF-fájlokat (nem rekurzív módon)."
 lang_edit_set1_sourcedir_help2="A teljes elérési útvonal használata"
-
 lang_edit_set1_targetdir_title="Cél könyvtár"
 lang_edit_set1_targetdir_help1="A kész PDF-fájlok kimeneti könyvtára (szükség esetén létrejön)."
 lang_edit_set1_targetdir_help2="A teljes elérési útvonal használata"
-
 lang_edit_set1_backupdir_title="Biztonsági mentés könyvtár"
 lang_edit_set1_backupdir_help1="Ha itt egy érvényes elérési útvonal van megadva, az eredeti fájlok ide kerülnek mentésre (szükség esetén létrejönnek)."
 lang_edit_set1_backupdir_help2="Ha nincs érvényes könyvtár tárolva, az eredeti fájlok véglegesen törlődnek."
 lang_edit_set1_backupdir_help3="A teljes elérési útvonal használata"
-
 lang_edit_set1_logdir_title="LOG fájlok könyvtára"
 lang_edit_set1_logdir_help1="A LOG fájlok könyvtára (szükség esetén létrejön)"
 lang_edit_set1_logdir_help2="A teljes elérési útvonal használata"
-
 lang_edit_set2_title="OCR beállítások és átnevezés"
-
 lang_edit_set2_ocropt_title="OCR beállítások"
 lang_edit_set2_ocropt_help1="Az OCRmyPDF egyedi paraméterei itt adhatók meg"
 lang_edit_set2_ocropt_help2="Ne írja újra a meglévő szövegréteggel rendelkező PDF fájlokat"
@@ -99,34 +89,28 @@ lang_edit_set2_ocropt_help4="automatikus lapozás"
 lang_edit_set2_ocropt_help5="Nyelvi kód"
 lang_edit_set2_ocropt_help6="ferde szkennelések korrigálása"
 lang_edit_set2_ocropt_help7="teljes körű segítségnyújtás"
-
 lang_edit_set2_dockerimage_title="Docker-kép, amelyet használni kell"
 lang_edit_set2_dockerimage_help1="Melyik Docker-képet kell használni?"
 lang_edit_set2_dockerimage_help2="a szabványos kép, de jelenleg csak a nyelveket tartalmazza:"
 lang_edit_set2_dockerimage_help3="A poliglott képek az összes lehetséges nyelvet tartalmazzák, de nagyobbak!"
 lang_edit_set2_dockerimage_help4="Kézzel letöltött vagy saját készítésű képek is választhatók, feltéve, hogy a névben szerepel a következő:"
-
 lang_edit_set2_dockerimageupdate_title="Tartsa naprakészen a Docker-képet"
 lang_edit_set2_dockerimageupdate_yes="naprakész (standard)"
 lang_edit_set2_dockerimageupdate_no="Verzió karbantartása"
 lang_edit_set2_dockerimageupdate_help1="A :latest címkével ellátott Docker-képek frissíthetők."
-
 lang_edit_set2_img2pdf_title="Képek átalakítása PDF-be"
 lang_edit_set2_img2pdf_no="Képek átugrása"
 lang_edit_set2_img2pdf_yes="Képek átalakítása"
 lang_edit_set2_img2pdf_help1="A forrásmappában lévő képek PDF-fájlokká alakíthatók. Ha aktiválva vannak, akkor a biztonsági mentés mappába kerülnek."
-
 lang_edit_set2_searchpref_title="Keresési minta Forrásfájl neve"
 lang_edit_set2_searchpref_help1="Csak meghatározott előtaggal rendelkező PDF-ek szerkesztése"
 lang_edit_set2_searchpref_help2="Hagyja üresen, ha az összes dokumentumot fel kell dolgozni"
 lang_edit_set2_searchpref_help3="az elején megfordítja a keresést"
 lang_edit_set2_searchpref_help4="a végén a kifejezés utótagként határozza meg a kifejezést"
-lang_edit_set2_delsearchpref_title=""
 lang_edit_set2_delsearchpref_keep="Keresési minta megőrzése"
 lang_edit_set2_delsearchpref_delete="Keresési minta eltávolítása"
 lang_edit_set2_delsearchpref_help1="A keresőkifejezést utólag el kell távolítani?"
 lang_edit_set2_delsearchpref_help2="(hasznos, ha a forrásmappa egyben a célmappa is)"
-
 lang_edit_set2_documentSplitPattern_title="Keresés minta dokumentum elválasztó"
 lang_edit_set2_documentSplitPattern_help1="Itt egy mintát lehet definiálni egy nagy dokumentum részdokumentumokra való automatikus felosztásához. A forrásdokumentum felosztásra kerül azokon az oldalakon, ahol a megadott keresési mintát találták."
 lang_edit_set2_documentSplitPattern_help3="Itt talál egy kinyomtatható sablont:"
@@ -135,39 +119,35 @@ lang_edit_set2_splitpagehandling_discard="dobja el a"
 lang_edit_set2_splitpagehandling_isLastPage="az utolsó oldal"
 lang_edit_set2_splitpagehandling_isFirstPage="az első oldal"
 lang_edit_set2_splitpagehandling_help1="Az elválasztó lap eldobható (alapértelmezett beállítás) vagy hozzárendelhető az előző vagy a következő területhez."
-
 lang_edit_set2_taglist_title="Keresendő címkék"
 lang_edit_set2_taglist_help1="Az itt megadott címkéket a dokumentumban keresik, és átnevezhetők."
 lang_edit_set2_taglist_help2="Az egyes címkék pontosvesszővel vannak elválasztva."
 lang_edit_set2_taglist_help2_1="A szabályfájl elérési útvonala is megadható."
 lang_edit_set2_taglist_help3="! ! ! NE HASZNÁLJON SORTÖRÉST ! ! !"
 lang_edit_set2_taglist_help4="A címkék és kategóriák szóközöket is tartalmazhatnak."
-lang_edit_set2_taglist_help5="Ha egy címkét csak egyenként kell megtalálni, akkor egy bekezdésjelnek kell megelőznie (a keresés a "
+lang_edit_set2_taglist_help5="Ha egy címkét csak egyenként kell megtalálni, akkor egy bekezdésjelnek kell megelőznie (a keresés a"
 lang_edit_set2_taglist_help6="Számla;Munka;Biztosítás"
 lang_edit_set2_taglist_help7="A címkéket (almappákhoz) kategóriához is hozzárendelheti egy egyenlőségjel segítségével (csak akkor alkalmazható, ha szabály által meghatározott mappákat is használ [alábbi opció])."
 lang_edit_set2_taglist_help8="Számla;HUK24=biztosítás;Allianz=biztosítás"
 lang_edit_set2_taglist_help9="A kiterjedt címkék egy külön szöveges fájlban is elmenthetők."
 lang_edit_set2_taglist_help10="Ebben az esetben az abszolút elérési utat kell itt megadni."
-
 lang_edit_set2_searchall_title="Címkék keresési tartománya"
 lang_edit_set2_searchall_1page="Csak az első oldal"
 lang_edit_set2_searchall_all="teljes dokumentum"
 lang_edit_set2_searchall_help1="Melyik területen keressek címkéket?"
 lang_edit_set2_searchall_help2="A szabvány csak az első oldalon szerepel. Minél nagyobb a keresési terület, annál több a hamis pozitív eredmény."
-
 lang_edit_set2_moveTaggedFiles_title="Címke alkönyvtárak használata"
 lang_edit_set2_moveTaggedFiles_targetdir="Tartsa a célmappában"
 lang_edit_set2_moveTaggedFiles_useCatDir="Szabályok által meghatározott mappák használata"
 lang_edit_set2_moveTaggedFiles_useTagDir="címke alapú mappák használata"
 lang_edit_set2_moveTaggedFiles_useYearDir="Éves mappák használata"
-lang_edit_set2_moveTaggedFiles_useYearMonthDir="évkönyvek használata "
+lang_edit_set2_moveTaggedFiles_useYearMonthDir="évkönyvek használata"
 lang_edit_set2_moveTaggedFiles_help1="Melyik szortírozást kell használni:"
 lang_edit_set2_moveTaggedFiles_help2="Alkönyvtárak vagy kategóriamappák címkézése"
 lang_edit_set2_moveTaggedFiles_help3="Szabályok által meghatározott mappák"
 lang_edit_set2_moveTaggedFiles_help4="Éves fájl"
 lang_edit_set2_moveTaggedFiles_help5="Év/hónap Mappa"
 lang_edit_set2_moveTaggedFiles_help6="Ha több címkére is vonatkozik, akkor kemény hivatkozások kerülnek beállításra."
-
 lang_edit_set2_renamesyntax_title="OCR átnevezés szintaxis"
 lang_edit_set2_renamesyntax_help1="Kész PDF-ek átnevezése egy meghatározott szintaxissal. A változók a YAML-szabályok célútvonalaiban is használhatók (kivéve a §tit)."
 lang_edit_set2_renamesyntax_help2="A következő változók lehetségesek folyamatos szöveggel kombinálva"
@@ -199,83 +179,66 @@ lang_edit_set2_renamesyntax_help20="Oldalszámláló (használt profil)"
 lang_edit_set2_renamesyntax_help21="Fájlszámláló (használt profil)"
 lang_edit_set2_renamesyntax_help15="generál"
 lang_edit_set2_renamesyntax_help17="A dokumentumban először a dátumokat kell keresni. Sikertelenség esetén a fájl dátuma kerül felhasználásra."
-
 lang_edit_set2_tagsymbol_title="Címkék jelölése a fájlnévben"
 lang_edit_set2_tagsymbol_help1="a talált címkék megjelölhetők a fájl nevében"
 lang_edit_set2_tagsymbol_help2="(A különleges karakterek kiszámíthatatlan következményekkel járhatnak!)"
-
 lang_edit_set2_filedate_title="Helyes fájl dátum"
 lang_edit_set2_filedate_now="aktuális idő"
 lang_edit_set2_filedate_ocr="A talált OCR dátum használata"
 lang_edit_set2_filedate_source="A forrásfájl dátumának használata"
 lang_edit_set2_filedate_help1="Hogyan kell beállítani a célfájl dátumát?"
 lang_edit_set2_filedate_help2="Ha az OCR dátum van kiválasztva, de nem található, akkor a forrásfájl dátumát használja a rendszer."
-
 lang_edit_set2_ignoredDate_title="Adatok figyelmen kívül hagyása"
 lang_edit_set2_ignoredDate_help1="A megadott adatok figyelmen kívül maradnak a keresés során. Több dátum is megadható (szóközzel elválasztva). Fontos a helyes formátum: ÉÉÉÉÉ-HH-HH-NN (pl. 2021-02-29 2021-04-31)."
-
 lang_edit_set2_DateSearchMinYear_title="Keresési tartomány a múltban"
 lang_edit_set2_DateSearchMinYear_help1="Adja meg itt az abszolút évet vagy az évek relatív számát, amelyet a múltban érvényes dátumként kell figyelembe venni."
 lang_edit_set2_DateSearchMinYear_help2="A négyjegyű szám abszolút évnek számít. Négy számjegynél kevesebb, mint relatív éves eltérés."
 lang_edit_set2_DateSearchMinYear_help3="Az üres érték vagy 0 korlátlannak minősül."
-
 lang_edit_set2_DateSearchMaxYear_title="Keresési terület a jövőben"
 lang_edit_set2_DateSearchMaxYear_help1="Adja meg itt az abszolút évet vagy az évek relatív számát, amelyet a jövőben érvényes dátumként kell figyelembe venni."
 lang_edit_set2_DateSearchMaxYear_help2="Az üres érték vagy 0 korlátlannak minősül."
-
 lang_edit_set2_filedate_search_nearest_date_title="Dátum Keresési eredmények sorrendje"
 lang_edit_set2_filedate_search_nearest_firstfound="1. találat a dokumentumban"
 lang_edit_set2_filedate_search_nearest_nearest="Legutóbbi dátum a múltban"
 lang_edit_set2_filedate_search_nearest_help1="A dátumkeresés melyik megállapítását kell használni?"
 lang_edit_set2_filedate_search_nearest_help2="Az első a dokumentumban vagy a legközelebbi dátum a múltban az összes lelet közül? (csak a Python-alapú keresésre vonatkozik!)"
-
 lang_edit_set2_date_search_method_title="Dátum keresési módszer"
 lang_edit_set2_date_search_method_python="Python"
 lang_edit_set2_date_search_method_regex="RegEx"
 lang_edit_set2_date_search_method_help1="A dátumkereséshez a következő lehetőségek állnak rendelkezésre: Python szkript és a keresés szabályos kifejezésként."
 lang_edit_set2_date_search_method_help2="A Python szkript szélesebb körben keres, és például a kiírt hónapokat is megtalálja. Az előfeltétel egy telepített Python3. A szükséges modulokat a synOCR telepíti."
 lang_edit_set2_date_search_method_help3="A szabályos kifejezésként történő keresés csak számformátumokat talál, de nem függ más szoftvertől, és gyorsabb."
-
 lang_edit_set2_clean_up_spaces_title="Tér megtisztított Keresés"
 lang_edit_set2_clean_up_spaces_true="Tisztítsa meg a tereket"
 lang_edit_set2_clean_up_spaces_false="Keresés az eredeti szövegben"
 lang_edit_set2_clean_up_spaces_help1="Ha a helytisztítás aktiválva van, akkor a több hely egy helyre csökken. Előfordul, hogy az OCR nem ismeri fel az eredeti szóközök számát, vagy az nem mindig ugyanaz. Különösen a RegEx kereséseknél hasznos lehet, ha a pontos számot meghatározzuk."
 lang_edit_set2_clean_up_spaces_help2="A beállítás a dokumentumban végzett összes keresést érinti (dátum, címkék, ...). Az eredeti dokumentum nem változik, csak az ideiglenes szövegkivonat."
-
 lang_edit_set3_title="DSM értesítés és egyéb beállítások"
-
 lang_edit_set3_backuprotate_title="Biztonsági mentési fájlok korlátozása"
 lang_edit_set3_backuprotate_help1="A felesleges biztonsági mentések automatikusan eltávolíthatók."
 lang_edit_set3_backuprotate_help2="Válassza ki a napokat vagy a fájlokat egységként."
 lang_edit_set3_backuprotate_help3="Az üres bejegyzés megszünteti a korlátozást."
-lang_edit_set3_backuprotatetype_title=""
 lang_edit_set3_backuprotatetype_files="Fájlok"
 lang_edit_set3_backuprotatetype_days="Napok"
-
 lang_edit_set3_logmax_title="Maximális LOG fájlok"
 lang_edit_set3_logmax_help="LOG fájlok maximális száma (az üres naplók azonnal törlődnek)"
-
 lang_edit_set3_dsmtextnotify_title="Rendszerértesítés (szöveges)"
 lang_edit_set3_dsmtextnotify_on="a"
 lang_edit_set3_dsmtextnotify_off="a  címről"
 lang_edit_set3_dsmtextnotify_help1="a ➜ Szöveges értesítés aktív az Értesítési központban"
 lang_edit_set3_dsmtextnotify_help2="off ➜ nincs szöveges értesítés"
-
 lang_edit_set3_MessageTo_title="Értesítés a felhasználónak"
 lang_edit_set3_MessageTo_help1="Felhasználó, akinek az értesítéseket küldi."
-lang_edit_set3_MessageTo_help2="Ily módon, a csomaggal kombinálva "
-lang_edit_set3_MessageTo_help3="Ha az érték üres marad, a csoport "
-
+lang_edit_set3_MessageTo_help2="Ily módon, a csomaggal kombinálva"
+lang_edit_set3_MessageTo_help3="Ha az érték üres marad, a csoport"
 lang_edit_set3_PBTOKEN_title="PushBullet token"
 lang_edit_set3_PBTOKEN_help1="Az Ön személyes PushBullet tokenje."
 lang_edit_set3_PBTOKEN_help2="Az értesítések a megfelelő fiókba kerülnek."
 lang_edit_set3_PBTOKEN_help3="Használaton kívül hagyja üresen."
-
 lang_edit_set3_dsmbeepnotify_title="Rendszerértesítés (hangjelzés)"
 lang_edit_set3_dsmbeepnotify_on="a"
 lang_edit_set3_dsmbeepnotify_off="a  címről"
 lang_edit_set3_dsmbeepnotify_help1="Egy rövid hangjelzés, amint a PDF elkészült."
-
 lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
 lang_edit_set3_loglevel_off="0 (ki)"
 lang_edit_set3_loglevel_1="1 (standard)"
@@ -283,20 +246,18 @@ lang_edit_set3_loglevel_2="2 (hibakeresési mód)"
 lang_edit_set3_loglevel_help1="0 ➜ nincs naplófájl létrehozva"
 lang_edit_set3_loglevel_help2="1 ➜ normál log (standard)"
 lang_edit_set3_loglevel_help3="2 ➜ hibakeresési napló"
-
 lang_edit_set3_accept_cpdf_license_title="Engedélyezési feltételek"
 lang_edit_set3_accept_cpdf_license_no="Az engedélyt elutasították"
 lang_edit_set3_accept_cpdf_license_yes="Elfogadom az engedélyt"
 lang_edit_set3_accept_cpdf_license_help1="A cpdf egy parancssori eszköz, amelyet a synOCR további funkciók (pl. elválasztó oldalak) biztosításához használhat."
 lang_edit_set3_accept_cpdf_license_help2="A cpdf csak nem kereskedelmi célokra használható fel ingyenesen. Erről a felhasználó dönthet itt."
 lang_edit_set3_accept_cpdf_license_help3="Eredeti szöveg:"
-
 lang_edit_yamlsample_01="A következő elérési utat kell megadni a kívánt profilban a címkék mezőben"
 lang_edit_yamlsample_02="KÉRJÜK, KÖVESSE AZ ALÁBBI UTASÍTÁSOKAT"
 lang_edit_yamlsample_03="nagyon fontos, hogy a megfelelő behúzásokat helyezzük be."
 lang_edit_yamlsample_04="ne használjon csapszegeket - csak szóközöket!"
 lang_edit_yamlsample_05="Használja a példában megadott pontos számú szóközöket."
-lang_edit_yamlsample_06="Tipp: másolás "
+lang_edit_yamlsample_06="Tipp: másolás"
 lang_edit_yamlsample_07="ne használjon Windows sortörést!"
 lang_edit_yamlsample_08="a következő kulcsszónak kell szerepelnie a fájlban:"
 lang_edit_yamlsample_09="Az alábbiakban a kulcsszavak leírása található:"
@@ -307,7 +268,7 @@ lang_edit_yamlsample_12b="a név nem kezdődhet számmal"
 lang_edit_yamlsample_13="a végén kettőspontnak kell lennie"
 lang_edit_yamlsample_14="minden blokk EGY címkét és EGY akciót (mozgást) definiál, ha definiálva van."
 lang_edit_yamlsample_15="Szintaxis:"
-lang_edit_yamlsample_16="egy szóköz a kettőspont között "
+lang_edit_yamlsample_16="egy szóköz a kettőspont között"
 lang_edit_yamlsample_17="A VALUE-t címkeként használják, ha a szabály teljesül."
 lang_edit_yamlsample_17a="Csak latin betűk / különleges karakterek nélkül!"
 lang_edit_yamlsample_17b="ha VALUE nem található, a tagname szolgál tartalékként"
@@ -317,7 +278,6 @@ lang_edit_yamlsample_20="VALUE egy útvonal, ha a szabály teljesül"
 lang_edit_yamlsample_21="lehet abszolút elérési útvonal"
 lang_edit_yamlsample_22a="ha ez nem abszolút elérési útvonal, akkor"
 lang_edit_yamlsample_22b="a GUI-ban meghatározott célmappához viszonyítva hozható létre"
-lang_edit_yamlsample_23=""
 lang_edit_yamlsample_24="hány keresési szabálynak kell teljesülnie ahhoz, hogy a szabály teljesüljön."
 lang_edit_yamlsample_25="Az ÉRTÉK"
 lang_edit_yamlsample_26="minden keresési szabálynak teljesülnie kell"
@@ -345,10 +305,6 @@ lang_edit_yamlsample_button_help_03="- a meglévő szabályok biztonsági másol
 lang_edit_yamlsample_gui_01="A szabályfájl már létezik!"
 lang_edit_yamlsample_gui_02="Kérjük, törölje a meglévő fájlt, és próbálja meg újra"
 lang_edit_yamlsample_gui_03="A szabályfájlt sikeresen létrehoztuk."
-
-#-------------------------------------------
-# page main:
-#-------------------------------------------
 lang_main_title1="OCR a Synology DSM-en"
 lang_main_title2="Leírás"
 lang_main_monitor_restart_necessary_1="A felügyelt bemeneti mappák listája már nem aktuális!"
@@ -368,16 +324,11 @@ lang_main_openfilecount="Fájlok szerkesztése"
 lang_main_alldone="Minden kész"
 lang_main_totalsince="Összesen azóta"
 lang_main_pages="Oldalak"
-
-#-------------------------------------------
-# page help:
-#-------------------------------------------
 lang_help_title_QS="Gyors indítás"
 lang_help_QS_1_beforelink="Először állítsa be a telepítést a"
 lang_help_QS_1_afterlink="an."
 lang_help_QS_1b="(opcionális): A bemeneti mappák automatikus felügyeletéhez telepíteni kell az inotify-tools csomagot."
 lang_help_QS_2="A synOCR megfelelő működéséhez új feladatot kell létrehozni a DSM Feladatütemezőben."
-# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="Ehhez nyissa meg a DSM vezérlőpultját."
 lang_help_QS_sub1_1="Feladat tervező"
 lang_help_QS_sub1_2="Hozzon létre"
@@ -409,16 +360,10 @@ lang_help_FAQ_sub4_2="Ellenőrizze, hogy a forrásmappához tartozó kívánt pr
 lang_help_FAQ_sub5_tit="a kérdésem nincs ott ..."
 lang_help_FAQ_sub5_beforelink="Minden egyéb kérdéssel és problémával kapcsolatban kérjük, használja a támogatási fórumot:"
 lang_help_FAQ_sub5_linktitle="synOCR támogatási fórum"
-lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="a synOCR-ről"
 lang_help_about_1="A projekt mindenekelőtt attól függ, hogy mennyi időt, energiát és vágyat tudok rá fordítani."
 lang_help_about_2="Azért kezdtem el, hogy megkönnyítsem a munkafolyamatomat a PDF dokumentumokkal, és örülök, ha mások is hasznosnak találják ezt a projektet. Ezért nem várok semmit cserébe!"
 lang_help_about_3="Azonban, ha valaki anyagilag boldoggá akar tenni, megteheti, ha erre a gombra kattint - KÖSZÖNÖM:"
-lang_help_about_4=""
-
-#-------------------------------------------
-# script synOCR-start.sh:
-#-------------------------------------------
 lang_synOCR_start_is_running="A synOCR már fut!"
 lang_synOCR_start_req_kill="Kényszer kilépés?"
 lang_synOCR_start_runs="A synOCR elindult"
@@ -432,10 +377,6 @@ lang_synOCR_start_target_created="A célkönyvtár létrehozásra került."
 lang_synOCR_start_umount_log="A titkosított LOG mappa nincs csatlakoztatva"
 lang_synOCR_start_errorexit="A synOCR hibásan megszakadt!"
 lang_synOCR_start_loginfo="További információk a LOG-ban"
-
-#-------------------------------------------
-# WIZARD_UIFILES:
-#-------------------------------------------
 lang_wizui_install_title="Megjegyzés a telepítéshez:"
 lang_wizui_install_desc="Az egyetlen előfeltétel a telepített Docker csomag. Normális esetben nincs szükség további konfigurációra a Dockerben."
 lang_wizui_uninstall_title="Eltávolítási értesítés"
@@ -448,9 +389,11 @@ lang_PKG_NOINSTALL_ERROR_PART2="a CPU architektúrával"
 lang_PKG_NOINSTALL_ERROR_PART3="a synOCR nem támogatja, mert a szükséges Docker csomag nem telepíthető (csak x86_64 / aarch64)"
 lang_PKG_DELETE_TIMER="A régebbi verziók beépített ütemezője már nem érhető el. Kérjük, használja a DSM feladattervezőt!"
 lang_INFO_description="A synOCR egy egyszerű GUI az OCRmyPDF Docker konténerhez. Segítségével könnyedén alkalmazhat OCR-t PDF dokumentumokra. A synOCR ezután képes címkéket és dátumokat keresni a dokumentumokban, egyedi minta szerint átnevezni és kategóriák szerint almappákba rendezni őket. A kemény hivatkozások használatával nem növekszik a tárhelyigény, ha egy dokumentumot több kategóriás mappába kell rendezni."
-
-#-------------------------------------------
-# miscellaneous:
-#-------------------------------------------
 lang_notify_file_job_successful="A PDF sikeresen feldolgozott."
 lang_notify_file_update_available="Frissítés elérhető!"
+lang_edit_profname="Profil neve"
+lang_edit_set2_delsearchpref_title=""
+lang_edit_set3_backuprotatetype_title=""
+lang_edit_yamlsample_23=""
+lang_help_FAQ_sub5_afterlink=""
+lang_help_about_4=""

@@ -1,11 +1,16 @@
-# german language file for synOCR-GUI
-# /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_nld.txt
-# translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
-machinetranslate="1"
+    #######################################################################################################
+    # Dutch language file for synOCR-GUI                                                                  #
+    #                                                                                                     #
+    # Path:                                                                                               #
+    #     /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_nld.txt                                      #
+    #                                                                                                     #
+    # translation instructions can you found here:                                                        #
+    #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
+    #                                                                                                     #
+    #     © 2022 by geimist                                                                               #
+    #######################################################################################################
 
-#-------------------------------------------
-# general:
-#-------------------------------------------
+machinetranslate="1"
 lang_page1="Overzicht"
 lang_page2="Configuratie"
 lang_page3="Dienstregeling"
@@ -31,13 +36,9 @@ lang_foot_buttondownDB="Download"
 lang_foot_buttondownDB_tit="Download de configuratie database ..."
 lang_foot_buttondelprof="Profiel verwijderen"
 lang_foot_buttondelprof_tit="verwijdert het huidige profiel na een bevestigingsprompt ..."
-
-#-------------------------------------------
-# page settings:
-#-------------------------------------------
 lang_edit_delques_1="Moet het huidige profiel"
 lang_edit_delques_2="worden gewist?"
-lang_edit_profname="Het profiel"
+lang_edit_delfin1="Het profiel"
 lang_edit_delfin2="werd verwijderd"
 lang_edit_deler="Fout bij het verwijderen van het profiel"
 lang_edit_dup1="Voer een naam in voor het gedupliceerde profiel"
@@ -53,44 +54,33 @@ lang_edit_new2="Een nieuw profiel met de naam"
 lang_edit_new3="werd gecreëerd"
 lang_edit_new4="Fout bij het aanmaken van het profiel!"
 lang_edit_savefin="Wijzigingen werden opgeslagen"
-
 lang_edit_summary1="Voer hier uw instellingen in en pas de paden aan."
 lang_edit_summary2="U kunt hulp krijgen voor de afzonderlijke velden door te klikken op het blauwe infosymbool in de rechtermarge."
 lang_edit_summary3="U kunt zo veel configuraties maken als u wilt via de profielen, die allemaal worden verwerkt bij elke programma-afloop. U kunt ook elk profiel deactiveren via het overeenkomstige veld."
 lang_edit_summary4="Zorg ervoor dat u de volledige paden invoert, inclusief het volume en dat u de juiste hoofdletters en kleine letters gebruikt. Het veiligste is om de gewenste map in het Filestation te zoeken en de eigenschappen te tonen door met de rechtermuisknop te klikken. In dit dialoogvenster kunt u het juiste pad kopiëren."
-
 lang_edit_dbupdate="Resultaat van DB-update"
 lang_edit_change_profile="naar profiel overschakelen"
-
 lang_edit_set1_title="Algemeen"
-
 lang_edit_set1_profilename_help="Profielen kunnen individueel worden benoemd"
-
 lang_edit_set1_profile_activ_title="Profiel activeren / deactiveren"
 lang_edit_set1_profile_activ="Profiel geactiveerd"
 lang_edit_set1_profile_inactiv="Profiel gedeactiveerd"
 lang_edit_set1_profile_activ_help1="Profielen kunnen worden geactiveerd of gedeactiveerd."
 lang_edit_set1_profile_activ_help2="Uitgeschakelde profielen kunnen worden gewijzigd maar zullen niet door synOCR worden uitgevoerd."
-
 lang_edit_set1_sourcedir_title="Bron map"
 lang_edit_set1_sourcedir_help1="Deze map wordt doorzocht op PDF-bestanden (niet recursief)."
 lang_edit_set1_sourcedir_help2="Gebruik het volledige pad"
-
 lang_edit_set1_targetdir_title="Doelmap"
 lang_edit_set1_targetdir_help1="Uitvoermap van de afgewerkte PDF-bestanden (wordt indien nodig aangemaakt)."
 lang_edit_set1_targetdir_help2="Gebruik het volledige pad"
-
 lang_edit_set1_backupdir_title="Back-up map"
 lang_edit_set1_backupdir_help1="Als hier een geldig pad wordt ingevoerd, worden de originele bestanden hier opgeslagen (worden indien nodig aangemaakt)."
 lang_edit_set1_backupdir_help2="Als er geen geldige directory is opgeslagen, worden de originele bestanden permanent gewist."
 lang_edit_set1_backupdir_help3="Gebruik het volledige pad"
-
 lang_edit_set1_logdir_title="Directory voor LOG-bestanden"
 lang_edit_set1_logdir_help1="Directory van de LOG-bestanden (wordt aangemaakt indien nodig)"
 lang_edit_set1_logdir_help2="Gebruik het volledige pad"
-
 lang_edit_set2_title="OCR-opties en hernoemen"
-
 lang_edit_set2_ocropt_title="OCR-opties"
 lang_edit_set2_ocropt_help1="Individuele parameters voor OCRmyPDF kunnen hier worden opgegeven"
 lang_edit_set2_ocropt_help2="PDF-bestanden met bestaande tekstlaag niet opnieuw coderen"
@@ -99,77 +89,63 @@ lang_edit_set2_ocropt_help4="automatisch omslaan van bladzijden"
 lang_edit_set2_ocropt_help5="Taalcode"
 lang_edit_set2_ocropt_help6="scheve scans rechtzetten"
 lang_edit_set2_ocropt_help7="volledige steun"
-
 lang_edit_set2_dockerimage_title="Docker image om te gebruiken"
 lang_edit_set2_dockerimage_help1="Welk Docker image moet worden gebruikt?"
 lang_edit_set2_dockerimage_help2="is de standaardafbeelding, maar bevat momenteel alleen de talen:"
 lang_edit_set2_dockerimage_help3="Polyglot afbeeldingen bevatten alle mogelijke talen, maar zijn groter!"
 lang_edit_set2_dockerimage_help4="Handmatig gedownloade of zelfgemaakte afbeeldingen kunnen ook worden geselecteerd, mits in de naam het volgende wordt vermeld:"
-
 lang_edit_set2_dockerimageupdate_title="Docker image up to date houden"
 lang_edit_set2_dockerimageupdate_yes="up to date houden (standaard)"
 lang_edit_set2_dockerimageupdate_no="Behoud versie"
 lang_edit_set2_dockerimageupdate_help1="Docker images met :latest tag kunnen worden bijgewerkt."
-
 lang_edit_set2_img2pdf_title="Afbeeldingen omzetten naar PDF"
 lang_edit_set2_img2pdf_no="Beelden overslaan"
 lang_edit_set2_img2pdf_yes="Afbeeldingen converteren"
 lang_edit_set2_img2pdf_help1="Afbeeldingen in de bronmap kunnen worden geconverteerd naar PDF-bestanden. Indien geactiveerd, worden ze vervolgens naar de back-upmap verplaatst."
-
 lang_edit_set2_searchpref_title="Zoekpatroon Naam bronbestand"
-lang_edit_set2_searchpref_help1="Alleen PDF's met een gedefinieerde prefix bewerken"
 lang_edit_set2_searchpref_help2="Blanco laten indien alle documenten moeten worden verwerkt"
 lang_edit_set2_searchpref_help3="aan het begin keert het zoeken om"
 lang_edit_set2_searchpref_help4="aan het eind definieert de term als een achtervoegsel"
-lang_edit_set2_delsearchpref_title=""
 lang_edit_set2_delsearchpref_keep="Behoud zoekpatroon"
 lang_edit_set2_delsearchpref_delete="Zoekpatroon verwijderen"
 lang_edit_set2_delsearchpref_help1="Moet de zoekterm daarna worden verwijderd?"
 lang_edit_set2_delsearchpref_help2="(handig als de bronmap ook de doelmap is)"
-
 lang_edit_set2_documentSplitPattern_title="Zoekpatroon documentscheidingsteken"
-lang_edit_set2_documentSplitPattern_help1="Hier kan een patroon worden gedefinieerd om een groot document automatisch op te splitsen in deeldocumenten. Het brondocument wordt gesplitst op de pagina's waar het opgegeven zoekpatroon is gevonden."
 lang_edit_set2_documentSplitPattern_help3="Hier vindt u een sjabloon om uit te printen:"
 lang_edit_set2_splitpagehandling_title="Behandeling van het scheidingsblad"
 lang_edit_set2_splitpagehandling_discard="weggooien"
 lang_edit_set2_splitpagehandling_isLastPage="is de laatste pagina"
 lang_edit_set2_splitpagehandling_isFirstPage="is de eerste pagina"
 lang_edit_set2_splitpagehandling_help1="Het scheidingsvel kan worden weggegooid (standaardinstelling) of worden toegewezen aan het voorgaande of volgende gebied."
-
 lang_edit_set2_taglist_title="Tags om naar te zoeken"
 lang_edit_set2_taglist_help1="De hier opgegeven tags worden in het document opgezocht en zijn beschikbaar voor hernoeming."
-lang_edit_set2_taglist_help2="Individuele tags worden gescheiden door puntkomma's."
 lang_edit_set2_taglist_help2_1="Er kan ook een pad naar een bestand met regels worden ingesteld."
 lang_edit_set2_taglist_help3="! ! ! GEBRUIK GEEN REGELEINDEN ! ! !"
 lang_edit_set2_taglist_help4="Tags en categorieën kunnen ook spaties bevatten."
-lang_edit_set2_taglist_help5="Als een tag slechts afzonderlijk moet worden gevonden, moet er een paragraafteken voor worden geplaatst (een zoekopdracht naar "
+lang_edit_set2_taglist_help5="Als een tag slechts afzonderlijk moet worden gevonden, moet er een paragraafteken voor worden geplaatst (een zoekopdracht naar"
 lang_edit_set2_taglist_help6="Factuur; Werk; Verzekering"
 lang_edit_set2_taglist_help7="Tags kunnen ook worden toegewezen aan een categorie (voor submappen) met behulp van een gelijkheidsteken (alleen van toepassing indien u ook gebruik maakt van door regels gedefinieerde mappen [optie hieronder])."
 lang_edit_set2_taglist_help8="Factuur;HUK24=verzekering;Allianz=verzekering"
 lang_edit_set2_taglist_help9="Uitgebreide tags kunnen ook in een apart tekstbestand worden opgeslagen."
 lang_edit_set2_taglist_help10="In dit geval moet hier het absolute pad worden ingevoerd."
-
 lang_edit_set2_searchall_title="Zoekbereik voor tags"
 lang_edit_set2_searchall_1page="Alleen de eerste pagina"
 lang_edit_set2_searchall_all="volledig document"
 lang_edit_set2_searchall_help1="In welk gebied moet ik naar tags zoeken?"
 lang_edit_set2_searchall_help2="Standaard staat alleen op de eerste pagina. Hoe groter het zoekgebied, hoe meer valse positieven er zijn."
-
 lang_edit_set2_moveTaggedFiles_title="Gebruik tag subdirectories"
 lang_edit_set2_moveTaggedFiles_targetdir="Bewaar in de doelmap"
 lang_edit_set2_moveTaggedFiles_useCatDir="Gebruik mappen die door regels zijn gedefinieerd"
 lang_edit_set2_moveTaggedFiles_useTagDir="gebruik mappen op basis van tags"
 lang_edit_set2_moveTaggedFiles_useYearDir="Gebruik jaarmappen"
-lang_edit_set2_moveTaggedFiles_useYearMonthDir="gebruik jaarmappen "
+lang_edit_set2_moveTaggedFiles_useYearMonthDir="gebruik jaarmappen"
 lang_edit_set2_moveTaggedFiles_help1="Welke sortering moet worden gebruikt:"
 lang_edit_set2_moveTaggedFiles_help2="Tag subdirectories of categorie mappen"
 lang_edit_set2_moveTaggedFiles_help3="Door regels gedefinieerde mappen"
 lang_edit_set2_moveTaggedFiles_help4="Jaarlijks dossier"
 lang_edit_set2_moveTaggedFiles_help5="Jaar/Maand Map"
 lang_edit_set2_moveTaggedFiles_help6="Indien meerdere tags van toepassing zijn, worden harde links ingesteld."
-
 lang_edit_set2_renamesyntax_title="OCR Hernoem Syntax"
-lang_edit_set2_renamesyntax_help1="Hernoem voltooide PDF's met een specifieke syntaxis. De variabelen kunnen ook worden gebruikt in doelpaden in YAML regels (behalve voor §tit)."
 lang_edit_set2_renamesyntax_help2="De volgende variabelen zijn mogelijk in combinatie met doorlopende tekst"
 lang_edit_set2_renamesyntax_help3="(Speciale tekens kunnen onvoorspelbare gevolgen hebben!)"
 lang_edit_set2_renamesyntax_help4="Datum / Dag - gevonden in tekst"
@@ -199,83 +175,66 @@ lang_edit_set2_renamesyntax_help20="Paginateller (gebruikt profiel)"
 lang_edit_set2_renamesyntax_help21="Bestandsteller (gebruikt profiel)"
 lang_edit_set2_renamesyntax_help15="genereert"
 lang_edit_set2_renamesyntax_help17="Datums worden eerst in het document gezocht. Indien dit niet lukt, wordt de bestandsdatum gebruikt."
-
 lang_edit_set2_tagsymbol_title="Markeer tags in de bestandsnaam"
 lang_edit_set2_tagsymbol_help1="gevonden tags kunnen worden gemarkeerd in de bestandsnaam"
 lang_edit_set2_tagsymbol_help2="(Speciale tekens kunnen onvoorspelbare gevolgen hebben!)"
-
 lang_edit_set2_filedate_title="Juiste bestandsdatum"
 lang_edit_set2_filedate_now="huidig tijdstip"
 lang_edit_set2_filedate_ocr="Gebruik gevonden OCR datum"
 lang_edit_set2_filedate_source="Gebruik de datum van het bronbestand"
 lang_edit_set2_filedate_help1="Hoe moet de datum van het doelbestand worden aangepast?"
 lang_edit_set2_filedate_help2="Als de OCR-datum is geselecteerd maar geen datum is gevonden, wordt de datum van het bronbestand gebruikt."
-
 lang_edit_set2_ignoredDate_title="Negeer gegevens"
 lang_edit_set2_ignoredDate_help1="Gespecificeerde gegevens worden bij het zoeken genegeerd. Er kunnen meerdere data worden ingevoerd (gescheiden door spaties). Het juiste formaat is belangrijk: JJJJ-MM-DD (bijv. 2021-02-29 2021-04-31)."
-
 lang_edit_set2_DateSearchMinYear_title="Zoekbereik in het verleden"
 lang_edit_set2_DateSearchMinYear_help1="Voer hier het absolute jaar of een relatief aantal jaren in dat moet worden beschouwd als een geldige datum in het verleden."
 lang_edit_set2_DateSearchMinYear_help2="Een getal van vier cijfers wordt geteld als een absoluut jaar. Minder dan vier cijfers als relatieve jaarafwijking."
 lang_edit_set2_DateSearchMinYear_help3="Een lege waarde of 0 wordt als onbeperkt beschouwd."
-
 lang_edit_set2_DateSearchMaxYear_title="Zoekgebied in de toekomst"
 lang_edit_set2_DateSearchMaxYear_help1="Voer hier het absolute jaar in of een relatief aantal jaren dat moet worden aangehouden als een geldige datum in de toekomst."
 lang_edit_set2_DateSearchMaxYear_help2="Een lege waarde of 0 wordt als onbeperkt beschouwd."
-
 lang_edit_set2_filedate_search_nearest_date_title="Datum Volgorde zoekresultaten"
 lang_edit_set2_filedate_search_nearest_firstfound="1e treffer in document"
 lang_edit_set2_filedate_search_nearest_nearest="Meest recente datum in het verleden"
 lang_edit_set2_filedate_search_nearest_help1="Welke bevinding van het datumonderzoek moet worden gebruikt?"
 lang_edit_set2_filedate_search_nearest_help2="De eerste in het document of de dichtstbijzijnde datum in het verleden van alle vondsten? (geldt alleen voor de Python-gebaseerde zoekactie!)"
-
 lang_edit_set2_date_search_method_title="Datum zoekmethode"
 lang_edit_set2_date_search_method_python="Python"
 lang_edit_set2_date_search_method_regex="RegEx"
 lang_edit_set2_date_search_method_help1="De volgende opties zijn beschikbaar voor het zoeken op datum: Python script en de zoekopdracht als een reguliere expressie."
 lang_edit_set2_date_search_method_help2="Het Python script zoekt uitgebreider en vindt ook, bijvoorbeeld, uitgeschreven maanden. De eerste vereiste is een geïnstalleerde Python3. Noodzakelijke modules worden door synOCR geïnstalleerd."
 lang_edit_set2_date_search_method_help3="Het zoeken als een reguliere expressie vindt alleen getalnotaties, maar is niet afhankelijk van andere software en is sneller."
-
 lang_edit_set2_clean_up_spaces_title="Ruimte Opgeruimd Zoeken"
 lang_edit_set2_clean_up_spaces_true="Ruimtes opruimen"
 lang_edit_set2_clean_up_spaces_false="Zoeken in oorspronkelijke tekst"
 lang_edit_set2_clean_up_spaces_help1="Als ruimteschoonmaak is geactiveerd, worden meerdere ruimten teruggebracht tot één. Soms herkent OCR het oorspronkelijke aantal spaties niet, of is het niet altijd hetzelfde. Vooral bij RegEx-zoekopdrachten kan het nuttig zijn als het exacte getal wordt gedefinieerd."
 lang_edit_set2_clean_up_spaces_help2="De instelling beïnvloedt alle zoekacties in het document (datum, tags, ...). Het originele document wordt niet gewijzigd, alleen het tijdelijke tekstuittreksel."
-
 lang_edit_set3_title="DSM-kennisgeving en andere instellingen"
-
 lang_edit_set3_backuprotate_title="Back-upbestanden beperken"
 lang_edit_set3_backuprotate_help1="Overtollige back-ups kunnen automatisch worden verwijderd."
 lang_edit_set3_backuprotate_help2="Selecteer dagen of bestanden als eenheid."
 lang_edit_set3_backuprotate_help3="Een blanco vermelding heft de beperking op."
-lang_edit_set3_backuprotatetype_title=""
 lang_edit_set3_backuprotatetype_files="Bestanden"
 lang_edit_set3_backuprotatetype_days="Dagen"
-
 lang_edit_set3_logmax_title="Maximum LOG-bestanden"
 lang_edit_set3_logmax_help="Maximum aantal LOG bestanden (lege logs worden onmiddellijk gewist)"
-
 lang_edit_set3_dsmtextnotify_title="Systeemmelding (tekst)"
 lang_edit_set3_dsmtextnotify_on="a"
 lang_edit_set3_dsmtextnotify_off="van"
 lang_edit_set3_dsmtextnotify_help1="a ➜ Melding per tekst actief in het meldingscentrum"
 lang_edit_set3_dsmtextnotify_help2="uit ➜ geen tekstmelding"
-
 lang_edit_set3_MessageTo_title="Kennisgeving aan gebruiker"
 lang_edit_set3_MessageTo_help1="Gebruiker naar wie de meldingen worden gestuurd."
-lang_edit_set3_MessageTo_help2="Op deze manier, in combinatie met het pakket "
-lang_edit_set3_MessageTo_help3="Als de waarde leeg blijft, is de groep "
-
+lang_edit_set3_MessageTo_help2="Op deze manier, in combinatie met het pakket"
+lang_edit_set3_MessageTo_help3="Als de waarde leeg blijft, is de groep"
 lang_edit_set3_PBTOKEN_title="PushBullet token"
 lang_edit_set3_PBTOKEN_help1="Uw persoonlijke PushBullet token."
 lang_edit_set3_PBTOKEN_help2="Kennisgevingen worden naar de juiste rekening gestuurd."
 lang_edit_set3_PBTOKEN_help3="Leeg laten wanneer niet in gebruik."
-
 lang_edit_set3_dsmbeepnotify_title="Systeemmelding (pieptoon)"
 lang_edit_set3_dsmbeepnotify_on="a"
 lang_edit_set3_dsmbeepnotify_off="van"
 lang_edit_set3_dsmbeepnotify_help1="Een korte pieptoon zodra een PDF is voltooid."
-
 lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
 lang_edit_set3_loglevel_off="0 (uit)"
 lang_edit_set3_loglevel_1="1 (standaard)"
@@ -283,20 +242,17 @@ lang_edit_set3_loglevel_2="2 (debug-modus)"
 lang_edit_set3_loglevel_help1="0 ➜ er wordt geen logbestand aangemaakt"
 lang_edit_set3_loglevel_help2="1 ➜ normale log (standaard)"
 lang_edit_set3_loglevel_help3="2 ➜ debugging log"
-
 lang_edit_set3_accept_cpdf_license_title="Vergunningsvoorwaarden"
 lang_edit_set3_accept_cpdf_license_no="Vergunning geweigerd"
 lang_edit_set3_accept_cpdf_license_yes="Ik accepteer de vergunning"
-lang_edit_set3_accept_cpdf_license_help1="cpdf is een opdrachtregelgereedschap dat synOCR kan gebruiken om extra functies te bieden (b.v. scheidingspagina's)."
 lang_edit_set3_accept_cpdf_license_help2="cpdf mag alleen gratis worden gebruikt voor niet-commercieel gebruik. De gebruiker kan hier zelf over beslissen."
 lang_edit_set3_accept_cpdf_license_help3="Oorspronkelijke bewoording:"
-
 lang_edit_yamlsample_01="Het volgende pad moet in het gewenste profiel worden ingevoerd in het veld voor de tags"
 lang_edit_yamlsample_02="GELIEVE DEZE INSTRUCTIES TE VOLGEN"
 lang_edit_yamlsample_03="het is zeer belangrijk om de juiste inkepingen aan te brengen"
 lang_edit_yamlsample_04="gebruik geen tapstoppen - alleen spaties!"
 lang_edit_yamlsample_05="Gebruik het exacte aantal spaties zoals aangegeven in het voorbeeld"
-lang_edit_yamlsample_06="Tip: kopiëren "
+lang_edit_yamlsample_06="Tip: kopiëren"
 lang_edit_yamlsample_07="gebruik geen Windows regeleinden!"
 lang_edit_yamlsample_08="moet het volgende sleutelwoord in het bestand worden opgenomen:"
 lang_edit_yamlsample_09="Hieronder volgt een beschrijving van de trefwoorden:"
@@ -307,7 +263,7 @@ lang_edit_yamlsample_12b="de naam mag niet met een cijfer beginnen"
 lang_edit_yamlsample_13="er moet een dubbele punt aan het eind staan"
 lang_edit_yamlsample_14="elk blok definieert EEN tag en EEN actie (move), indien gedefinieerd"
 lang_edit_yamlsample_15="Syntaxis:"
-lang_edit_yamlsample_16="een spatie tussen dubbele punt "
+lang_edit_yamlsample_16="een spatie tussen dubbele punt"
 lang_edit_yamlsample_17="VALUE wordt gebruikt als een markering wanneer aan de regel is voldaan"
 lang_edit_yamlsample_17a="Alleen Latijnse letters / geen speciale tekens!"
 lang_edit_yamlsample_17b="indien VALUE niet gevonden wordt, dient tagname als noodoplossing"
@@ -317,7 +273,6 @@ lang_edit_yamlsample_20="VALUE is een pad als aan de regel is voldaan"
 lang_edit_yamlsample_21="het kan een absoluut pad zijn"
 lang_edit_yamlsample_22a="als het geen absoluut pad is, wordt het"
 lang_edit_yamlsample_22b="aangemaakt relatief aan de doelmap gedefinieerd in de GUI"
-lang_edit_yamlsample_23=""
 lang_edit_yamlsample_24="aan hoeveel zoekregels moet zijn voldaan om aan de regel te voldoen"
 lang_edit_yamlsample_25="WAARDE is"
 lang_edit_yamlsample_26="aan alle zoekregels moet zijn voldaan"
@@ -345,10 +300,6 @@ lang_edit_yamlsample_button_help_03="- een backup van de bestaande regels wordt 
 lang_edit_yamlsample_gui_01="Het regelbestand bestaat al!"
 lang_edit_yamlsample_gui_02="Verwijder het bestaande bestand en probeer het opnieuw"
 lang_edit_yamlsample_gui_03="Het regels bestand is succesvol aangemaakt."
-
-#-------------------------------------------
-# page main:
-#-------------------------------------------
 lang_main_title1="OCR op Synology DSM"
 lang_main_title2="Beschrijving"
 lang_main_monitor_restart_necessary_1="De lijst van bewaakte invoermappen is niet meer up-to-date!"
@@ -367,17 +318,11 @@ lang_main_openjobs="Open taken"
 lang_main_openfilecount="Bestanden bewerken"
 lang_main_alldone="Alles klaar"
 lang_main_totalsince="Totaal sinds"
-lang_main_pages="Pagina's"
-
-#-------------------------------------------
-# page help:
-#-------------------------------------------
 lang_help_title_QS="Snelle start"
 lang_help_QS_1_beforelink="Pas eerst uw installatie aan in de"
 lang_help_QS_1_afterlink="an."
 lang_help_QS_1b="(facultatief): Om invoermappen automatisch te controleren, moet het pakket inotify-tools geïnstalleerd zijn."
 lang_help_QS_2="Voor een goede werking van synOCR moet een nieuwe taak worden aangemaakt in de DSM Task Scheduler."
-# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="Om dit te doen, opent u het configuratiescherm in de DSM"
 lang_help_QS_sub1_1="Taakplanner"
 lang_help_QS_sub1_2="Maak"
@@ -409,16 +354,10 @@ lang_help_FAQ_sub4_2="Controleer of het gewenste profiel voor de bronmap ook in 
 lang_help_FAQ_sub5_tit="mijn vraag is er niet ..."
 lang_help_FAQ_sub5_beforelink="Voor alle andere vragen en problemen kunt u het ondersteuningsforum gebruiken:"
 lang_help_FAQ_sub5_linktitle="synOCR ondersteuningsforum"
-lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="over synOCR"
 lang_help_about_1="Het project hangt vooral af van de tijd, de energie en de wil die ik eraan kan besteden."
 lang_help_about_2="Begonnen om mijn workflow met PDF-documenten eenvoudiger te maken, is het voor mij ook een plezier als anderen dit project nuttig vinden. Daarom verwacht ik er niets voor terug!"
 lang_help_about_3="Maar als iemand mij financieel gelukkig wil maken, kan dat door op deze knop te klikken - DANK JE:"
-lang_help_about_4=""
-
-#-------------------------------------------
-# script synOCR-start.sh:
-#-------------------------------------------
 lang_synOCR_start_is_running="synOCR draait al!"
 lang_synOCR_start_req_kill="Geforceerd stoppen?"
 lang_synOCR_start_runs="synOCR werd gelanceerd"
@@ -432,10 +371,6 @@ lang_synOCR_start_target_created="Doelmap is aangemaakt."
 lang_synOCR_start_umount_log="Gecodeerde LOG-map niet gemount"
 lang_synOCR_start_errorexit="synOCR werd beëindigd met fouten!"
 lang_synOCR_start_loginfo="Nadere informatie in het LOG"
-
-#-------------------------------------------
-# WIZARD_UIFILES:
-#-------------------------------------------
 lang_wizui_install_title="Opmerking over de installatie:"
 lang_wizui_install_desc="De enige vereiste is het geïnstalleerde Docker pakket. Normaal gezien is er geen verdere configuratie in Docker nodig."
 lang_wizui_uninstall_title="Kennisgeving van de-installatie"
@@ -448,9 +383,17 @@ lang_PKG_NOINSTALL_ERROR_PART2="met de CPU architectuur"
 lang_PKG_NOINSTALL_ERROR_PART3="wordt niet ondersteund door synOCR omdat het vereiste Docker-pakket niet kan worden geïnstalleerd (alleen x86_64 / aarch64)"
 lang_PKG_DELETE_TIMER="De ingebouwde planner van oudere versies is niet langer beschikbaar. Gebruik alstublieft de DSM taakplanner!"
 lang_INFO_description="synOCR is een eenvoudige GUI voor de Docker container OCRmyPDF. Hiermee kunt u eenvoudig OCR toepassen op PDF-documenten. synOCR kan vervolgens zoeken naar tags en data in de documenten, ze hernoemen volgens een individueel patroon en ze sorteren in submappen volgens categorieën. Door het gebruik van harde koppelingen is er geen grotere opslagruimte nodig als een document in verschillende categoriemappen moet worden gesorteerd."
-
-#-------------------------------------------
-# miscellaneous:
-#-------------------------------------------
 lang_notify_file_job_successful="PDF is succesvol verwerkt."
 lang_notify_file_update_available="Update beschikbaar!"
+lang_edit_set2_searchpref_help1="Alleen PDF's met een gedefinieerde prefix bewerken"
+lang_edit_set2_documentSplitPattern_help1="Hier kan een patroon worden gedefinieerd om een groot document automatisch op te splitsen in deeldocumenten. Het brondocument wordt gesplitst op de pagina's waar het opgegeven zoekpatroon is gevonden."
+lang_edit_set2_taglist_help2="Individuele tags worden gescheiden door puntkomma's."
+lang_edit_set2_renamesyntax_help1="Hernoem voltooide PDF's met een specifieke syntaxis. De variabelen kunnen ook worden gebruikt in doelpaden in YAML regels (behalve voor §tit)."
+lang_edit_set3_accept_cpdf_license_help1="cpdf is een opdrachtregelgereedschap dat synOCR kan gebruiken om extra functies te bieden (b.v. scheidingspagina's)."
+lang_main_pages="Pagina's"
+lang_edit_profname="Profiel naam"
+lang_edit_set2_delsearchpref_title=""
+lang_edit_set3_backuprotatetype_title=""
+lang_edit_yamlsample_23=""
+lang_help_FAQ_sub5_afterlink=""
+lang_help_about_4=""

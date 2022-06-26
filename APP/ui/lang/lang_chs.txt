@@ -1,11 +1,16 @@
-# german language file for synOCR-GUI
-# /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_chs.txt
-# translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
-machinetranslate="1"
+    #######################################################################################################
+    # Chinese simplified language file for synOCR-GUI                                                     #
+    #                                                                                                     #
+    # Path:                                                                                               #
+    #     /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_chs.txt                                      #
+    #                                                                                                     #
+    # translation instructions can you found here:                                                        #
+    #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
+    #                                                                                                     #
+    #     © 2022 by geimist                                                                               #
+    #######################################################################################################
 
-#-------------------------------------------
-# general:
-#-------------------------------------------
+machinetranslate="1"
 lang_page1="概述"
 lang_page2="配置"
 lang_page3="时间表"
@@ -31,13 +36,9 @@ lang_foot_buttondownDB="下载"
 lang_foot_buttondownDB_tit="下载配置数据库..."
 lang_foot_buttondelprof="删除简介"
 lang_foot_buttondelprof_tit="在确认提示后删除当前的配置文件 ..."
-
-#-------------------------------------------
-# page settings:
-#-------------------------------------------
 lang_edit_delques_1="如果当前的配置文件"
 lang_edit_delques_2="被删除？"
-lang_edit_profname="简介"
+lang_edit_delfin1="简介"
 lang_edit_delfin2="被删除"
 lang_edit_deler="删除资料时出错"
 lang_edit_dup1="请为重复的资料输入一个名称"
@@ -53,44 +54,33 @@ lang_edit_new2="一个新的配置文件，名称为"
 lang_edit_new3="创建了"
 lang_edit_new4="创建资料时出错了!"
 lang_edit_savefin="更改被保存"
-
 lang_edit_summary1="在这里输入你的设置并调整路径。"
 lang_edit_summary2="你可以通过点击右边空白处的蓝色信息符号来获得各个领域的帮助。"
 lang_edit_summary3="你可以通过配置文件创建任意多的配置，这些配置在每次程序运行时都被处理。你也可以通过相应的字段停用每个配置文件。"
 lang_edit_summary4="确保你输入完整的路径，包括卷，并使用正确的大写和小写字母。最安全的做法是在Filestation中搜索所需的文件夹，并通过右键点击显示属性。在这个对话中，你可以复制正确的路径。"
-
 lang_edit_dbupdate="DB更新的结果"
 lang_edit_change_profile="切换到配置文件"
-
 lang_edit_set1_title="一般"
-
 lang_edit_set1_profilename_help="配置文件可以单独命名"
-
 lang_edit_set1_profile_activ_title="激活/停用个人资料"
 lang_edit_set1_profile_activ="激活简介"
 lang_edit_set1_profile_inactiv="已停用的资料"
 lang_edit_set1_profile_activ_help1="预案可以被激活或停用。"
 lang_edit_set1_profile_activ_help2="被禁用的配置文件可以被修改，但不会被synOCR执行。"
-
 lang_edit_set1_sourcedir_title="来源目录"
 lang_edit_set1_sourcedir_help1="这个目录会被搜索到PDF文件（非递归）。"
 lang_edit_set1_sourcedir_help2="使用完整的路径"
-
 lang_edit_set1_targetdir_title="目标目录"
 lang_edit_set1_targetdir_help1="完成的PDF文件的输出目录（必要时将创建）。"
 lang_edit_set1_targetdir_help2="使用完整的路径"
-
 lang_edit_set1_backupdir_title="备份目录"
 lang_edit_set1_backupdir_help1="如果在这里输入了有效的路径，原始文件就会被保存在这里（必要时将被创建）。"
 lang_edit_set1_backupdir_help2="如果没有存储有效的目录，原始文件将被永久删除。"
 lang_edit_set1_backupdir_help3="使用完整的路径"
-
 lang_edit_set1_logdir_title="LOG文件的目录"
 lang_edit_set1_logdir_help1="LOG文件的目录（必要时将创建）。"
 lang_edit_set1_logdir_help2="使用完整的路径"
-
 lang_edit_set2_title="OCR选项和重命名"
-
 lang_edit_set2_ocropt_title="OCR选项"
 lang_edit_set2_ocropt_help1="OCRmyPDF的个别参数可以在这里指定"
 lang_edit_set2_ocropt_help2="不要用现有的文本层重新OCR PDF文件"
@@ -99,34 +89,28 @@ lang_edit_set2_ocropt_help4="自动翻页"
 lang_edit_set2_ocropt_help5="语言代码"
 lang_edit_set2_ocropt_help6="纠正偏斜的扫描"
 lang_edit_set2_ocropt_help7="完全协助"
-
 lang_edit_set2_dockerimage_title="要使用的Docker镜像"
 lang_edit_set2_dockerimage_help1="应该使用哪个Docker镜像？"
 lang_edit_set2_dockerimage_help2="是标准图像，但目前只包含语言。"
 lang_edit_set2_dockerimage_help3="多语言图像包含所有可能的语言，但体积更大"
 lang_edit_set2_dockerimage_help4="手动下载或自创的图像也可以选择，但名称中必须包括以下内容。"
-
 lang_edit_set2_dockerimageupdate_title="保持Docker镜像的更新"
 lang_edit_set2_dockerimageupdate_yes="保持更新（标准）"
 lang_edit_set2_dockerimageupdate_no="保持版本"
 lang_edit_set2_dockerimageupdate_help1="带有:最新标签的Docker镜像可以被更新。"
-
 lang_edit_set2_img2pdf_title="将图像转换为PDF"
 lang_edit_set2_img2pdf_no="跳过图片"
 lang_edit_set2_img2pdf_yes="转换图像"
 lang_edit_set2_img2pdf_help1="源文件夹中的图像可以被转换为PDF文件。如果激活，它们就会被移到备份文件夹。"
-
 lang_edit_set2_searchpref_title="搜索模式 源文件名"
 lang_edit_set2_searchpref_help1="只编辑有定义前缀的PDF文件"
 lang_edit_set2_searchpref_help2="如果所有文件都要处理，请留空"
 lang_edit_set2_searchpref_help3="在开始时将搜索倒置"
 lang_edit_set2_searchpref_help4="在结尾处将该词定义为一个后缀"
-lang_edit_set2_delsearchpref_title=""
 lang_edit_set2_delsearchpref_keep="保留搜索模式"
 lang_edit_set2_delsearchpref_delete="移除搜索模式"
 lang_edit_set2_delsearchpref_help1="事后是否应该删除搜索表达？"
 lang_edit_set2_delsearchpref_help2="(如果源文件夹也是目标文件夹，则很有帮助。）"
-
 lang_edit_set2_documentSplitPattern_title="搜索模式文件分离器"
 lang_edit_set2_documentSplitPattern_help1="在这里可以定义一个模式，将一个大文件自动分割成部分文件。源文件在找到指定搜索模式的页面上被分割。"
 lang_edit_set2_documentSplitPattern_help3="在这里你会发现一个可以打印出来的模板。"
@@ -135,39 +119,35 @@ lang_edit_set2_splitpagehandling_discard="弃置"
 lang_edit_set2_splitpagehandling_isLastPage="是最后一页"
 lang_edit_set2_splitpagehandling_isFirstPage="是第一页"
 lang_edit_set2_splitpagehandling_help1="分隔页可以被丢弃（默认设置）或分配到前面或后面的区域。"
-
 lang_edit_set2_taglist_title="要搜索的标签"
 lang_edit_set2_taglist_help1="这里指定的标签在文件中被搜索到，并可用于重命名。"
 lang_edit_set2_taglist_help2="单个标签由分号分隔。"
 lang_edit_set2_taglist_help2_1="也可以设置一个规则文件的路径。"
 lang_edit_set2_taglist_help3="!!!请勿使用换行符!!!"
 lang_edit_set2_taglist_help4="标签和类别也可以包含空格。"
-lang_edit_set2_taglist_help5="如果一个标签只需要找到一个，则必须在前面加上一个段落符号（搜索为 "
+lang_edit_set2_taglist_help5="如果一个标签只需要找到一个，则必须在前面加上一个段落符号（搜索为"
 lang_edit_set2_taglist_help6="发票;工作;保险"
 lang_edit_set2_taglist_help7="标签也可以用等号分配给一个类别（用于子文件夹）（只适用于你也使用规则定义的文件夹[下面的选项]）。"
 lang_edit_set2_taglist_help8="发票；HUK24=保险；Allianz=保险"
 lang_edit_set2_taglist_help9="广泛的标签也可以保存在一个单独的文本文件中。"
 lang_edit_set2_taglist_help10="在这种情况下，要在这里输入绝对路径。"
-
 lang_edit_set2_searchall_title="标签的搜索范围"
 lang_edit_set2_searchall_1page="仅第一页"
 lang_edit_set2_searchall_all="整个文件"
 lang_edit_set2_searchall_help1="我应该在哪个领域搜索标签？"
 lang_edit_set2_searchall_help2="标准只在第一页。搜索区域越大，假阳性就越多。"
-
 lang_edit_set2_moveTaggedFiles_title="使用标签子目录"
 lang_edit_set2_moveTaggedFiles_targetdir="保存在目标文件夹中"
 lang_edit_set2_moveTaggedFiles_useCatDir="使用规则定义的文件夹"
 lang_edit_set2_moveTaggedFiles_useTagDir="使用基于标签的文件夹"
 lang_edit_set2_moveTaggedFiles_useYearDir="使用年度文件夹"
-lang_edit_set2_moveTaggedFiles_useYearMonthDir="使用年度文件夹 "
+lang_edit_set2_moveTaggedFiles_useYearMonthDir="使用年度文件夹"
 lang_edit_set2_moveTaggedFiles_help1="应该使用哪种排序方式。"
 lang_edit_set2_moveTaggedFiles_help2="标签子目录或类别文件夹"
 lang_edit_set2_moveTaggedFiles_help3="规则定义的文件夹"
 lang_edit_set2_moveTaggedFiles_help4="年度文件"
 lang_edit_set2_moveTaggedFiles_help5="年/月文件夹"
 lang_edit_set2_moveTaggedFiles_help6="如果有几个标签适用，就会设置硬链接。"
-
 lang_edit_set2_renamesyntax_title="OCR重命名语法"
 lang_edit_set2_renamesyntax_help1="用特定的语法重命名完成的PDF。这些变量也可以在YAML规则的目标路径中使用（§tit除外）。"
 lang_edit_set2_renamesyntax_help2="以下变量可以与连续文本结合使用"
@@ -199,83 +179,66 @@ lang_edit_set2_renamesyntax_help20="页面计数器（使用的配置文件）�
 lang_edit_set2_renamesyntax_help21="文件计数器（使用的配置文件）。"
 lang_edit_set2_renamesyntax_help15="生成"
 lang_edit_set2_renamesyntax_help17="日期首先在文件中搜索。如果不成功，则使用文件日期。"
-
 lang_edit_set2_tagsymbol_title="在文件名中标记标签"
 lang_edit_set2_tagsymbol_help1="找到的标签可以在文件名中标注"
 lang_edit_set2_tagsymbol_help2="(特殊字符会产生不可预知的后果！)"
-
 lang_edit_set2_filedate_title="正确的文件日期"
 lang_edit_set2_filedate_now="当前时间"
 lang_edit_set2_filedate_ocr="使用发现的OCR日期"
 lang_edit_set2_filedate_source="使用源文件的日期"
 lang_edit_set2_filedate_help1="目标文件的日期应如何调整？"
 lang_edit_set2_filedate_help2="如果选择了OCR日期但没有找到，则使用源文件的日期。"
-
 lang_edit_set2_ignoredDate_title="忽略数据"
 lang_edit_set2_ignoredDate_help1="指定的数据在搜索中被忽略。可以输入几个日期（用空格分隔）。正确的格式很重要：YYY-MM-DD（例如：2021-02-29 2021-04-31）。"
-
 lang_edit_set2_DateSearchMinYear_title="过去的搜索范围"
 lang_edit_set2_DateSearchMinYear_help1="在此输入绝对年份或相对年数，作为过去的有效日期来观察。"
 lang_edit_set2_DateSearchMinYear_help2="一个四位数的数字被算作一个绝对年份。小于四位数作为相对年份的偏差。"
 lang_edit_set2_DateSearchMinYear_help3="一个空值或0被认为是无限的。"
-
 lang_edit_set2_DateSearchMaxYear_title="未来的搜索领域"
 lang_edit_set2_DateSearchMaxYear_help1="在此输入绝对年份或相对年份，作为未来的有效日期来观察。"
 lang_edit_set2_DateSearchMaxYear_help2="一个空值或0被认为是无限的。"
-
 lang_edit_set2_filedate_search_nearest_date_title="日期 搜索结果顺序"
 lang_edit_set2_filedate_search_nearest_firstfound="文件中的第1次点击"
 lang_edit_set2_filedate_search_nearest_nearest="过去最近期的日期"
 lang_edit_set2_filedate_search_nearest_help1="应该使用哪种日期搜索的结果？"
 lang_edit_set2_filedate_search_nearest_help2="是文件中的第一个还是所有发现中最接近的日期？(只适用于基于Python的搜索！)"
-
 lang_edit_set2_date_search_method_title="日期搜索方法"
 lang_edit_set2_date_search_method_python="蟒蛇"
 lang_edit_set2_date_search_method_regex="寄存器Ex"
 lang_edit_set2_date_search_method_help1="下列选项可用于日期搜索。Python脚本和作为正则表达式的搜索。"
 lang_edit_set2_date_search_method_help2="Python脚本的搜索范围更广，也能找到例如写出的月份。先决条件是安装了Python3。必要的模块是由synOCR安装的。"
 lang_edit_set2_date_search_method_help3="作为正则表达式的搜索只能找到数字格式，但不依赖任何其他软件，而且速度更快。"
-
 lang_edit_set2_clean_up_spaces_title="空间清洁搜索"
 lang_edit_set2_clean_up_spaces_true="清理空间"
 lang_edit_set2_clean_up_spaces_false="在原始文本中搜索"
 lang_edit_set2_clean_up_spaces_help1="如果空间清理被激活，多个空间将被缩减为一个。有时OCR不能识别原始的空格数，或者它不总是相同。特别是在RegEx搜索中，如果定义了准确的数字，会很有帮助。"
 lang_edit_set2_clean_up_spaces_help2="该设置影响到文件中的所有搜索（日期、标签...）。原始文件没有改变，只有临时文本摘录。"
-
 lang_edit_set3_title="DSM通知和其他设置"
-
 lang_edit_set3_backuprotate_title="限制备份文件"
 lang_edit_set3_backuprotate_help1="过多的备份可以被自动删除。"
 lang_edit_set3_backuprotate_help2="选择天或文件作为单位。"
 lang_edit_set3_backuprotate_help3="空白条目可消除限制。"
-lang_edit_set3_backuprotatetype_title=""
 lang_edit_set3_backuprotatetype_files="文件"
 lang_edit_set3_backuprotatetype_days="天数"
-
 lang_edit_set3_logmax_title="最大的LOG文件"
 lang_edit_set3_logmax_help="LOG文件的最大数量（空的日志会立即删除）。"
-
 lang_edit_set3_dsmtextnotify_title="系统通知（文本）"
 lang_edit_set3_dsmtextnotify_on="a"
 lang_edit_set3_dsmtextnotify_off="从"
 lang_edit_set3_dsmtextnotify_help1="a➜ 在通知中心激活文本通知"
 lang_edit_set3_dsmtextnotify_help2="关闭➜ 无短信通知"
-
 lang_edit_set3_MessageTo_title="向用户发出通知"
 lang_edit_set3_MessageTo_help1="向其发送通知的用户。"
-lang_edit_set3_MessageTo_help2="这样一来，在与软件包的结合中 "
-lang_edit_set3_MessageTo_help3="如果该值保持为空，则该组为 "
-
+lang_edit_set3_MessageTo_help2="这样一来，在与软件包的结合中"
+lang_edit_set3_MessageTo_help3="如果该值保持为空，则该组为"
 lang_edit_set3_PBTOKEN_title="PushBullet令牌"
 lang_edit_set3_PBTOKEN_help1="你的个人PushBullet代币。"
 lang_edit_set3_PBTOKEN_help2="通知被发送到相应的账户。"
 lang_edit_set3_PBTOKEN_help3="不使用时留空。"
-
 lang_edit_set3_dsmbeepnotify_title="系统通知（哔哔声）。"
 lang_edit_set3_dsmbeepnotify_on="a"
 lang_edit_set3_dsmbeepnotify_off="从"
 lang_edit_set3_dsmbeepnotify_help1="当一个PDF完成时，会发出短促的提示音。"
-
 lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
 lang_edit_set3_loglevel_off="0 (关闭)"
 lang_edit_set3_loglevel_1="1 (标准)"
@@ -283,20 +246,18 @@ lang_edit_set3_loglevel_2="2 (调试模式)"
 lang_edit_set3_loglevel_help1="0➜ 不创建日志文件"
 lang_edit_set3_loglevel_help2="1➜ 正常对数(标准)"
 lang_edit_set3_loglevel_help3="2➜ 调试日志"
-
 lang_edit_set3_accept_cpdf_license_title="许可证条件"
 lang_edit_set3_accept_cpdf_license_no="许可证被拒绝"
 lang_edit_set3_accept_cpdf_license_yes="我接受该许可"
 lang_edit_set3_accept_cpdf_license_help1="cpdf是一个命令行工具，synOCR可以用它来提供额外的功能（例如分隔页）。"
 lang_edit_set3_accept_cpdf_license_help2="cpdf只能在非商业用途中免费使用。用户可以在此决定。"
 lang_edit_set3_accept_cpdf_license_help3="原来的措辞。"
-
 lang_edit_yamlsample_01="在所需的配置文件中，要在标签的字段中输入以下路径"
 lang_edit_yamlsample_02="请遵循这些指示"
 lang_edit_yamlsample_03="插入正确的压痕是非常重要的。"
 lang_edit_yamlsample_04="不要使用分接板--只能使用空格"
 lang_edit_yamlsample_05="使用精确的空格数，如例子所示"
-lang_edit_yamlsample_06="提示：复制 "
+lang_edit_yamlsample_06="提示：复制"
 lang_edit_yamlsample_07="请不要使用Windows的换行符!"
 lang_edit_yamlsample_08="文件中必须包括以下关键词。"
 lang_edit_yamlsample_09="下面是对关键词的描述。"
@@ -307,7 +268,7 @@ lang_edit_yamlsample_12b="该名称不能以数字开头"
 lang_edit_yamlsample_13="最后必须有一个冒号"
 lang_edit_yamlsample_14="每个区块定义了一个标签和一个动作（移动），如果定义了的话。"
 lang_edit_yamlsample_15="语法。"
-lang_edit_yamlsample_16="冒号之间有一个空格 "
+lang_edit_yamlsample_16="冒号之间有一个空格"
 lang_edit_yamlsample_17="当规则得到满足时，VALUE被用作标签。"
 lang_edit_yamlsample_17a="只有拉丁字母/没有特殊字符!"
 lang_edit_yamlsample_17b="如果找不到VALUE，tagname将作为后备方案。"
@@ -317,7 +278,6 @@ lang_edit_yamlsample_20="如果规则得到满足，VALUE是一个路径。"
 lang_edit_yamlsample_21="它可以是一个绝对路径"
 lang_edit_yamlsample_22a="如果它不是一个绝对路径，它将是"
 lang_edit_yamlsample_22b="相对于在GUI中定义的目标文件夹创建。"
-lang_edit_yamlsample_23=""
 lang_edit_yamlsample_24="必须满足多少条搜索规则才算完成了任务"
 lang_edit_yamlsample_25="价值是"
 lang_edit_yamlsample_26="必须满足所有的搜索规则"
@@ -345,10 +305,6 @@ lang_edit_yamlsample_button_help_03="- 在输入目录中创建一个现有规�
 lang_edit_yamlsample_gui_01="规则文件已经存在!"
 lang_edit_yamlsample_gui_02="请删除现有文件并重试"
 lang_edit_yamlsample_gui_03="规则文件已成功创建。"
-
-#-------------------------------------------
-# page main:
-#-------------------------------------------
 lang_main_title1="Synology DSM上的OCR"
 lang_main_title2="描述"
 lang_main_monitor_restart_necessary_1="受监控的输入文件夹列表不再是最新的了!"
@@ -368,16 +324,11 @@ lang_main_openfilecount="编辑文件"
 lang_main_alldone="全部完成"
 lang_main_totalsince="共计自"
 lang_main_pages="页数"
-
-#-------------------------------------------
-# page help:
-#-------------------------------------------
 lang_help_title_QS="快速启动"
 lang_help_QS_1_beforelink="首先调整你的安装，在"
 lang_help_QS_1_afterlink="一个。"
 lang_help_QS_1b="(可选)。为了自动监控输入文件夹，必须安装inotify-tools软件包。"
 lang_help_QS_2="为了使synOCR正常运行，必须在DSM任务调度器中创建一个新任务。"
-# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="要做到这一点，在DSM中打开控制面板"
 lang_help_QS_sub1_1="任务规划器"
 lang_help_QS_sub1_2="创建"
@@ -409,16 +360,10 @@ lang_help_FAQ_sub4_2="检查源文件夹的所需配置文件是否也在配置�
 lang_help_FAQ_sub5_tit="我的问题是不存在的..."
 lang_help_FAQ_sub5_beforelink="对于所有其他问题和难题，请使用支持论坛。"
 lang_help_FAQ_sub5_linktitle="协同作战支持论坛"
-lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="关于SynOCR"
 lang_help_about_1="这个项目首先取决于我能够投入的时间、精力和愿望。"
 lang_help_about_2="开始使我的PDF文件的工作流程更容易，如果其他人发现这个项目有帮助，我也很高兴。因此，我不期望有任何回报!"
 lang_help_about_3="然而，如果有人想让我在经济上感到高兴，他们可以通过点击这个按钮来实现 - 谢谢。"
-lang_help_about_4=""
-
-#-------------------------------------------
-# script synOCR-start.sh:
-#-------------------------------------------
 lang_synOCR_start_is_running="synOCR已经开始运行了!"
 lang_synOCR_start_req_kill="强制退出？"
 lang_synOCR_start_runs="推出了synOCR"
@@ -432,10 +377,6 @@ lang_synOCR_start_target_created="目标目录已被创建。"
 lang_synOCR_start_umount_log="加密的LOG文件夹没有安装"
 lang_synOCR_start_errorexit="synOCR被错误地终止了!"
 lang_synOCR_start_loginfo="LOG中的进一步信息"
-
-#-------------------------------------------
-# WIZARD_UIFILES:
-#-------------------------------------------
 lang_wizui_install_title="关于安装的注意事项。"
 lang_wizui_install_desc="唯一的先决条件是安装了Docker包。通常情况下，在Docker中不需要进一步配置。"
 lang_wizui_uninstall_title="卸载通知"
@@ -448,9 +389,11 @@ lang_PKG_NOINSTALL_ERROR_PART2="与CPU架构"
 lang_PKG_NOINSTALL_ERROR_PART3="不被synOCR支持，因为所需的Docker包无法安装（只有x86_64 / aarch64）。"
 lang_PKG_DELETE_TIMER="旧版本的内置调度器已不再可用。请使用DSM任务计划器!"
 lang_INFO_description="synOCR是Docker容器OCRmyPDF的一个简单GUI。有了它，你可以轻松地将OCR应用于PDF文档。然后，synOCR可以搜索文档中的标签和日期，根据个别模式重命名，并根据类别将它们分类到子文件夹中。通过使用硬链接，如果一份文件需要被分类到几个类别的文件夹中，就不会增加存储空间的要求。"
-
-#-------------------------------------------
-# miscellaneous:
-#-------------------------------------------
 lang_notify_file_job_successful="PDF已成功处理。"
 lang_notify_file_update_available="有更新了!"
+lang_edit_profname="简介名称"
+lang_edit_set2_delsearchpref_title=""
+lang_edit_set3_backuprotatetype_title=""
+lang_edit_yamlsample_23=""
+lang_help_FAQ_sub5_afterlink=""
+lang_help_about_4=""

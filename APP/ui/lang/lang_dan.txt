@@ -1,11 +1,16 @@
-# german language file for synOCR-GUI
-# /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_dan.txt
-# translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
-machinetranslate="1"
+    #######################################################################################################
+    # Danish language file for synOCR-GUI                                                                 #
+    #                                                                                                     #
+    # Path:                                                                                               #
+    #     /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_dan.txt                                      #
+    #                                                                                                     #
+    # translation instructions can you found here:                                                        #
+    #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
+    #                                                                                                     #
+    #     © 2022 by geimist                                                                               #
+    #######################################################################################################
 
-#-------------------------------------------
-# general:
-#-------------------------------------------
+machinetranslate="1"
 lang_page1="Oversigt"
 lang_page2="Konfiguration"
 lang_page3="Tidsplan"
@@ -31,13 +36,9 @@ lang_foot_buttondownDB="Download"
 lang_foot_buttondownDB_tit="Download konfigurationsdatabasen ..."
 lang_foot_buttondelprof="Slet profil"
 lang_foot_buttondelprof_tit="sletter den aktuelle profil efter en bekræftelsesprompt ..."
-
-#-------------------------------------------
-# page settings:
-#-------------------------------------------
 lang_edit_delques_1="Hvis den nuværende profil"
 lang_edit_delques_2="blive slettet?"
-lang_edit_profname="Profiler"
+lang_edit_delfin1="Profiler"
 lang_edit_delfin2="blev slettet"
 lang_edit_deler="Fejl ved sletning af profilen"
 lang_edit_dup1="Indtast et navn for den duplikerede profil"
@@ -53,44 +54,33 @@ lang_edit_new2="En ny profil med navnet"
 lang_edit_new3="blev oprettet"
 lang_edit_new4="Fejl ved oprettelse af profilen!"
 lang_edit_savefin="Ændringer blev gemt"
-
 lang_edit_summary1="Indtast dine indstillinger her, og juster stierne."
 lang_edit_summary2="Du kan få hjælp til de enkelte felter ved at klikke på det blå infosymbol i højre margen."
 lang_edit_summary3="Du kan oprette så mange konfigurationer, som du vil, via profilerne, som alle behandles ved hver programkørsel. Du kan også deaktivere hver profil via det tilsvarende felt."
 lang_edit_summary4="Sørg for, at du indtaster de komplette stier, herunder volumen, og at du bruger de korrekte store og små bogstaver. Det sikreste er at søge efter den ønskede mappe i Filestation og få vist egenskaberne ved at højreklikke på den. I denne dialog kan du kopiere den korrekte sti."
-
 lang_edit_dbupdate="Resultat af DB-opdatering"
 lang_edit_change_profile="skifte til profil"
-
 lang_edit_set1_title="Generelt"
-
 lang_edit_set1_profilename_help="Profiler kan navngives individuelt"
-
 lang_edit_set1_profile_activ_title="Aktiver / deaktiver profil"
 lang_edit_set1_profile_activ="Profil aktiveret"
 lang_edit_set1_profile_inactiv="Profil deaktiveret"
 lang_edit_set1_profile_activ_help1="Profiler kan aktiveres eller deaktiveres."
 lang_edit_set1_profile_activ_help2="Deaktiverede profiler kan ændres, men vil ikke blive udført af synOCR."
-
 lang_edit_set1_sourcedir_title="Kildefortegnelse"
 lang_edit_set1_sourcedir_help1="Der søges i denne mappe efter PDF-filer (ikke rekursivt)."
 lang_edit_set1_sourcedir_help2="Brug den fulde sti"
-
 lang_edit_set1_targetdir_title="Målmappe"
 lang_edit_set1_targetdir_help1="Outputmappe for de færdige PDF-filer (oprettes om nødvendigt)."
 lang_edit_set1_targetdir_help2="Brug den fulde sti"
-
 lang_edit_set1_backupdir_title="Backup-mappe"
 lang_edit_set1_backupdir_help1="Hvis der angives en gyldig sti her, gemmes de originale filer her (vil om nødvendigt blive oprettet)."
 lang_edit_set1_backupdir_help2="Hvis der ikke er gemt nogen gyldig mappe, slettes de oprindelige filer permanent."
 lang_edit_set1_backupdir_help3="Brug den fulde sti"
-
 lang_edit_set1_logdir_title="Katalog for LOG-filer"
 lang_edit_set1_logdir_help1="Katalog for LOG-filerne (oprettes om nødvendigt)"
 lang_edit_set1_logdir_help2="Brug den fulde sti"
-
 lang_edit_set2_title="OCR-muligheder og omdøbning"
-
 lang_edit_set2_ocropt_title="OCR-muligheder"
 lang_edit_set2_ocropt_help1="De enkelte parametre for OCRmyPDF kan angives her"
 lang_edit_set2_ocropt_help2="PDF-filer med eksisterende tekstlag må ikke omrokeres"
@@ -99,34 +89,28 @@ lang_edit_set2_ocropt_help4="automatisk vending af sider"
 lang_edit_set2_ocropt_help5="Sprogkode"
 lang_edit_set2_ocropt_help6="korrigere skæve scanninger"
 lang_edit_set2_ocropt_help7="fuldstændig bistand"
-
 lang_edit_set2_dockerimage_title="Docker-aftryk, der skal bruges"
 lang_edit_set2_dockerimage_help1="Hvilket Docker-image skal bruges?"
 lang_edit_set2_dockerimage_help2="er standardbilledet, men indeholder i øjeblikket kun sprogene:"
 lang_edit_set2_dockerimage_help3="Polyglotte billeder indeholder alle mulige sprog, men er større!"
 lang_edit_set2_dockerimage_help4="Manuelt downloadede eller selvskabte billeder kan også vælges, forudsat at følgende er inkluderet i navnet:"
-
 lang_edit_set2_dockerimageupdate_title="Hold Docker-image opdateret"
 lang_edit_set2_dockerimageupdate_yes="holde sig opdateret (standard)"
 lang_edit_set2_dockerimageupdate_no="Vedligeholde version"
 lang_edit_set2_dockerimageupdate_help1="Docker-aftryk med :latest-tag kan opdateres."
-
 lang_edit_set2_img2pdf_title="Konverter billeder til PDF"
 lang_edit_set2_img2pdf_no="Spring billeder over"
 lang_edit_set2_img2pdf_yes="Konverter billeder"
 lang_edit_set2_img2pdf_help1="Billeder i kildemappen kan konverteres til PDF-filer. Hvis de er aktiveret, flyttes de til backup-mappen."
-
 lang_edit_set2_searchpref_title="Søgemønster Kildefilens navn"
 lang_edit_set2_searchpref_help1="Kun redigere PDF-filer med et defineret præfiks"
 lang_edit_set2_searchpref_help2="Lad det være tomt, hvis alle dokumenter skal behandles"
 lang_edit_set2_searchpref_help3="i begyndelsen vender søgningen om"
 lang_edit_set2_searchpref_help4="i slutningen definerer udtrykket som et suffiks"
-lang_edit_set2_delsearchpref_title=""
 lang_edit_set2_delsearchpref_keep="Bevar søgemønster"
 lang_edit_set2_delsearchpref_delete="Fjern søgemønster"
 lang_edit_set2_delsearchpref_help1="Skal søgeudtrykket fjernes bagefter?"
 lang_edit_set2_delsearchpref_help2="(nyttigt, hvis kildemappen også er destinationsmappen)"
-
 lang_edit_set2_documentSplitPattern_title="Søgemønster dokumentseparator"
 lang_edit_set2_documentSplitPattern_help1="Her kan der defineres et mønster til automatisk at opdele et stort dokument i deldokumenter. Kildedokumentet opdeles på de sider, hvor det angivne søgemønster blev fundet."
 lang_edit_set2_documentSplitPattern_help3="Her finder du en skabelon til udskrivning:"
@@ -135,39 +119,35 @@ lang_edit_set2_splitpagehandling_discard="kassere"
 lang_edit_set2_splitpagehandling_isLastPage="er den sidste side"
 lang_edit_set2_splitpagehandling_isFirstPage="er den første side"
 lang_edit_set2_splitpagehandling_help1="Separatorarket kan kasseres (standardindstilling) eller tildeles det foregående eller følgende område."
-
 lang_edit_set2_taglist_title="Tags at søge efter"
 lang_edit_set2_taglist_help1="Tags, der angives her, søges efter i dokumentet og er tilgængelige til omdøbning."
 lang_edit_set2_taglist_help2="De enkelte tags er adskilt med semikolon."
 lang_edit_set2_taglist_help2_1="Der kan også angives en sti til en regelfil."
 lang_edit_set2_taglist_help3="! ! ! BRUG IKKE LINJESKIFT ! ! !"
 lang_edit_set2_taglist_help4="Tags og kategorier kan også indeholde mellemrum."
-lang_edit_set2_taglist_help5="Hvis et tag kun skal findes enkeltvis, skal det indledes med et afsnitstegn (en søgning efter "
+lang_edit_set2_taglist_help5="Hvis et tag kun skal findes enkeltvis, skal det indledes med et afsnitstegn (en søgning efter"
 lang_edit_set2_taglist_help6="Faktura;arbejde;forsikring"
 lang_edit_set2_taglist_help7="Tags kan også tildeles en kategori (for undermapper) ved hjælp af et lighedstegn (gælder kun, hvis du også bruger regeldefinerede mapper [indstilling nedenfor])."
 lang_edit_set2_taglist_help8="Faktura;HUK24=forsikring;Allianz=forsikring"
 lang_edit_set2_taglist_help9="Omfattende tags kan også gemmes i en separat tekstfil."
 lang_edit_set2_taglist_help10="I dette tilfælde skal den absolutte sti angives her."
-
 lang_edit_set2_searchall_title="Søgeområde for tags"
 lang_edit_set2_searchall_1page="Kun første side"
 lang_edit_set2_searchall_all="hele dokumentet"
 lang_edit_set2_searchall_help1="På hvilket område skal jeg søge efter tags?"
 lang_edit_set2_searchall_help2="Standard er kun på første side. Jo større søgeområdet er, jo flere falske positive resultater er der."
-
 lang_edit_set2_moveTaggedFiles_title="Brug tag-undermapper"
 lang_edit_set2_moveTaggedFiles_targetdir="Opbevares i destinationsmappen"
 lang_edit_set2_moveTaggedFiles_useCatDir="Brug regel-definerede mapper"
 lang_edit_set2_moveTaggedFiles_useTagDir="bruge tag-baserede mapper"
 lang_edit_set2_moveTaggedFiles_useYearDir="Brug årlige mapper"
-lang_edit_set2_moveTaggedFiles_useYearMonthDir="bruge årsmapper "
+lang_edit_set2_moveTaggedFiles_useYearMonthDir="bruge årsmapper"
 lang_edit_set2_moveTaggedFiles_help1="Hvilken sortering skal anvendes:"
 lang_edit_set2_moveTaggedFiles_help2="Marker undermapper eller kategorimapper"
 lang_edit_set2_moveTaggedFiles_help3="Regel-definerede mapper"
 lang_edit_set2_moveTaggedFiles_help4="Årlig fil"
 lang_edit_set2_moveTaggedFiles_help5="År/måned mappe"
 lang_edit_set2_moveTaggedFiles_help6="Hvis flere tags er relevante, sættes der hårde links."
-
 lang_edit_set2_renamesyntax_title="Syntaks for OCR-omdøbning"
 lang_edit_set2_renamesyntax_help1="Omdøb færdige PDF-filer med en specifik syntaks. Variablerne kan også bruges i målstierne i YAML-regler (undtagen §tit)."
 lang_edit_set2_renamesyntax_help2="Følgende variabler er mulige i kombination med kontinuerlig tekst"
@@ -199,83 +179,66 @@ lang_edit_set2_renamesyntax_help20="Sidetæller (profil anvendt)"
 lang_edit_set2_renamesyntax_help21="Filtæller (profil anvendt)"
 lang_edit_set2_renamesyntax_help15="genererer"
 lang_edit_set2_renamesyntax_help17="Der søges først efter datoer i dokumentet. Hvis det ikke lykkes, anvendes fildatoen."
-
 lang_edit_set2_tagsymbol_title="Markér tags i filnavnet"
 lang_edit_set2_tagsymbol_help1="fundne tags kan markeres i filnavnet"
 lang_edit_set2_tagsymbol_help2="(Særlige tegn kan have uforudsigelige konsekvenser!)"
-
 lang_edit_set2_filedate_title="Korrekt fildato"
 lang_edit_set2_filedate_now="nuværende tidspunkt"
 lang_edit_set2_filedate_ocr="Brug fundet OCR-dato"
 lang_edit_set2_filedate_source="Brug datoen for kildefilen"
 lang_edit_set2_filedate_help1="Hvordan skal datoen for destinationsfilen justeres?"
 lang_edit_set2_filedate_help2="Hvis der er valgt OCR-dato, men der ikke findes nogen, anvendes datoen i kildefilen."
-
 lang_edit_set2_ignoredDate_title="Ignorer data"
 lang_edit_set2_ignoredDate_help1="De angivne data ignoreres i søgningen. Der kan indtastes flere datoer (adskilt af mellemrum). Det er vigtigt at anvende det korrekte format: ÅÅÅÅÅ-MM-DD (f.eks. 2021-02-29 2021-04-31)."
-
 lang_edit_set2_DateSearchMinYear_title="Søgningsområde i fortiden"
 lang_edit_set2_DateSearchMinYear_help1="Indtast her det absolutte år eller et relativt antal år, der skal betragtes som en gyldig dato i fortiden."
 lang_edit_set2_DateSearchMinYear_help2="Et firecifret tal regnes som et absolut år. Mindre end fire cifre som en relativ årsafvigelse."
 lang_edit_set2_DateSearchMinYear_help3="En tom værdi eller 0 anses for at være ubegrænset."
-
 lang_edit_set2_DateSearchMaxYear_title="Søgningsområde i fremtiden"
 lang_edit_set2_DateSearchMaxYear_help1="Angiv her det absolutte år eller et relativt antal år, der skal overholdes som en gyldig dato i fremtiden."
 lang_edit_set2_DateSearchMaxYear_help2="En tom værdi eller 0 anses for at være ubegrænset."
-
 lang_edit_set2_filedate_search_nearest_date_title="Dato Rækkefølge af søgeresultater"
 lang_edit_set2_filedate_search_nearest_firstfound="1. hit i dokumentet"
 lang_edit_set2_filedate_search_nearest_nearest="Seneste dato i fortiden"
 lang_edit_set2_filedate_search_nearest_help1="Hvilket resultat af datosøgningen skal anvendes?"
 lang_edit_set2_filedate_search_nearest_help2="Den første i dokumentet eller den nærmeste dato i fortiden af alle fund? (gælder kun for den Python-baserede søgning!)"
-
 lang_edit_set2_date_search_method_title="Metode til søgning efter dato"
 lang_edit_set2_date_search_method_python="Python"
 lang_edit_set2_date_search_method_regex="RegEx"
 lang_edit_set2_date_search_method_help1="Følgende indstillinger er tilgængelige for datosøgning: Python-script og søgningen som et regulært udtryk."
 lang_edit_set2_date_search_method_help2="Python-scriptet søger mere omfattende og finder f.eks. også udgåede måneder. Forudsætningen er, at Python3 er installeret. Nødvendige moduler installeres af synOCR."
 lang_edit_set2_date_search_method_help3="Søgningen som et regulært udtryk finder kun talformater, men er ikke afhængig af anden software og er hurtigere."
-
 lang_edit_set2_clean_up_spaces_title="Rummelighed renset søgning"
 lang_edit_set2_clean_up_spaces_true="Ryd op i rummene"
 lang_edit_set2_clean_up_spaces_false="Søg i originalteksten"
 lang_edit_set2_clean_up_spaces_help1="Hvis rydning af rum er aktiveret, reduceres flere rum til ét. Nogle gange genkender OCR ikke det oprindelige antal mellemrum, eller det er ikke altid det samme. Især ved RegEx-søgninger kan det være nyttigt, hvis det nøjagtige nummer er defineret."
 lang_edit_set2_clean_up_spaces_help2="Indstillingen påvirker alle søgninger i dokumentet (dato, tags, ...). Det originale dokument ændres ikke, kun det midlertidige tekstuddrag."
-
 lang_edit_set3_title="DSM-meddelelse og andre indstillinger"
-
 lang_edit_set3_backuprotate_title="Begrænse backup-filer"
 lang_edit_set3_backuprotate_help1="Overdrevne sikkerhedskopier kan fjernes automatisk."
 lang_edit_set3_backuprotate_help2="Vælg dage eller filer som enhed."
 lang_edit_set3_backuprotate_help3="En blank angivelse fjerner begrænsningen."
-lang_edit_set3_backuprotatetype_title=""
 lang_edit_set3_backuprotatetype_files="Filer"
 lang_edit_set3_backuprotatetype_days="Dage"
-
 lang_edit_set3_logmax_title="Maksimum LOG-filer"
 lang_edit_set3_logmax_help="Maksimalt antal LOG-filer (tomme logfiler slettes straks)"
-
 lang_edit_set3_dsmtextnotify_title="Systemmeddelelse (tekst)"
 lang_edit_set3_dsmtextnotify_on="a"
 lang_edit_set3_dsmtextnotify_off="fra"
 lang_edit_set3_dsmtextnotify_help1="a ➜ Meddelelse via tekst er aktiv i meddelelsescenteret"
 lang_edit_set3_dsmtextnotify_help2="off ➜ ingen tekstmeddelelse"
-
 lang_edit_set3_MessageTo_title="Meddelelse til brugeren"
 lang_edit_set3_MessageTo_help1="Bruger, som notifikationerne sendes til."
-lang_edit_set3_MessageTo_help2="På denne måde, i kombination med pakken "
-lang_edit_set3_MessageTo_help3="Hvis værdien forbliver tom, er gruppen "
-
+lang_edit_set3_MessageTo_help2="På denne måde, i kombination med pakken"
+lang_edit_set3_MessageTo_help3="Hvis værdien forbliver tom, er gruppen"
 lang_edit_set3_PBTOKEN_title="PushBullet-token"
 lang_edit_set3_PBTOKEN_help1="Dit personlige PushBullet-token."
 lang_edit_set3_PBTOKEN_help2="Meddelelser sendes til den relevante konto."
 lang_edit_set3_PBTOKEN_help3="Lad den stå tom, når den ikke er i brug."
-
 lang_edit_set3_dsmbeepnotify_title="Systemmeddelelse (bip)"
 lang_edit_set3_dsmbeepnotify_on="a"
 lang_edit_set3_dsmbeepnotify_off="fra"
 lang_edit_set3_dsmbeepnotify_help1="Et kort bip, så snart en PDF er blevet færdiggjort."
-
 lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
 lang_edit_set3_loglevel_off="0 (slukket)"
 lang_edit_set3_loglevel_1="1 (standard)"
@@ -283,20 +246,18 @@ lang_edit_set3_loglevel_2="2 (fejlfindingstilstand)"
 lang_edit_set3_loglevel_help1="0 ➜ Der oprettes ingen logfil"
 lang_edit_set3_loglevel_help2="1 ➜ normal log (standard)"
 lang_edit_set3_loglevel_help3="2 ➜ fejlfindingsprotokol"
-
 lang_edit_set3_accept_cpdf_license_title="Betingelser for tilladelsen"
 lang_edit_set3_accept_cpdf_license_no="Afslag på licens"
 lang_edit_set3_accept_cpdf_license_yes="Jeg accepterer licensen"
 lang_edit_set3_accept_cpdf_license_help1="cpdf er et kommandolinjeværktøj, som synOCR kan bruge til at levere yderligere funktioner (f.eks. separatorsider)."
 lang_edit_set3_accept_cpdf_license_help2="cpdf må kun anvendes gratis til ikke-kommerciel brug. Brugeren kan selv bestemme dette her."
 lang_edit_set3_accept_cpdf_license_help3="Oprindelig ordlyd:"
-
 lang_edit_yamlsample_01="Følgende sti skal indtastes i den ønskede profil i feltet for tags"
 lang_edit_yamlsample_02="FØLG DISSE INSTRUKTIONER"
 lang_edit_yamlsample_03="det er meget vigtigt at indsætte de korrekte indrykninger"
 lang_edit_yamlsample_04="Brug ikke tapstops - kun mellemrum!"
 lang_edit_yamlsample_05="Brug det nøjagtige antal mellemrum som vist i eksemplet"
-lang_edit_yamlsample_06="Tip: kopi "
+lang_edit_yamlsample_06="Tip: kopi"
 lang_edit_yamlsample_07="brug ikke Windows-linjeskift!"
 lang_edit_yamlsample_08="skal følgende nøgleord være med i filen:"
 lang_edit_yamlsample_09="nedenfor er en beskrivelse af nøgleordene:"
@@ -307,17 +268,15 @@ lang_edit_yamlsample_12b="navnet må ikke begynde med et tal"
 lang_edit_yamlsample_13="der skal være et kolon i slutningen"
 lang_edit_yamlsample_14="hver blok definerer ET tag og EN handling (bevægelse), hvis den er defineret"
 lang_edit_yamlsample_15="Syntaks:"
-lang_edit_yamlsample_16="et mellemrum mellem kolon "
+lang_edit_yamlsample_16="et mellemrum mellem kolon"
 lang_edit_yamlsample_17="VALUE anvendes som et tag, når reglen er opfyldt"
 lang_edit_yamlsample_17a="Kun latinske bogstaver / ingen specialtegn!"
 lang_edit_yamlsample_17b="hvis VALUE ikke findes, tjener tagname som fallback"
 lang_edit_yamlsample_18="Kun ét nøgleord pr. regel"
-lang_edit_yamlsample_19="valgfrit / hvis ikke defineret, anvendes det mål, der er defineret i GUI'en"
 lang_edit_yamlsample_20="VALUE er en sti, hvis reglen er opfyldt"
 lang_edit_yamlsample_21="det kan være en absolut sti"
 lang_edit_yamlsample_22a="hvis det ikke er en absolut sti, vil det være"
 lang_edit_yamlsample_22b="oprettes i forhold til den destinationsmappe, der er defineret i den grafiske brugergrænseflade"
-lang_edit_yamlsample_23=""
 lang_edit_yamlsample_24="hvor mange søgeregler der skal være opfyldt, for at reglen er opfyldt"
 lang_edit_yamlsample_25="VÆRDI er"
 lang_edit_yamlsample_26="alle søgeregler skal være opfyldt"
@@ -345,10 +304,6 @@ lang_edit_yamlsample_button_help_03="- der oprettes en sikkerhedskopi af de eksi
 lang_edit_yamlsample_gui_01="Regelfilen findes allerede!"
 lang_edit_yamlsample_gui_02="Slet venligst den eksisterende fil og prøv igen"
 lang_edit_yamlsample_gui_03="Regelfilen blev oprettet med succes."
-
-#-------------------------------------------
-# page main:
-#-------------------------------------------
 lang_main_title1="OCR på Synology DSM"
 lang_main_title2="Beskrivelse"
 lang_main_monitor_restart_necessary_1="Listen over overvågede inputmapper er ikke længere opdateret!"
@@ -368,16 +323,11 @@ lang_main_openfilecount="Rediger filer"
 lang_main_alldone="Alt er gjort"
 lang_main_totalsince="I alt siden"
 lang_main_pages="Sider"
-
-#-------------------------------------------
-# page help:
-#-------------------------------------------
 lang_help_title_QS="Hurtig start"
 lang_help_QS_1_beforelink="Juster først din installation i"
 lang_help_QS_1_afterlink="en."
 lang_help_QS_1b="(valgfrit): For at overvåge inddatamapper automatisk skal pakken inotify-tools være installeret."
 lang_help_QS_2="For at synOCR kan fungere korrekt, skal der oprettes en ny opgave i DSM Task Scheduler."
-# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="Du kan gøre dette ved at åbne kontrolpanelet i DSM"
 lang_help_QS_sub1_1="Opgaveplanlægger"
 lang_help_QS_sub1_2="Opret"
@@ -401,7 +351,6 @@ lang_help_FAQ_sub2_1="Det kan afhjælpes ved at aktivere følgende indstilling"
 lang_help_FAQ_sub2_2="Øget browserkompatibilitet ved at afstå fra IP-kontrol"
 lang_help_FAQ_sub2_3="(findes her: DSM Kontrolpanel ➜ Sikkerhed)"
 lang_help_FAQ_sub3_tit="sikkerhedsrådgiveren advarer mod synOCR"
-lang_help_FAQ_sub3_1="Årsagen til advarslen er ikke en trussel fra synOCR, men at sikkerhedsrådgiveren ikke er opmærksom på ændringen i crontab'en."
 lang_help_FAQ_sub3_2="Det kan afhjælpes ved at springe over i sikkerhedsrådgiveren eller en manuel opgave i DSM-opgaveplanlæggeren."
 lang_help_FAQ_sub4_tit="ingen filer behandles, selv om nogle af dem er tilgængelige."
 lang_help_FAQ_sub4_1="Dette kan være tilfældet, hvis OCR-søgepræfikset blev angivet, men ikke passer til filerne"
@@ -409,16 +358,10 @@ lang_help_FAQ_sub4_2="Kontroller, om den ønskede profil for kildemappen også e
 lang_help_FAQ_sub5_tit="mit spørgsmål er der ikke ..."
 lang_help_FAQ_sub5_beforelink="For alle andre spørgsmål og problemer kan du bruge supportforummet:"
 lang_help_FAQ_sub5_linktitle="synOCR support forum"
-lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="om synOCR"
 lang_help_about_1="Projektet afhænger først og fremmest af den tid, energi og lyst, jeg kan afsætte til det."
 lang_help_about_2="Jeg er begyndt at gøre min arbejdsgang med PDF-dokumenter lettere, og det er også en fornøjelse for mig, hvis andre finder dette projekt nyttigt. Derfor forventer jeg ikke noget til gengæld!"
 lang_help_about_3="Men hvis nogen ønsker at gøre mig økonomisk glad, kan de gøre det ved at klikke på denne knap - TAK:"
-lang_help_about_4=""
-
-#-------------------------------------------
-# script synOCR-start.sh:
-#-------------------------------------------
 lang_synOCR_start_is_running="synOCR er allerede i gang!"
 lang_synOCR_start_req_kill="Tvangsafbrydelse?"
 lang_synOCR_start_runs="synOCR blev lanceret"
@@ -432,10 +375,6 @@ lang_synOCR_start_target_created="Målmappen er blevet oprettet."
 lang_synOCR_start_umount_log="Krypteret LOG-mappe ikke monteret"
 lang_synOCR_start_errorexit="synOCR blev afbrudt med fejl!"
 lang_synOCR_start_loginfo="Yderligere oplysninger i LOG"
-
-#-------------------------------------------
-# WIZARD_UIFILES:
-#-------------------------------------------
 lang_wizui_install_title="Bemærkninger om installation:"
 lang_wizui_install_desc="Den eneste forudsætning er den installerede Docker-pakke. Normalt er det ikke nødvendigt med yderligere konfiguration i Docker."
 lang_wizui_uninstall_title="Meddelelse om afinstallering"
@@ -448,9 +387,13 @@ lang_PKG_NOINSTALL_ERROR_PART2="med CPU-arkitekturen"
 lang_PKG_NOINSTALL_ERROR_PART3="understøttes ikke af synOCR, fordi den nødvendige Docker-pakke ikke kan installeres (kun x86_64 / aarch64)"
 lang_PKG_DELETE_TIMER="Den indbyggede scheduler fra ældre versioner er ikke længere tilgængelig. Brug venligst DSM-opgaveplanlæggeren!"
 lang_INFO_description="synOCR er en simpel GUI for Docker-containeren OCRmyPDF. Med den kan du nemt anvende OCR til PDF-dokumenter. synOCR kan derefter søge efter tags og datoer i dokumenterne, omdøbe dem efter et individuelt mønster og sortere dem i undermapper efter kategorier. Ved at bruge hardlinks er der ikke behov for øget lagerplads, hvis et dokument skal sorteres i flere kategorimapper."
-
-#-------------------------------------------
-# miscellaneous:
-#-------------------------------------------
 lang_notify_file_job_successful="PDF-filen er blevet behandlet med succes."
 lang_notify_file_update_available="Opdatering tilgængelig!"
+lang_edit_yamlsample_19="valgfrit / hvis ikke defineret, anvendes det mål, der er defineret i GUI'en"
+lang_help_FAQ_sub3_1="Årsagen til advarslen er ikke en trussel fra synOCR, men at sikkerhedsrådgiveren ikke er opmærksom på ændringen i crontab'en."
+lang_edit_profname="Profilnavn"
+lang_edit_set2_delsearchpref_title=""
+lang_edit_set3_backuprotatetype_title=""
+lang_edit_yamlsample_23=""
+lang_help_FAQ_sub5_afterlink=""
+lang_help_about_4=""

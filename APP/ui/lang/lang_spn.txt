@@ -1,11 +1,16 @@
-# german language file for synOCR-GUI
-# /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_spn.txt
-# translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
-machinetranslate="1"
+    #######################################################################################################
+    # Spanish language file for synOCR-GUI                                                                #
+    #                                                                                                     #
+    # Path:                                                                                               #
+    #     /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_spn.txt                                      #
+    #                                                                                                     #
+    # translation instructions can you found here:                                                        #
+    #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
+    #                                                                                                     #
+    #     © 2022 by geimist                                                                               #
+    #######################################################################################################
 
-#-------------------------------------------
-# general:
-#-------------------------------------------
+machinetranslate="0"
 lang_page1="Resumen"
 lang_page2="Configuración"
 lang_page3="Horario"
@@ -31,13 +36,9 @@ lang_foot_buttondownDB="Descargar"
 lang_foot_buttondownDB_tit="Descargue la base de datos de configuración ..."
 lang_foot_buttondelprof="Borrar el perfil"
 lang_foot_buttondelprof_tit="elimina el perfil actual después de una pregunta de confirmación ..."
-
-#-------------------------------------------
-# page settings:
-#-------------------------------------------
 lang_edit_delques_1="Si el perfil actual"
 lang_edit_delques_2="¿se borrará?"
-lang_edit_profname="El perfil"
+lang_edit_delfin1="El perfil"
 lang_edit_delfin2="fue eliminado"
 lang_edit_deler="Error al borrar el perfil"
 lang_edit_dup1="Introduzca un nombre para el perfil duplicado"
@@ -53,44 +54,33 @@ lang_edit_new2="Un nuevo perfil con el nombre"
 lang_edit_new3="fue creado"
 lang_edit_new4="¡Error al crear el perfil!"
 lang_edit_savefin="Se han guardado los cambios"
-
 lang_edit_summary1="Introduzca aquí su configuración y ajuste las rutas."
 lang_edit_summary2="Puede obtener ayuda para los campos individuales haciendo clic en el símbolo azul de información en el margen derecho."
 lang_edit_summary3="Puedes crear tantas configuraciones como quieras a través de los perfiles, que se procesan con cada ejecución del programa. También puede desactivar cada perfil a través del campo correspondiente."
 lang_edit_summary4="Asegúrese de introducir las rutas completas, incluyendo el volumen, y asegúrese de que las letras mayúsculas y minúsculas son correctas. Lo más seguro es buscar la carpeta deseada en el Filestation y mostrar las propiedades haciendo clic con el botón derecho. En este diálogo puede copiar la ruta correcta."
-
 lang_edit_dbupdate="Resultado de la actualización de la base de datos"
 lang_edit_change_profile="cambiar al perfil"
-
 lang_edit_set1_title="General"
-
 lang_edit_set1_profilename_help="Los perfiles pueden ser nombrados individualmente"
-
 lang_edit_set1_profile_activ_title="Activar / desactivar el perfil"
 lang_edit_set1_profile_activ="Perfil activado"
 lang_edit_set1_profile_inactiv="Perfil desactivado"
 lang_edit_set1_profile_activ_help1="Los perfiles se pueden activar o desactivar."
 lang_edit_set1_profile_activ_help2="Los perfiles deshabilitados pueden ser modificados pero no serán ejecutados por synOCR."
-
 lang_edit_set1_sourcedir_title="Directorio de fuentes"
 lang_edit_set1_sourcedir_help1="En este directorio se buscan los archivos PDF (no de forma recursiva)."
 lang_edit_set1_sourcedir_help2="Utilice la ruta completa"
-
 lang_edit_set1_targetdir_title="Directorio de destino"
 lang_edit_set1_targetdir_help1="Directorio de salida de los archivos PDF terminados (se creará si es necesario)."
 lang_edit_set1_targetdir_help2="Utilice la ruta completa"
-
 lang_edit_set1_backupdir_title="Directorio de respaldo"
 lang_edit_set1_backupdir_help1="Si se introduce aquí una ruta válida, los archivos originales se guardan aquí (se crearán si es necesario)."
 lang_edit_set1_backupdir_help2="Si no se almacena ningún directorio válido, los archivos originales se borran definitivamente."
 lang_edit_set1_backupdir_help3="Utilice la ruta completa"
-
 lang_edit_set1_logdir_title="Directorio para archivos LOG"
 lang_edit_set1_logdir_help1="Directorio de los archivos LOG (se creará si es necesario)"
 lang_edit_set1_logdir_help2="Utilice la ruta completa"
-
 lang_edit_set2_title="Opciones de OCR y cambio de nombre"
-
 lang_edit_set2_ocropt_title="Opciones de OCR"
 lang_edit_set2_ocropt_help1="Aquí se pueden especificar los parámetros individuales de OCRmyPDF"
 lang_edit_set2_ocropt_help2="No volver a copiar los archivos PDF con la capa de texto existente"
@@ -99,34 +89,28 @@ lang_edit_set2_ocropt_help4="paso automático de las páginas"
 lang_edit_set2_ocropt_help5="Código de la lengua"
 lang_edit_set2_ocropt_help6="rectificar escaneos sesgados"
 lang_edit_set2_ocropt_help7="asistencia completa"
-
 lang_edit_set2_dockerimage_title="Imagen Docker a utilizar"
 lang_edit_set2_dockerimage_help1="¿Qué imagen Docker se debe utilizar?"
 lang_edit_set2_dockerimage_help2="es la imagen estándar, pero actualmente sólo contiene los idiomas:"
 lang_edit_set2_dockerimage_help3="Las imágenes políglotas contienen todos los idiomas posibles, pero son más grandes."
 lang_edit_set2_dockerimage_help4="También se pueden seleccionar imágenes descargadas manualmente o creadas por uno mismo, siempre que se incluya lo siguiente en el nombre:"
-
 lang_edit_set2_dockerimageupdate_title="Mantener la imagen de Docker actualizada"
 lang_edit_set2_dockerimageupdate_yes="estar al día (estándar)"
 lang_edit_set2_dockerimageupdate_no="Mantener la versión"
 lang_edit_set2_dockerimageupdate_help1="Las imágenes Docker con la etiqueta :latest pueden ser actualizadas."
-
 lang_edit_set2_img2pdf_title="Convertir imágenes en PDF"
 lang_edit_set2_img2pdf_no="Saltar imágenes"
 lang_edit_set2_img2pdf_yes="Convertir imágenes"
 lang_edit_set2_img2pdf_help1="Las imágenes de la carpeta de origen se pueden convertir en archivos PDF. Si se activan, se trasladan a la carpeta de copia de seguridad."
-
 lang_edit_set2_searchpref_title="Patrón de búsqueda Nombre del archivo fuente"
 lang_edit_set2_searchpref_help1="Editar sólo los PDF con un prefijo definido"
 lang_edit_set2_searchpref_help2="Dejar en blanco si se van a procesar todos los documentos"
 lang_edit_set2_searchpref_help3="al principio invierte la búsqueda"
 lang_edit_set2_searchpref_help4="al final define el término como un sufijo"
-lang_edit_set2_delsearchpref_title=""
 lang_edit_set2_delsearchpref_keep="Conservar el patrón de búsqueda"
 lang_edit_set2_delsearchpref_delete="Eliminar el patrón de búsqueda"
 lang_edit_set2_delsearchpref_help1="¿Debe eliminarse después la expresión de búsqueda?"
 lang_edit_set2_delsearchpref_help2="(útil si la carpeta de origen es también la de destino)"
-
 lang_edit_set2_documentSplitPattern_title="Separador de documentos del patrón de búsqueda"
 lang_edit_set2_documentSplitPattern_help1="Aquí se puede definir un patrón para dividir automáticamente un documento grande en documentos parciales. El documento fuente se divide en las páginas en las que se ha encontrado el patrón de búsqueda especificado."
 lang_edit_set2_documentSplitPattern_help3="Aquí encontrará una plantilla para imprimir:"
@@ -135,39 +119,35 @@ lang_edit_set2_splitpagehandling_discard="descartar"
 lang_edit_set2_splitpagehandling_isLastPage="es la última página"
 lang_edit_set2_splitpagehandling_isFirstPage="es la primera página"
 lang_edit_set2_splitpagehandling_help1="La hoja de separación puede descartarse (configuración por defecto) o asignarse a la zona anterior o posterior."
-
 lang_edit_set2_taglist_title="Etiquetas para buscar"
 lang_edit_set2_taglist_help1="Las etiquetas especificadas aquí se buscan en el documento y están disponibles para renombrarlas."
 lang_edit_set2_taglist_help2="Las etiquetas individuales están separadas por punto y coma."
 lang_edit_set2_taglist_help2_1="También se puede establecer una ruta de acceso a un archivo de reglas."
 lang_edit_set2_taglist_help3="¡! ¡! ¡! ¡NO UTILICE SALTOS DE LÍNEA ! ¡! ¡!"
 lang_edit_set2_taglist_help4="Las etiquetas y las categorías también pueden contener espacios."
-lang_edit_set2_taglist_help5="Si una etiqueta sólo debe encontrarse de forma individual, debe colocarse un signo de párrafo delante (una búsqueda de "
+lang_edit_set2_taglist_help5="Si una etiqueta sólo debe encontrarse de forma individual, debe colocarse un signo de párrafo delante (una búsqueda de"
 lang_edit_set2_taglist_help6="Factura;Trabajo;Seguro"
 lang_edit_set2_taglist_help7="Las etiquetas también pueden asignarse a una categoría (para las subcarpetas) utilizando un signo de igualdad (sólo se aplica si también se utilizan carpetas definidas por reglas [opción más abajo])."
 lang_edit_set2_taglist_help8="Factura;HUK24=seguro;Allianz=seguro"
 lang_edit_set2_taglist_help9="Las etiquetas extensas también pueden guardarse en un archivo de texto separado."
 lang_edit_set2_taglist_help10="En este caso, se debe introducir aquí la ruta absoluta."
-
 lang_edit_set2_searchall_title="Rango de búsqueda de etiquetas"
 lang_edit_set2_searchall_1page="Sólo la primera página"
 lang_edit_set2_searchall_all="documento completo"
 lang_edit_set2_searchall_help1="¿En qué área debo buscar las etiquetas?"
 lang_edit_set2_searchall_help2="La norma está sólo en la primera página. Cuanto mayor sea el área de búsqueda, más falsos positivos habrá."
-
 lang_edit_set2_moveTaggedFiles_title="Utilizar subdirectorios de etiquetas"
 lang_edit_set2_moveTaggedFiles_targetdir="Mantener en la carpeta de destino"
 lang_edit_set2_moveTaggedFiles_useCatDir="Utilizar carpetas definidas por reglas"
 lang_edit_set2_moveTaggedFiles_useTagDir="utilizar carpetas basadas en etiquetas"
 lang_edit_set2_moveTaggedFiles_useYearDir="Utilizar las carpetas anuales"
-lang_edit_set2_moveTaggedFiles_useYearMonthDir="utilizar carpetas anuales "
+lang_edit_set2_moveTaggedFiles_useYearMonthDir="utilizar carpetas anuales"
 lang_edit_set2_moveTaggedFiles_help1="Qué clasificación debe utilizarse:"
 lang_edit_set2_moveTaggedFiles_help2="Etiquetar subdirectorios o carpetas de categorías"
 lang_edit_set2_moveTaggedFiles_help3="Carpetas definidas por reglas"
 lang_edit_set2_moveTaggedFiles_help4="Expediente anual"
 lang_edit_set2_moveTaggedFiles_help5="Carpeta del año/mes"
 lang_edit_set2_moveTaggedFiles_help6="Si se aplican varias etiquetas, se establecen enlaces duros."
-
 lang_edit_set2_renamesyntax_title="Sintaxis de cambio de nombre del OCR"
 lang_edit_set2_renamesyntax_help1="Cambiar el nombre de los PDF terminados con una sintaxis específica. Las variables también pueden utilizarse en las rutas de destino en las reglas YAML (excepto para §tit)."
 lang_edit_set2_renamesyntax_help2="Las siguientes variables son posibles en combinación con el texto continuo"
@@ -199,83 +179,66 @@ lang_edit_set2_renamesyntax_help20="Contador de páginas (perfil utilizado)"
 lang_edit_set2_renamesyntax_help21="Contador de archivos (perfil utilizado)"
 lang_edit_set2_renamesyntax_help15="genera"
 lang_edit_set2_renamesyntax_help17="Las fechas se buscan primero en el documento. Si no se consigue, se utiliza la fecha del archivo."
-
 lang_edit_set2_tagsymbol_title="Marcar etiquetas en el nombre del archivo"
 lang_edit_set2_tagsymbol_help1="las etiquetas encontradas pueden marcarse en el nombre del archivo"
 lang_edit_set2_tagsymbol_help2="(¡Los caracteres especiales pueden tener consecuencias imprevisibles!)"
-
 lang_edit_set2_filedate_title="Fecha correcta del archivo"
 lang_edit_set2_filedate_now="hora actual"
 lang_edit_set2_filedate_ocr="Utilizar la fecha OCR encontrada"
 lang_edit_set2_filedate_source="Utilizar la fecha del archivo de origen"
 lang_edit_set2_filedate_help1="¿Cómo se debe ajustar la fecha del archivo de destino?"
 lang_edit_set2_filedate_help2="Si se selecciona la fecha del OCR pero no se encuentra ninguna, se utiliza la fecha del archivo de origen."
-
 lang_edit_set2_ignoredDate_title="Ignorar los datos"
 lang_edit_set2_ignoredDate_help1="Los datos especificados se ignoran en la búsqueda. Se pueden introducir varias fechas (separadas por espacios). El formato correcto es importante: AAAA-MM-DD (por ejemplo, 2021-02-29 2021-04-31)."
-
 lang_edit_set2_DateSearchMinYear_title="Rango de búsqueda en el pasado"
 lang_edit_set2_DateSearchMinYear_help1="Introduzca aquí el año absoluto o un número relativo de años que debe observarse como fecha válida en el pasado."
 lang_edit_set2_DateSearchMinYear_help2="Un número de cuatro dígitos se cuenta como un año absoluto. Menos de cuatro dígitos como desviación relativa del año."
 lang_edit_set2_DateSearchMinYear_help3="Un valor vacío o 0 se considera ilimitado."
-
 lang_edit_set2_DateSearchMaxYear_title="Área de búsqueda en el futuro"
 lang_edit_set2_DateSearchMaxYear_help1="Introduzca aquí el año absoluto o un número relativo de años que debe observarse como fecha válida en el futuro."
 lang_edit_set2_DateSearchMaxYear_help2="Un valor vacío o 0 se considera ilimitado."
-
 lang_edit_set2_filedate_search_nearest_date_title="Fecha Orden de los resultados de la búsqueda"
 lang_edit_set2_filedate_search_nearest_firstfound="Primera coincidencia en el documento"
 lang_edit_set2_filedate_search_nearest_nearest="Fecha más reciente en el pasado"
 lang_edit_set2_filedate_search_nearest_help1="¿Qué hallazgo de la búsqueda de fechas debe utilizarse?"
 lang_edit_set2_filedate_search_nearest_help2="¿La primera en el documento o la fecha más cercana en el pasado de todos los hallazgos? (¡sólo se aplica a la búsqueda basada en Python!)"
-
 lang_edit_set2_date_search_method_title="Método de búsqueda de fechas"
 lang_edit_set2_date_search_method_python="Python"
 lang_edit_set2_date_search_method_regex="RegEx"
 lang_edit_set2_date_search_method_help1="Las siguientes opciones están disponibles para la búsqueda de fechas: Script de Python y la búsqueda como una expresión regular."
 lang_edit_set2_date_search_method_help2="El script de Python busca más ampliamente y también encuentra, por ejemplo, meses escritos. El requisito previo es tener instalado Python3. Los módulos necesarios son instalados por synOCR."
 lang_edit_set2_date_search_method_help3="La búsqueda como expresión regular sólo encuentra formatos numéricos, pero no depende de ningún otro software y es más rápida."
-
 lang_edit_set2_clean_up_spaces_title="Búsqueda en el espacio limpio"
 lang_edit_set2_clean_up_spaces_true="Limpiar los espacios"
 lang_edit_set2_clean_up_spaces_false="Buscar en el texto original"
 lang_edit_set2_clean_up_spaces_help1="Si se activa la limpieza de espacios, los espacios múltiples se reducen a uno. A veces el OCR no reconoce el número original de espacios, o no siempre es el mismo. Especialmente con las búsquedas RegEx, puede ser útil si se define el número exacto."
 lang_edit_set2_clean_up_spaces_help2="La configuración afecta a todas las búsquedas en el documento (fecha, etiquetas, ...). El documento original no se modifica, sólo el extracto de texto temporal."
-
 lang_edit_set3_title="Notificación DSM y otros ajustes"
-
 lang_edit_set3_backuprotate_title="Limitar los archivos de copia de seguridad"
 lang_edit_set3_backuprotate_help1="Las copias de seguridad excesivas pueden eliminarse automáticamente."
 lang_edit_set3_backuprotate_help2="Seleccione días o archivos como unidad."
 lang_edit_set3_backuprotate_help3="Una entrada en blanco elimina la limitación."
-lang_edit_set3_backuprotatetype_title=""
 lang_edit_set3_backuprotatetype_files="Archivos"
 lang_edit_set3_backuprotatetype_days="Días"
-
 lang_edit_set3_logmax_title="Máximo de archivos LOG"
 lang_edit_set3_logmax_help="Número máximo de archivos de registro (los registros vacíos se eliminan inmediatamente)"
-
 lang_edit_set3_dsmtextnotify_title="Notificación del sistema (texto)"
 lang_edit_set3_dsmtextnotify_on="a"
 lang_edit_set3_dsmtextnotify_off="de"
 lang_edit_set3_dsmtextnotify_help1="a ➜ Notificación por texto activa en el Centro de notificaciones"
 lang_edit_set3_dsmtextnotify_help2="desactivado ➜ sin notificación de texto"
-
 lang_edit_set3_MessageTo_title="Notificación al usuario"
 lang_edit_set3_MessageTo_help1="Usuario al que se envían las notificaciones."
-lang_edit_set3_MessageTo_help2="De este modo, en combinación con el paquete "
-lang_edit_set3_MessageTo_help3="Si el valor permanece vacío, el grupo es "
-
+lang_edit_set3_MessageTo_help2="De este modo, en combinación con el paquete"
+lang_edit_set3_MessageTo_help3="Si el valor permanece vacío, el grupo es"
 lang_edit_set3_PBTOKEN_title="Ficha PushBullet"
 lang_edit_set3_PBTOKEN_help1="Su ficha personal de PushBullet."
 lang_edit_set3_PBTOKEN_help2="Las notificaciones se envían a la cuenta correspondiente."
 lang_edit_set3_PBTOKEN_help3="Déjelo vacío cuando no lo utilice."
-
 lang_edit_set3_dsmbeepnotify_title="Notificación del sistema (pitido)"
 lang_edit_set3_dsmbeepnotify_on="a"
 lang_edit_set3_dsmbeepnotify_off="de"
 lang_edit_set3_dsmbeepnotify_help1="Un breve pitido cuando se termina un PDF."
-
 lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
 lang_edit_set3_loglevel_off="0 (desactivado)"
 lang_edit_set3_loglevel_1="1 (estándar)"
@@ -283,20 +246,18 @@ lang_edit_set3_loglevel_2="2 (modo de depuración)"
 lang_edit_set3_loglevel_help1="0 ➜ no se crea ningún archivo de registro"
 lang_edit_set3_loglevel_help2="1 ➜ Log normal (estándar)"
 lang_edit_set3_loglevel_help3="2 ➜ registro de depuración"
-
 lang_edit_set3_accept_cpdf_license_title="Condiciones de la licencia"
 lang_edit_set3_accept_cpdf_license_no="Licencia denegada"
 lang_edit_set3_accept_cpdf_license_yes="Acepto la licencia"
 lang_edit_set3_accept_cpdf_license_help1="cpdf es una herramienta de línea de comandos que synOCR puede utilizar para proporcionar funciones adicionales (por ejemplo, páginas separadoras)."
 lang_edit_set3_accept_cpdf_license_help2="cpdf sólo puede utilizarse gratuitamente para uso no comercial. El usuario puede decidir sobre esto aquí."
 lang_edit_set3_accept_cpdf_license_help3="Redacción original:"
-
 lang_edit_yamlsample_01="En el perfil deseado, en el campo de las etiquetas, debe introducirse la siguiente ruta"
 lang_edit_yamlsample_02="SIGA ESTAS INSTRUCCIONES"
 lang_edit_yamlsample_03="es muy importante insertar las muescas correctas"
 lang_edit_yamlsample_04="no utilizar tapones - ¡sólo espacios!"
 lang_edit_yamlsample_05="Utilice el número exacto de espacios como se muestra en el ejemplo"
-lang_edit_yamlsample_06="Consejo: copie "
+lang_edit_yamlsample_06="Consejo: copie"
 lang_edit_yamlsample_07="no utilice los saltos de línea de Windows."
 lang_edit_yamlsample_08="la siguiente palabra clave debe incluirse en el archivo:"
 lang_edit_yamlsample_09="A continuación se describen las palabras clave:"
@@ -307,7 +268,7 @@ lang_edit_yamlsample_12b="el nombre no debe comenzar con un número"
 lang_edit_yamlsample_13="debe haber dos puntos al final"
 lang_edit_yamlsample_14="cada bloque define UNA etiqueta y UNA acción (movimiento), si se define"
 lang_edit_yamlsample_15="Sintaxis:"
-lang_edit_yamlsample_16="un espacio entre dos puntos "
+lang_edit_yamlsample_16="un espacio entre dos puntos"
 lang_edit_yamlsample_17="VALOR se utiliza como etiqueta cuando se cumple la regla"
 lang_edit_yamlsample_17a="Sólo letras latinas / sin caracteres especiales"
 lang_edit_yamlsample_17b="si no se encuentra VALUE, tagname sirve como alternativa"
@@ -317,7 +278,6 @@ lang_edit_yamlsample_20="VALOR es un camino si la regla se cumple"
 lang_edit_yamlsample_21="puede ser una ruta absoluta"
 lang_edit_yamlsample_22a="si no es una ruta absoluta, será"
 lang_edit_yamlsample_22b="creado en relación con la carpeta de destino definida en la GUI"
-lang_edit_yamlsample_23=""
 lang_edit_yamlsample_24="cuántas reglas de búsqueda deben cumplirse para que la regla se cumpla"
 lang_edit_yamlsample_25="El valor es"
 lang_edit_yamlsample_26="deben cumplirse todas las normas de búsqueda"
@@ -345,10 +305,6 @@ lang_edit_yamlsample_button_help_03="- se crea una copia de seguridad de las reg
 lang_edit_yamlsample_gui_01="El archivo de reglas ya existe."
 lang_edit_yamlsample_gui_02="Por favor, borre el archivo existente e inténtelo de nuevo"
 lang_edit_yamlsample_gui_03="El archivo de reglas se ha creado con éxito."
-
-#-------------------------------------------
-# page main:
-#-------------------------------------------
 lang_main_title1="OCR en Synology DSM"
 lang_main_title2="Descripción"
 lang_main_monitor_restart_necessary_1="La lista de carpetas de entrada supervisadas ya no está actualizada."
@@ -368,16 +324,11 @@ lang_main_openfilecount="Editar archivos"
 lang_main_alldone="Todo hecho"
 lang_main_totalsince="Total desde"
 lang_main_pages="Páginas"
-
-#-------------------------------------------
-# page help:
-#-------------------------------------------
 lang_help_title_QS="Inicio rápido"
 lang_help_QS_1_beforelink="Primero ajuste su instalación en el"
 lang_help_QS_1_afterlink="an."
 lang_help_QS_1b="(opcional): Para supervisar automáticamente las carpetas de entrada, es necesario instalar el paquete inotify-tools."
 lang_help_QS_2="Para que synOCR funcione correctamente, es necesario crear una nueva tarea en el programador de tareas DSM."
-# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="Para ello, abra el panel de control en el DSM"
 lang_help_QS_sub1_1="Planificador de tareas"
 lang_help_QS_sub1_2="Crear"
@@ -409,16 +360,10 @@ lang_help_FAQ_sub4_2="Compruebe si el perfil deseado para la carpeta de origen t
 lang_help_FAQ_sub5_tit="mi pregunta no está ahí ..."
 lang_help_FAQ_sub5_beforelink="Para todas las demás preguntas y problemas, utilice el foro de asistencia:"
 lang_help_FAQ_sub5_linktitle="Foro de soporte de synOCR"
-lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="sobre synOCR"
 lang_help_about_1="El proyecto depende sobre todo del tiempo, la energía y las ganas que pueda dedicarle."
 lang_help_about_2="Comenzó para facilitar mi flujo de trabajo con documentos PDF, también es un placer para mí si otros encuentran este proyecto útil. Por lo tanto, no espero nada a cambio."
 lang_help_about_3="Sin embargo, si alguien quiere alegrarme económicamente, puede hacerlo pulsando este botón: GRACIAS:"
-lang_help_about_4=""
-
-#-------------------------------------------
-# script synOCR-start.sh:
-#-------------------------------------------
 lang_synOCR_start_is_running="¡synOCR ya está en marcha!"
 lang_synOCR_start_req_kill="¿Abandonar a la fuerza?"
 lang_synOCR_start_runs="Se lanzó synOCR"
@@ -432,10 +377,6 @@ lang_synOCR_start_target_created="Se ha creado el directorio de destino."
 lang_synOCR_start_umount_log="Carpeta LOG encriptada no montada"
 lang_synOCR_start_errorexit="synOCR ha finalizado con errores."
 lang_synOCR_start_loginfo="Más información en el LOG"
-
-#-------------------------------------------
-# WIZARD_UIFILES:
-#-------------------------------------------
 lang_wizui_install_title="Nota sobre la instalación:"
 lang_wizui_install_desc="El único requisito previo es el paquete Docker instalado. Normalmente, no es necesaria ninguna otra configuración en Docker."
 lang_wizui_uninstall_title="Aviso de desinstalación"
@@ -448,9 +389,11 @@ lang_PKG_NOINSTALL_ERROR_PART2="con la arquitectura de la CPU"
 lang_PKG_NOINSTALL_ERROR_PART3="no es compatible con synOCR porque no se puede instalar el paquete Docker necesario (sólo x86_64 / aarch64)"
 lang_PKG_DELETE_TIMER="El programador integrado de las versiones anteriores ya no está disponible. Utilice el planificador de tareas de DSM."
 lang_INFO_description="synOCR es una sencilla interfaz gráfica de usuario para el contenedor Docker OCRmyPDF. Con él, puede aplicar fácilmente el OCR a los documentos PDF. synOCR puede entonces buscar etiquetas y fechas en los documentos, renombrarlos según un patrón individual y ordenarlos en subcarpetas según las categorías. Al utilizar enlaces duros, no se necesita más espacio de almacenamiento si un documento tiene que ser clasificado en varias carpetas de categorías."
-
-#-------------------------------------------
-# miscellaneous:
-#-------------------------------------------
 lang_notify_file_job_successful="El PDF ha sido procesado con éxito."
 lang_notify_file_update_available="¡Actualización disponible!"
+lang_edit_profname="Nombre del perfil"
+lang_edit_set2_delsearchpref_title=""
+lang_edit_set3_backuprotatetype_title=""
+lang_edit_yamlsample_23=""
+lang_help_FAQ_sub5_afterlink=""
+lang_help_about_4=""

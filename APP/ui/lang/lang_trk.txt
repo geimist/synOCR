@@ -1,11 +1,16 @@
-# german language file for synOCR-GUI
-# /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_trk.txt
-# translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
-machinetranslate="1"
+    #######################################################################################################
+    # Turkish language file for synOCR-GUI                                                                #
+    #                                                                                                     #
+    # Path:                                                                                               #
+    #     /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_trk.txt                                      #
+    #                                                                                                     #
+    # translation instructions can you found here:                                                        #
+    #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
+    #                                                                                                     #
+    #     © 2022 by geimist                                                                               #
+    #######################################################################################################
 
-#-------------------------------------------
-# general:
-#-------------------------------------------
+machinetranslate="1"
 lang_page1="Genel Bakış"
 lang_page2="Konfigürasyon"
 lang_page3="Zaman Çizelgesi"
@@ -31,13 +36,9 @@ lang_foot_buttondownDB="İndir"
 lang_foot_buttondownDB_tit="Yapılandırma veritabanını indirin ..."
 lang_foot_buttondelprof="Profil silme"
 lang_foot_buttondelprof_tit="bir onay isteminden sonra geçerli profili siler ..."
-
-#-------------------------------------------
-# page settings:
-#-------------------------------------------
 lang_edit_delques_1="Mevcut profil"
 lang_edit_delques_2="silinecek mi?"
-lang_edit_profname="Profil"
+lang_edit_delfin1="Profil"
 lang_edit_delfin2="silindi"
 lang_edit_deler="Profil silinirken hata oluştu"
 lang_edit_dup1="Lütfen çoğaltılan profil için bir ad girin"
@@ -53,80 +54,59 @@ lang_edit_new2="İsimli yeni bir profil"
 lang_edit_new3="oluşturuldu"
 lang_edit_new4="Profil oluşturulurken hata oluştu!"
 lang_edit_savefin="Değişiklikler kaydedildi"
-
 lang_edit_summary1="Ayarlarınızı buraya girin ve yolları ayarlayın."
 lang_edit_summary2="Sağ kenar boşluğundaki mavi bilgi sembolüne tıklayarak her bir alan için yardım alabilirsiniz."
 lang_edit_summary3="Her program çalıştırıldığında işlenen profiller aracılığıyla istediğiniz kadar konfigürasyon oluşturabilirsiniz. Ayrıca her bir profili ilgili alan üzerinden devre dışı bırakabilirsiniz."
-lang_edit_summary4="Birim de dahil olmak üzere tüm yolları girdiğinizden ve büyük ve küçük harflerin doğru olduğundan emin olun. Yapılacak en güvenli şey, Filestation'da istenen klasörü aramak ve sağ tıklayarak özellikleri görüntülemektir. Bu diyalogda doğru yolu kopyalayabilirsiniz."
-
 lang_edit_dbupdate="DB güncellemesinin sonucu"
 lang_edit_change_profile="profile geç"
-
 lang_edit_set1_title="Genel"
-
 lang_edit_set1_profilename_help="Profiller ayrı ayrı adlandırılabilir"
-
 lang_edit_set1_profile_activ_title="Profili etkinleştirme / devre dışı bırakma"
 lang_edit_set1_profile_activ="Profil etkinleştirildi"
 lang_edit_set1_profile_inactiv="Profil devre dışı bırakıldı"
 lang_edit_set1_profile_activ_help1="Profiller etkinleştirilebilir veya devre dışı bırakılabilir."
 lang_edit_set1_profile_activ_help2="Devre dışı bırakılan profiller değiştirilebilir ancak synOCR tarafından yürütülmez."
-
 lang_edit_set1_sourcedir_title="Kaynak dizini"
 lang_edit_set1_sourcedir_help1="Bu dizin PDF dosyaları için aranır (özyinelemeli olarak değil)."
 lang_edit_set1_sourcedir_help2="Tam yolu kullanın"
-
 lang_edit_set1_targetdir_title="Hedef dizin"
 lang_edit_set1_targetdir_help1="Bitmiş PDF dosyalarının çıktı dizini (gerekirse oluşturulacaktır)."
 lang_edit_set1_targetdir_help2="Tam yolu kullanın"
-
 lang_edit_set1_backupdir_title="Yedekleme dizini"
 lang_edit_set1_backupdir_help1="Buraya geçerli bir yol girilirse, orijinal dosyalar buraya kaydedilir (gerekirse oluşturulacaktır)."
 lang_edit_set1_backupdir_help2="Geçerli bir dizin kaydedilmemişse, orijinal dosyalar kalıcı olarak silinir."
 lang_edit_set1_backupdir_help3="Tam yolu kullanın"
-
 lang_edit_set1_logdir_title="LOG dosyaları için dizin"
 lang_edit_set1_logdir_help1="LOG dosyalarının dizini (gerekirse oluşturulacaktır)"
 lang_edit_set1_logdir_help2="Tam yolu kullanın"
-
 lang_edit_set2_title="OCR seçenekleri ve yeniden adlandırma"
-
 lang_edit_set2_ocropt_title="OCR seçenekleri"
 lang_edit_set2_ocropt_help1="OCRmyPDF için bireysel parametreler burada belirtilebilir"
 lang_edit_set2_ocropt_help2="PDF dosyalarını mevcut metin katmanıyla yeniden OCR yapmayın"
-lang_edit_set2_ocropt_help3="Yeni bir OCR'yi zorlayın"
 lang_edit_set2_ocropt_help4="sayfaların otomatik çevrilmesi"
 lang_edit_set2_ocropt_help5="Dil kodu"
 lang_edit_set2_ocropt_help6="çarpık taramaları düzeltme"
 lang_edit_set2_ocropt_help7="eksiksiz yardım"
-
 lang_edit_set2_dockerimage_title="Kullanılacak Docker görüntüsü"
 lang_edit_set2_dockerimage_help1="Hangi Docker görüntüsü kullanılmalıdır?"
 lang_edit_set2_dockerimage_help2="standart görüntüdür, ancak şu anda yalnızca dilleri içermektedir:"
 lang_edit_set2_dockerimage_help3="Çok dilli resimler olası tüm dilleri içerir, ancak daha büyüktür!"
 lang_edit_set2_dockerimage_help4="Elle indirilen veya kendi oluşturduğunuz görüntüler de, adında aşağıdakilerin yer alması koşuluyla seçilebilir:"
-
 lang_edit_set2_dockerimageupdate_title="Docker görüntüsünü güncel tutun"
 lang_edit_set2_dockerimageupdate_yes="güncel tutun (standart)"
 lang_edit_set2_dockerimageupdate_no="Sürümü koruyun"
 lang_edit_set2_dockerimageupdate_help1="latest etiketine sahip Docker görüntüleri güncellenebilir."
-
-lang_edit_set2_img2pdf_title="Görüntüleri PDF'ye dönüştürme"
 lang_edit_set2_img2pdf_no="Resimleri atla"
 lang_edit_set2_img2pdf_yes="Görüntüleri dönüştürme"
 lang_edit_set2_img2pdf_help1="Kaynak klasördeki görüntüler PDF dosyalarına dönüştürülebilir. Etkinleştirilirlerse, yedekleme klasörüne taşınırlar."
-
 lang_edit_set2_searchpref_title="Arama deseni Kaynak dosya adı"
-lang_edit_set2_searchpref_help1="Yalnızca tanımlanmış bir ön eke sahip PDF'leri düzenleme"
 lang_edit_set2_searchpref_help2="Tüm belgeler işlenecekse boş bırakın"
 lang_edit_set2_searchpref_help3="başlangıçta aramayı tersine çevirir"
 lang_edit_set2_searchpref_help4="sonunda terimi bir son ek olarak tanımlar"
-lang_edit_set2_delsearchpref_title=""
 lang_edit_set2_delsearchpref_keep="Arama modelini koru"
 lang_edit_set2_delsearchpref_delete="Arama şablonunu kaldır"
 lang_edit_set2_delsearchpref_help1="Arama ifadesi daha sonra kaldırılmalı mı?"
 lang_edit_set2_delsearchpref_help2="(kaynak klasör aynı zamanda hedef klasör ise faydalıdır)"
-
 lang_edit_set2_documentSplitPattern_title="Arama deseni belge ayırıcı"
 lang_edit_set2_documentSplitPattern_help1="Büyük bir belgeyi otomatik olarak kısmi belgelere bölmek için burada bir kalıp tanımlanabilir. Kaynak belge, belirtilen arama deseninin bulunduğu sayfalara bölünür."
 lang_edit_set2_documentSplitPattern_help3="Burada çıktısını alabileceğiniz bir şablon bulacaksınız:"
@@ -135,41 +115,36 @@ lang_edit_set2_splitpagehandling_discard="ıskarta"
 lang_edit_set2_splitpagehandling_isLastPage="son sayfadır"
 lang_edit_set2_splitpagehandling_isFirstPage="ilk sayfa"
 lang_edit_set2_splitpagehandling_help1="Ayırıcı sayfa atılabilir (varsayılan ayar) veya önceki ya da sonraki alana atanabilir."
-
 lang_edit_set2_taglist_title="Aranacak etiketler"
 lang_edit_set2_taglist_help1="Burada belirtilen etiketler belgede aranır ve yeniden adlandırma için kullanılabilir."
 lang_edit_set2_taglist_help2="Ayrı etiketler noktalı virgülle ayrılır."
 lang_edit_set2_taglist_help2_1="Kural dosyasına giden bir yol da ayarlanabilir."
 lang_edit_set2_taglist_help3="! ! ! SATIR SONU KULLANMAYIN! ! !"
 lang_edit_set2_taglist_help4="Etiketler ve kategoriler boşluk da içerebilir."
-lang_edit_set2_taglist_help5="Bir etiket yalnızca tek başına bulunacaksa, önüne bir paragraf işareti konulmalıdır (arama "
+lang_edit_set2_taglist_help5="Bir etiket yalnızca tek başına bulunacaksa, önüne bir paragraf işareti konulmalıdır (arama"
 lang_edit_set2_taglist_help6="Fatura; İş; Sigorta"
 lang_edit_set2_taglist_help7="Etiketler eşittir işareti kullanılarak bir kategoriye (alt klasörler için) de atanabilir (yalnızca kural tanımlı klasörleri de kullanıyorsanız geçerlidir [aşağıdaki seçenek])."
 lang_edit_set2_taglist_help8="Fatura; HUK24=sigorta; Allianz=sigorta"
 lang_edit_set2_taglist_help9="Kapsamlı etiketler ayrı bir metin dosyasına da kaydedilebilir."
 lang_edit_set2_taglist_help10="Bu durumda, mutlak yol buraya girilmelidir."
-
 lang_edit_set2_searchall_title="Etiketler için arama aralığı"
 lang_edit_set2_searchall_1page="Sadece ilk sayfa"
 lang_edit_set2_searchall_all="tüm belge"
 lang_edit_set2_searchall_help1="Etiketleri hangi alanda aramalıyım?"
 lang_edit_set2_searchall_help2="Standart sadece ilk sayfadadır. Arama alanı ne kadar büyük olursa, o kadar fazla yanlış pozitif olur."
-
 lang_edit_set2_moveTaggedFiles_title="Etiket alt dizinlerini kullanma"
 lang_edit_set2_moveTaggedFiles_targetdir="Hedef klasörde saklayın"
 lang_edit_set2_moveTaggedFiles_useCatDir="Kural tanımlı klasörleri kullanma"
 lang_edit_set2_moveTaggedFiles_useTagDir="etiket tabanlı klasörler kullanın"
 lang_edit_set2_moveTaggedFiles_useYearDir="Yıllık klasörler kullanın"
-lang_edit_set2_moveTaggedFiles_useYearMonthDir="yıl klasörlerini kullanın "
+lang_edit_set2_moveTaggedFiles_useYearMonthDir="yıl klasörlerini kullanın"
 lang_edit_set2_moveTaggedFiles_help1="Hangi sıralama kullanılmalıdır:"
 lang_edit_set2_moveTaggedFiles_help2="Alt dizinleri veya kategori klasörlerini etiketleyin"
 lang_edit_set2_moveTaggedFiles_help3="Kural tanımlı klasörler"
 lang_edit_set2_moveTaggedFiles_help4="Yıllık dosya"
 lang_edit_set2_moveTaggedFiles_help5="Yıl/Ay Klasörü"
 lang_edit_set2_moveTaggedFiles_help6="Birkaç etiket geçerliyse, sabit bağlantılar ayarlanır."
-
 lang_edit_set2_renamesyntax_title="OCR Yeniden Adlandırma Sözdizimi"
-lang_edit_set2_renamesyntax_help1="Bitmiş PDF'leri belirli bir sözdizimiyle yeniden adlandırın. Değişkenler YAML kurallarındaki hedef yollarda da kullanılabilir (§tit hariç)."
 lang_edit_set2_renamesyntax_help2="Sürekli metin ile birlikte aşağıdaki değişkenler mümkündür"
 lang_edit_set2_renamesyntax_help3="(Özel karakterlerin öngörülemeyen sonuçları olabilir!)"
 lang_edit_set2_renamesyntax_help4="Tarih / Gün - metin içinde bulunur"
@@ -199,83 +174,64 @@ lang_edit_set2_renamesyntax_help20="Sayfa sayacı (kullanılan profil)"
 lang_edit_set2_renamesyntax_help21="Dosya sayacı (kullanılan profil)"
 lang_edit_set2_renamesyntax_help15="üretir"
 lang_edit_set2_renamesyntax_help17="Belgede ilk olarak tarihler aranır. Başarısız olursa, dosya tarihi kullanılır."
-
 lang_edit_set2_tagsymbol_title="Dosya adındaki etiketleri işaretleyin"
 lang_edit_set2_tagsymbol_help1="bulunan etiketler dosya adında işaretlenebilir"
 lang_edit_set2_tagsymbol_help2="(Özel karakterlerin öngörülemeyen sonuçları olabilir!)"
-
 lang_edit_set2_filedate_title="Doğru dosya tarihi"
 lang_edit_set2_filedate_now="şimdiki zaman"
 lang_edit_set2_filedate_ocr="Bulunan OCR tarihini kullanın"
 lang_edit_set2_filedate_source="Kaynak dosyanın tarihini kullan"
 lang_edit_set2_filedate_help1="Hedef dosyanın tarihi nasıl ayarlanmalıdır?"
 lang_edit_set2_filedate_help2="OCR tarihi seçilir ancak hiçbir tarih bulunamazsa, kaynak dosyanın tarihi kullanılır."
-
 lang_edit_set2_ignoredDate_title="Verileri yoksay"
 lang_edit_set2_ignoredDate_help1="Belirtilen veriler aramada göz ardı edilir. Birden fazla tarih girilebilir (boşluklarla ayrılmış olarak). Doğru format önemlidir: YYYY-MM-DD (örneğin 2021-02-29 2021-04-31)."
-
 lang_edit_set2_DateSearchMinYear_title="Geçmişte arama aralığı"
 lang_edit_set2_DateSearchMinYear_help1="Buraya geçmişte geçerli bir tarih olarak gözlemlenecek mutlak yılı veya göreceli bir yıl sayısını girin."
 lang_edit_set2_DateSearchMinYear_help2="Dört basamaklı bir sayı mutlak yıl olarak sayılır. Bağıl yıl sapması olarak dört basamaktan daha az."
 lang_edit_set2_DateSearchMinYear_help3="Boş bir değer veya 0 sınırsız olarak kabul edilir."
-
 lang_edit_set2_DateSearchMaxYear_title="Gelecekte arama alanı"
 lang_edit_set2_DateSearchMaxYear_help1="Gelecekte geçerli bir tarih olarak gözlemlenecek mutlak yılı veya göreceli bir yıl sayısını buraya girin."
 lang_edit_set2_DateSearchMaxYear_help2="Boş bir değer veya 0 sınırsız olarak kabul edilir."
-
 lang_edit_set2_filedate_search_nearest_date_title="Tarih Arama sonucu sırası"
 lang_edit_set2_filedate_search_nearest_firstfound="Belgede ilk vuruş"
 lang_edit_set2_filedate_search_nearest_nearest="Geçmişteki en son tarih"
 lang_edit_set2_filedate_search_nearest_help1="Tarih aramasının hangi bulgusu kullanılmalıdır?"
 lang_edit_set2_filedate_search_nearest_help2="Belgedeki ilk tarih mi yoksa tüm buluntuların geçmişindeki en yakın tarih mi? (sadece Python tabanlı arama için geçerlidir!)"
-
 lang_edit_set2_date_search_method_title="Tarih arama yöntemi"
 lang_edit_set2_date_search_method_python="Python"
 lang_edit_set2_date_search_method_regex="RegEx"
 lang_edit_set2_date_search_method_help1="Tarih araması için aşağıdaki seçenekler mevcuttur: Python betiği ve düzenli ifade olarak arama."
-lang_edit_set2_date_search_method_help2="Python betiği daha kapsamlı arama yapar ve örneğin yazılı olmayan ayları da bulur. Ön koşul Python3'ün kurulu olmasıdır. Gerekli modüller synOCR tarafından yüklenir."
 lang_edit_set2_date_search_method_help3="Düzenli ifade olarak arama yalnızca sayı biçimlerini bulur, ancak başka herhangi bir yazılıma bağımlı değildir ve daha hızlıdır."
-
 lang_edit_set2_clean_up_spaces_title="Alan Temizlenmiş Arama"
 lang_edit_set2_clean_up_spaces_true="Alanları temizleyin"
 lang_edit_set2_clean_up_spaces_false="Orijinal metinde arama"
 lang_edit_set2_clean_up_spaces_help1="Boşluk temizleme etkinleştirilirse, birden fazla boşluk bire indirilir. Bazen OCR orijinal boşluk sayısını tanımaz veya her zaman aynı değildir. Özellikle RegEx aramalarında, tam sayının tanımlanması yararlı olabilir."
 lang_edit_set2_clean_up_spaces_help2="Ayar, belgedeki tüm aramaları etkiler (tarih, etiketler, ...). Orijinal belge değiştirilmez, yalnızca geçici metin alıntısı değiştirilir."
-
 lang_edit_set3_title="DSM bildirimi ve diğer ayarlar"
-
 lang_edit_set3_backuprotate_title="Yedekleme dosyalarını sınırlayın"
 lang_edit_set3_backuprotate_help1="Aşırı yedeklemeler otomatik olarak kaldırılabilir."
 lang_edit_set3_backuprotate_help2="Birim olarak günleri veya dosyaları seçin."
 lang_edit_set3_backuprotate_help3="Boş bir giriş sınırlamayı kaldırır."
-lang_edit_set3_backuprotatetype_title=""
 lang_edit_set3_backuprotatetype_files="Dosyalar"
 lang_edit_set3_backuprotatetype_days="Günler"
-
 lang_edit_set3_logmax_title="Maksimum LOG dosyaları"
 lang_edit_set3_logmax_help="Maksimum LOG dosyası sayısı (boş loglar hemen silinir)"
-
 lang_edit_set3_dsmtextnotify_title="Sistem bildirimi (metin)"
 lang_edit_set3_dsmtextnotify_on="a"
 lang_edit_set3_dsmtextnotify_off="gelen"
-lang_edit_set3_dsmtextnotify_help1="a ➜ Bildirim Merkezi'nde etkin olan metinle bildirim"
 lang_edit_set3_dsmtextnotify_help2="kapalı ➜ metin bildirimi yok"
-
 lang_edit_set3_MessageTo_title="Kullanıcıya bildirim"
 lang_edit_set3_MessageTo_help1="Bildirimlerin gönderildiği kullanıcı."
-lang_edit_set3_MessageTo_help2="Bu şekilde, paket ile birlikte "
-lang_edit_set3_MessageTo_help3="Değer boş kalırsa, grup "
-
+lang_edit_set3_MessageTo_help2="Bu şekilde, paket ile birlikte"
+lang_edit_set3_MessageTo_help3="Değer boş kalırsa, grup"
 lang_edit_set3_PBTOKEN_title="PushBullet belirteci"
 lang_edit_set3_PBTOKEN_help1="Kişisel PushBullet belirteciniz."
 lang_edit_set3_PBTOKEN_help2="Bildirimler uygun hesaba gönderilir."
 lang_edit_set3_PBTOKEN_help3="Kullanılmadığında boş bırakın."
-
 lang_edit_set3_dsmbeepnotify_title="Sistem bildirimi (bip sesi)"
 lang_edit_set3_dsmbeepnotify_on="a"
 lang_edit_set3_dsmbeepnotify_off="gelen"
 lang_edit_set3_dsmbeepnotify_help1="PDF tamamlandığında kısa bir bip sesi duyulur."
-
 lang_edit_set3_loglevel_title="LOG seviyesi (0,1,2)"
 lang_edit_set3_loglevel_off="0 (kapalı)"
 lang_edit_set3_loglevel_1="1 (standart)"
@@ -283,20 +239,17 @@ lang_edit_set3_loglevel_2="2 (hata ayıklama modu)"
 lang_edit_set3_loglevel_help1="0 ➜ günlük dosyası oluşturulmaz"
 lang_edit_set3_loglevel_help2="1 ➜ normal log (standart)"
 lang_edit_set3_loglevel_help3="2 ➜ hata ayıklama günlüğü"
-
 lang_edit_set3_accept_cpdf_license_title="Ruhsat koşulları"
 lang_edit_set3_accept_cpdf_license_no="Ruhsat reddedildi"
 lang_edit_set3_accept_cpdf_license_yes="Ruhsatı kabul ediyorum"
-lang_edit_set3_accept_cpdf_license_help1="cpdf, synOCR'nin ek işlevler (örn. ayırıcı sayfalar) sağlamak için kullanabileceği bir komut satırı aracıdır."
 lang_edit_set3_accept_cpdf_license_help2="cpdf yalnızca ticari olmayan kullanım için ücretsiz olarak kullanılabilir. Kullanıcı burada buna karar verebilir."
 lang_edit_set3_accept_cpdf_license_help3="Orijinal ifade:"
-
 lang_edit_yamlsample_01="Aşağıdaki yol, etiketler için alana istenen profilde girilmelidir"
 lang_edit_yamlsample_02="LÜTFEN BU TALIMATLARI IZLEYIN"
 lang_edit_yamlsample_03="doğru girintileri yerleştirmek çok önemlidir"
 lang_edit_yamlsample_04="tapstop kullanmayin - sadece boşluklar!"
 lang_edit_yamlsample_05="Örnekte gösterildiği gibi tam boşluk sayısını kullanın"
-lang_edit_yamlsample_06="İpucu: kopyalayın "
+lang_edit_yamlsample_06="İpucu: kopyalayın"
 lang_edit_yamlsample_07="Windows satır sonlarını kullanmayın!"
 lang_edit_yamlsample_08="aşağıdaki anahtar kelime dosyaya dahil edilmelidir:"
 lang_edit_yamlsample_09="aşağıda anahtar kelimelerin bir açıklaması bulunmaktadır:"
@@ -307,17 +260,14 @@ lang_edit_yamlsample_12b="isim bir sayı ile başlamamalıdır"
 lang_edit_yamlsample_13="sonunda iki nokta üst üste olmalıdır"
 lang_edit_yamlsample_14="her blok BİR etiket ve tanımlanmışsa BİR eylem (hareket) tanımlar"
 lang_edit_yamlsample_15="Sözdizimi:"
-lang_edit_yamlsample_16="iki nokta arasında bir boşluk "
+lang_edit_yamlsample_16="iki nokta arasında bir boşluk"
 lang_edit_yamlsample_17="VALUE, kural yerine getirildiğinde etiket olarak kullanılır"
 lang_edit_yamlsample_17a="Sadece Latin harfleri / özel karakter yok!"
 lang_edit_yamlsample_17b="VALUE bulunamazsa, tagname yedek olarak kullanılır"
 lang_edit_yamlsample_18="Kural başına yalnızca bir anahtar kelime"
-lang_edit_yamlsample_19="isteğe bağlı / tanımlanmamışsa GUI'de tanımlanan hedef kullanılır"
 lang_edit_yamlsample_20="Kural yerine getirilirse DEĞER bir yoldur"
 lang_edit_yamlsample_21="mutlak bir yol olabilir"
 lang_edit_yamlsample_22a="eğer mutlak bir yol değilse"
-lang_edit_yamlsample_22b="GUI'de tanımlanan hedef klasöre göre oluşturulur"
-lang_edit_yamlsample_23=""
 lang_edit_yamlsample_24="kuralın yerine getirilmesi için kaç arama kuralının yerine getirilmesi gerektiği"
 lang_edit_yamlsample_25="DEĞER"
 lang_edit_yamlsample_26="tüm arama kuralları yerine getirilmelidir"
@@ -328,7 +278,6 @@ lang_edit_yamlsample_30="değiştirmeyin"
 lang_edit_yamlsample_31="Bir arama kuralı bloğu her zaman aşağıdaki dört anahtardan oluşur"
 lang_edit_yamlsample_32="sınırsız sayıda arama kuralı bloğu birleştirilebilir"
 lang_edit_yamlsample_33="kısa çizgi ve boşlukla başlar"
-lang_edit_yamlsample_34="VALUE bir dize, bir arama terimi veya RegEx'tir"
 lang_edit_yamlsample_35="DEĞER boş olmamalıdır"
 lang_edit_yamlsample_36="DEĞER olabilir:"
 lang_edit_yamlsample_37="Bir yerde saklı"
@@ -345,10 +294,6 @@ lang_edit_yamlsample_button_help_03="- giriş dizininde mevcut kuralların bir y
 lang_edit_yamlsample_gui_01="Kurallar dosyası zaten mevcut!"
 lang_edit_yamlsample_gui_02="Lütfen mevcut dosyayı silin ve tekrar deneyin"
 lang_edit_yamlsample_gui_03="Kural dosyası başarıyla oluşturuldu."
-
-#-------------------------------------------
-# page main:
-#-------------------------------------------
 lang_main_title1="Synology DSM üzerinde OCR"
 lang_main_title2="Açıklama"
 lang_main_monitor_restart_necessary_1="İzlenen giriş klasörlerinin listesi artık güncel değil!"
@@ -359,7 +304,6 @@ lang_main_dockerfailed2="Lütfen Docker paketinin yüklü olup olmadığını ko
 lang_main_permissions_failed1="synOCR henüz gerekli izinlere sahip değil!"
 lang_main_permissions_failed2="Lütfen aşağıdaki komut dosyasıyla görev planlayıcıda bir görev oluşturun (root olarak)"
 lang_main_permissions_failed3="görev en az bir kez gerçekleştirilmelidir"
-lang_main_desc1="SynOCR, Docker konteyneri OCRmyPDF için basit bir GUI sağlar. Docker'da bir yapılandırma gerekli değildir."
 lang_main_desc2="Şu anda, muhtemelen tüm parametreler OCRmyPDF ile bağlantılı olarak kullanılamaz, ancak en önemlileri kullanılabilir. Yapılandırmada kaynak ve hedef klasörü girmeniz yeterlidir. Artık alttaki düğme aracılığıyla manuel bir program çalıştırma zaten mümkün. Otomatik program çalıştırma (yardımda açıklandığı gibi) ya zamanlayıcı ya da DSM görev planlayıcısı aracılığıyla ayarlanmalıdır."
 lang_main_buttonrun="Şimdi manuel synOCR çalıştırmasını başlatın"
 lang_main_statshead="Durum / İstatistikler"
@@ -368,17 +312,10 @@ lang_main_openfilecount="Dosyaları düzenle"
 lang_main_alldone="Hepsi tamam"
 lang_main_totalsince="O zamandan beri toplam"
 lang_main_pages="Sayfalar"
-
-#-------------------------------------------
-# page help:
-#-------------------------------------------
 lang_help_title_QS="Hızlı başlangıç"
 lang_help_QS_1_beforelink="İlk olarak kurulumunuzu"
 lang_help_QS_1_afterlink="bir."
 lang_help_QS_1b="(isteğe bağlı): Giriş klasörlerini otomatik olarak izlemek için inotify-tools paketi kurulmalıdır."
-lang_help_QS_2="synOCR'nin düzgün çalışması için DSM Görev Zamanlayıcı'da yeni bir görev oluşturulmalıdır."
-# ensure exact translation from the DSM!:
-lang_help_QS_sub1_tit="Bunu yapmak için, DSM'deki kontrol panelini açın"
 lang_help_QS_sub1_1="Görev planlayıcısı"
 lang_help_QS_sub1_2="Oluştur"
 lang_help_QS_sub1_3="zamanlanmış görev"
@@ -396,29 +333,19 @@ lang_help_FAQ_sub1_tit="OCRmyPDF seçenekleri"
 lang_help_FAQ_sub1_1_beforelink="OCRmyPDF hakkında daha ayrıntılı yardımı şu adreste bulabilirsiniz"
 lang_help_FAQ_sub1_1_linktitle="OCRmyPDF yardım sayfası"
 lang_help_FAQ_sub1_1_afterlink="."
-lang_help_FAQ_sub2_tit="synOCR'yi aradığımda DSM'den çıkış yapıyorum."
 lang_help_FAQ_sub2_1="Çözüm, aşağıdaki ayarı etkinleştirmektir"
 lang_help_FAQ_sub2_2="IP kontrolünden vazgeçerek tarayıcı uyumluluğunu artırın"
 lang_help_FAQ_sub2_3="(burada bulunabilir: DSM Kontrol Paneli ➜ Güvenlik)"
-lang_help_FAQ_sub3_tit="güvenli̇k danişmani si̇nocr'a karşi uyardi"
-lang_help_FAQ_sub3_1="Uyarının nedeni synOCR'den kaynaklanan bir tehdit değil, güvenlik danışmanının crontab'daki değişiklikten habersiz olmasıdır."
-lang_help_FAQ_sub3_2="Çözüm, Güvenlik Danışmanı'nda veya DSM Görev Planlayıcısı'nda manuel bir görevi atlamaktır."
 lang_help_FAQ_sub4_tit="Bazı dosyalar mevcut olmasına rağmen hiçbir dosya işlenmez."
 lang_help_FAQ_sub4_1="OCR arama öneki belirtilmiş ancak dosyalarla eşleşmiyorsa bu durum söz konusu olabilir"
 lang_help_FAQ_sub4_2="Kaynak klasör için istenen profilin yapılandırmada da etkinleştirilip etkinleştirilmediğini kontrol edin."
 lang_help_FAQ_sub5_tit="Benim sorum orada değil ..."
 lang_help_FAQ_sub5_beforelink="Diğer tüm soru ve sorunlarınız için lütfen destek forumunu kullanın:"
 lang_help_FAQ_sub5_linktitle="synOCR destek forumu"
-lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="synOCR hakkında"
 lang_help_about_1="Proje her şeyden önce benim ona ayırabileceğim zamana, enerjiye ve arzuya bağlı."
 lang_help_about_2="PDF belgeleriyle iş akışımı kolaylaştırmaya başladım, başkalarının bu projeyi yararlı bulması benim için de bir zevk. Bu nedenle, karşılığında hiçbir şey beklemiyorum!"
 lang_help_about_3="Ancak, beni maddi olarak mutlu etmek isteyen biri varsa, bunu bu düğmeye tıklayarak yapabilir - TEŞEKKÜRLER:"
-lang_help_about_4=""
-
-#-------------------------------------------
-# script synOCR-start.sh:
-#-------------------------------------------
 lang_synOCR_start_is_running="synOCR zaten çalışıyor!"
 lang_synOCR_start_req_kill="Bırakmaya zorlamak mı?"
 lang_synOCR_start_runs="synOCR piyasaya sürüldü"
@@ -431,26 +358,42 @@ lang_synOCR_start_check_target="Yapılandırmadaki hedef dizini kontrol edin"
 lang_synOCR_start_target_created="Hedef dizin oluşturuldu."
 lang_synOCR_start_umount_log="Şifrelenmiş LOG klasörü takılı değil"
 lang_synOCR_start_errorexit="synOCR hatalarla sonlandırıldı!"
-lang_synOCR_start_loginfo="LOG'da daha fazla bilgi"
-
-#-------------------------------------------
-# WIZARD_UIFILES:
-#-------------------------------------------
 lang_wizui_install_title="Kurulum hakkında not:"
-lang_wizui_install_desc="Tek ön koşul yüklü Docker paketidir. Normalde Docker'da başka bir yapılandırmaya gerek yoktur."
 lang_wizui_uninstall_title="Kaldırma bildirimi"
 lang_wizui_uninstall_desc_1="Kaldırma işlemi sırasında tüm ayarlar silinir. Gerekirse, kaldırmadan önce HyperBackup ile bir yedekleme oluşturun."
 lang_wizui_uninstall_desc_2="DSM görev planlayıcısı aracılığıyla manuel olarak oluşturulan bir görevin manuel olarak silinmesi gerekebilir."
 lang_wizui_upgrade_title="Yükseltme yaparken önemli not!"
-lang_wizui_upgrade_desc="DiskStationManager'daki bir sorun nedeniyle, synOCR bir yükseltmeden sonra açılamıyor. Bu nedenle, <u>bir yükseltmeden sonra DSM sayfasını yenilemek veya yeniden yüklemek (F5)</u> ya da synOCR'yi yeni bir pencerede açmak gerekir."
 lang_PKG_NOINSTALL_ERROR_PART1="Cihazınız"
 lang_PKG_NOINSTALL_ERROR_PART2="CPU mimarisi ile"
 lang_PKG_NOINSTALL_ERROR_PART3="synOCR tarafından desteklenmez çünkü gerekli Docker paketi yüklenemez (yalnızca x86_64 / aarch64)"
 lang_PKG_DELETE_TIMER="Eski sürümlerdeki yerleşik zamanlayıcı artık mevcut değildir. Lütfen DSM görev planlayıcısını kullanın!"
-lang_INFO_description="synOCR, Docker konteyneri OCRmyPDF için basit bir GUI'dir. Bununla PDF belgelerine kolayca OCR uygulayabilirsiniz. synOCR daha sonra belgelerdeki etiketleri ve tarihleri arayabilir, bunları ayrı bir desene göre yeniden adlandırabilir ve kategorilere göre alt klasörler halinde sıralayabilir. Sabit bağlantılar kullanıldığında, bir belgenin birkaç kategori klasörüne ayrılması gerekiyorsa, depolama alanı gereksinimi artmaz."
-
-#-------------------------------------------
-# miscellaneous:
-#-------------------------------------------
 lang_notify_file_job_successful="PDF başarıyla işlendi."
 lang_notify_file_update_available="Güncelleme mevcut!"
+lang_edit_summary4="Birim de dahil olmak üzere tüm yolları girdiğinizden ve büyük ve küçük harflerin doğru olduğundan emin olun. Yapılacak en güvenli şey, Filestation'da istenen klasörü aramak ve sağ tıklayarak özellikleri görüntülemektir. Bu diyalogda doğru yolu kopyalayabilirsiniz."
+lang_edit_set2_ocropt_help3="Yeni bir OCR'yi zorlayın"
+lang_edit_set2_img2pdf_title="Görüntüleri PDF'ye dönüştürme"
+lang_edit_set2_searchpref_help1="Yalnızca tanımlanmış bir ön eke sahip PDF'leri düzenleme"
+lang_edit_set2_renamesyntax_help1="Bitmiş PDF'leri belirli bir sözdizimiyle yeniden adlandırın. Değişkenler YAML kurallarındaki hedef yollarda da kullanılabilir (§tit hariç)."
+lang_edit_set2_date_search_method_help2="Python betiği daha kapsamlı arama yapar ve örneğin yazılı olmayan ayları da bulur. Ön koşul Python3'ün kurulu olmasıdır. Gerekli modüller synOCR tarafından yüklenir."
+lang_edit_set3_dsmtextnotify_help1="a ➜ Bildirim Merkezi'nde etkin olan metinle bildirim"
+lang_edit_set3_accept_cpdf_license_help1="cpdf, synOCR'nin ek işlevler (örn. ayırıcı sayfalar) sağlamak için kullanabileceği bir komut satırı aracıdır."
+lang_edit_yamlsample_19="isteğe bağlı / tanımlanmamışsa GUI'de tanımlanan hedef kullanılır"
+lang_edit_yamlsample_22b="GUI'de tanımlanan hedef klasöre göre oluşturulur"
+lang_edit_yamlsample_34="VALUE bir dize, bir arama terimi veya RegEx'tir"
+lang_main_desc1="SynOCR, Docker konteyneri OCRmyPDF için basit bir GUI sağlar. Docker'da bir yapılandırma gerekli değildir."
+lang_help_QS_2="synOCR'nin düzgün çalışması için DSM Görev Zamanlayıcı'da yeni bir görev oluşturulmalıdır."
+lang_help_QS_sub1_tit="Bunu yapmak için, DSM'deki kontrol panelini açın"
+lang_help_FAQ_sub2_tit="synOCR'yi aradığımda DSM'den çıkış yapıyorum."
+lang_help_FAQ_sub3_tit="güvenli̇k danişmani si̇nocr'a karşi uyardi"
+lang_help_FAQ_sub3_1="Uyarının nedeni synOCR'den kaynaklanan bir tehdit değil, güvenlik danışmanının crontab'daki değişiklikten habersiz olmasıdır."
+lang_help_FAQ_sub3_2="Çözüm, Güvenlik Danışmanı'nda veya DSM Görev Planlayıcısı'nda manuel bir görevi atlamaktır."
+lang_synOCR_start_loginfo="LOG'da daha fazla bilgi"
+lang_wizui_install_desc="Tek ön koşul yüklü Docker paketidir. Normalde Docker'da başka bir yapılandırmaya gerek yoktur."
+lang_wizui_upgrade_desc="DiskStationManager'daki bir sorun nedeniyle, synOCR bir yükseltmeden sonra açılamıyor. Bu nedenle, <u>bir yükseltmeden sonra DSM sayfasını yenilemek veya yeniden yüklemek (F5)</u> ya da synOCR'yi yeni bir pencerede açmak gerekir."
+lang_INFO_description="synOCR, Docker konteyneri OCRmyPDF için basit bir GUI'dir. Bununla PDF belgelerine kolayca OCR uygulayabilirsiniz. synOCR daha sonra belgelerdeki etiketleri ve tarihleri arayabilir, bunları ayrı bir desene göre yeniden adlandırabilir ve kategorilere göre alt klasörler halinde sıralayabilir. Sabit bağlantılar kullanıldığında, bir belgenin birkaç kategori klasörüne ayrılması gerekiyorsa, depolama alanı gereksinimi artmaz."
+lang_edit_profname="Profil adı"
+lang_edit_set2_delsearchpref_title=""
+lang_edit_set3_backuprotatetype_title=""
+lang_edit_yamlsample_23=""
+lang_help_FAQ_sub5_afterlink=""
+lang_help_about_4=""
