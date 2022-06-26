@@ -4,10 +4,6 @@
     # automatic translation script with DeepL                                                             #
     #     v1.0 © 2022 by geimist                                                                          #
     #                                                                                                     #
-    # Path:                                                                                               #
-    #     /volume1/homes/admin/script/DeepL_API_DB_Aufbau.sh                                              #
-    #                                                                                                     #
-    #                                                                                                     #
     #######################################################################################################
 
 DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
