@@ -47,6 +47,9 @@
 #           3.  YYYY-|.|/MM-|.|/DD
 #           4.  YY-|.|/MM-|.|/DD
 #
+#     0.9, 26.06.2022
+#          bugfix: minYear,maxYear could be >= or <= instead of < and >
+#
 #
 #
 # search_alpha_numeric_dates
@@ -151,8 +154,8 @@ class FindDates:
         act_value = f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year:04d}"
         logging.debug(f'Found numeric date {act_value}')
         if date_obj:
-            if (self.minYear == 0 or date_obj.year > self.minYear) \
-                    and (self.maxYear == 0 or date_obj.year < self.maxYear):
+            if (self.minYear == 0 or date_obj.year >= self.minYear) \
+                    and (self.maxYear == 0 or date_obj.year <= self.maxYear):
                 if len(self.dateBlackList_DMY):
                     if act_value not in self.dateBlackList_DMY:
                         self.founddatelist.append(date_obj)
@@ -283,8 +286,8 @@ class FindDates:
                                                                  'REQUIRE_PARTS': ['month', 'year'],
                                                                  'PREFER_DAY_OF_MONTH': 'first'})
                         if found_dates:
-                            if (self.minYear == 0 or found_dates.year > self.minYear) \
-                                    and (self.maxYear == 0 or found_dates.year < self.maxYear):
+                            if (self.minYear == 0 or found_dates.year >= self.minYear) \
+                                    and (self.maxYear == 0 or found_dates.year <= self.maxYear):
                                 self.founddatelist.append(found_dates)
                                 founddatelist.append(found_dates)
 
@@ -300,8 +303,8 @@ class FindDates:
                                                                      'REQUIRE_PARTS': ['month', 'year'],
                                                                      'PREFER_DAY_OF_MONTH': 'first'})
                             if found_dates:
-                                if (self.minYear == 0 or found_dates.year > self.minYear) \
-                                        and (self.maxYear == 0 or found_dates.year < self.maxYear):
+                                if (self.minYear == 0 or found_dates.year >= self.minYear) \
+                                        and (self.maxYear == 0 or found_dates.year <= self.maxYear):
                                     self.founddatelist.append(found_dates)
                                     founddatelist.append(found_dates)
 
@@ -351,8 +354,8 @@ class FindDates:
                             found_dates = search_dates(line[startpos:].rstrip(),
                                                        settings={'TIMEZONE': 'CEST'})
                             if found_dates:
-                                if (self.minYear == 0 or found_dates[0][1].year > self.minYear) \
-                                        and (self.maxYear == 0 or found_dates[0][1].year < self.maxYear):
+                                if (self.minYear == 0 or found_dates[0][1].year >= self.minYear) \
+                                        and (self.maxYear == 0 or found_dates[0][1].year <= self.maxYear):
                                     self.founddatelist.append(found_dates[0][1])
                                     founddatelist.append(found_dates)
 
