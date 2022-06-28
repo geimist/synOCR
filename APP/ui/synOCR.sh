@@ -34,6 +34,10 @@
     current_logfile="$2"        # current logfile / is submitted by start script
     shopt -s globstar           # enable 'globstar' shell option (to use ** for directionary wildcard)
     date_start_all=$(date +%s)
+    # hard coded setting to enable / disable metadata integration
+    # /usr/syno/bin/synosetkeyvalue "/usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh" enablePyMetaData 0
+    enablePyMetaData=1            
+    
     python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
     synOCR_python_module_list=( DateTime dateparser "PyPDF2==2.3.1" Pillow yq PyYAML )
@@ -1190,6 +1194,10 @@ renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before rene
 # ---------------------------------------------------------------------
 NewName=$(replace_variables "$NameSyntax")
 
+# replace parameters with values (rulenames can contain placeholders, which are replaced here):
+# ---------------------------------------------------------------------
+renameTag=$(replace_variables "${renameTag}")
+
 # parameters without replace_variables function:
 NewName=$( echo "$NewName" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" )
 
@@ -1210,7 +1218,7 @@ echo "$NewName"
 # ---------------------------------------------------------------------
 echo -n "${log_indent}➜ insert metadata "
 
-if [ "$python_check" = "ok" ]; then
+if [ "$python_check" = "ok" ] && [ "$enablePyMetaData" -eq 1 ]; then
     echo "(use python PyPDF2)"
     unset py_meta
 
@@ -1295,7 +1303,7 @@ elif which exiftool > /dev/null  2>&1 ; then
     echo -n "(exiftool ok) "
     exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
 else
-    echo "FAILED! - exiftool not found / Python-check failed! Please install it when you need it and when you want to insert metadata"
+    echo "FAILED! - exiftool not found / Python-check failed or enablePyMetaData was set to false manualy! Please install it when you need it and when you want to insert metadata"
 fi
 
 [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
@@ -1824,25 +1832,15 @@ while read input ; do
 
             # https://learndataanalysis.org/how-to-extract-pdf-pages-and-save-as-a-separate-pdf-file-using-python/
             # ---------------------------------------------------------------------
-            {  #echo "from PyPDF2 import PdfFileReader, PdfFileWriter"
-                echo "from PyPDF2 import PdfReader, PdfWriter"
-        
+            {   echo "from PyPDF2 import PdfReader, PdfWriter"
                 echo 'pdf_file_path = "'$outputtmp'"'
                 echo "file_base_name = pdf_file_path.replace('.pdf', '')"
-                
-               #echo "pdf = PdfFileReader(pdf_file_path)"
                 echo "pdf = PdfReader(pdf_file_path)"
-                
                 echo "pages = [$pageRange]" # page 1, 3, 5
-               #echo "pdfWriter = PdfFileWriter()"
                 echo "pdf_Writer = PdfWriter()"
-                
                 echo "for page_num in pages:"
-               #echo "    pdfWriter.addPage(pdf.getPage(page_num))"
                 echo "    pdf_Writer.addPage(pdf.getPage(page_num))"
-                
                 echo "with open('{0}_${1}${4}.pdf'.format(file_base_name), 'wb') as f:"
-               #echo "    pdfWriter.write(f)"
                 echo "    pdf_Writer.write(f)"
                 echo "    f.close()"
             } | python3
