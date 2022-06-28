@@ -2,44 +2,52 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.0.1 © 2022 by geimist                                                                        #
+    #     v1.0.2 © 2022 by geimist                                                                        #
+    #                                                                                                     #
     #                                                                                                     #
     #######################################################################################################
 
 DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
 
-# diese Datei im ini-Format definiert die Variablen und dient als Sprachvorlage:
-# sollen nur einzelne Strings aktualisiert werden oder es wurden Variablen hinzugefügt, 
-# werden nur diese Werte im File benötigt. Bestehende gleiche Werte werden übersprungen.
-# Aufbau: variablename="value"
-masterFile="/volume1/@appstore/synOCR/ui/lang/lang_ger.txt"
-
-# Pfad für die Sprach-DB
-# - in dieser DB werden alle Strings aufbewahrt.
-# - die benötigten Sprachdateien für das SPK werden daraus generiert (Funktion: export_langfiles)
-# - ist die DB nicht vorhanden, so wird sie neu erstellt
-i18n_DB="/volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n.sqlite"
+# Mastersprache:
+#---------------------------------------------------------------------------------------------------
+    # diese Datei im ini-Format definiert die Variablen und dient als Sprachvorlage:
+    # sollen nur einzelne Strings aktualisiert werden oder es wurden Variablen hinzugefügt, 
+    # werden nur diese Werte im File benötigt. Bestehende gleiche Werte werden übersprungen.
+    # Aufbau: variablename="value"
+    masterFile="/volume1/@appstore/synOCR/ui/lang/lang_ger.txt"
+        
+    # die Version wird für die Mastertabelle gesetzt und zeigt, ob einzelne Übersetzungs-Strings aktuell oder veraltet sind
+    langVersion=1
     
-# die Version wird für die Mastertabelle gesetzt und zeigt, ob einzelne Übersetzungs-Strings aktuell oder veraltet sind
-langVersion=1
+    # Sprachcode der Mustersprache (Sprache der Mastertabelle) / verwende den Synology Sprachcode:
+    # diese Sprache dient als Ausgangsübersetzung für DeepL.
+    masterSynoShortName="ger"
 
-# Sprachcode der Mustersprache (Sprache der Mastertabelle) / verwende den Synology Sprachcode:
-# diese Sprache dient als Ausgangsübersetzung für DeepL.
-masterSynoShortName="ger"
+# Datenbank:
+#---------------------------------------------------------------------------------------------------
+    # Pfad für die Sprach-DB
+    # - in dieser DB werden alle Strings aufbewahrt.
+    # - die benötigten Sprachdateien für das SPK werden daraus generiert (Funktion: export_langfiles)
+    # - ist die DB nicht vorhanden, so wird sie neu erstellt
+    i18n_DB="/volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n.sqlite"
 
-# sollen abschließend die Sprachdateien exportiert werden?:
-exportLangFiles=1
-exportPath="/volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n/"
-
-# sollen bereits vorhandene Sprachdateien überschrieben werden?:
-overwrite=1
+# Export der übersetzten Sprachdateien
+#---------------------------------------------------------------------------------------------------
+    # sollen abschließend die Sprachdateien exportiert werden?:
+    exportLangFiles=1
+    exportPath="/volume1/@appstore/synOCR/ui/lang/"
+    
+    # sollen bereits vorhandene Sprachdateien überschrieben werden?:
+    overwrite=0
 
 # manueller Import bereist vorhandener Sprachdateien
-# das Masterfile "masterFile" für die Variablendefinition sollte dennoch oben angegeben werden
-manuellImpmort=0
-
-# Ordner mit den zu importierenden Sprachdateien - dieser Pfad ist anzupassen:
-langPath="/volume1/@appstore/synOCR/ui/lang/"
+#---------------------------------------------------------------------------------------------------
+    # das Masterfile "masterFile" für die Variablendefinition sollte dennoch oben angegeben werden
+    manuellImpmort=0
+    
+    # Ordner mit den zu importierenden Sprachdateien - dieser Pfad ist anzupassen:
+    langPath="/volume1/@appstore/synOCR/ui/lang/"
 
 ####################################################################################################
 
@@ -452,7 +460,7 @@ export_langfiles() {
         languages=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT synoshortname, longname FROM languages WHERE langID='$langID'")
         synoShortName="$(echo "$languages" | awk -F'\t' '{print $1}')"
         targetLongName="$(echo "$languages" | awk -F'\t' '{print $2}')"
-        langFile="${exportPath}/lang_${synoShortName}.txt"
+        langFile="${exportPath%/}/lang_${synoShortName}.txt"
         printf "\nverarbeite Sprach-ID: $langID [$targetLongName]\n"
 
         if [ "$overwrite" = 0 ] && [ -f "$langFile" ]; then
@@ -505,3 +513,5 @@ printf "\n\nStatistik:\n"
 limitState=$(curl -sH "Authorization: DeepL-Auth-Key $DeepLapiKey" https://api-free.deepl.com/v2/usage)
 printf "    Für die Übersetzung wurden $(( $(jq -r .character_count <<<"$limitState" )-$(jq -r .character_count <<<"$limitStateStart" ))) Zeichen berechnet.\n"
 printf "    Im aktuellen Zeitraum wurden $(jq -r .character_count <<<"$limitState" ) Zeichen von $(jq -r .character_limit <<<"$limitState" ) verbraucht.\n    "
+
+exit
