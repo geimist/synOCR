@@ -46,6 +46,7 @@
     dashline1="-----------------------------------------------------------------------------------"
     dashline2="●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
 
+
 # to which user/group the DSM notification should be sent:
 # ---------------------------------------------------------------------
     synOCR_user=$(whoami); echo "synOCR-user:              $synOCR_user"
@@ -64,13 +65,14 @@
         dsm_version=7
     fi
 
+
 # read out and change into the working directory:
 # ---------------------------------------------------------------------
     SAVED_IFS=$IFS                 # Save original field separator
     APPDIR=$(cd $(dirname $0);pwd)
     cd ${APPDIR}
-
     source ./includes/functions.sh
+
 
 # load configuration:
 # ---------------------------------------------------------------------
@@ -137,7 +139,8 @@
     pagecount_profile_new=$pagecount_profile
     ocrcount_profile_new=$ocrcount_profile
 
-# System Information:
+
+# System Information and log settings:
 # ---------------------------------------------------------------------
     local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
     highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
@@ -187,11 +190,9 @@
             ocropt_arr+=( "$value" )
         fi
     done <<<"$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" $ocropt")"
-
     unset c
 
     echo "ocropt_array:             ${ocropt_arr[@]}"
-
     echo "search prefix:            $SearchPraefix"
     echo "replace search prefix:    $delSearchPraefix"
     echo "renaming syntax:          $NameSyntax"
@@ -199,22 +200,20 @@
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "Document split pattern:   ${documentSplitPattern}"
     echo "split page handling:      ${splitpagehandling}"
-
     echo "clean up spaces:          ${clean_up_spaces}"
-
     echo -n "Date search method:       "
     if [ "$date_search_method" = "python" ] ; then
         echo "use Python (BETA)"
     else
         echo "use standard search via RegEx"
     fi
-
     echo "date found order:         ${search_nearest_date}"
     echo "source for filedate:      ${filedate}"
     echo "ignored dates by search:  ${ignoredDate}"
 
     validate_date_range() {
-        local year="$( echo "$1" | tr -cd [:alnum:] )" # filter special characters
+        # filter special characters
+        local year="$( echo "$1" | tr -cd [:alnum:] )"
         local length=$( printf "$year" | wc -c )
         local functionType="$2"
 
@@ -256,8 +255,8 @@
     else
         echo "WARNING: Docker could not be found. Please check if the Docker package has been installed!"
     fi
-
     echo "DSM notify to user:       ${MessageTo}"
+
 
 # Configuration for LogLevel:
 # ---------------------------------------------------------------------
@@ -276,14 +275,13 @@
         ocropt_arr+=( "-v2" )
         rm_log_level="v"
     fi
-
     echo "max. count of logfiles:   ${LOGmax}"
-
     if [ -z "$backup_max" ] || [ "$backup_max" == 0 ]; then
         echo "rotate backupfiles after: (purge backup deactivated)"
     else
         echo "rotate backupfiles after: $backup_max $backup_max_type"
     fi
+
 
 # Check or create and adjust directories:
 # ---------------------------------------------------------------------
@@ -319,7 +317,6 @@
         backup=false
     fi
 
-
     LOGDIR="${LOGDIR%/}/"
 
 #################################################################################################
@@ -329,6 +326,7 @@
 #       |_______________________________________________________________________________|       #
 #                                                                                               #
 #################################################################################################
+
 
 update_dockerimage()
 {
@@ -798,8 +796,9 @@ yaml_validate()
 # This function validate the integrity of yaml-file                                     #
 #########################################################################################
 
-    # check & adjust the rule names (only numbers and letters / no number at the beginning):
-    # ---------------------------------------------------------------------
+
+# check & adjust the rule names (only numbers and letters / no number at the beginning):
+# ---------------------------------------------------------------------
     rulenames=$(cat "${taglisttmp}" | egrep -v '^[[:space:]]|^#|^$' | egrep ':[[:space:]]?$')
     for i in ${rulenames} ; do
         i2=$(echo "${i}" | sed -e 's/[^a-zA-Z0-9_:]/_/g')    # replace all nonconfom chars / only latin letters!
@@ -813,15 +812,17 @@ yaml_validate()
         fi
     done
 
-    # check uniqueness of parent nodes:
-    # ---------------------------------------------------------------------
+
+# check uniqueness of parent nodes:
+# ---------------------------------------------------------------------
     if [ $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l ) -ge 1 ] ; then # check for the number of duplicate lines
         echo "${log_indent}main keywords are not unique!"
         echo "${log_indent}dublicats are: $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d)"
     fi
 
-    # check parameter validity:
-    # ---------------------------------------------------------------------
+
+# check parameter validity:
+# ---------------------------------------------------------------------
     # check, if value of condition is "all" OR "any" OR "none":
     while read line ; do
         if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
@@ -869,8 +870,9 @@ prepare_python()
 #                                                                                       #
 #########################################################################################
 
-    # check python3:
-    # ---------------------------------------------------------------------
+
+# check python3:
+# ---------------------------------------------------------------------
     [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check Python:\n"
     if [ ! $(which python3) ]; then
         echo "${log_indent}  (Python3 is not installed / use fallback search with regex"
@@ -884,8 +886,8 @@ prepare_python()
         if [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "$python_env_version" ]; then
             [ "$loglevel" = "2" ] && printf "${log_indent}  python3 already installed ($(which python3))\n"
 
-            # check / install pip:
-            # ---------------------------------------------------------------------
+        # check / install pip:
+        # ---------------------------------------------------------------------
             [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check pip:\n"
             if ! python3 -m pip --version > /dev/null  2>&1 ; then
                 printf "${log_indent}  Python3 pip was not found and will be now installed ➜ "
@@ -980,108 +982,114 @@ format=$1   # for regex search: 1 = dd mm [yy]yy
 
 # python search and set regex fallback, if needed
 # ---------------------------------------------------------------------
-if [ "$tmp_date_search_method" = "python" ] && [ "$python_check" = "ok" ]; then
-    format=2
-    if [ "$search_nearest_date" = "nearest" ]; then
-        arg_searchnearest='-searchnearest="on"'
-    fi
-
-    founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
-
-    [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
+    if [ "$tmp_date_search_method" = "python" ] && [ "$python_check" = "ok" ]; then
+        format=2
+        if [ "$search_nearest_date" = "nearest" ]; then
+            arg_searchnearest='-searchnearest="on"'
+        fi
+    
+        founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
+        [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
+    
     
     # test and maybe fallback to RegEx search, if result of python search not valid:
     # ---------------------------------------------------------------------
-    date "+%d/%m/%Y" -d $(awk -F- '{print $2}' <<<"$founddatestr" )/$(awk -F- '{print $3}' <<<"$founddatestr" )/$(awk -F- '{print $1}' <<<"$founddatestr" ) > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
-    if [ $? -ne 0 ]; then
-        printf "\n${log_indent}! ! ! failed ...\n${log_indent}fallback to RegEx search\n\n"
-        tmp_date_search_method=regex
-        format=1
+        date "+%d/%m/%Y" -d $(awk -F- '{print $2}' <<<"$founddatestr" )/$(awk -F- '{print $3}' <<<"$founddatestr" )/$(awk -F- '{print $1}' <<<"$founddatestr" ) > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+        if [ $? -ne 0 ]; then
+            printf "\n${log_indent}! ! ! failed ...\n${log_indent}fallback to RegEx search\n\n"
+            tmp_date_search_method=regex
+            format=1
+        fi
     fi
-fi
 
-if [ "$tmp_date_search_method" = "regex" ]; then
-    # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
-    
-    # alphanum example:
-    # (?i)\b(([0-9]?[0-9])[. ][ ]?([0-9]?[0-9][. ]|Jan.*|Feb.*|Mär.*|Apr.*|Mai|Jun.*|Jul.*|Aug.*|Sep.*|Okt.*|Nov.*|Dez.*)[ ]?([0-9]?[0-9]?[0-9][0-9]))\b
-    
-    echo "${log_indent}run RegEx date search - search for date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
-    if [ "$format" -eq 1 ]; then
-        # search by format: dd[./-]mm[./-]yy(yy)
-        founddatestr=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
-    elif [ "$format" -eq 2 ]; then
-        # search by format: yy(yy)[./-]mm[./-]dd
-        founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
-    elif  [ "$format" -eq 3 ]; then
-        # search by format: mm[./-]dd[./-]yy(yy) american
-        founddatestr=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+
+# RegEx search
+# ---------------------------------------------------------------------
+    if [ "$tmp_date_search_method" = "regex" ]; then
+        # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
+        
+        # alphanum example:
+        # (?i)\b(([0-9]?[0-9])[. ][ ]?([0-9]?[0-9][. ]|Jan.*|Feb.*|Mär.*|Apr.*|Mai|Jun.*|Jul.*|Aug.*|Sep.*|Okt.*|Nov.*|Dez.*)[ ]?([0-9]?[0-9]?[0-9][0-9]))\b
+        
+        echo "${log_indent}run RegEx date search - search for date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
+        if [ "$format" -eq 1 ]; then
+            # search by format: dd[./-]mm[./-]yy(yy)
+            founddatestr=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+        elif [ "$format" -eq 2 ]; then
+            # search by format: yy(yy)[./-]mm[./-]dd
+            founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
+        elif  [ "$format" -eq 3 ]; then
+            # search by format: mm[./-]dd[./-]yy(yy) american
+            founddatestr=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+        fi
     fi
-fi
+
 
 # Select and separate date:
 # (the loop to filter & check multiple results is obsolete 
 # in the current version)
 # ---------------------------------------------------------------------
-if [ ! -z "$founddatestr" ]; then
-    readarray -t founddates <<<"$founddatestr"
-    cntDatesFound=${#founddates[@]}
-    echo "${log_indent}  Dates found: ${cntDatesFound}"
-
-    for currentFoundDate in "${founddates[@]}" ; do
-        if [ "$format" -eq 1 ]; then
-            echo "${log_indent}  check date (dd mm [yy]yy): $currentFoundDate"
-            date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
-            date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}') )))
-            date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
-        elif [ "$format" -eq 2 ]; then
-            echo "${log_indent}  check date ([yy]yy mm dd): $currentFoundDate"
-            date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
-            date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}') )))
-            date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
-        elif  [ "$format" -eq 3 ]; then
-            echo "${log_indent}  check date (mm dd [yy]yy): $currentFoundDate"
-            date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
-            date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $1}') )))
-            date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
-        fi
-
-    # check century:
-        if [ $(echo -n $date_yy | wc -m) -eq 2 ]; then
-            if [ "$date_yy" -gt $(date +%y) ]; then
-                date_yy="$(($(date +%C) - 1))${date_yy}"
-                echo "${log_indent}  Date is most probably in the last century. Setting year to ${date_yy}"
-            else
-                date_yy="$(date +%C)${date_yy}"
+    if [ ! -z "$founddatestr" ]; then
+        readarray -t founddates <<<"$founddatestr"
+        cntDatesFound=${#founddates[@]}
+        echo "${log_indent}  Dates found: ${cntDatesFound}"
+    
+        for currentFoundDate in "${founddates[@]}" ; do
+            if [ "$format" -eq 1 ]; then
+                echo "${log_indent}  check date (dd mm [yy]yy): $currentFoundDate"
+                date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
+                date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}') )))
+                date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
+            elif [ "$format" -eq 2 ]; then
+                echo "${log_indent}  check date ([yy]yy mm dd): $currentFoundDate"
+                date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
+                date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}') )))
+                date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
+            elif  [ "$format" -eq 3 ]; then
+                echo "${log_indent}  check date (mm dd [yy]yy): $currentFoundDate"
+                date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
+                date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $1}') )))
+                date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             fi
-        fi
-
-        date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
-        if [ $? -eq 0 ]; then
-            if grep -q "${date_yy}-${date_mm}-${date_dd}" <<< "$ignoredDate" ; then
-                echo "${log_indent}  Date ${date_yy}-${date_mm}-${date_dd} is on ignore list. Skipping this date."
-                continue
-            else
-                echo "${log_indent}  ➜ valid"
-                echo "${log_indent}      day:  ${date_dd}"
-                echo "${log_indent}      month:${date_mm}"
-                echo "${log_indent}      year: ${date_yy}"
-                dateIsFound=yes
-                break
+    
+        # check century:
+            if [ $(echo -n $date_yy | wc -m) -eq 2 ]; then
+                if [ "$date_yy" -gt $(date +%y) ]; then
+                    date_yy="$(($(date +%C) - 1))${date_yy}"
+                    echo "${log_indent}  Date is most probably in the last century. Setting year to ${date_yy}"
+                else
+                    date_yy="$(date +%C)${date_yy}"
+                fi
             fi
-        else
-            echo "${log_indent}  ➜ invalid format"
-        fi
-    done
-fi
-
-if [ "$dateIsFound" = no ]; then
-    if [ "$format" -eq 1 ]; then
-        find_date 2
-    elif [ "$format" -eq 2 ]; then
-        find_date 3
+    
+            date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+            if [ $? -eq 0 ]; then
+                if grep -q "${date_yy}-${date_mm}-${date_dd}" <<< "$ignoredDate" ; then
+                    echo "${log_indent}  Date ${date_yy}-${date_mm}-${date_dd} is on ignore list. Skipping this date."
+                    continue
+                else
+                    echo "${log_indent}  ➜ valid"
+                    echo "${log_indent}      day:  ${date_dd}"
+                    echo "${log_indent}      month:${date_mm}"
+                    echo "${log_indent}      year: ${date_yy}"
+                    dateIsFound=yes
+                    break
+                fi
+            else
+                echo "${log_indent}  ➜ invalid format"
+            fi
+        done
     fi
-fi
+
+# not found? Next loop with other schema
+# ---------------------------------------------------------------------
+    if [ "$dateIsFound" = no ]; then
+        if [ "$format" -eq 1 ]; then
+            find_date 2
+        elif [ "$format" -eq 2 ]; then
+            find_date 3
+        fi
+    fi
 
 }
 
@@ -1097,14 +1105,16 @@ adjust_attributes()
     local source_file="$1"
     local target_file="$2"
 
-    # adjust file permissions;
-    # ---------------------------------------------------------------------
+
+# adjust file permissions;
+# ---------------------------------------------------------------------
     cp --attributes-only -p "${source_file}" "${target_file}"
     chmod 664 "${target_file}"
     synoacltool -enforce-inherit "${target_file}"
 
-    # adjust file date;
-    # ---------------------------------------------------------------------
+
+# adjust file date;
+# ---------------------------------------------------------------------
     echo -n "${log_indent}➜ Adapt file date (Source: "
 
     if [ "$filedate" == "ocr" ]; then
@@ -1125,8 +1135,9 @@ adjust_attributes()
         touch --reference="${source_file}" "${target_file}"
     fi
 
-    # File permissions-Log:
-    # ---------------------------------------------------------------------
+
+# File permissions-Log:
+# ---------------------------------------------------------------------
     if [ "$loglevel" = "2" ] ; then
         echo "${log_indent}➜ File permissions target file:"
         echo "${log_indent}  $(ls -l "${target_file}")"
@@ -1144,8 +1155,8 @@ copy_attributes()
     local source_file="$1"
     local target_file="$2"
 
-    # adjust file permissions and date;
-    # ---------------------------------------------------------------------
+# adjust file permissions and date;
+# ---------------------------------------------------------------------
     cp --attributes-only -p "${source_file}" "${target_file}"
     touch --reference="${source_file}" "${target_file}"
     chmod 664 "${target_file}"
@@ -1172,234 +1183,268 @@ replace_variables()
 rename()
 {
 
-[ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+
 
 # rename target file:
 # ---------------------------------------------------------------------
-echo "${log_indent}➜ renaming:"
-outputtmp=${output}
+    echo "${log_indent}➜ renaming:"
+    outputtmp=${output}
+    
+    if [ -z "$NameSyntax" ]; then
+        # if no renaming syntax was specified by the user, the source filename will be used
+        NameSyntax="§tit"
+    fi
+    echo -n "${log_indent}  apply renaming syntax ➜ "
+    
+    # encode special characters for sed compatibility:
+    title=$(urlencode "${title}")
+    renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before renew encoding
 
-if [ -z "$NameSyntax" ]; then
-    # if no renaming syntax was specified by the user, the source filename will be used
-    NameSyntax="§tit"
-fi
-
-echo -n "${log_indent}  apply renaming syntax ➜ "
-
-# encode special characters for sed compatibility:
-title=$(urlencode "${title}")
-renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before renew encoding
 
 # replace parameters with values:
 # ---------------------------------------------------------------------
-NewName=$(replace_variables "$NameSyntax")
+    NewName=$(replace_variables "$NameSyntax")
 
+   
 # replace parameters with values (rulenames can contain placeholders, which are replaced here):
 # ---------------------------------------------------------------------
-renameTag=$(replace_variables "${renameTag}")
+    renameTag=$(replace_variables "${renameTag}")
+    
+    # parameters without replace_variables function:
+    NewName=$( echo "$NewName" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" )
+    
+    # fallback to old  parameters:
+    NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
+    NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
+    NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
+    
+    # decode special characters:
+    NewName=$(urldecode "$NewName")
+    renameTag=$(urldecode "${renameTag}")
+    echo "$NewName"
+    
+    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
-# parameters without replace_variables function:
-NewName=$( echo "$NewName" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" )
-
-# fallback to old  parameters:
-NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
-NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
-NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
-
-# decode special characters:
-NewName=$(urldecode "$NewName")
-renameTag=$(urldecode "${renameTag}")
-
-echo "$NewName"
-
-[ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
-
+    
 # set metadata:
 # ---------------------------------------------------------------------
-echo -n "${log_indent}➜ insert metadata "
+    echo -n "${log_indent}➜ insert metadata "
+    
+    if [ "$python_check" = "ok" ] && [ "$enablePyMetaData" -eq 1 ]; then
+        echo "(use python PyPDF2)"
+        unset py_meta
+    
+        py_meta="'/Author': '$documentAuthor',"
+        py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
+        py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\'")"
 
-if [ "$python_check" = "ok" ] && [ "$enablePyMetaData" -eq 1 ]; then
-    echo "(use python PyPDF2)"
-    unset py_meta
+        # reset pdf standard to PDF/A (https://stackoverflow.com/a/35042680/10763442):
+    #    py_meta="$(printf "$py_meta\n'/Version': 'PDF-1.7'")"  # dosn't work ...
+    
+        echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
 
-    py_meta="'/Author': '$documentAuthor',"
-    py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
-#py_meta="$(printf "$py_meta\n'/Keywords': \'John, Doe\',")"
-    py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\'")"
-#    py_meta="'/Author': \'$documentAuthor\',"
-#    py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
-#    py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
+        get_previous_meta(){
+            {   echo "import pprint"
+                echo "from PyPDF2 import PdfFileReader, PdfFileMerger"
+                echo "if __name__ == '__main__':"
+                echo "    file_in = open('${outputtmp}', 'rb')"
+                echo "    pdf_reader = PdfFileReader(file_in)"
+                echo "    metadata = pdf_reader.getDocumentInfo()"
+                echo "    pprint.pprint(metadata)"
+                echo "    file_in.close()"
+            } | python3
+        }
+        # get previous metadata - maybe for feature use:
+#       previous_meta=$(get_previous_meta)
+    
+        outputtmpMeta="${outputtmp}_meta.pdf"
 
-    # reset pdf standard to PDF/A (https://stackoverflow.com/a/35042680/10763442):
-#    py_meta="$(printf "$py_meta\n'/Version': 'PDF-1.7'")"
-
-    echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
-
-
-    get_previous_meta(){
         {   echo "import pprint"
-            echo "from PyPDF2 import PdfFileReader, PdfFileMerger"
+        
+            echo "from PyPDF2 import PdfReader, PdfMerger"
+        
             echo "if __name__ == '__main__':"
-            echo "    file_in = open('${outputtmp}', 'rb')"
-            echo "    pdf_reader = PdfFileReader(file_in)"
-            echo "    metadata = pdf_reader.getDocumentInfo()"
-            echo "    pprint.pprint(metadata)"
-            echo "    file_in.close()"
+            echo "    reader = PdfReader('$outputtmp')"
+            echo "    metadata = reader.metadata"
+        
+            echo "    merger = PdfMerger()"
+            echo "    merger.append(reader)"
+            echo "    merger.add_metadata({$py_meta})"
+            echo "    with open('$outputtmpMeta', 'wb') as fp:"
+            echo "        merger.write(fp)"
         } | python3
-    }
-    # get previous metadata - maybe for feature use:
-#     previous_meta=$(get_previous_meta)
 
-    outputtmpMeta="${outputtmp}_meta.pdf"
-#    {   echo "import pprint"
-#    
-#        echo "from PyPDF2 import PdfFileReader, PdfFileMerger"
+        if [ $? != 0 ] || [ $(stat -c %s "${outputtmpMeta}") -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
+            echo "${log_indent}  ⚠️ ERROR with writing metadata ... "
+        else
+            mv "${outputtmpMeta}" "${outputtmp}"
+        fi
+        unset outputtmpMeta
     
-#        echo "if __name__ == '__main__':"
-#        echo "    file_in = open('${outputtmp}', 'rb')"
-#        echo "    pdf_reader = PdfFileReader(file_in)"
-#        echo "    metadata = pdf_reader.getDocumentInfo()"
-    
-#        echo "    pdf_merger = PdfFileMerger()"
-#        echo "    pdf_merger.append(file_in)"
-#        echo "    pdf_merger.addMetadata({$py_meta})"
-       #echo "    file_out = open('${outputtmp}', 'wb')"
-#        echo "    file_out = open('${outputtmpMeta}', 'wb')"
-#        echo "    pdf_merger.write(file_out)"
-
-#        echo "    file_in.close()"
-#        echo "    file_out.close()"
-#    } | python3
-
-
-    {   echo "import pprint"
-    
-        echo "from PyPDF2 import PdfReader, PdfMerger"
-    
-        echo "if __name__ == '__main__':"
-        echo "    reader = PdfReader('$outputtmp')"
-        echo "    metadata = reader.metadata"
-    
-        echo "    merger = PdfMerger()"
-        echo "    merger.append(reader)"
-        echo "    merger.add_metadata({$py_meta})"
-        echo "    with open('$outputtmpMeta', 'wb') as fp:"
-        echo "        merger.write(fp)"
-    } | python3
-
-
-
-
-
-    if [ $? != 0 ] || [ $(stat -c %s "${outputtmpMeta}") -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
-#   if [ $(stat -c %s "${outputtmpMeta}") -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
-        echo "${log_indent}  ⚠️ ERROR with writing metadata ... "
+    elif which exiftool > /dev/null  2>&1 ; then
+        echo -n "(exiftool ok) "
+        exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
     else
-        mv "${outputtmpMeta}" "${outputtmp}"
+        echo "FAILED! - exiftool not found / Python-check failed or enablePyMetaData was set to false manualy! Please install it when you need it and when you want to insert metadata"
     fi
-    unset outputtmpMeta
-
-elif which exiftool > /dev/null  2>&1 ; then
-    echo -n "(exiftool ok) "
-    exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
-else
-    echo "FAILED! - exiftool not found / Python-check failed or enablePyMetaData was set to false manualy! Please install it when you need it and when you want to insert metadata"
-fi
-
-[ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
-
-
+    
+    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    
+    
 # move target files:
 # ---------------------------------------------------------------------
-i=0
-if [ "$moveTaggedFiles" = useYearDir ] ; then
+    i=0
+    if [ "$moveTaggedFiles" = useYearDir ] ; then
     # move to folder each year:
     # ---------------------------------------------------------------------
-    echo "${log_indent}➜ move to folder each year ( …/target/YYYY/file.pdf)"
-    subOUTPUTDIR="${OUTPUTDIR}${date_yy}/"
-    echo -n "${log_indent}  target directory \".../${date_yy}/\" exists? ➜  "
-    if [ -d "${subOUTPUTDIR}" ] ;then
-        echo "OK"
-    else
-        mkdir -p "${subOUTPUTDIR}"
-        echo "created"
-    fi
+        echo "${log_indent}➜ move to folder each year ( …/target/YYYY/file.pdf)"
+        subOUTPUTDIR="${OUTPUTDIR}${date_yy}/"
+        echo -n "${log_indent}  target directory \".../${date_yy}/\" exists? ➜  "
+        if [ -d "${subOUTPUTDIR}" ] ;then
+            echo "OK"
+        else
+            mkdir -p "${subOUTPUTDIR}"
+            echo "created"
+        fi
+    
+        prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
+    
+        echo "${log_indent}  target file: $(basename "${output}")"
+        mv "${outputtmp}" "${output}"
 
-    prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
-
-    echo "${log_indent}  target file: $(basename "${output}")"
-    mv "${outputtmp}" "${output}"
-
-    adjust_attributes "${input}" "${output}"
-elif [ "$moveTaggedFiles" = useYearMonthDir ] ; then
+        adjust_attributes "${input}" "${output}"
+    elif [ "$moveTaggedFiles" = useYearMonthDir ] ; then
     # move to folder each year & month:
     # ---------------------------------------------------------------------
-    echo "${log_indent}➜ move to folder each year & month ( …/target/YYYY/MM/file.pdf)"
-    subOUTPUTDIR="${OUTPUTDIR}${date_yy}/${date_mm}/"
-    echo -n "${log_indent}  target directory \".../${date_yy}/${date_mm}/\" exists? ➜  "
-    if [ -d "${subOUTPUTDIR}" ] ;then
-        echo "OK"
-    else
-        mkdir -p "${subOUTPUTDIR}"
-        echo "created"
-    fi
-
-    prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
-
-    echo "${log_indent}  target file: $(basename "${output}")"
-    mv "${outputtmp}" "${output}"
-
-    adjust_attributes "${input}" "${output}"
-
-elif [ ! -z "$renameCat" ] && [ "$moveTaggedFiles" = useCatDir ] ; then
+        echo "${log_indent}➜ move to folder each year & month ( …/target/YYYY/MM/file.pdf)"
+        subOUTPUTDIR="${OUTPUTDIR}${date_yy}/${date_mm}/"
+        echo -n "${log_indent}  target directory \".../${date_yy}/${date_mm}/\" exists? ➜  "
+        if [ -d "${subOUTPUTDIR}" ] ;then
+            echo "OK"
+        else
+            mkdir -p "${subOUTPUTDIR}"
+            echo "created"
+        fi
+    
+        prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
+    
+        echo "${log_indent}  target file: $(basename "${output}")"
+        mv "${outputtmp}" "${output}"
+    
+        adjust_attributes "${input}" "${output}"
+    
+    elif [ ! -z "$renameCat" ] && [ "$moveTaggedFiles" = useCatDir ] ; then
     # use sorting in category folder:
     # ---------------------------------------------------------------------
-    echo "${log_indent}➜ move to category directory"
+        echo "${log_indent}➜ move to category directory"
+    
+        # replace date parameters:
+        renameCat=$(replace_variables "$renameCat")
 
-    # replace date parameters:
-    renameCat=$(replace_variables "$renameCat")
-
-    tagarray=( $renameCat )     # define target folder as array
-    DestFolderList=""           # temp. list of used destination folders to avoid file duplicates (different tags, but one category)
-    maxID=${#tagarray[*]}
-
-    while (( i < maxID )); do
-        tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-
-        echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
-
-        if echo "${tagdir}"| grep -q "^/volume*" ; then
-            subOUTPUTDIR="${tagdir%/}/"
-            if [ -d "${subOUTPUTDIR}" ] ;then
-                echo "OK [absolute path]"
+        # define target folder as array
+        tagarray=( $renameCat )
+        
+        # temp. list of used destination folders to avoid file duplicates (different tags, but one category):
+        DestFolderList=""
+        maxID=${#tagarray[*]}
+    
+        while (( i < maxID )); do
+            tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+    
+            echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
+    
+            if echo "${tagdir}"| grep -q "^/volume*" ; then
+                subOUTPUTDIR="${tagdir%/}/"
+                if [ -d "${subOUTPUTDIR}" ] ;then
+                    echo "OK [absolute path]"
+                else
+                    mkdir -p "${subOUTPUTDIR}"
+                    echo "created [absolute path]"
+                fi
             else
-                mkdir -p "${subOUTPUTDIR}"
-                echo "created [absolute path]"
+                # if path is not absolute, then remove special characters
+                # tagdir=$(echo ${tagdir} | sed 's%\/\|\\\|\:\|\?%_%g' ) # gefiltert wird: \ / : ?
+                subOUTPUTDIR="${OUTPUTDIR}${tagdir%/}/"
+                if [ -d "${subOUTPUTDIR}" ] ;then
+                    echo "OK [subfolder target dir]"
+                else
+                    mkdir -p "${subOUTPUTDIR}"
+                    echo "created [subfolder target dir]"
+                fi
             fi
+    
+            prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
+    
+            echo "${log_indent}  target:   ${subOUTPUTDIR}$(basename "${output}")"
+    
+            # check if the same file has already been sorted into this category (different tags, but same category)
+            if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
+                echo "${log_indent}  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
+            else
+                if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
+                    echo "${log_indent}  do not set a hard link when copying across volumes"
+                    # do not set a hardlink when copying across volumes:
+                    cp "${outputtmp}" "${output}"
+                else
+                    echo "${log_indent}  set a hard link"
+                    commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
+                    # check: - creating hard link don't fails / - target file is valid (not empty)
+                    if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
+                        echo "${log_indent}  $commandlog"
+                        echo "${log_indent}  Creating a hard link failed! A file copy is used."
+                        if [ "$loglevel" = "2" ] ; then
+                            echo "${log_indent}list of mounted volumes:"
+                            df -h --output=source,target | sed -e "s/^/${log_indent}      /g"
+                            echo -e
+                        fi
+                        cp -f "${outputtmp}" "${output}"
+                    fi
+                fi
+    
+                adjust_attributes "${input}" "${output}"
+            fi
+    
+            DestFolderList="${tagarray[$i]}\n${DestFolderList}"
+            i=$((i + 1))
+            echo -e
+        done
+    
+        rm "${outputtmp}"
+    elif [ ! -z "$renameTag" ] && [ "$moveTaggedFiles" = useTagDir ] ; then
+    # use sorting in tag folder:
+    # ---------------------------------------------------------------------
+        echo "${log_indent}➜ move to tag directory"
+    
+        if [ ! -z "$tagsymbol" ]; then
+            renameTag=$( echo $renameTag_raw | sed -e "s/${tagsymbol}/ /g" )
         else
-            # if path is not absolute, then remove special characters
-            # tagdir=$(echo ${tagdir} | sed 's%\/\|\\\|\:\|\?%_%g' ) # gefiltert wird: \ / : ?
-
-            subOUTPUTDIR="${OUTPUTDIR}${tagdir%/}/"
-            if [ -d "${subOUTPUTDIR}" ] ;then
-                echo "OK [subfolder target dir]"
-            else
-                mkdir -p "${subOUTPUTDIR}"
-                echo "created [subfolder target dir]"
-            fi
+            renameTag="$renameTag_raw"
         fi
-
-        prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
-
-        echo "${log_indent}  target:   ${subOUTPUTDIR}$(basename "${output}")"
-
-        # check if the same file has already been sorted into this category (different tags, but same category)
-        if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
-            echo "${log_indent}  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
-        else
+    
+        # define tags as array
+        tagarray=( $renameTag )
+        maxID=${#tagarray[*]}
+    
+        while (( i < maxID )); do
+            tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+            echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
+    
+            if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
+                echo "OK"
+            else
+                mkdir "${OUTPUTDIR}${tagdir}"
+                echo "created"
+            fi
+    
+            prepare_target_path "${OUTPUTDIR}${tagdir}" "${NewName}.pdf"
+    
+            echo "${log_indent}  target:   ./${tagdir}/$(basename "${output}")"
+    
             if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
                 echo "${log_indent}  do not set a hard link when copying across volumes"
-                cp "${outputtmp}" "${output}"   # do not set a hardlink when copying across volumes
+                # do not set a hardlink when copying across volumes:
+                cp "${outputtmp}" "${output}"
             else
                 echo "${log_indent}  set a hard link"
                 commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
@@ -1415,81 +1460,25 @@ elif [ ! -z "$renameCat" ] && [ "$moveTaggedFiles" = useCatDir ] ; then
                     cp -f "${outputtmp}" "${output}"
                 fi
             fi
-
+    
             adjust_attributes "${input}" "${output}"
-        fi
-
-        DestFolderList="${tagarray[$i]}\n${DestFolderList}"
-        i=$((i + 1))
-        echo -e
-    done
-
-    rm "${outputtmp}"
-elif [ ! -z "$renameTag" ] && [ "$moveTaggedFiles" = useTagDir ] ; then
-    # use sorting in tag folder:
-    # ---------------------------------------------------------------------
-    echo "${log_indent}➜ move to tag directory"
-
-    if [ ! -z "$tagsymbol" ]; then
-        renameTag=$( echo $renameTag_raw | sed -e "s/${tagsymbol}/ /g" )
+    
+            i=$((i + 1))
+        done
+    
+        echo "${log_indent}➜ delete temp. target file"
+        rm "${outputtmp}"
     else
-        renameTag="$renameTag_raw"
-    fi
-
-    tagarray=( $renameTag )   # define tags as array
-    maxID=${#tagarray[*]}
-
-    while (( i < maxID )); do
-        tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
-        echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
-
-        if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
-            echo "OK"
-        else
-            mkdir "${OUTPUTDIR}${tagdir}"
-            echo "created"
-        fi
-
-        prepare_target_path "${OUTPUTDIR}${tagdir}" "${NewName}.pdf"
-
-        echo "${log_indent}  target:   ./${tagdir}/$(basename "${output}")"
-
-        if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
-            echo "${log_indent}  do not set a hard link when copying across volumes"
-            cp "${outputtmp}" "${output}"   # do not set a hardlink when copying across volumes
-        else
-            echo "${log_indent}  set a hard link"
-            commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
-            # check: - creating hard link don't fails / - target file is valid (not empty)
-            if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
-                echo "${log_indent}  $commandlog"
-                echo "${log_indent}  Creating a hard link failed! A file copy is used."
-                if [ "$loglevel" = "2" ] ; then
-                    echo "${log_indent}list of mounted volumes:"
-                    df -h --output=source,target | sed -e "s/^/${log_indent}      /g"
-                    echo -e
-                fi
-                cp -f "${outputtmp}" "${output}"
-            fi
-        fi
-
-        adjust_attributes "${input}" "${output}"
-
-        i=$((i + 1))
-    done
-
-    echo "${log_indent}➜ delete temp. target file"
-    rm "${outputtmp}"
-else
     # no rule fulfilled - use the target folder:
     # ---------------------------------------------------------------------
-    prepare_target_path "${OUTPUTDIR}" "${NewName}.pdf"
+        prepare_target_path "${OUTPUTDIR}" "${NewName}.pdf"
+    
+        echo "${log_indent}  target file: $(basename "${output}")"
+        mv "${outputtmp}" "${output}"
+    
+        adjust_attributes "${input}" "${output}"
+    fi
 
-    echo "${log_indent}  target file: $(basename "${output}")"
-    mv "${outputtmp}" "${output}"
-
-    adjust_attributes "${input}" "${output}"
-fi
 }
 
 
@@ -1506,8 +1495,9 @@ purge_log()
 
     printf "\n  purge log files ...\n"
 
-    # delete surplus logs:
-    # ---------------------------------------------------------------------
+
+# delete surplus logs:
+# ---------------------------------------------------------------------
     count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax ))
     echo "  delete "$(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} | wc -l )" log files ( > $LOGmax files)"
 
@@ -1518,8 +1508,9 @@ purge_log()
         done <<<"$(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} )"
     fi
 
-    # delete surplus search text files:
-    # ---------------------------------------------------------------------
+
+# delete surplus search text files:
+# ---------------------------------------------------------------------
     count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | wc -l) - $LOGmax ))
     echo "  delete "$(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} | wc -l )" search files ( > $LOGmax files)"
 
@@ -1554,8 +1545,9 @@ purge_backup()
         source_file_type4find="\(PDF\|pdf\)"
     fi
 
-    # delete surplus backup files:
-    # ---------------------------------------------------------------------
+
+# delete surplus backup files:
+# ---------------------------------------------------------------------
     if [[ "$backup_max_type" == days ]]; then
         echo "  delete $(find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +$backup_max | wc -l) backup files ( > $backup_max days)"
         find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +$backup_max -exec rm -f${rm_log_level} {} \; | sed -e "s/^/${log_indent}/g"
@@ -1686,12 +1678,12 @@ while read input ; do
     printf "\n"
     filename=$(basename "$input")
     title=${filename%.*}
-#   echo "${dashline2}"
     echo "CURRENT FILE:   ➜ source: $filename"
     date_start=$(date +%s)
 
-    # convert file
-    # ---------------------------------------------------------------------
+
+# convert file
+# ---------------------------------------------------------------------
     prepare_target_path "${INPUTDIR}" "${title}${SearchSuffix}.pdf"
     echo "${log_indent}➜ target: $output"
     {   echo 'import  PIL as pillow'
@@ -1702,8 +1694,9 @@ while read input ; do
         echo 'exit()'
     } | python3 
 
-    # backup source
-    # ---------------------------------------------------------------------
+
+# backup source
+# ---------------------------------------------------------------------
    if [ $(stat -c %s "${output}") -ne 0 ] && [ -f "${output}" ];then
         if [ "$backup" = true ]; then
             echo "${log_indent}➜ backup source file" # to $output"
@@ -1735,8 +1728,9 @@ collect_input_files "${INPUTDIR}" "pdf"
 while read input ; do
     [ ! -f "$input" ] && continue
 
-    # create temporary working directory
-    # ---------------------------------------------------------------------
+
+# create temporary working directory
+# ---------------------------------------------------------------------
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
     trap 'rm -rf "$work_tmp"; exit' EXIT
 
@@ -1752,8 +1746,9 @@ while read input ; do
     outputtmp="${work_tmp}/${title}.pdf"
     echo "${log_indent}  temp. target file: ${outputtmp}"
 
-    # OCRmyPDF:
-    # ---------------------------------------------------------------------
+
+# OCRmyPDF:
+# ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "processing PDF @ OCRmyPDF:" "${dashline1}"
     [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
@@ -1767,9 +1762,9 @@ while read input ; do
     [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
 
 
-    # check if target file is valid (not empty), otherwise continue / 
-    # defective source files are moved to ERROR including LOG:
-    # ---------------------------------------------------------------------
+# check if target file is valid (not empty), otherwise continue / 
+# defective source files are moved to ERROR including LOG:
+# ---------------------------------------------------------------------
     if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
         echo "${log_indent}  ┖➜ failed! (target file is empty or not available)"
         rm "${outputtmp}"
@@ -1791,14 +1786,15 @@ while read input ; do
         printf "${log_indent}target file (OK): ${outputtmp}\n\n"
     fi
 
-    # document split handling
-    # ---------------------------------------------------------------------
+
+# document split handling
+# ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "document split handling:" "${dashline1}"
 
     if [ -n "${documentSplitPattern}" ] && [ "$python_check" = "ok" ]; then
 
-        # identify split pages / write to an array:
-        # ---------------------------------------------------------------------
+    # identify split pages / write to an array:
+    # ---------------------------------------------------------------------
         pageCount=$( py_page_count "${outputtmp}" )
 
         if grep -qwP "^[0-9]+$" <<<"$pageCount" ; then
@@ -1815,8 +1811,8 @@ while read input ; do
             echo "${log_indent}! ! ! error at counting PDF pages"
         fi
     
-        # split document:
-        # ---------------------------------------------------------------------
+    # split document:
+    # ---------------------------------------------------------------------
         split_pages(){
 
             echo "${log_indent}part:            $1"
@@ -1830,8 +1826,8 @@ while read input ; do
 
             echo "${log_indent}used pages:      $pageRange  (zero based)"
 
-            # https://learndataanalysis.org/how-to-extract-pdf-pages-and-save-as-a-separate-pdf-file-using-python/
-            # ---------------------------------------------------------------------
+        # https://learndataanalysis.org/how-to-extract-pdf-pages-and-save-as-a-separate-pdf-file-using-python/
+        # ---------------------------------------------------------------------
             {   echo "from PyPDF2 import PdfReader, PdfWriter"
                 echo 'pdf_file_path = "'$outputtmp'"'
                 echo "file_base_name = pdf_file_path.replace('.pdf', '')"
@@ -1846,8 +1842,8 @@ while read input ; do
             } | python3
         }
 
-        # calculate site ranges for splitting
-        # ---------------------------------------------------------------------
+    # calculate site ranges for splitting
+    # ---------------------------------------------------------------------
         SplitPageCount=${#splitPages[@]}
         [ "$loglevel" = 2 ] && echo "split page count: $SplitPageCount"
 
@@ -1967,8 +1963,9 @@ while read input ; do
         echo "${log_indent}no split pattern defined or splitting not possible"
     fi
 
-    # delete / save source file (takes into account existing files with the same name):
-    # ---------------------------------------------------------------------
+
+# delete / save source file (takes into account existing files with the same name):
+# ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "handle source file:" "${dashline1}"
 
     if [ "$was_splitted" = 0 ] || [ "$split_error" = 1 ]; then
@@ -1990,8 +1987,9 @@ while read input ; do
 
     rm -rfv "$work_tmp" | sed -e "s/^/${log_indent}/g"
 
-    # Stats:
-    # ---------------------------------------------------------------------
+
+# Stats:
+# ---------------------------------------------------------------------
     echo -e
     echo "Stats:"
     echo "  runtime last file:              ➜ $(sec_to_time $(( $(date +%s) - ${date_start} )))"
@@ -2012,9 +2010,11 @@ printf "\n  %s\n  ● %-80s●\n  %s\n\n" "${dashline2}" "STEP 2 - SEARCH TAGS /
 
 collect_input_files "${OUTPUTDIR_tmp}" "pdf"
 
+
 # make special characters visible if necessary
 # ---------------------------------------------------------------------
-[ "$loglevel" = "2" ] && printf "\n${log_indent}list files in INPUT with transcoded special characters:\n" && ls "${OUTPUTDIR_tmp}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
+    [ "$loglevel" = "2" ] && printf "\n${log_indent}list files in INPUT with transcoded special characters:\n" && ls "${OUTPUTDIR_tmp}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
+
 
 # count pages / files:
 # ---------------------------------------------------------------------
@@ -2034,15 +2034,17 @@ while read input ; do
 
     [ -z "$pagecount_latest" ] && pagecount_latest=0 && echo "${log_indent}! ! ! ERROR - with pdfinfo / exiftool / PyPDF2 - \$pagecount was set to 0"
 
-    # adapt counter:
-    # ---------------------------------------------------------------------
+
+# adapt counter:
+# ---------------------------------------------------------------------
     global_pagecount_new=$(( $global_pagecount_new + $pagecount_latest))
     global_ocrcount_new=$(( $global_ocrcount_new + 1))
     pagecount_profile_new=$(( $pagecount_profile_new + $pagecount_latest))
     ocrcount_profile_new=$(( $ocrcount_profile_new + 1))
 
-    # create temporary working directory
-    # ---------------------------------------------------------------------
+
+# create temporary working directory
+# ---------------------------------------------------------------------
     work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
     trap 'rm -rf "$work_tmp"; exit' EXIT
 
@@ -2059,31 +2061,36 @@ while read input ; do
         title=$( echo "${title}" | sed s/${SearchPraefix_tmp}//g )
     fi
 
-    # temporary output destination with seconds for uniqueness 
-    # (otherwise there will be duplication if renaming syntax is missing)
-    # ---------------------------------------------------------------------
+
+# temporary output destination with seconds for uniqueness 
+# (otherwise there will be duplication if renaming syntax is missing)
+# ---------------------------------------------------------------------
     output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
 
-    # move temporary file to destination folder:
-    # ---------------------------------------------------------------------
+
+# move temporary file to destination folder:
+# ---------------------------------------------------------------------
     cp "${input}" "${output}"
 
-    # source file permissions-Log:
-    # ---------------------------------------------------------------------
+
+# source file permissions-Log:
+# ---------------------------------------------------------------------
     if [ "$loglevel" = "2" ] ; then
         echo "${log_indent}➜ File permissions source file:"
         echo -n "${log_indent}  "
         ls -l "$input"
     fi
 
-    # exact text
-    # ---------------------------------------------------------------------
+
+# exact text
+# ---------------------------------------------------------------------
     searchfile="${work_tmp}/synOCR.txt"
     searchfilename="${work_tmp}/synOCR_filename.txt"    # for search in file name
     echo "${title}" > "${searchfilename}"
 
-    # Search in the whole documents, or only on the first page?:
-    # ---------------------------------------------------------------------
+
+# Search in the whole documents, or only on the first page?:
+# ---------------------------------------------------------------------
     if [ "$searchAll" = no ]; then
         pdftotextOpt="-l 1"
     else
@@ -2097,16 +2104,17 @@ while read input ; do
     fi
 
     content=$(cat "$searchfile" )   # the standard rules search in the variable / the extended rules directly in the source file
-
     [ "$loglevel" = "2" ] && cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
 
-    # search by tags:
-    # ---------------------------------------------------------------------
+
+# search by tags:
+# ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "search tags in ocr text:" "${dashline1}"
     tag_search
 
-    # search by date:
-    # ---------------------------------------------------------------------
+
+# search by date:
+# ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "search for a valid date in ocr text:" "${dashline1}"
     dateIsFound=no
     find_date 1
@@ -2128,15 +2136,17 @@ while read input ; do
         echo "${log_indent}  year: ${date_yy}"
     fi
 
-    # compose and rename file names / move to target:
-    # ---------------------------------------------------------------------
+
+# compose and rename file names / move to target:
+# ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "rename and sort to target folder:" "${dashline1}"
     rename
 
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "final tasks:" "${dashline1}"
 
-    # Notification:
-    # ---------------------------------------------------------------------
+
+# Notification:
+# ---------------------------------------------------------------------
     # ToDo: the automatic language setting should be included here:
     if [ "$dsmtextnotify" = "on" ] ; then
         file_notify=$(basename "${output}")
@@ -2168,8 +2178,9 @@ while read input ; do
         echo "${log_indent}  INFO: (PushBullet-TOKEN not set)"
     fi
 
-    # update file count profile:
-    # ---------------------------------------------------------------------
+
+# update file count profile:
+# ---------------------------------------------------------------------
     echo -e
     echo "Stats:"
 
@@ -2186,8 +2197,9 @@ while read input ; do
     echo -e
     echo "cleanup:"
 
-    # delete temporary working directory:
-    # ---------------------------------------------------------------------
+
+# delete temporary working directory:
+# ---------------------------------------------------------------------
     echo "  delete tmp-files ..."
     rm -rfv "$work_tmp" | sed -e "s/^/${log_indent}/g"
     rm -rfv "${input}" | sed -e "s/^/${log_indent}/g"   # rm ocred version - source file is backuped after ocrmypdf processing 
@@ -2202,9 +2214,10 @@ done <<<"${files}"
     echo "  ● |    ==> RUN THE FUNCTIONS <==   | ●"
     echo "  ● ---------------------------------- ●"
     echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
-    
-    # prepare steps (check / install / activate python enviroment & check docker):
-    # --------------------------------------------------------------------
+
+
+# prepare steps (check / install / activate python enviroment & check docker):
+# --------------------------------------------------------------------
     update_dockerimage
     
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
@@ -2220,8 +2233,9 @@ done <<<"${files}"
         printf "${log_indent}prepare_python: ! ! ! ERROR ! ! ! \n"
     fi
 
-    # main steps:
-    # ---------------------------------------------------------------------
+
+# main steps:
+# ---------------------------------------------------------------------
     if [ "$img2pdf" = true ]; then
         py_img2pdf
     fi
