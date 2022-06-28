@@ -1,16 +1,11 @@
-    #######################################################################################################
-    # German language file for synOCR-GUI                                                                 #
-    #                                                                                                     #
-    # Path:                                                                                               #
-    #     /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_ger.txt                                      #
-    #                                                                                                     #
-    # translation instructions can you found here:                                                        #
-    #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
-    #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
-    #######################################################################################################
+# german language file for synOCR-GUI
+# /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_ger.txt
+# translation instructions can you found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md
+machinetranslate=0
 
-machinetranslate="0"
+#-------------------------------------------
+# general:
+#-------------------------------------------
 lang_page1="Übersicht"
 lang_page2="Konfiguration"
 lang_page3="Zeitplaner"
@@ -36,6 +31,10 @@ lang_foot_buttondownDB="Download"
 lang_foot_buttondownDB_tit="Download der Konfigurationsdatenbank …"
 lang_foot_buttondelprof="Profil löschen"
 lang_foot_buttondelprof_tit="löscht das aktuelle Profil nach Sicherheitsabfrage …"
+
+#-------------------------------------------
+# page settings:
+#-------------------------------------------
 lang_edit_delques_1="Soll das aktuelle Profil"
 lang_edit_delques_2="gelöscht werden?"
 lang_edit_delfin1="Das Profil"
@@ -55,33 +54,44 @@ lang_edit_new2="Ein neues Profil mit dem Namen"
 lang_edit_new3="wurde erstellt"
 lang_edit_new4="Fehler beim Erstellen des Profils!"
 lang_edit_savefin="Änderungen wurden gespeichert"
+
 lang_edit_summary1="Trage hier deine Einstellungen ein und passe die Pfade an."
 lang_edit_summary2="Hilfe für die einzelnen Felder erhältst du über das blaue Info-Symbol am rechten Rand."
 lang_edit_summary3="Über die Profile kannst du beliebig viele Konfigurationen anlegen, welche alle bei jedem Programmlauf abgearbeitet werden. Man kann jedes Profil über das entsprechende Feld auch deaktivieren."
 lang_edit_summary4="Achte unbedingt darauf, die kompletten Pfade inkl. Volume einzutragen und achte auf korrekte Groß- und Kleinschreibung. Das sicherste ist, wenn du in der Filestation den gewünschten Ordner suchst und du dir über Rechtsklick die Eigenschaften anzeigen lässt. In diesem Dialog kannst du dir den korrekten Pfad kopieren."
+
 lang_edit_dbupdate="Ergebnis von DB-Update"
 lang_edit_change_profile="wechsle zu Profil"
+
 lang_edit_set1_title="Allgemein"
+
 lang_edit_set1_profilename_help="Profile können individuell benannt werden"
+
 lang_edit_set1_profile_activ_title="Profil aktivieren / deaktivieren"
 lang_edit_set1_profile_activ="Profil aktiviert"
 lang_edit_set1_profile_inactiv="Profil deaktiviert"
 lang_edit_set1_profile_activ_help1="Profile können aktiviert, oder deaktiviert werden."
 lang_edit_set1_profile_activ_help2="Deaktivierte Profile können zwar modifiziert werden, werden aber von synOCR nicht ausgeführt."
+
 lang_edit_set1_sourcedir_title="Quellverzeichnis"
 lang_edit_set1_sourcedir_help1="In diesem Verzeichnis wird nach PDF-Dateien gesucht (nicht rekursiv)."
 lang_edit_set1_sourcedir_help2="Verwende den vollständigen Pfad"
+
 lang_edit_set1_targetdir_title="Zielverzeichnis"
 lang_edit_set1_targetdir_help1="Ausgabeverzeichnis der fertigen PDF-Dateien (wird ggf. erstellt)."
 lang_edit_set1_targetdir_help2="Verwende den vollständigen Pfad"
+
 lang_edit_set1_backupdir_title="Backup-Verzeichnis"
 lang_edit_set1_backupdir_help1="Sofern hier ein gültiger Pfad eingetragen wird, werden die Originaldateien hier gesichert (wird ggf. erstellt)."
 lang_edit_set1_backupdir_help2="Ist kein gültiges Verzeichnis hinterlegt, werden die Originaldateien endgültig gelöscht."
 lang_edit_set1_backupdir_help3="Verwende den vollständigen Pfad"
+
 lang_edit_set1_logdir_title="Verzeichnis für LOG-Dateien"
 lang_edit_set1_logdir_help1="Verzeichnis der LOG-Dateien (wird ggf. erstellt)"
-lang_edit_set1_logdir_help2="Verwende den vollständigen Pfad"
+lang_edit_set1_logdir_help2="Verwende den vollständigen Pfad" 
+
 lang_edit_set2_title="OCR Optionen und Umbenennung"
+
 lang_edit_set2_ocropt_title="OCR Optionen"
 lang_edit_set2_ocropt_help1="Hier können individuelle Parameter für OCRmyPDF angegeben werden"
 lang_edit_set2_ocropt_help2="PDF-Dateien mit vorhandenem Textlayer nicht erneut OCRen"
@@ -90,28 +100,34 @@ lang_edit_set2_ocropt_help4="automatisches drehen von Seiten"
 lang_edit_set2_ocropt_help5="Sprachcode"
 lang_edit_set2_ocropt_help6="schiefe Scans entzerren"
 lang_edit_set2_ocropt_help7="vollständige Hilfe"
+
 lang_edit_set2_dockerimage_title="zuverwendendes Dockerimage"
 lang_edit_set2_dockerimage_help1="Welches Dockerimage soll verwendet werden?"
 lang_edit_set2_dockerimage_help2="ist das Standardimage, enthält aktuell aber nur die Sprachen:"
 lang_edit_set2_dockerimage_help3="Polyglot-Images enthalten alle möglichen Sprachen, sind aber größer!"
 lang_edit_set2_dockerimage_help4="Manuell heruntergeladene oder selbst erstellte Images stehen ebenfalls zur Auswahl, sofern folgendes im Namen enthalten ist:"
+
 lang_edit_set2_dockerimageupdate_title="Dockerimage aktuell halten"
 lang_edit_set2_dockerimageupdate_yes="aktuell halten (standard)"
 lang_edit_set2_dockerimageupdate_no="Version beibehalten"
 lang_edit_set2_dockerimageupdate_help1="Dockerimages mit :latest-Tag können aktualisiert werden."
+
 lang_edit_set2_img2pdf_title="Konvertiere Bilder zu PDF"
 lang_edit_set2_img2pdf_no="Bilder überspringen"
 lang_edit_set2_img2pdf_yes="konvertiere Bilder"
 lang_edit_set2_img2pdf_help1="Bilder im Quellordner können zu PDF-Dateien konvertiert werden. Sofern aktiviert, werden sie anschließend in den Backupordner verschoben."
+
 lang_edit_set2_searchpref_title="Suchmuster Quelldateiname"
 lang_edit_set2_searchpref_help1="Nur PDFs mit definiertem Präfix bearbeiten"
 lang_edit_set2_searchpref_help2="leerlassen, wenn alle Dokumente verarbeitet werden sollen"
 lang_edit_set2_searchpref_help3="am Anfang invertiert die Suche"
 lang_edit_set2_searchpref_help4="am Ende definiert den Begriff als Suffix"
+lang_edit_set2_delsearchpref_title=""
 lang_edit_set2_delsearchpref_keep="Suchmuster erhalten"
 lang_edit_set2_delsearchpref_delete="Suchmuster entfernen"
 lang_edit_set2_delsearchpref_help1="Soll der Suchausdruck im Anschluss entfernt werden?"
 lang_edit_set2_delsearchpref_help2="(hilfreich, sofern der Quellordner auch gleichzeitig der Zielordner ist)"
+
 lang_edit_set2_documentSplitPattern_title="Suchmuster Dokumententrenner"
 lang_edit_set2_documentSplitPattern_help1="Hier kann ein Muster definiert werden um ein großes Dokument automatisiert in Teildokumente zu splitten. Das Quelldokument wird an den Seiten, auf denen das angegebene Suchmuster gefunden wurde, getrennt."
 lang_edit_set2_documentSplitPattern_help3="Hier findest du eine Vorlage zum Ausdrucken:"
@@ -120,6 +136,7 @@ lang_edit_set2_splitpagehandling_discard="verwerfen"
 lang_edit_set2_splitpagehandling_isLastPage="ist die letzte Seite"
 lang_edit_set2_splitpagehandling_isFirstPage="ist die erste Seite"
 lang_edit_set2_splitpagehandling_help1="Das Trennblatt kann verworfen werden (Standardeinstellung) oder dem vorausgehenden, bzw. nachfolgenden Bereich zugeordnet werden."
+
 lang_edit_set2_taglist_title="zu suchende Tags"
 lang_edit_set2_taglist_help1="Hier angegebene Tags werden im Dokument gesucht und stehen für die Umbenennung zur Verfügung."
 lang_edit_set2_taglist_help2="Einzelne Tags werdendurch Semikolon getrennt."
@@ -132,11 +149,13 @@ lang_edit_set2_taglist_help7="Tags können auch durch ein Gleichheitszeichen ein
 lang_edit_set2_taglist_help8="Rechnung;HUK24=Versicherung;Allianz=Versicherung"
 lang_edit_set2_taglist_help9="Umfangreiche Tags können auch in einer separaten Textdatei gespeichert werden."
 lang_edit_set2_taglist_help10="In diesem Fall ist hier der absolute Pfad einzutragen."
+
 lang_edit_set2_searchall_title="Suchbereich für Tags"
 lang_edit_set2_searchall_1page="nur erste Seite"
 lang_edit_set2_searchall_all="gesamtes Dokument"
 lang_edit_set2_searchall_help1="In welchem Bereich soll nach Tags gesucht werden?"
 lang_edit_set2_searchall_help2="Standard ist nur auf erster Seite. Je größer der Suchbereich, desto mehr false positive gibt es."
+
 lang_edit_set2_moveTaggedFiles_title="Tag-Unterverzeichnisse nutzen"
 lang_edit_set2_moveTaggedFiles_targetdir="im Zielordner behalten"
 lang_edit_set2_moveTaggedFiles_useCatDir="verwende Regel-definierte Ordner"
@@ -149,6 +168,7 @@ lang_edit_set2_moveTaggedFiles_help3="Regel-definierte Ordner"
 lang_edit_set2_moveTaggedFiles_help4="Jahresordner"
 lang_edit_set2_moveTaggedFiles_help5="Jahr/Monatsordner"
 lang_edit_set2_moveTaggedFiles_help6="Bei mehreren zutreffenden Tags werden Hardlinks gesetzt."
+
 lang_edit_set2_renamesyntax_title="OCR Rename-Syntax"
 lang_edit_set2_renamesyntax_help1="Fertige PDFs mit einer bestimmten Syntax umbenennen. Die Variablen können auch in Zielpfaden in YAML-Regeln verwendet werden (bis auf §tit)."
 lang_edit_set2_renamesyntax_help2="Folgende Variablen sind in Kombination mit Fließtext möglich"
@@ -180,66 +200,83 @@ lang_edit_set2_renamesyntax_help20="Seitenzähler (genutztes Profil)"
 lang_edit_set2_renamesyntax_help21="Dateizähler (genutztes Profil)"
 lang_edit_set2_renamesyntax_help15="erzeugt"
 lang_edit_set2_renamesyntax_help17="Datumsangaben werden zuerst im Dokument gesucht. Wenn erfolglos, wird das Dateidatum verwendet."
+
 lang_edit_set2_tagsymbol_title="Tags im Dateinamen kennzeichnen"
 lang_edit_set2_tagsymbol_help1="gefundene tags können im Dateinamen gekennzeichnet werden"
 lang_edit_set2_tagsymbol_help2="(Sonderzeichen können unvorhersehbare Folgen haben!)"
+
 lang_edit_set2_filedate_title="Dateidatum korrigieren"
 lang_edit_set2_filedate_now="aktuelle Zeit"
 lang_edit_set2_filedate_ocr="gefundenes OCR-Datum verwenden"
 lang_edit_set2_filedate_source="Datum der Quelldatei verwenden"
 lang_edit_set2_filedate_help1="Wie soll das Datum der Zieldatei angepasst werden?"
 lang_edit_set2_filedate_help2="Ist OCR-Datum gewählt, wird aber keins gefunden, so wird das Datum der Quelldatei verwendet."
+
 lang_edit_set2_ignoredDate_title="Daten ignorieren"
 lang_edit_set2_ignoredDate_help1="Angegebene Daten werden bei der Suche ignoriert. Es können mehrere Daten angegeben werden (getrennt durch Leerzeichen). Wichtig ist die richtige Formatangabe: YYYY-MM-DD (z.B. 2021-02-29 2021-04-31)"
+
 lang_edit_set2_DateSearchMinYear_title="Suchbereich in Vergangenheit"
 lang_edit_set2_DateSearchMinYear_help1="Gib hier das absolute Jahr oder eine relative Anzahl an Jahren an, die in der Vergangenheit als gültiges Datum beachtet werden sollen."
 lang_edit_set2_DateSearchMinYear_help2="Eine vierstellige Zahl wird als absolutes Jahr gewertet. Weniger als vier Stellen als relative Jahresabweichung."
 lang_edit_set2_DateSearchMinYear_help3="Ein leerer Wert oder 0 werden als unbegrenzt gewertet."
+
 lang_edit_set2_DateSearchMaxYear_title="Suchbereich in Zukunft"
 lang_edit_set2_DateSearchMaxYear_help1="Gib hier das absolute Jahr oder eine relative Anzahl an Jahren an, die in der Zukunft als gültiges Datum beachtet werden sollen."
 lang_edit_set2_DateSearchMaxYear_help2="Ein leerer Wert oder 0 werden als unbegrenzt gewertet."
+
 lang_edit_set2_filedate_search_nearest_date_title="Datum Suchergebnis Reihenfolge"
 lang_edit_set2_filedate_search_nearest_firstfound="1. Treffer in Dokument"
 lang_edit_set2_filedate_search_nearest_nearest="jüngste Datum in Vergangenheit"
 lang_edit_set2_filedate_search_nearest_help1="Welcher Fund der Datumssuche soll verwendet werden?"
 lang_edit_set2_filedate_search_nearest_help2="Das erste im Dokument oder das nähste Datum in der Vergangenheit aller Funde? (greift nur bei der Python basierten Suche!)"
+
 lang_edit_set2_date_search_method_title="Methode der Datumsuche"
 lang_edit_set2_date_search_method_python="Python"
 lang_edit_set2_date_search_method_regex="RegEx"
 lang_edit_set2_date_search_method_help1="Folgende Möglichkeiten stehen für die Datumsuche zur Verfügung: Python-Skript und die Suche als regulärer Ausdruck."
 lang_edit_set2_date_search_method_help2="Das Pythonskrip sucht umfangreicher und findet z.B. auch ausgeschriebene Monate. Vorraussetzung ist ein installiertes Python3. Notwendige Module werden von synOCR nachinstalliert."
 lang_edit_set2_date_search_method_help3="Die Suche als regulärer Ausdruck findet nur Zahlenformate, ist aber von keiner weiteren Software abhängig und ist schneller."
+
 lang_edit_set2_clean_up_spaces_title="Leerzeichen bereinigte Suche"
 lang_edit_set2_clean_up_spaces_true="Leerzeichen bereinigen"
 lang_edit_set2_clean_up_spaces_false="Suche im Originaltext"
 lang_edit_set2_clean_up_spaces_help1="Bei aktivierter Leerzeichenbereinigung, werden multible Leerzeichen auf eins reduziert. Teilweise erkennt OCR nicht die ursprüngliche Anzahl der Leerzeichen, oder sie ist nicht immer gleich. Gerade bei RegEx-Suchen kann es hilfreich sein, wenn die genaue Anzahl definiert ist."
 lang_edit_set2_clean_up_spaces_help2="Die Einstellung wirkt sich auf alle Suchvorgänge im Dokument aus (Datum, Tags, …). Das Originaldokument wird dabei nicht verändert, sondern lediglich der temporäre Textauszug."
+
 lang_edit_set3_title="DSM-Benachrichtigung und sonstige Einstellungen"
+
 lang_edit_set3_backuprotate_title="Backupdateien begrenzen"
 lang_edit_set3_backuprotate_help1="Überzählige Backups können automatisch entfernt werden."
 lang_edit_set3_backuprotate_help2="Wähle Tage oder Dateien als Einheit."
 lang_edit_set3_backuprotate_help3="Eine leere Angabe hebt die Begrenzung auf."
+lang_edit_set3_backuprotatetype_title=
 lang_edit_set3_backuprotatetype_files="Dateien"
 lang_edit_set3_backuprotatetype_days="Tage"
+
 lang_edit_set3_logmax_title="maximale LOG-Dateien"
 lang_edit_set3_logmax_help="maximale Anzahl der LOG-Dateien (leere Logs werden sofort gelöscht)"
+
 lang_edit_set3_dsmtextnotify_title="Systembenachrichtigung (Text)"
 lang_edit_set3_dsmtextnotify_on="ein"
 lang_edit_set3_dsmtextnotify_off="aus"
 lang_edit_set3_dsmtextnotify_help1="ein ➜ Benachrichtigung per Text aktiv im Benachrichtigungszentrum"
 lang_edit_set3_dsmtextnotify_help2="aus ➜ keine Textbenachrichtigung"
+
 lang_edit_set3_MessageTo_title="Benachrichtigung an User"
 lang_edit_set3_MessageTo_help1="User, an den die Benachrichtigungen gesendet werden."
 lang_edit_set3_MessageTo_help2="Auf diese Art kann man sich in Verbindung mit dem Paket &quot;Notification Forwarder&quot; über synOCR-Ereignisse z.B. über einen Pushdienst benachrichtigen lassen."
 lang_edit_set3_MessageTo_help3="Bleibt der Wert leer, so wird die Gruppe &quot;administrators&quot; benachrichtigt."
+
 lang_edit_set3_PBTOKEN_title="PushBullet-Token"
 lang_edit_set3_PBTOKEN_help1="Dein persönlicher PushBullet-Token."
 lang_edit_set3_PBTOKEN_help2="Benachrichtigungen werden an den entsprechenden Account gesendet."
 lang_edit_set3_PBTOKEN_help3="Bei Nichtgebrauch leer lassen."
+
 lang_edit_set3_dsmbeepnotify_title="Systembenachrichtigung (Piep)"
 lang_edit_set3_dsmbeepnotify_on="ein"
 lang_edit_set3_dsmbeepnotify_off="aus"
 lang_edit_set3_dsmbeepnotify_help1="Ein kurzer Piep, sobald ein PDF fertig bearbeitet wurde."
+
 lang_edit_set3_loglevel_title="LOGlevel (0,1,2)"
 lang_edit_set3_loglevel_off="0 (aus)"
 lang_edit_set3_loglevel_1="1 (standard)"
@@ -247,12 +284,14 @@ lang_edit_set3_loglevel_2="2 (debug mode)"
 lang_edit_set3_loglevel_help1="0 ➜ es wird keine Log-Datei erstellt"
 lang_edit_set3_loglevel_help2="1 ➜ normales Log (standard)"
 lang_edit_set3_loglevel_help3="2 ➜ debuging Log"
+
 lang_edit_set3_accept_cpdf_license_title="Lizenzbedingungen"
 lang_edit_set3_accept_cpdf_license_no="Lizenz abgelehnt"
 lang_edit_set3_accept_cpdf_license_yes="Ich akzeptiere die Lizenz"
 lang_edit_set3_accept_cpdf_license_help1="Bei cpdf handelt es sich um ein mitgeliefertes Kommandozeilenprogramm, womit synOCR zusätzliche Funktionen bereitstellen kann (z.B. Trennseiten)."
 lang_edit_set3_accept_cpdf_license_help2="cpdf darf nur bei nicht kommerziellen Gebrauch kostenfrei genutzt werden. Darüber kann der Anwender hier entscheiden."
 lang_edit_set3_accept_cpdf_license_help3="Originalformulierung:"
+
 lang_edit_yamlsample_01="Der nachstehende Pfad ist im gewünschten Profil in das Feld für die Tags einzutragen"
 lang_edit_yamlsample_02="BITTE BEACHTE DIESE ANLEITUNG"
 lang_edit_yamlsample_03="es ist sehr wichtig, die korrekten Einrückungen einzufügen"
@@ -279,6 +318,7 @@ lang_edit_yamlsample_20="VALUE ist ein Pfad, wenn die Regel erfüllt ist"
 lang_edit_yamlsample_21="es kann ein absoluter Pfad sein"
 lang_edit_yamlsample_22a="wenn es sich nicht um einen absoluten Pfad handelt, wird er"
 lang_edit_yamlsample_22b="relativ zum in der GUI definierte Zielordner erstellt"
+lang_edit_yamlsample_23=
 lang_edit_yamlsample_24="wie viele Suchregeln erfüllt sein müssen, damit die Regel erfüllt wird"
 lang_edit_yamlsample_25="VALUE ist"
 lang_edit_yamlsample_26="alle Suchregeln müssen erfüllt werden"
@@ -306,6 +346,10 @@ lang_edit_yamlsample_button_help_03="- von den bestehenden Regeln wird ein Backu
 lang_edit_yamlsample_gui_01="Die Regeldatei besteht bereits!"
 lang_edit_yamlsample_gui_02="Bitte lösche die bestehende Datei und versuche es erneut"
 lang_edit_yamlsample_gui_03="Die Regeldatei wurde erfolgreich erstellt."
+
+#-------------------------------------------
+# page main:
+#-------------------------------------------
 lang_main_title1="OCR auf Synology DSM"
 lang_main_title2="Beschreibung"
 lang_main_monitor_restart_necessary_1="Die Liste der überwachten Input-Ordner ist nicht mehr aktuell!"
@@ -325,11 +369,16 @@ lang_main_openfilecount="Dateien zu bearbeiten"
 lang_main_alldone="Alles erledigt"
 lang_main_totalsince="Gesamt seit"
 lang_main_pages="Seiten"
+
+#-------------------------------------------
+# page help:
+#-------------------------------------------
 lang_help_title_QS="Schnellstart"
 lang_help_QS_1_beforelink="Passe zunächst deine Installation in der"
 lang_help_QS_1_afterlink="an."
 lang_help_QS_1b="(optional): Um Input-Ordner automatisch zu überwachen, muss das Paket inotify-tools installiert sein"
 lang_help_QS_2="Für einen ordnungsgemäßen Betrieb von synOCR muss im DSM Aufgabenplaner eine neue Aufgabe erstellt werden."
+# ensure exact translation from the DSM!:
 lang_help_QS_sub1_tit="Öffne dazu im DSM die Systemsteuerung"
 lang_help_QS_sub1_1="Aufgabenplaner"
 lang_help_QS_sub1_2="Erstellen"
@@ -361,10 +410,16 @@ lang_help_FAQ_sub4_2="überprüfe, ob das gewünschte Profil für den Quellordne
 lang_help_FAQ_sub5_tit="meine Frage ist nicht dabei …"
 lang_help_FAQ_sub5_beforelink="Für alle weiteren Fragen und Probeme nutze bitte das Supportforum:"
 lang_help_FAQ_sub5_linktitle="synOCR Supportforum"
+lang_help_FAQ_sub5_afterlink=""
 lang_help_about_title="über synOCR"
 lang_help_about_1="Das Projekt hängt vor allem von meiner Zeit, Kraft und Lust ab, die ich dafür bereitstellen kann."
 lang_help_about_2="Begonnen, um meinen Arbeitsablauf mit PDF Dokumenten einfacher zu machen, ist es auch eine Freude für mich, wenn anderen dieses Projekt hilft. Daher erwarte ich keine Gegenleistung!"
-lang_help_about_3="Sollte allerdings mir jemand eine finanzielle Freude machen wollen, so kann ihm das über diesen Button gelingen - DANKE:"
+lang_help_about_3="Wenn mir aber jemand eine finanzielle Freude machen und das Projekt unterstützen möchte, so kann ihm das über diesen Button gelingen - DANKE:"
+lang_help_about_4="Besonderen Dank für die Unterstützung geht an"
+
+#-------------------------------------------
+# script synOCR-start.sh:
+#-------------------------------------------
 lang_synOCR_start_is_running="synOCR läuft bereits!"
 lang_synOCR_start_req_kill="Beenden erzwingen?"
 lang_synOCR_start_runs="synOCR wurde gestartet"
@@ -378,6 +433,10 @@ lang_synOCR_start_target_created="Zielverzeichnis wurde erstellt."
 lang_synOCR_start_umount_log="verschlüsselter LOG-Ordner nicht eingehangen"
 lang_synOCR_start_errorexit="synOCR wurde mit Fehlern beendet!"
 lang_synOCR_start_loginfo="weitere Informationen im LOG"
+
+#-------------------------------------------
+# installation files:
+#-------------------------------------------
 lang_wizui_install_title="Hinweis zur Installation:"
 lang_wizui_install_desc="Einzige Vorraussetzung ist das installierte Paket Docker. Im Normalfall ist keine weitere Konfiguration in Docker notwendig."
 lang_wizui_uninstall_title="Deinstallationshinweis"
@@ -390,10 +449,9 @@ lang_PKG_NOINSTALL_ERROR_PART2="mit der CPU-Architektur"
 lang_PKG_NOINSTALL_ERROR_PART3="wird von synOCR nicht unterstützt, da das benötigte Paket Docker nicht installiert werden kann (nur x86_64 / aarch64)"
 lang_PKG_DELETE_TIMER="Der eingebaute Zeitplaner aus älteren Versionen ist nicht länger verfügbar. Bitte nutze den DSM Aufgabenplaner!"
 lang_INFO_description="synOCR ist eine einfache GUI für den Dockercontainer OCRmyPDF. Damit kannst du einfach OCR auf PDF-Dokumente anwenden. synOCR kann anschließend nach Tags und Datum in den Dokumenten suchen, diese nach einem individuellen Muster umbennenn und nach Kategorien in Unterordner einsortieren. Durch Verwendung von Hardlinks entsteht kein erhöhter Speicherplatzbedarf, wenn ein Dokument in mehrere Kategorieordner einsortiert werden muss."
+
+#-------------------------------------------
+# miscellaneous:
+#-------------------------------------------
 lang_notify_file_job_successful="PDF wurde erfolgreich verarbeitet."
 lang_notify_file_update_available="Update verfügbar!"
-lang_edit_set2_delsearchpref_title=""
-lang_edit_set3_backuprotatetype_title=""
-lang_edit_yamlsample_23=""
-lang_help_FAQ_sub5_afterlink=""
-lang_help_about_4=""
