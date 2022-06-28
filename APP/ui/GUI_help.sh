@@ -98,26 +98,26 @@ echo '
 </div>'
 
 # -> Section other:
-echo '
-<div class="accordion" id="Accordion-03">
-    <div class="accordion-item border-start-0 border-end-0" style="border-style: dashed none dashed none; size: 1px;">
-        <h2 class="accordion-header" id="Heading-03">
-            <button class="accordion-button collapsed bg-white synocr-accordion-glow-off" type="button" data-bs-toggle="collapse" data-bs-target="#Collapse-03" aria-expanded="false" aria-controls="collapseTwo">
-                <span class="synocr-text-blue">'$lang_help_about_title'</span>
-            </button>
-        </h2>
-        <div id="Collapse-03" class="accordion-collapse collapse border-white" aria-labelledby="Heading-03" data-bs-parent="#Accordion-03">
-            <div class="accordion-body">
-                <p>
-                    '$lang_help_about_1'<br />
-                    '$lang_help_about_2'<br />
-                    '$lang_help_about_3'<br />
-                    <a href="https://www.paypal.me/geimist" onclick="window.open(this.href); return false;">
-                        <img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="200"/>
-                    </a><br />
-                    '$lang_help_about_4'
-                </p><br>
-            </div>
-        </div>
-    </div>
-</div>'
+
+lang_help_about_4="Besonderen Dank für die Unterstützung geht an:"
+
+    echo '
+    <p>&nbsp;</p>
+    <h5 class="synocr-text-blue mt-3">'$lang_help_about_title'</h5>
+    <p>&nbsp;</p>
+    <p>
+        '$lang_help_about_1'<br />
+        '$lang_help_about_2'<br />
+        '$lang_help_about_3'
+        <a href="https://www.paypal.me/geimist" onclick="window.open(this.href); return false;">
+            <img src="images/paypal.png" alt="PayPal" style="float:right;padding:10px" height="60" width="200"/>
+        </a><br /><br /><hr>
+        <p><b>
+            '$lang_help_about_4':</b>
+            <ul>
+                <li><a href="https://github.com/ocrmypdf/OCRmyPDF" onclick="window.open(this.href); return false;" style="'$synocrred';">'jbarlow83 [OCRmyPDF]'</a></li>
+                <li><a href="https://www.synology-forum.de/members/tommes.8120/" onclick="window.open(this.href); return false;" style="'$synocrred';">'Tommes'</a> [GUI]</li>
+                <li><a href="https://www.synology-forum.de/members/gthorsten.118999/" onclick="window.open(this.href); return false;" style="'$synocrred';">'Gthorsten'</a> [Python find date script]</li>
+            </ul>
+        </p>
+    </p><br>'
