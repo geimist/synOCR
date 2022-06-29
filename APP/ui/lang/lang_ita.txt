@@ -117,7 +117,7 @@ lang_edit_set2_taglist_help2="I singoli tag sono separati da un punto e virgola.
 lang_edit_set2_taglist_help2_1="È possibile impostare anche il percorso di un file di regole."
 lang_edit_set2_taglist_help3="! ! ! NON UTILIZZARE INTERRUZIONI DI RIGA! ! !"
 lang_edit_set2_taglist_help4="Anche i tag e le categorie possono contenere spazi."
-lang_edit_set2_taglist_help5="Se un tag deve essere trovato solo singolarmente, deve essere preceduto da un segno di paragrafo (una ricerca di"
+lang_edit_set2_taglist_help5="Se un tag deve essere trovato solo singolarmente, è necessario anteporre un segno di paragrafo (una ricerca per"
 lang_edit_set2_taglist_help6="Fattura;Lavoro;Assicurazione"
 lang_edit_set2_taglist_help7="I tag possono anche essere assegnati a una categoria (per le sottocartelle) usando un segno di uguale (si applica solo se si usano anche le cartelle definite dalle regole [opzione seguente])."
 lang_edit_set2_taglist_help8="Fattura;HUK24=assicurazione;Allianz=assicurazione"

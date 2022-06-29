@@ -125,7 +125,7 @@ lang_edit_set2_taglist_help2="As etiquetas individuais são separadas por ponto-
 lang_edit_set2_taglist_help2_1="Também pode ser definido um caminho para um ficheiro de regras."
 lang_edit_set2_taglist_help3="! ! ! NÃO UTILIZE QUEBRAS DE LINHA ! ! !"
 lang_edit_set2_taglist_help4="As etiquetas e categorias também podem conter espaços."
-lang_edit_set2_taglist_help5="Se uma etiqueta for encontrada apenas individualmente, deve ser colocado um sinal de parágrafo na frente (uma pesquisa por"
+lang_edit_set2_taglist_help5="Se uma etiqueta for encontrada apenas individualmente, deve ser precedida de um sinal de parágrafo (uma pesquisa por"
 lang_edit_set2_taglist_help6="Factura; Trabalho; Seguros"
 lang_edit_set2_taglist_help7="As etiquetas também podem ser atribuídas a uma categoria (para subpastas) usando um sinal de igualdade (só se aplica se também usar pastas definidas por regras [opção abaixo])."
 lang_edit_set2_taglist_help8="Factura;HUK24=seguro;Allianz=seguro"
