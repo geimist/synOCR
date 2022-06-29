@@ -1240,6 +1240,7 @@ rename()
         py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\'")"
 
         # reset pdf standard to PDF/A (https://stackoverflow.com/a/35042680/10763442):
+        # https://avepdf.com/pdfa-validation
     #    py_meta="$(printf "$py_meta\n'/Version': 'PDF-1.7'")"  # dosn't work ...
     
         echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
