@@ -28,7 +28,9 @@ known issues / limitations:
  -  🔥 Pictures in the source folder can be converted automatically
  -  option to reduce multiple spaces to one (helpful with RegEx)
  -  the number of pages is now determined with Python - Exiftool and pdfinfo become obsolete
- -  all renaming parameter can be used as tagname components in YAML-rules (experimental)
+ -  [YAML] all renaming parameter can be used as tagname components in YAML-rules (experimental)
+ -  [YAML] tagname & tagname_RegEx can be combined:
+    - use §tagname_RegEx in tagname and it will be replaced by tagname_RegEx
  -  Metadata will be add with Python - Exiftool become obsolete
     - set author (get author information from ocr options if set [--author john doe])
     - set creation date (depending on which one was defined: OCR, file date, now)
