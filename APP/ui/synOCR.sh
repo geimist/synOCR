@@ -682,9 +682,13 @@ if [ "$type_of_rule" = advanced ]; then
 
             if [[ "$tagname_RegEx" != null ]] ; then
                 echo -n "${log_indent}              ➜ search RegEx for tag ➜ "
-                tagname_RegEx_result=$( grep -oP "$tagname_RegEx" "${VARsearchfile}" | head -n1 )
+                tagname_RegEx_result=$( grep -oP "$tagname_RegEx" "${VARsearchfile}" | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
                 if [ ! -z "$tagname_RegEx_result" ] ; then
-                    searchtag=$(echo "$tagname_RegEx_result" | sed 's%\/\|\\\|\:\|\?%_%g') # filtered: \ / : ?
+                    if echo "$searchtag" | grep -q "§tagname_RegEx" ; then
+                        searchtag=$(echo "$searchtag" | sed -e "s/§tagname_RegEx/$tagname_RegEx_result/g" )
+                    else
+                        searchtag="$tagname_RegEx_result"
+                    fi
                     echo "$searchtag"
                 else
                     echo "RegEx not found (fallback to $searchtag)"
@@ -1199,18 +1203,18 @@ rename()
     
     # encode special characters for sed compatibility:
     title=$(urlencode "${title}")
-    renameTag=$(urlencode "$(urldecode "${renameTag}")")    # decode %20 before renew encoding
+    
+    # replace parameters with values (rulenames can contain placeholders, which are replaced here):
+    renameTag=$(replace_variables "${renameTag}")
+
+    # decode %20 before renew encoding
+    renameTag=$(urlencode "$(urldecode "${renameTag}")")
 
 
 # replace parameters with values:
 # ---------------------------------------------------------------------
     NewName=$(replace_variables "$NameSyntax")
 
-   
-# replace parameters with values (rulenames can contain placeholders, which are replaced here):
-# ---------------------------------------------------------------------
-    renameTag=$(replace_variables "${renameTag}")
-    
     # parameters without replace_variables function:
     NewName=$( echo "$NewName" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" )
     
@@ -1218,7 +1222,7 @@ rename()
     NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
     NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
     NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
-    
+
     # decode special characters:
     NewName=$(urldecode "$NewName")
     renameTag=$(urldecode "${renameTag}")
