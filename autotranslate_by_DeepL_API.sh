@@ -2,12 +2,13 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.0.2 © 2022 by geimist                                                                        #
+    #     v1.0.3 © 2022 by geimist                                                                        #
     #                                                                                                     #
     #                                                                                                     #
     #######################################################################################################
 
 DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
+
 
 # Mastersprache:
 #---------------------------------------------------------------------------------------------------
@@ -52,6 +53,7 @@ DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
 ####################################################################################################
 
 cCount=0
+error=0
 date_start=$(date +%s)
 
 if ! uname -a | grep -q synology ; then
@@ -181,7 +183,9 @@ create_master() {
     # sind Variablennamen bereits vorhanden, werden die Werte aktualisiert und der Versionszähler der Variable um 1 erhöht
 
     # set progressbar:
-    printf "\n\nImportiere / aktualisiere Mastertabelle ...\n\n"
+    printf "\n\nImportiere / aktualisiere Mastertabelle ...\n"
+    printf "[Masterfile: $masterFile]\n\n"
+
     progress_start=0
 #   progress_end=$(cat "$masterFile" | grep -v "^$" | grep -v "^#" | wc -l)
     progress_end=$(cat "$masterFile" | grep -v "^$" | grep -v ^[[:space:]]*# | wc -l)
@@ -337,9 +341,8 @@ translate() {
     # diese Funktion list die Musterübersetzung und übersetzt sie, sofern sie in der Zielsprache fehlt 
     # oder deren Version nicht mit der Version in der Mastertabelle übereinstimmt
 
-    printf "\n\nPrüfe auf fehlende oder veraltete Übersetzungen und aktualisiere sie ggf. ... \n\n"
-
-    echo "Master Sprach-ID:     $masterLangID [$masterLongName"]
+    printf "\n\nPrüfe auf fehlende oder veraltete Übersetzungen und aktualisiere sie ggf. ... \n"
+    printf "    Master Sprach-ID:     $masterLangID [$masterLongName]\n\n"
 
     while read langID; do
         languages=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT deeplshortname, longname FROM languages WHERE langID='$langID'")
@@ -389,7 +392,7 @@ translate() {
 
                 # ToDo: $langList & $masterList mit ID auslesen und für den diff-Vergleich die Spalte ID abschneiden - so erspart man sich die erneute Abfrage
                 # ist die Zeile vorhanden (rowID = Zahl), dann wird sie aktualisiert, sonst wird ein neuer Datensatz erstellt ("INSERT OR REPLACE …"):
-                rowID=$(sqlite3 "$i18n_DB" "SELECT ID FROM strings WHERE varID='$varID' AND langID='$langID'")
+                rowID=$(sqlite3 "$i18n_DB" "SELECT ID FROM strings WHERE varID='$varID' AND langID='$langID'" | head -n1)
                 if echo "$rowID" | grep -q ^[[:digit:]]$; then
                     IDname="ID, "
                     rowID="'$rowID',"
@@ -406,7 +409,6 @@ translate() {
             while read varID; do
 
                 # Progressbar:
-                let cCount=$cCount+1
                 progressbar ${cCount} ${progress_end}
 
                 # lese die Quelldaten:
@@ -418,19 +420,40 @@ translate() {
 
                 # call API / translate
                 # https://www.deepl.com/de/docs-api/translating-text/
-                value=$(curl -s https://api-free.deepl.com/v2/translate \
+
+                request_start=$(date +%s)
+                transValue=$(curl -s  --connect-timeout 5 \
+                    --max-time 5 \
+                    --retry 5 \
+                    --retry-delay 0 \
+                    --retry-max-time 30 \
+                    https://api-free.deepl.com/v2/translate \
                 	-d auth_key="$DeepLapiKey" \
                 	-d "text=$value"  \
                 	-d "source_lang=$masterDeeplShortName" \
                 	-d "tag_handling=xml" \
                 	-d "target_lang=$targetDeeplShortName" | jq -r .translations[].text)
 
+                if [ "$?" -ne 0 ]; then
+                    printf "    ÜBERSETZUNGSFEHLER - überspringen ..."
+                    error=1
+                    continue
+                elif [ -z "$transValue" ] && [ -n "$value" ]; then
+                    printf "    ÜBERSETZUNGSFEHLER (leere Rückgabe | varID: $varID ) - überspringen ..."
+                    error=1
+                    continue
+                fi
+
+                # Hinweis bei langsamen DeepL
+                requestTime=$(($(date +%s)-$request_start))
+                [ "$requestTime" -gt 10 ] && printf "  lange DeepL Antwortzeit [$requestTime Sekunden] | Ergebnis: $transValue"
+
                 # separiere den Sprachstring und maskierte single quotes:
-                value="$(echo "$value" | sed -e "s/'/''/g")" 
+                transValue="$(echo "$transValue" | sed -e "s/'/''/g")" 
 
                 # setzte Kennzeichnung auf automatisch übersetzt:
                 if [ "$machinetranslateID" -eq "$varID" ]; then
-                    value="1"
+                    transValue="1"
                 fi
 
                 # ToDo: $langList & $masterList mit ID auslesen und für den diff-Vergleich die Spalte ID abschneiden - so erspart man sich die erneute Abfrage
@@ -444,7 +467,11 @@ translate() {
                     IDname=""
                     rowID=""
                 fi
-                sqlite3 "$i18n_DB" "INSERT OR REPLACE INTO strings ( $IDname varID, langID, version, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion', '$value' ) "
+                sqlite3 "$i18n_DB" "INSERT OR REPLACE INTO strings ( $IDname varID, langID, version, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion', '$transValue' ) "
+
+                # Progressbar:
+                let cCount=$cCount+1
+                progressbar ${cCount} ${progress_end}
 
             done <<<"$(echo "$diffNew" | awk -F'\t' '{print $1}')"
         fi
@@ -460,7 +487,7 @@ export_langfiles() {
         languages=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT synoshortname, longname FROM languages WHERE langID='$langID'")
         synoShortName="$(echo "$languages" | awk -F'\t' '{print $1}')"
         targetLongName="$(echo "$languages" | awk -F'\t' '{print $2}')"
-        langFile="${exportPath%/}/lang_${synoShortName}.txt"
+        langFile="${exportPath}/lang_${synoShortName}.txt"
         printf "\nverarbeite Sprach-ID: $langID [$targetLongName]\n"
 
         if [ "$overwrite" = 0 ] && [ -f "$langFile" ]; then
@@ -510,6 +537,7 @@ masterLongName="$(echo "$languages" | awk -F'\t' '{print $3}')"
 #######################
 
 printf "\n\nStatistik:\n"
+[ "$error" -ne 0 ] && echo "    Es gab bei der Ausführung Fehler - bitte erneut aufrufen."
 limitState=$(curl -sH "Authorization: DeepL-Auth-Key $DeepLapiKey" https://api-free.deepl.com/v2/usage)
 printf "    Für die Übersetzung wurden $(( $(jq -r .character_count <<<"$limitState" )-$(jq -r .character_count <<<"$limitStateStart" ))) Zeichen berechnet.\n"
 printf "    Im aktuellen Zeitraum wurden $(jq -r .character_count <<<"$limitState" ) Zeichen von $(jq -r .character_limit <<<"$limitState" ) verbraucht.\n    "
