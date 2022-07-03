@@ -98,9 +98,6 @@ echo '
 </div>'
 
 # -> Section other:
-
-lang_help_about_4="Besonderen Dank für die Unterstützung geht an:"
-
     echo '
     <p>&nbsp;</p>
     <h5 class="synocr-text-blue mt-3">'$lang_help_about_title'</h5>
