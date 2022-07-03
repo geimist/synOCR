@@ -351,10 +351,9 @@ exit 1
     cp -f "$TargetName" "${APPDIR}"
 
     printf "\n-----------------------------------------------------------------------------------\n"
-    echo "   The SPK was created and can be found at:"
-    printf "\n-----------------------------------------------------------------------------------\n\n"
-
+    printf "   The SPK was created and can be found at:\n"
     printf "   ${APPDIR}/$TargetName\n"
+    printf "\n-----------------------------------------------------------------------------------\n\n"
 
 exit 0
 
