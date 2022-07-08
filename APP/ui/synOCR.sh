@@ -1208,7 +1208,9 @@ rename()
     renameTag=$(replace_variables "${renameTag}")
 
     # decode %20 before renew encoding
-    renameTag=$(urlencode "$(urldecode "${renameTag}")")
+#   renameTag=$(urlencode "$(urldecode "${renameTag}")")
+    # re-code only whitespaces:
+    renameTag="$( echo  "${renameTag}" | sed -e "s~%20~ ~g;s~ ~%20~g")"
 
 
 # replace parameters with values:
