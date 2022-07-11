@@ -10,6 +10,7 @@ DSM7 version you can found here: https://git.geimist.eu/geimist/synOCR/src/branc
  -  catching an error message if there are no docker images to be cleaned up
   IMPROVEMENT:
  -  YAML rules: if the value for condition not set - fallback to any
+ -  Notification in the log when rule-based destination folders are found, but a conflicting setting is set in the GUI.
   IMPLEMENTATIONS:
  -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
     to use this: call synOCR-start.sh with parameter start in DSM task scheduler:
