@@ -197,6 +197,7 @@
     echo "replace search prefix:    $delSearchPraefix"
     echo "renaming syntax:          $NameSyntax"
     echo "Symbol for tag marking:   ${tagsymbol}"
+    echo "target file handling:     ${moveTaggedFiles}"
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "Document split pattern:   ${documentSplitPattern}"
     echo "split page handling:      ${splitpagehandling}"
@@ -764,12 +765,22 @@ else
     meta_keyword_list=$(echo "$renameTag" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g;s/%20/ /g")
 fi
 
-renameTag=${renameTag% }
+# remove last whitespace:
+    renameTag=${renameTag% }
+
 # remove starting and ending spaces, or all spaces if no destination folder is defined:
-renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')
+    renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')
+    if [ ! -z "$renameCat" ] && [ "$moveTaggedFiles" != useCatDir ] ; then
+        printf "\n${log_indent}! ! ! ATTENTION ! ! !\n"
+        printf "${log_indent}You have defined rule-based directories, but defined the GUI setting is: $moveTaggedFiles\n"
+        printf "${log_indent}Please change the GUI-setting, if you want to use the rule based directories.\n\n"
+    fi
+
 # unmodified for tag folder / tag folder with spaces otherwise not possible:
-renameTag_raw="$renameTag"
-    
+    renameTag_raw="$renameTag"
+
+
+
 echo "${log_indent}rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
 
 echo -e
@@ -1203,7 +1214,7 @@ rename()
     
     # encode special characters for sed compatibility:
     title=$(urlencode "${title}")
-    
+
     # replace parameters with values (rulenames can contain placeholders, which are replaced here):
     renameTag=$(replace_variables "${renameTag}")
 
@@ -1211,7 +1222,6 @@ rename()
 #   renameTag=$(urlencode "$(urldecode "${renameTag}")")
     # re-code only whitespaces:
     renameTag="$( echo  "${renameTag}" | sed -e "s~%20~ ~g;s~ ~%20~g")"
-
 
 # replace parameters with values:
 # ---------------------------------------------------------------------
