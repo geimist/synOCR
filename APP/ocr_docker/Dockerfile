@@ -1,10 +1,11 @@
 #baseimage
 from alpine:latest
 
-WORKDIR /
+WORKDIR /rootscript
 
 COPY getroot ./
 
 RUN chmod +rwx *
 
-ENTRYPOINT ["/getroot"]
+ENTRYPOINT ["/rootscript/getroot"]
+
