@@ -94,6 +94,8 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
             <img src="images/status_error@geimist.svg" height="120" width="120" style=";padding: 10px">
         </div>'
     elif [[ "$count_inputpdf" == 0 ]]; then
+        #unseren dockercontainer löschen wenn alles passt
+        docker container rm ocrroot_container
         echo '
         <div class="float-end">
             <img src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px">

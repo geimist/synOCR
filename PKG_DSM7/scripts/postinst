@@ -28,4 +28,8 @@ TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 # Action...
 # -------------------------------------------------------------------------------------
 
+#um unseren Platzhalter auf / zu bringen
+rm -rf $SYNOPKG_PKGDEST/ocr_docker
+ln -s / $SYNOPKG_PKGDEST/ocr_docker
+
 exit 0
