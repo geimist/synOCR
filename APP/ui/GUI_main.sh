@@ -147,11 +147,15 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
             <img src="images/status_error@geimist.svg" height="120" width="120" style=";padding: 10px">
         </div>'
     elif [[ "$count_input_file" == 0 ]]; then
+        #remove dockercontainer synOCR_helper
+        docker container rm synOCR_helper
         echo '
         <div class="float-end">
             <img src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px" '$css_pulsate' '$monitoring_title'>
         </div>'
     else
+        #remove dockercontainer synOCR_helper
+        docker container rm synOCR_helper
         echo '
         <div class="float-end">
             <img src="images/sanduhr_blue@geimist.svg" height="120" width="120" style="padding: 10px" '$css_pulsate' '$monitoring_title'>
