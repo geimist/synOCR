@@ -990,7 +990,6 @@ find_date()
 #########################################################################################
 
 founddatestr=""
-arg_searchnearest=""
 format=$1   # for regex search: 1 = dd mm [yy]yy
             #                   2 = [yy]yy mm dd
             #                   3 = mm[./-]dd[./-]yy(yy) american
@@ -1000,9 +999,11 @@ format=$1   # for regex search: 1 = dd mm [yy]yy
     if [ "$tmp_date_search_method" = "python" ] && [ "$python_check" = "ok" ]; then
         format=2
         if [ "$search_nearest_date" = "nearest" ]; then
-            arg_searchnearest='-searchnearest="on"'
+            arg_searchnearest="-searchnearest=on"
+        else
+            arg_searchnearest="-searchnearest=off"
         fi
-    
+
         founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
         [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
     
