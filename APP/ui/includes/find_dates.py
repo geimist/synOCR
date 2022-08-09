@@ -7,19 +7,28 @@
 #
 #  Author: gthorsten
 #  Version:
-#     0.1, 24.03.2022
-#     0.2, 01.04.2022
-#          remove exit on error for call ArgumentParser(exit_on_error=False)
-#     0.3, 03.05.2022
-#          splitt_dates: Bugfix for dateformar YMD
-#     0.4, 13.05.2022
-#          add correct timezone to dateparser calls to prevent PEP Message
-#          enable alphanumeric date search ( needed parts month, year)
-#          actual behaviour:
-#          - search all alpha-numeric date
-#          - search all numeric dates and append
-#          - if not search nearest first found alphanumeric date ist returned
-#          - if no alpha date is found first numeric date is returned
+#     0.91, 21.07.2022
+#           add logging for parameter search nearest
+#
+#     0.9, 26.06.2022
+#          bugfix: minYear,maxYear could be >= or <= instead of < and >
+#     0.8, 19.06.2022
+#          rework numeric date search
+#          supported following formats:
+#           1.  DD-|.|/MM-|.|/YYYY
+#           2.  DD-|.|/MM-|.|/YY
+#           3.  YYYY-|.|/MM-|.|/DD
+#           4.  YY-|.|/MM-|.|/DD
+#
+#     0.7, 08.06.2022
+#          remove logging for everyline in alpha search
+#          add Parameter minYear/maxYear
+#              range 0, 1900-2200, 0:means unlimited
+#          rework alphanumeric search and add long dates 11. April 2002 and short dates April 2022
+#
+#     0.6, 01.06.2022
+#          BugFix search_alpha_numeric_dates
+#          Regex \a-zA-Z -> a-zA-z
 #
 #     0.5, 30.05.2022
 #          enable logging things happens during date search
@@ -29,26 +38,20 @@
 #          rework alphanumeric date search.
 #          - prescan every line with regex, otherwise date_search was to bad
 #
-#     0.6, 01.06.2022
-#          BugFix search_alpha_numeric_dates
-#          Regex \a-zA-Z -> a-zA-z
+#     0.4, 13.05.2022
+#          add correct timezone to dateparser calls to prevent PEP Message
+#          enable alphanumeric date search ( needed parts month, year)
+#          actual behaviour:
+#          - search all alpha-numeric date
+#          - search all numeric dates and append
+#          - if not search nearest first found alphanumeric date ist returned
+#          - if no alpha date is found first numeric date is returned
 #
-#     0.7, 08.06.2022
-#          remove logging for everyline in alpha search
-#          add Parameter minYear/maxYear
-#              range 0, 1900-2200, 0:means unlimited
-#          rework alphanumeric search and add long dates 11. April 2002 and short dates April 2022
-#
-#     0.8, 19.06.2022
-#          rework numeric date search
-#          supported following formats:
-#           1.  DD-|.|/MM-|.|/YYYY
-#           2.  DD-|.|/MM-|.|/YY
-#           3.  YYYY-|.|/MM-|.|/DD
-#           4.  YY-|.|/MM-|.|/DD
-#
-#     0.9, 26.06.2022
-#          bugfix: minYear,maxYear could be >= or <= instead of < and >
+#     0.3, 03.05.2022
+#          splitt_dates: Bugfix for dateformar YMD
+#     0.2, 01.04.2022
+#          remove exit on error for call ArgumentParser(exit_on_error=False)
+#     0.1, 24.03.2022
 #
 #
 #
@@ -500,9 +503,13 @@ if __name__ == '__main__':
     findDate.maxYear = args.maxYear
 
     if args.searchnearest:
+        logging.info(f'Parameter searchnearest = {args.searchnearest}')
         if args.searchnearest in acceptedvalue:
-            logging.info(f'Parameter searchnearest = {args.searchnearest}')
+            # logging.info(f'Parameter searchnearest = {args.searchnearest}')
+            logging.info(f'set searchnearest = {args.searchnearest}')
             findDate.setfindmode(args.searchnearest)
+        else:
+            logging.info(f'searchnearest invalid = {args.searchnearest}')
 
     if args.fileWithTextFindings:
         logging.info(f'Parameter fileWithTextFindings = {args.fileWithTextFindings}')
