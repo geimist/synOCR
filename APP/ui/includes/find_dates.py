@@ -7,6 +7,10 @@
 #
 #  Author: gthorsten
 #  Version:
+#     0.92, 10.08.2022
+#           add version string for logging
+#           change regexstr for search_all_numeric_dates. Whitespace at start
+#
 #     0.91, 21.07.2022
 #           add logging for parameter search nearest
 #
@@ -81,6 +85,7 @@ class FindDates:
         self.dbg_file = None
         self.numeric_dates_cnt = 0
         self.alphanumeric_dates_cnt = 0
+        self.version = '0.92'
 
         now = datetime.datetime.now()
         self.year_now = now.year
@@ -188,7 +193,7 @@ class FindDates:
         # !!!!! \s?(((\d{4})(\s?)(-|\.|\/)(\s?))|((\d{2})(\s?)(-|\.|\/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)
 
         regex = r"(0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}"
-        regex_DMY = r"\s(0[1-9]|[12][0-9]|3[01])(\s?)(-|\.|\/)(\s?)(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)"
+        regex_DMY = r"\s?(0[1-9]|[12][0-9]|3[01])(\s?)(-|\.|\/)(\s?)(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)"
         regex_YMD = r"\s?(((\d{4})(\s?)(-|\.|\/)(\s?))|((\d{2})(\s?)(-|\.|\/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)"
         max_len = len(self.searchtextstr)
 
@@ -495,6 +500,7 @@ if __name__ == '__main__':
 
         logging.basicConfig(filename=findDate.dbg_file, filemode='a', format='%(asctime)s - %(message)s', level=dbg_lvl)
         logging.info('Date scanning started')
+        logging.info(f'Version: {findDate.version}')
 
     #   if args.minYear and args.maxYear:
     logging.info(f'Parameter minYear = {args.minYear}')
