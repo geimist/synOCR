@@ -16,7 +16,7 @@
         fi
 
     # set docker and admin permission to user synOCR for DSM7 and above
-        if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
+        if [ $(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
             dsm_version=7
             echo "synOCR run at DSM7 or above"
             echo -n "    ➜ check admin permissions: "
@@ -114,7 +114,7 @@
 
     # is the source directory present and is the path valid?
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
-            if [ $callFrom = GUI ] ; then
+            if [ "$callFrom" = GUI ] ; then
                 echo '
                 <p class="text-center">
                     <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_lost_input' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span>
