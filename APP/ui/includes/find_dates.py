@@ -7,6 +7,11 @@
 #
 #  Author: gthorsten
 #  Version:
+#     0.93, 11.08.2022
+#           search_all_numeric_dates()
+#           - split pattern for D.M.Y, D-M-Y, D/M/Y in different pattern strings.
+#             using or (.|/|/) gives sometimes bad results
+#
 #     0.92, 10.08.2022
 #           add version string for logging
 #           change regexstr for search_all_numeric_dates. Whitespace at start
@@ -85,7 +90,7 @@ class FindDates:
         self.dbg_file = None
         self.numeric_dates_cnt = 0
         self.alphanumeric_dates_cnt = 0
-        self.version = '0.92'
+        self.version = '0.93'
 
         now = datetime.datetime.now()
         self.year_now = now.year
@@ -192,6 +197,57 @@ class FindDates:
         #
         # !!!!! \s?(((\d{4})(\s?)(-|\.|\/)(\s?))|((\d{2})(\s?)(-|\.|\/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)
 
+        max_len = len(self.searchtextstr)
+
+        regexlist = [
+            r"\s?(0[1-9]|[12][0-9]|3[01])(\s?)(-)(\s?)(0[1-9]|1[0-2])(\s?)(-)(\s?)(\d{4}|\d{2})(\s|\.|\,)",  # D-M-Y
+            r"\s?(0[1-9]|[12][0-9]|3[01])(\s?)(\.)(\s?)(0[1-9]|1[0-2])(\s?)(\.)(\s?)(\d{4}|\d{2})(\s|\.|\,)",  # D.M.Y
+            r"\s?(0[1-9]|[12][0-9]|3[01])(\s?)(\/)(\s?)(0[1-9]|1[0-2])(\s?)(\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)",  # D/M/Y
+            r"\s?(((\d{4})(\s?)(-)(\s?))|((\d{2})(\s?)(-)(\s?)))(0[1-9]|1[0-2])(\s?)(-)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)"  # Y-M-D
+            r"\s?(((\d{4})(\s?)(\.)(\s?))|((\d{2})(\s?)(\.)(\s?)))(0[1-9]|1[0-2])(\s?)(\.)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)"
+            # Y.M.D
+            r"\s?(((\d{4})(\s?)(\/)(\s?))|((\d{2})(\s?)(\/)(\s?)))(0[1-9]|1[0-2])(\s?)(\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)"
+            # Y/M/D
+        ]
+
+        with open(self.fileWithTextFindings, 'r', encoding='UTF-8') as f:
+            for line in f:
+                start_pos = 0
+                while start_pos < len(line):
+                    # start_pos = 0
+                    # while start_pos < max_len:
+                    for single_regex in regexlist:
+                        res = re.search(single_regex, line[start_pos:])
+                        if res:
+                            self.check_year_range(res, 'DMY')
+                            start_pos = start_pos + res.end()
+                    if not res:
+                        break
+
+        f.close()
+        self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
+        logging.info(f'found {self.numeric_dates_cnt} numeric dates')
+
+    def search_all_numeric_dates2(self):
+        """
+        Search for numeric dates in self.searchtextstr
+        return value is always an list. empty if no date found, otherwise contains a list of datetime objects
+        """
+        founddate = None
+        # reg für zahlendatums
+        # 12.12.2022
+        # 12.12.20     (DD.MM.YY)
+        # (0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}(\s|\.|\,)
+        # DD-|.|/MM-|.|/YYYY
+        # DD-|.|/MM-|.|/YY
+        #
+        # !!!!! \s?(0[1-9]|[12][0-9]|3[01])(\s?)(-|\.|\/)(\s?)(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)
+        # /(0[1-9]|[12][0-9]|3[01])(-|\.|\/)(0[1-9]|1[0-2])(-|\.|\/)\d{4}/gm
+        # YYYY-|.|/MM-|.|/DD
+        # YY-|.|/MM-|.|/DD
+        #
+        # !!!!! \s?(((\d{4})(\s?)(-|\.|\/)(\s?))|((\d{2})(\s?)(-|\.|\/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)
+
         regex = r"(0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}"
         regex_DMY = r"\s?(0[1-9]|[12][0-9]|3[01])(\s?)(-|\.|\/)(\s?)(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)"
         regex_YMD = r"\s?(((\d{4})(\s?)(-|\.|\/)(\s?))|((\d{2})(\s?)(-|\.|\/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)"
@@ -210,7 +266,7 @@ class FindDates:
 
                         start_pos = start_pos + res1.end()
                         # Check if start_pos > max_len of searchstring
-                        #if start_pos > max_len:
+                        # if start_pos > max_len:
                         #    self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
                         #    logging.info(f'found {self.numeric_dates_cnt} numeric dates')
                         #    return self.founddatelist
@@ -219,7 +275,7 @@ class FindDates:
 
                         start_pos = start_pos + res2.end()
                         # Check if start_pos > max_len of searchstring
-                        #if start_pos > max_len:
+                        # if start_pos > max_len:
                         #    self.numeric_dates_cnt = len(self.founddatelist) - self.alphanumeric_dates_cnt
                         #    logging.info(f'found {self.numeric_dates_cnt} numeric dates')
                         #    return self.founddatelist
@@ -334,88 +390,6 @@ class FindDates:
 
         return founddate
 
-    def search_alpha_numeric_dates2(self):
-
-        # Mai 2022
-        # \s?(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
-        # 01. Mai 2022
-        # \s(((0[1-9]|[12][0-9]|3[01])\.?)?)\s(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
-
-        founddatelist = []
-        regexlist = [
-            r"\s(((0[1-9]|[12][0-9]|3[01])\.?)?)\s(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})",
-            r"\s?(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
-        ]
-
-        founddate = None
-
-        with open(self.fileWithTextFindings, 'r', encoding='UTF-8') as f:
-            for line in f:
-                for singleregex in regexlist:
-                    startpos = 0
-                    while startpos < len(line):
-                        result = re.search(singleregex, line[startpos:])
-                        if result:  # , settings={'DATE_ORDER': 'DMY'}
-                            # found_dates = search_dates(result.group(0).rstrip(),
-                            #                            settings={'TIMEZONE': 'CEST', 'REQUIRE_PARTS': ['month', 'year'],
-                            #                                      'PREFER_DAY_OF_MONTH': 'first'})
-                            found_dates = search_dates(line[startpos:].rstrip(),
-                                                       settings={'TIMEZONE': 'CEST'})
-                            if found_dates:
-                                if (self.minYear == 0 or found_dates[0][1].year >= self.minYear) \
-                                        and (self.maxYear == 0 or found_dates[0][1].year <= self.maxYear):
-                                    self.founddatelist.append(found_dates[0][1])
-                                    founddatelist.append(found_dates)
-
-                                logging.debug(f'Line from File: {line}')
-                                logging.debug(f'{found_dates[0][1]}')
-
-                            startpos += result.end()
-                        else:
-                            break
-
-                # print(found_dates)
-                # if found_dates:
-                #    logging.debug(f'{found_dates[0][1]}')
-                #    logging.debug('end')
-
-        f.close()
-        self.alphanumeric_dates_cnt = len(self.founddatelist)
-        logging.info(f'found {self.alphanumeric_dates_cnt} alphanumeric dates')
-
-        return founddate
-
-    def search_alpha_numeric_dates1(self):
-        # \s(([\a-zA-Z]{3}\.)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
-
-        # \s(([\a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
-
-        # \s(((0[1-9]|[12][0-9]|3[01])\.?)?)\s(([\a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
-
-        founddate = None
-
-        with open(self.fileWithTextFindings, 'r', encoding='UTF-8') as f:
-            for line in f:
-                # print(line)
-                found_dates = search_dates(line.rstrip(),
-                                           settings={'TIMEZONE': 'CEST', 'REQUIRE_PARTS': ['month', 'year'],
-                                                     'PREFER_DAY_OF_MONTH': 'first'})
-                # print(found_dates)
-                if found_dates:
-                    self.founddatelist.append(found_dates[0][1])
-                    logging.debug(f'Line from File: {line}')
-                    logging.debug(f'{found_dates[0][1]}')
-
-        f.close()
-        self.alphanumeric_dates_cnt = len(self.founddatelist)
-        logging.info(f'found {self.alphanumeric_dates_cnt} alphanumeric dates')
-
-        # found_dates = search_dates(self.searchtextstr,settings={'REQUIRE_PARTS': ['month', 'year'], 'PREFER_DAY_OF_MONTH': 'first'})
-        # if found_dates:
-        #    self.founddatelist.append(found_dates[0][1])
-
-        return founddate
-
     def search_dates(self):
         """
         search for dates in self.fileWithTextFindings
@@ -461,8 +435,7 @@ class FindDates:
                     return None
 
 
-if __name__ == '__main__':
-
+def main_fn():
     acceptedvalue = ['on', 'off']
     parser = argparse.ArgumentParser()
     parser.add_argument('-fileWithTextFindings', type=str)
@@ -487,10 +460,11 @@ if __name__ == '__main__':
 
     if args.dbg_file:
         dbg_file = Path(args.dbg_file)
-        if dbg_file.is_file():
-            findDate.dbg_file = args.dbg_file
+        # if dbg_file.is_file():
+        findDate.dbg_file = args.dbg_file
 
-    if args.dbg_lvl >= 1 and dbg_file.is_file():
+    if args.dbg_lvl >= 1:
+        # and dbg_file.is_file():
         if args.dbg_lvl == 1:
             dbg_lvl = logging.INFO
         elif args.dbg_lvl == 0:
@@ -530,3 +504,7 @@ if __name__ == '__main__':
     if args.dbg_lvl >= 1 and dbg_file.is_file():
         logging.info(f'found date {foundDate}')
         logging.info('Date scanning ended')
+
+
+if __name__ == '__main__':
+    main_fn()
