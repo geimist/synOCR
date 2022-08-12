@@ -13,7 +13,7 @@
 
 callFrom=shell
 exit_status=0
-dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
+dsm_version=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION majorversion)
 machinetyp=$(uname --machine)
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
 

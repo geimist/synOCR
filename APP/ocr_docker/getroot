@@ -1,0 +1,11 @@
+#!/bin/sh
+#einfach das fertig script nutzen was es schon gibt und mehrfach ausführen. Beim ersten Run läuft es meist nicht, gibt sicher einen Grund dafür
+
+chroot /mnt/synoroot/ /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
+sleep 1
+chroot /mnt/synoroot/ /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
+sleep 1
+chroot /mnt/synoroot/ /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
+
+#resourcefile muss man löschen, damit man den container ohne Fehler löschen kann
+rm -f /mnt/synoroot/var/packages/synOCR/conf/resource

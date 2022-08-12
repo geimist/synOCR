@@ -1,5 +1,18 @@
 {
     "usr-local-linker": {
         "bin": ["bin/synOCR-cli"]
+    },
+    "docker": {
+      "services": [{
+        "service":"ocr_root",
+	    "image":"synocr_helper_image",
+        "tag":"latest",
+        "build":"ocr_docker",
+	    "container_name":"synocr_helper",
+        "volumes": [{
+            "host_dir": "ocr_docker",
+            "mount_point": "/mnt/synoroot"
+        }]
+      }]
     }
 }
