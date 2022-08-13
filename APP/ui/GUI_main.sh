@@ -148,16 +148,16 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
         </div>'
     elif [[ "$count_input_file" == 0 ]]; then
         # remove dockercontainer & image synocr_helper
-        docker container rm synocr_helper
-        docker image rm synocr_helper_image
+        docker container rm synocr_helper >/dev/null 2>&1
+        docker image rm synocr_helper_image >/dev/null 2>&1
         echo '
         <div class="float-end">
             <img src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px" '$css_pulsate' '$monitoring_title'>
         </div>'
     else
         # remove dockercontainer & image synocr_helper
-        docker container rm synocr_helper
-        docker image rm synocr_helper_image
+        docker container rm synocr_helper >/dev/null 2>&1
+        docker image rm synocr_helper_image >/dev/null 2>&1
         echo '
         <div class="float-end">
             <img src="images/sanduhr_blue@geimist.svg" height="120" width="120" style="padding: 10px" '$css_pulsate' '$monitoring_title'>
