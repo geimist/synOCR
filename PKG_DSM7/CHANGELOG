@@ -16,11 +16,13 @@ known issues / limitations:
   IMPROVEMENT:
  -  YAML rules: if the value for condition not set - fallback to any
  -  Notification in the log when rule-based destination folders are found, but a conflicting setting is set in the GUI
+ -  Profiles are now processed in alphabetical order (by profile name)
   IMPLEMENTATIONS:
  -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
     to use this: call synOCR-start.sh with parameter start in DSM task scheduler:
     /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
     a pulsing status icon in the gui indicates an active monitoring
+ -  the necessary package permissions are now already set during installation (kkrell)
  -  🔥 new Python based date search implemented, which also finds written out months (gthorsten)
     - a start year for date search can defined in GUI
     - a year in future can be defined in GUI as latest year for search
