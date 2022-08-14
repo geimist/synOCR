@@ -39,7 +39,7 @@ fi
 machinetyp=$(uname --machine)
 device=$( uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g" )
 
-if [ $machinetyp != "x86_64" ] || [ $machinetyp != "aarch64" ]; then
+if [ $machinetyp != "x86_64" ] && [ $machinetyp != "aarch64" ]; then
     echo "${PKG_NOINSTALL_ERROR_PART1} (${device}) ${PKG_NOINSTALL_ERROR_PART2} ${machinetyp} ${PKG_NOINSTALL_ERROR_PART3}" > $SYNOPKG_TEMP_LOGFILE
     exit 1
 fi
