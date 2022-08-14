@@ -236,14 +236,17 @@ exit 1
         # PKG_DSMx/scripts/lang/${lang}
         scripts_lang_lang="$build_tmp/$PKG/scripts/lang/${lang}"
         if [ ! -f "${scripts_lang_lang}" ]; then
+            # add language variables in script language file:
             echo 'PKG_NOINSTALL_ERROR_PART1="lang_PKG_NOINSTALL_ERROR_PART1"' > "${scripts_lang_lang}"
             echo 'PKG_NOINSTALL_ERROR_PART2="lang_PKG_NOINSTALL_ERROR_PART2"' >> "${scripts_lang_lang}"
             echo 'PKG_NOINSTALL_ERROR_PART3="lang_PKG_NOINSTALL_ERROR_PART3"' >> "${scripts_lang_lang}"
+            echo 'PKG_NOINSTALL_MISSING_DOCKER_ERROR="lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR"' >> "${scripts_lang_lang}"
             echo 'PKG_DELETE_TIMER="lang_PKG_DELETE_TIMER"' >> "${scripts_lang_lang}"
         fi
         synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART1 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART1)
         synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART2 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART2)
         synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART3 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART3)
+        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_MISSING_DOCKER_ERROR $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR)
         synosetkeyvalue "${scripts_lang_lang}" PKG_DELETE_TIMER $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_DELETE_TIMER)
 
         # install_uifile:
