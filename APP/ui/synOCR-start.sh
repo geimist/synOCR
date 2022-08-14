@@ -233,7 +233,9 @@ fi
             profile, 
             img2pdf 
         FROM 
-            config 
+            config
+        ORDER BY 
+            profile ASC
         WHERE 
             active='1' "
 
