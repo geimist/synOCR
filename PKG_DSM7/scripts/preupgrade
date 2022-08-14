@@ -70,4 +70,10 @@ fi
         echo "${PKG_DELETE_TIMER}" > $SYNOPKG_TEMP_LOGFILE
     fi
 
+# check docker:
+if [ ! -e "/var/run/docker.sock" ]; then
+    echo "${PKG_NOINSTALL_MISSING_DOCKER_ERROR}" > $SYNOPKG_TEMP_LOGFILE
+    exit 1
+fi
+
 exit 0
