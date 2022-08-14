@@ -397,3 +397,4 @@ lang_edit_set2_taglist_help5="Se un tag deve essere trovato solo come tag singol
 lang_edit_set3_backuprotatetype_title=""
 lang_edit_yamlsample_23=""
 lang_help_FAQ_sub5_afterlink=""
+lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR="synOCR richiede l'installazione di Docker! Docker non è stato trovato ..."
