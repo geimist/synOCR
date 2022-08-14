@@ -44,7 +44,7 @@ if [ $machinetyp != "x86_64" ] && [ $machinetyp != "aarch64" ]; then
     exit 1
 fi
 
-if [ ! -a "/var/run/docker.sock" ]; then
+if [ ! -e "/var/run/docker.sock" ]; then
     echo "${PKG_NOINSTALL_MISSING_DOCKER_ERROR}" > $SYNOPKG_TEMP_LOGFILE
     exit 1
 fi
