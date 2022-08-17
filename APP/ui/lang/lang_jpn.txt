@@ -398,3 +398,4 @@ lang_edit_set3_logmax_help="LOGファイルの最大数（空のログは即座�
 lang_edit_yamlsample_23=""
 lang_help_FAQ_sub5_afterlink=""
 lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR="synOCRはDockerのインストールが必要です!Dockerが見つかりませんでした ..."
+lang_main_update_available="アップデートが可能です"
