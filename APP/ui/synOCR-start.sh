@@ -13,7 +13,7 @@
 
 callFrom=shell
 exit_status=0
-dsm_version=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION majorversion)
+dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
 machinetyp=$(uname --machine)
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
 
@@ -105,6 +105,10 @@ for i in "$@" ; do
 done
 
 
+# Read working directory and change into it:
+    APPDIR=$(cd $(dirname $0);pwd)
+    cd ${APPDIR}
+
 if [ "$callFrom" = shell ] ; then
     # adjust PATH:
     if [ $machinetyp = "x86_64" ]; then
@@ -113,35 +117,12 @@ if [ "$callFrom" = shell ] ; then
         PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
     fi
 
-# set docker and admin permission to user synOCR for DSM7 and above
+    # set docker and admin permission to user synOCR for DSM7 and above
     if [ "$dsm_version" -ge 7 ]; then
         echo "synOCR run at DSM7 or above"
-        echo -n "    ➜ check admin permissions: "
-        if ! cat /etc/group | grep ^administrators | grep -q synOCR ; then
-            echo "added user synOCR to group administrators ..."
-            sed -i "/^administrators:/ s/$/,synOCR/" /etc/group
-        else
-            echo "ok"
-        fi
-
-        echo -n "    ➜ check docker group and permissions: "
-        if ! cat /etc/group | grep -q ^docker: ; then
-            echo "create group docker ..."
-            synogroup --add docker
-            chown root:docker /var/run/docker.sock
-            synogroup --member docker synOCR
-        elif ! cat /etc/group | grep ^docker: | grep -q synOCR ; then
-            echo "added user synOCR to group docker ..."
-            sed -i "/^docker:/ s/$/,synOCR/" /etc/group
-        else
-            echo "ok [$(cat /etc/group | grep ^docker:)]"
-        fi
+        source "./check_permissions.sh"
     fi
 fi
-
-# Read working directory and change into it:
-    APPDIR=$(cd $(dirname $0);pwd)
-    cd ${APPDIR}
 
 # Load language variables:
     source "./includes/functions.sh"
@@ -248,7 +229,7 @@ fi
         loglevel=$(echo "$entry" | awk -F'\t' '{print $6}')
         profile=$(echo "$entry" | awk -F'\t' '{print $7}')
         img2pdf=$(echo "$entry" | awk -F'\t' '{print $8}')
-
+echo "Profil: $profile"
     # is the source directory present and is the path valid?
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
             if [ "$callFrom" = GUI ] ; then
