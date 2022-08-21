@@ -66,23 +66,23 @@ dsmMajorVersion=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
 # manual synOCR start monitoring:
 # ---------------------------------------------------------------------
     if [[ "$page" == "main-run-synocr-monitoring" ]]; then
-        echo '
-        <div class="Content_1Col_full">
-            <meta http-equiv="refresh" content="5; URL=index.cgi?page=main">
-        </div>'
-        
         /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1 &
+
+        echo '
+        <div class="Content_1Col_full" style="font-size: 0.8rem; color: #808080;">'$lang_main_reload_manualy' ...
+            <meta http-equiv="refresh" content="0; URL=index.cgi?page=main">
+        </div>'
     fi
 
 # manual synOCR stop monitoring:
 # ---------------------------------------------------------------------
     if [[ "$page" == "main-stop-synocr-monitoring" ]]; then
-        echo '
-        <div class="Content_1Col_full">
-            <meta http-equiv="refresh" content="2; URL=index.cgi?page=main">
-        </div>'
+        /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh stop >/dev/null 2>&1 &
        
-       /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh stop >/dev/null 2>&1 &
+        echo '
+        <div class="Content_1Col_full" style="font-size: 0.8rem; color: #808080;">'$lang_main_reload_manualy' ...
+            <meta http-equiv="refresh" content="0; URL=index.cgi?page=main">
+        </div>'
     fi
 
 # Force synOCR exit:
@@ -128,7 +128,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
                     '$lang_main_monitor_restart_necessary_3'<br>
                 </h5>'
             else
-                /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
+                /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1 &
             fi
         fi
         rm -f "${monitored_folders}_tmp"
