@@ -63,6 +63,28 @@ dsmMajorVersion=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
         </div>'
     fi
 
+# manual synOCR start monitoring:
+# ---------------------------------------------------------------------
+    if [[ "$page" == "main-run-synocr-monitoring" ]]; then
+        echo '
+        <div class="Content_1Col_full">
+            <meta http-equiv="refresh" content="5; URL=index.cgi?page=main">
+        </div>'
+        
+        /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1 &
+    fi
+
+# manual synOCR stop monitoring:
+# ---------------------------------------------------------------------
+    if [[ "$page" == "main-stop-synocr-monitoring" ]]; then
+        echo '
+        <div class="Content_1Col_full">
+            <meta http-equiv="refresh" content="2; URL=index.cgi?page=main">
+        </div>'
+       
+       /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh stop >/dev/null 2>&1 &
+    fi
+
 # Force synOCR exit:
 # ---------------------------------------------------------------------
     if [[ "$page" == "main-kill-synocr" ]]; then
@@ -70,6 +92,10 @@ dsmMajorVersion=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
         docker stop -t 0 synOCR > /dev/null  2>&1
         echo '<meta http-equiv="refresh" content="0; URL=index.cgi?page=main">'
     fi
+
+# check inotifywait:
+# ---------------------------------------------------------------------
+    [ $(which inotifywait) ] && inotify_tools_ready=1 || inotify_tools_ready=0
 
 # Body:
 # ---------------------------------------------------------------------
@@ -80,49 +106,60 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     <h2 class="synocr-text-blue mt-3">synOCR '$lang_page1'</h2>
     <p>&nbsp;</p>'
 
-    # monitoring active?
+    # monitoring active?:
     if [ $(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}') ]; then
         # pulsate icon, if monitoring are running
         css_pulsate='class="pulsate"'
         monitoring_title='title="monitoring is running"'
+        monitoring_state=1
+        monitoring_user=$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $1}')
 
         # check if the list of watched folders is still up to date:
         monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
         sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
 
         if [ "$(cat "$monitored_folders" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
-            echo ' 
-            <h5 class="text-center pulsate" style="font-size: 0.7rem;">
-                '$lang_main_monitor_restart_necessary_1'<br>
-                '$lang_main_monitor_restart_necessary_2'<br>
-                '$lang_main_monitor_restart_necessary_3'<br>
-            </h5>'
+            if [ "$monitoring_user" = root ]; then
+                # if inotify was started by root, it cannot be restarted by the user synOCR via the GUI
+                echo ' 
+                <h5 class="text-center pulsate" style="font-size: 0.7rem;">
+                    '$lang_main_monitor_restart_necessary_1'<br>
+                    '$lang_main_monitor_restart_necessary_2'<br>
+                    '$lang_main_monitor_restart_necessary_3'<br>
+                </h5>'
+            else
+                /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
+            fi
         fi
         rm -f "${monitored_folders}_tmp"
     else
         # pulsate icon, if monitoring are running
         css_pulsate=""
         monitoring_title='title="monitoring is not running"'
+        monitoring_state=0
     fi
 
 #   notify about update, if necessary:
 # ---------------------------------------------------------------------
-    online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
     if [ "$(grep "^beta" /var/packages/synOCR/INFO | cut -d '"' -f2)" = yes ]; then
         release_channel=beta
     else
         release_channel=release
     fi
     server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION" )
+#   online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
     online_version=$(echo "$server_info" | jq -r .dsm.dsm${dsmMajorVersion}.${release_channel}.version )
     downloadUrl=$(echo "$server_info" | jq -r .dsm.dsm${dsmMajorVersion}.${release_channel}.downloadUrl )
-    
+    changeLogUrl=$(echo "$server_info" | jq -r .dsm.dsm${dsmMajorVersion}.${release_channel}.changeLogUrl )
+
     local_version=$(grep "^version" /var/packages/synOCR/INFO  | cut -d '"' -f2)
     highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
     if [[ "$local_version" != "$highest_version" ]] ; then
         echo ' 
         <h5 class="text-center">
-            <a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">UPDATE TO VERSION '$online_version' AVAILABLE! [DOWNLOAD]</a>
+            <a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">'$lang_main_update_available' [DOWNLOAD VERSION '${online_version}' </a>
+                <span class="pulsate" style="font-size: 0.7rem;">/</span>
+            <a href="'${changeLogUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;"> CHANGELOG]</a>
         </h5>'
     fi
 
@@ -133,20 +170,23 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
 
 # check Docker:
     if [ ! $(which docker) ]; then
+        permissions_ready=0
         echo '
-        <p class="text-center synocr-text-red mb-5">'$lang_attention':<br>'$lang_main_dockerfailed1'<br>'$lang_main_dockerfailed2'</p>
+        <p class="text-center synocr-text-red mb-5">'lang_attention':<br>'$lang_main_dockerfailed1'<br>'$lang_main_dockerfailed2'</p>
         <div class="float-end">
             <img src="images/status_error@geimist.svg" height="120" width="120" style="padding: 10px">
         </div>'
     elif [ "${dsmMajorVersion}" -ge 7 ] && $(! cat /etc/group | grep ^administrators | grep -q synOCR || ! cat /etc/group | grep ^docker: | grep -q synOCR ); then
+        permissions_ready=0
         echo '
-        <p class="text-center synocr-text-red">'$lang_attention':<br>'$lang_main_permissions_failed1'<br>'$lang_main_permissions_failed2'<br>('$lang_main_permissions_failed3')
+        <p class="text-center synocr-text-red">'lang_attention':<br>'$lang_main_permissions_failed1'<br>'$lang_main_permissions_failed2'<br>('$lang_main_permissions_failed3')
             <code class="mb-5">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</code>
         </p>
         <div class="float-end">
             <img src="images/status_error@geimist.svg" height="120" width="120" style=";padding: 10px">
         </div>'
     elif [[ "$count_input_file" == 0 ]]; then
+        permissions_ready=1
         # remove dockercontainer & image synocr_helper
         docker container rm synocr_helper >/dev/null 2>&1
         docker image rm synocr_helper_image >/dev/null 2>&1
@@ -155,6 +195,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
             <img src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px" '$css_pulsate' '$monitoring_title'>
         </div>'
     else
+        permissions_ready=1
         # remove dockercontainer & image synocr_helper
         docker container rm synocr_helper >/dev/null 2>&1
         docker image rm synocr_helper_image >/dev/null 2>&1
@@ -173,11 +214,30 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     <p>&nbsp;</p>'
 
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
-    if [ "${dsmMajorVersion}" -eq 6 ] || (cat /etc/group | grep ^administrators | grep -q synOCR && cat /etc/group | grep ^docker | grep -q synOCR) ; then
-        echo '
-        <p class="text-center">
-            <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'$lang_main_buttonrun'</button>
-        </p><br />'
+    if [ "${dsmMajorVersion}" -eq 6 ] || (grep ^administrators /etc/group | grep -q synOCR && grep ^docker /etc/group | grep -q synOCR) ; then
+        if [ "${inotify_tools_ready}" -eq 0 ]; then 
+            # start single run:
+            echo '
+            <p class="text-center">
+                <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'$lang_main_buttonrun'</button>
+            </p><br />'
+        elif [ "${inotify_tools_ready}" -eq 1 ] && [ "$monitoring_user" != root ]; then 
+            if [ $(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}') ]; then
+                # stop / (re-)start monitoring:
+                echo '
+                <p class="text-center">
+                    <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr-monitoring">'$lang_main_button_restart_monitoring'</button>
+                    <button name="page" class="btn btn-white" style="color: #FFFFFF; background-color: #BD0010;" value="main-stop-synocr-monitoring">'$lang_main_button_stop_monitoring'</button>
+                </p><br />'
+            else
+                # start monitoring:
+                echo '
+                <p class="text-center">
+                    <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr-monitoring">'$lang_main_button_start_monitoring'</button>
+                </p><br />'
+            
+            fi
+        fi
     fi
 
 # Section Status / Statistics:
