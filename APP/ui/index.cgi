@@ -121,6 +121,7 @@
     set_var="/usr/syno/bin/synosetkeyvalue"
     get_var="/bin/get_key_value"
     var="${app_home}/etc/var.txt"
+    synocrred="color: #BD0010"
         
     # Backup of the Internal Field Separator (IFS) as well as the separation of 
     # GET/POST key/value requests, by localization of the separator "&".
