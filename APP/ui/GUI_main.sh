@@ -119,7 +119,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
         sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
 
         if [ "$(cat "$monitored_folders" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
-            if [ "$monitoring_user" = root ]; then
+            if [ "${dsmMajorVersion}" -ge 7 ] && [ "$monitoring_user" = root ]; then
                 # if inotify was started by root, it cannot be restarted by the user synOCR via the GUI
                 echo ' 
                 <h5 class="text-center pulsate" style="font-size: 0.7rem;">
@@ -217,11 +217,16 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     if [ "${dsmMajorVersion}" -eq 6 ] || (grep ^administrators /etc/group | grep -q synOCR && grep ^docker /etc/group | grep -q synOCR) ; then
         if [ "${inotify_tools_ready}" -eq 0 ]; then 
             # start single run:
+
             echo '
             <p class="text-center">
                 <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'$lang_main_buttonrun'</button>
+                <p class="text-center">'$lang_help_QS_1b' (<a href="https://synocommunity.com/package/inotify-tools" onclick="window.open(this.href); return false;" style="'$synocrred';"><b>'$lang_foot_buttondownDB' Inotify-Tools</b></a>)</p>
+                
+
+                
             </p><br />'
-        elif [ "${inotify_tools_ready}" -eq 1 ] && [ "$monitoring_user" != root ]; then 
+        elif [ "${inotify_tools_ready}" -eq 1 ] && ("${dsmMajorVersion}" -eq 6 ] || [ "$monitoring_user" != root ]); then 
             if [ $(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}') ]; then
                 # stop / (re-)start monitoring:
                 echo '
