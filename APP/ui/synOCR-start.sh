@@ -229,7 +229,7 @@ fi
         loglevel=$(echo "$entry" | awk -F'\t' '{print $6}')
         profile=$(echo "$entry" | awk -F'\t' '{print $7}')
         img2pdf=$(echo "$entry" | awk -F'\t' '{print $8}')
-echo "Profil: $profile"
+
     # is the source directory present and is the path valid?
         if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
             if [ "$callFrom" = GUI ] ; then
