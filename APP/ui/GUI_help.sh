@@ -19,7 +19,7 @@ echo '
             <div class="accordion-body">
                 <ol style="list-style:decimal">
                     <li>'$lang_help_QS_1_beforelink' <a href="index.cgi?page=edit" style="'$synocrred';">'$lang_page2'</a> '$lang_help_QS_1_afterlink'</li>
-                    <li>'$lang_help_QS_1b' <a href="https://synocommunity.com/package/inotify-tools" onclick="window.open(this.href); return false;" style="'$synocrred';"><b>(DOWNLOAD inotify-tools)</b></a></li>
+                    <li>'$lang_help_QS_1b' <a href="https://synocommunity.com/package/inotify-tools" onclick="window.open(this.href); return false;" style="'$synocrred';"><b>(DOWNLOAD Inotify-Tools)</b></a></li>
                     <li>'$lang_help_QS_2'<br /><br />
                         <h6 class="synocr-text-blue">'$lang_help_QS_sub1_tit'</h6>
                         <ul class="li_standard">
