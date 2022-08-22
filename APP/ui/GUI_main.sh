@@ -103,8 +103,8 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     # -> Headline
 
     echo '
-    <h2 class="synocr-text-blue mt-3">synOCR '$lang_page1'</h2>
-    <p>&nbsp;</p>'
+    <h2 class="synocr-text-blue mt-3">synOCR '$lang_page1'</h2>'
+#   echo '<p>&nbsp;</p>'
 
     # monitoring active?:
     if [ $(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}') ]; then
@@ -210,8 +210,8 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
     <h2 class="synocr-text-blue">'$lang_main_title2':</h2>
     <p>&nbsp;</p>
     <p>'$lang_main_desc1'</p>
-    <p>'$lang_main_desc2'</p>
-    <p>&nbsp;</p>'
+    <p>'$lang_main_desc2'</p>'
+#   echo '<p>&nbsp;</p>'
 
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
     if [ "${dsmMajorVersion}" -eq 6 ] || (grep ^administrators /etc/group | grep -q synOCR && grep ^docker /etc/group | grep -q synOCR) ; then
