@@ -128,7 +128,7 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
                     '$lang_main_monitor_restart_necessary_3'<br>
                 </h5>'
             else
-                /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1 &
+                nohup /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1 &
             fi
         fi
         rm -f "${monitored_folders}_tmp"
