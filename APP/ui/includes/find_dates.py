@@ -7,6 +7,11 @@
 #
 #  Author: gthorsten
 #  Version:
+#     0.94, 25.08.2022
+#           search_alpha_numeric_dates()
+#           - Bugfix for alphanumeric dates.
+#             
+#
 #     0.93, 11.08.2022
 #           search_all_numeric_dates()
 #           - split pattern for D.M.Y, D-M-Y, D/M/Y in different pattern strings.
@@ -329,12 +334,12 @@ class FindDates:
 
         founddatelist = []
         regexlist = [
-            r"\s?(((0[1-9]|[12][0-9]|3[01])\.?)?)\s(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})",
-            r"\s?(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
+            r"\s?(((0[1-9]|[12][0-9]|3[01])\.?)?)\s(([a-zA-Z]{3}\.)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})",
+            r"\s?(([a-zA-Z]{3}\.)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
         ]
 
-        regex_long_date = r"\s?((([1-9{1}]|0[1-9]|[12][0-9]|3[01])\.?)\s?)(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
-        regex_short_date = r"\s?(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
+        regex_long_date = r"\s?((([1-9{1}]|0[1-9]|[12][0-9]|3[01])\.?)\s?)(([a-zA-Z]{3}\.)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
+        regex_short_date = r"\s?(([a-zA-Z]{3}\.)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
 
         founddate = None
 
