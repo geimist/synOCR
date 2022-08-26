@@ -37,13 +37,14 @@ case $1 in
         echo "Starting..."
         echo ''${TIMESTAMP}' - Start as '${MYID}'' >/tmp/${SYNOPKG_PKGNAME}.start
  #       [ -x /usr/local/bin/inotifywait ] || [ $(which inotifywait) ] && /bin/nohup /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1 &
-        [ $(which inotifywait) ] && /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
+        [ $(which inotifywait) ] && /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/tmp/${SYNOPKG_PKGNAME}.start
         exit 0
       ;;
     stop)
         echo "Stopping..."
         echo ''${TIMESTAMP}' - Stop as '${MYID}'' >/tmp/${SYNOPKG_PKGNAME}.stop
   #      /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh stop >/dev/null 2>&1 &
+        /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh stop >/tmp/${SYNOPKG_PKGNAME}.stop
         exit 0
       ;;
     status)
