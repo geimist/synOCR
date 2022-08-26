@@ -315,10 +315,10 @@ exit 1
     if [[ $(grep beta "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}') == yes ]]; then
         beta_status="_BETA"
         # write changelog to INFO:
-        cat "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA" | awk -v RS="" '{gsub (/\n/,"<br/>")}1' >> "$build_tmp/$PKG/INFO"
+        echo "changelog=\"$(cat "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "$build_tmp/$PKG/INFO"
     else
         # write changelog to INFO:
-        cat "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE" | awk -v RS="" '{gsub (/\n/,"<br/>")}1' >> "$build_tmp/$PKG/INFO"
+        echo "changelog=\"$(cat "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "$build_tmp/$PKG/INFO"
     fi
 
     printf "\n-----------------------------------------------------------------------------------\n"
