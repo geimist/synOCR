@@ -37,6 +37,7 @@ case $1 in
         echo "Starting..."
         echo ''${TIMESTAMP}' - Start as '${MYID}'' >/tmp/${SYNOPKG_PKGNAME}.start
  #       [ -x /usr/local/bin/inotifywait ] || [ $(which inotifywait) ] && /bin/nohup /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1 &
+        [ $(which inotifywait) ] && /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
         exit 0
       ;;
     stop)
