@@ -1,0 +1,23 @@
+1.2.0 [2022-01-11]
+  BUGFIXES:
+ -  Creating the required user group 'docker' was not possible if a similarly named group already existed.
+ -  RegEx with lookahead / lookbehind for tag names were not possible
+ -  minor bugfixes (thx to tommes)
+  IMPROVEMENT:
+ -  handling of special characters improved
+ -  cleanup of unused docker images
+ -  delete cron job who was generated with synOCR at DSM6
+ -  DSM notifications work again
+ -  DSM notifications: list all possible users
+ -  indicator about valid directorys in GUI
+ -  the order of the tags can now be defined
+    criterion is the alphabetical sorting of the rule names in the YAML file
+ -  rewrite GUI (thx to tommes)
+  IMPLEMENTATIONS:
+ -  renaming parameter for the year can now be 2 or 4 digits 
+    (§yocr2 §yocr4 §ynow2 §ynow4 §ysource2 §ysource4)
+ -  added renaming parameter §pagecount (pages of current document)
+ -  all renaming parameter can be used as path components in YAML-rules (except document title [§tit])
+ -  target files can moved to folders named by year
+ -  target files can moved to folders named by year/month
+ -  number of backup files can now be limited (days or number)
