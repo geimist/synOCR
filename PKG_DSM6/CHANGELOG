@@ -14,9 +14,8 @@ DSM7 version you can found here: https://git.geimist.eu/geimist/synOCR/src/branc
  -  Profiles are now processed in alphabetical order (by profile name)
   IMPLEMENTATIONS:
  -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
-    to use this: call synOCR-start.sh with parameter start in DSM task scheduler:
-    /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
-    a pulsing status icon in the gui indicates an active monitoring
+    - a pulsing status icon in the gui indicates an active monitoring
+    - in combination with the Inotify-tools, configuration in the task scheduler is no longer necessary as of this version
  -  🔥 new Python based date search implemented, which also finds written out months (gthorsten)
     - a start year for date search can defined in GUI
     - a year in future can be defined in GUI as latest year for search
