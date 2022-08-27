@@ -252,38 +252,12 @@ exit 1
         # install_uifile:
         install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
         create_install_uifile "${install_uifile_lang}"
-#        if [ ! -f "${install_uifile_lang}" ]; then
-#            {   echo '['
-#                echo '   {'
-#                echo '      "step_title" : "lang_wizui_install_title",'
-#                echo '      "items" : ['
-#                echo '         {'
-#                echo '            "desc" : "<p>lang_wizui_install_desc</p>"'
-#                echo '         }'
-#                echo '      ]'
-#                echo '   }'
-#                echo ']'
-#            } > "${install_uifile_lang}"
-#            fi
         sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_title)|" "${install_uifile_lang}"
         sed -i "s|lang_wizui_install_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_desc)|" "${install_uifile_lang}"
 
         # uninstall_uifile:
         uninstall_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile_${lang}"
         create_uninstall_uifile "${uninstall_uifile_lang}"
-#        if [ ! -f "${uninstall_uifile_lang}" ]; then
-#            {   echo '['
-#                echo '   {'
-#                echo '      "step_title" : "lang_wizui_uninstall_title",'
-#                echo '      "items" : ['
-#                echo '         {'
-#                echo '            "desc" : "<p>lang_wizui_uninstall_desc</p>"'
-#                echo '         }'
-#                echo '      ]'
-#                echo '   }'
-#                echo ']'
-#           }  > "${uninstall_uifile_lang}"
-#        fi
         sed -i "s|lang_wizui_uninstall_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_title)|" "${uninstall_uifile_lang}"
         sed -i "s|lang_wizui_uninstall_desc_1|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc_1)|" "${uninstall_uifile_lang}"
         sed -i "s|lang_wizui_uninstall_desc_2|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc_2)|" "${uninstall_uifile_lang}"
@@ -293,19 +267,6 @@ exit 1
         if [ "$TargetDSM" = 6 ]; then
             upgrade_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}"
             create_upgrade_uifile "${upgrade_uifile_lang}"
-#            if [ ! -f "${upgrade_uifile_lang}" ]; then
-#                {   echo '['
-#                    echo '   {'
-#                    echo '      "step_title" : "lang_wizui_upgrade_title",'
-#                    echo '      "items" : ['
-#                    echo '         {'
-#                    echo '            "desc" : "<p>lang_wizui_upgrade_desc</p>"'
-#                    echo '         }'
-#                    echo '      ]'
-#                    echo '   }'
-#                    echo ']'
-#                } > "${upgrade_uifile_lang}"
-#            fi
             [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_title)|" "${upgrade_uifile_lang}"
             [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_desc)|" "${upgrade_uifile_lang}"
         fi
