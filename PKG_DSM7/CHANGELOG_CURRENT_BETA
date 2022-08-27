@@ -5,4 +5,5 @@
   IMPROVEMENT:
  -  the necessary package permissions are now already set during installation (thx to kkrell)
  -  Input folder monitoring starts / stops with package status
+    In combination with the Inotify-tools, configuration in the task scheduler is no longer necessary as of this version
   IMPLEMENTATIONS:
