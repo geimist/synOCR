@@ -4,4 +4,5 @@
     ➜ Bugfix for alphanumeric dates.
   IMPROVEMENT:
  -  Input folder monitoring starts / stops with package status
+    In combination with the Inotify-tools, configuration in the task scheduler is no longer necessary as of this version
   IMPLEMENTATIONS:
