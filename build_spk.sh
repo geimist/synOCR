@@ -277,12 +277,13 @@ exit 1
         beta_status="_BETA"
         # write changelog to INFO:
         echo "changelog=\"$(cat "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "$build_tmp/$PKG/INFO"
-        rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA"
     else
         # write changelog to INFO:
         echo "changelog=\"$(cat "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "$build_tmp/$PKG/INFO"
-        rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE"
     fi
+
+    rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA"
+    rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE"
 
     printf "\n-----------------------------------------------------------------------------------\n"
     printf "   SPK will be created ..."
