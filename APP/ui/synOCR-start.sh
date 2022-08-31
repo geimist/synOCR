@@ -23,7 +23,7 @@ umask 0011   # so that creaded files can also be edited by other users / http://
 # --------------------------------------------------------------
 log_dir_list=()
 while read value ; do
-    [ -d "${value%/*}" ] && log_dir_list+=( "$value" ) && chmod 766 "$value"
+    [ -d "${value%/*}" ] && log_dir_list+=( "$value" ) #&& chmod 766 "$value"
 done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
 
 
