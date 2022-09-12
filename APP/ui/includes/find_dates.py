@@ -7,7 +7,7 @@
 #
 #  Author: gthorsten
 #  Version:
-#     1.00, 10.09.2002
+#     1.00, 12.09.2002
 #           optimze datesearch
 #           add unittest preparation
 #
@@ -175,7 +175,7 @@ class FindDates:
 
     def check_year_range(self, regex_result, settings_str):
         # def check_year_range(self, date_str, settings_str):
-        date_obj = dateparser.parse(date_str, settings=settings_str)
+        date_obj = dateparser.parse(regex_result, settings=settings_str)
         if date_obj:
             act_value = f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year:04d}"
             logging.debug(f'Found date {act_value}')
