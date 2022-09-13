@@ -7,6 +7,12 @@
 #
 #  Author: gthorsten
 #  Version:
+#     1.02, 12.09.2002
+#           bugfix search numeric dates. Dates direct at start
+#
+#     1.01, 12.09.2002
+#           bugfix unitest prparation
+#
 #     1.00, 12.09.2002
 #           optimze datesearch
 #           add unittest preparation
@@ -99,7 +105,7 @@ class FindDates:
         self.dbg_file = None
         self.numeric_dates_cnt = 0
         self.alphanumeric_dates_cnt = 0
-        self.version = '1.00'
+        self.version = '1.02'
         self.found_date_cnt = 0
                        
 
@@ -175,7 +181,7 @@ class FindDates:
 
     def check_year_range(self, regex_result, settings_str):
         # def check_year_range(self, date_str, settings_str):
-        date_obj = dateparser.parse(regex_result, settings=settings_str)
+        date_obj = dateparser.parse(regex_result.group(0), settings=settings_str)
         if date_obj:
             act_value = f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year:04d}"
             logging.debug(f'Found date {act_value}')
@@ -230,14 +236,13 @@ class FindDates:
         max_len = len(self.searchtextstr)
 
         regexlist = [
-            r"\s(0[1-9]|[12][0-9]|3[01])(\s?)(-)(\s?)(0[1-9]|1[0-2])(\s?)(-)(\s?)(\d{4}|\d{2})(\s|\.|\,)",  # D-M-Y
-            r"\s(0[1-9]|[12][0-9]|3[01])(\s?)(\.)(\s?)(0[1-9]|1[0-2])(\s?)(\.)(\s?)(\d{4}|\d{2})(\s|\.|\,)",  # D.M.Y
-            r"\s(0[1-9]|[12][0-9]|3[01])(\s?)(\/)(\s?)(0[1-9]|1[0-2])(\s?)(\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)",  # D/M/Y
-            r"\s(((\d{4})(\s?)(-)(\s?))|((\d{2})(\s?)(-)(\s?)))(0[1-9]|1[0-2])(\s?)(-)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)",  # Y-M-D
-            r"\s(((\d{4})(\s?)(\.)(\s?))|((\d{2})(\s?)(\.)(\s?)))(0[1-9]|1[0-2])(\s?)(\.)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)",
+            (r"\s*(0[1-9]|[12][0-9]|3[01])(\s?)(-)(\s?)(0[1-9]|1[0-2])(\s?)(-)(\s?)(\d{4}|\d{2})(\s|\.|\,)", "DMY"),  # D-M-Y
+            (r"\s*(0[1-9]|[12][0-9]|3[01])(\s?)(\.)(\s?)(0[1-9]|1[0-2])(\s?)(\.)(\s?)(\d{4}|\d{2})(\s|\.|\,)", "DMY"),  # D.M.Y
+            (r"\s*(0[1-9]|[12][0-9]|3[01])(\s?)(\/)(\s?)(0[1-9]|1[0-2])(\s?)(\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)", "DMY"),  # D/M/Y
+            (r"\s*(((\d{4})(\s?)(-)(\s?))|((\d{2})(\s?)(-)(\s?)))(0[1-9]|1[0-2])(\s?)(-)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)", "YMD"),  # Y-M-D
+            (r"\s*(((\d{4})(\s?)(\.)(\s?))|((\d{2})(\s?)(\.)(\s?)))(0[1-9]|1[0-2])(\s?)(\.)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)", "YMD"),
             # Y.M.D
-            r"\s(((\d{4})(\s?)(\/)(\s?))|((\d{2})(\s?)(\/)(\s?)))(0[1-9]|1[0-2])(\s?)(\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)"
-            # Y/M/D
+            (r"\s*(((\d{4})(\s?)(\/)(\s?))|((\d{2})(\s?)(\/)(\s?)))(0[1-9]|1[0-2])(\s?)(\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)", "YMD")     # Y/M/D
         ]
 
         start_pos = 0
@@ -246,9 +251,9 @@ class FindDates:
             # while start_pos < max_len:
             res = None
             for single_regex in regexlist:
-                res = re.search(single_regex, act_line[start_pos:])
+                res = re.search(single_regex[0], act_line[start_pos:])
                 if res:
-                    settings_str = {'TIMEZONE': 'CEST', 'DATE_ORDER': 'DMY'}
+                    settings_str = {'TIMEZONE': 'CEST', 'DATE_ORDER': single_regex[1]}
                     if self.check_year_range(res, settings_str):                    # add complete settings here
                         self.check_blacklist(res, settings_str)
                     start_pos = start_pos + res.end()
