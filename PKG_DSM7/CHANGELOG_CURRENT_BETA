@@ -1,7 +1,20 @@
-1.2.0.12 [2022-08-26]
+1.2.0.13 [2022-xx-xx]
   BUGFIXES:
- -  update find_dates.py to v0.94 (thx to gthorsten)
-    ➜ Bugfix for alphanumeric dates.
+ -  update find_dates.py to v1.03 (thx to gthorsten)
+     1.03, 16.09.2002
+           add unit test
+           bugfix numeric date search
+           bugfix blacklist dates
+     1.02, 12.09.2002
+           bugfix search numeric dates. Dates direct at start
+     1.01, 12.09.2002
+           bugfix unitest prparation
+     1.00, 12.09.2002
+           optimze datesearch
+           add unittest preparation
+     0.94, 25.08.2022
+           search_alpha_numeric_dates()
+           - Bugfix for alphanumeric dates.
   IMPROVEMENT:
  -  the necessary package permissions are now already set during installation (thx to kkrell)
  -  Input folder monitoring starts / stops with package status
