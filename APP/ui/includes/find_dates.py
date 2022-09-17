@@ -7,6 +7,11 @@
 #
 #  Author: gthorsten
 #  Version:
+#     1.03, 16.09.2002
+#           add unit test
+#           bugfix numeric date search
+#           bugfix blacklist dates
+#
 #     1.02, 12.09.2002
 #           bugfix search numeric dates. Dates direct at start
 #
@@ -105,7 +110,7 @@ class FindDates:
         self.dbg_file = None
         self.numeric_dates_cnt = 0
         self.alphanumeric_dates_cnt = 0
-        self.version = '1.02'
+        self.version = '1.03'
         self.found_date_cnt = 0
                        
 
@@ -138,7 +143,7 @@ class FindDates:
         """
         founddatelist = []
         regexlist = [
-            r"(0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}",  # DDMMYYY
+            #r"(0[1-9]|[12][0-9]|3[01])(-|\.)(0[1-9]|1[0-2])(-|\.)\d{4}",  # DDMMYYY
             r"\d{4}(-|\.)(0[1-9]|1[0-2])(-|\.)(0[1-9]|[12][0-9]|3[01])"  # YYYYMMDD
         ]
 
@@ -147,9 +152,9 @@ class FindDates:
             while startpos < len(date_string):
                 result = re.search(singleregex, date_string[startpos:])
                 if result:  # , settings={'DATE_ORDER': 'DMY'}
-                    parseresult = dateparser.parse(result.group(0), settings={'DATE_ORDER': 'DMY', 'TIMEZONE': 'CEST'})
-                    if not parseresult:
-                        parseresult = dateparser.parse(result.group(0),
+                    #parseresult = dateparser.parse(result.group(0), settings={'DATE_ORDER': 'DMY', 'TIMEZONE': 'CEST'})
+                    #if not parseresult:
+                    parseresult = dateparser.parse(result.group(0),
                                                        settings={'DATE_ORDER': 'YMD', 'TIMEZONE': 'CEST'})
 
                     if parseresult:
@@ -233,33 +238,83 @@ class FindDates:
         #
         # !!!!! \s?(((\d{4})(\s?)(-|\.|\/)(\s?))|((\d{2})(\s?)(-|\.|\/)(\s?)))(0[1-9]|1[0-2])(\s?)(-|\.|\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)
 
-        max_len = len(self.searchtextstr)
+        #max_len = len(self.searchtextstr)
 
         regexlist = [
-            (r"\s*(0[1-9]|[12][0-9]|3[01])(\s?)(-)(\s?)(0[1-9]|1[0-2])(\s?)(-)(\s?)(\d{4}|\d{2})(\s|\.|\,)", "DMY"),  # D-M-Y
-            (r"\s*(0[1-9]|[12][0-9]|3[01])(\s?)(\.)(\s?)(0[1-9]|1[0-2])(\s?)(\.)(\s?)(\d{4}|\d{2})(\s|\.|\,)", "DMY"),  # D.M.Y
-            (r"\s*(0[1-9]|[12][0-9]|3[01])(\s?)(\/)(\s?)(0[1-9]|1[0-2])(\s?)(\/)(\s?)(\d{4}|\d{2})(\s|\.|\,)", "DMY"),  # D/M/Y
-            (r"\s*(((\d{4})(\s?)(-)(\s?))|((\d{2})(\s?)(-)(\s?)))(0[1-9]|1[0-2])(\s?)(-)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)", "YMD"),  # Y-M-D
-            (r"\s*(((\d{4})(\s?)(\.)(\s?))|((\d{2})(\s?)(\.)(\s?)))(0[1-9]|1[0-2])(\s?)(\.)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)", "YMD"),
+            # Y-M-D
+            (r"\s(((\d{4})(\s?)(-)(\s?)))(0[1-9]|1[0-2])(\s?)(-)(\s?)(0[1-9]|[12][0-9]|3[01])((\.|\,|\s)|\s*$)", "YMD", True),
             # Y.M.D
-            (r"\s*(((\d{4})(\s?)(\/)(\s?))|((\d{2})(\s?)(\/)(\s?)))(0[1-9]|1[0-2])(\s?)(\/)(\s?)(0[1-9]|[12][0-9]|3[01])(\.|\,|\s)", "YMD")     # Y/M/D
+            (r"\s(((\d{4})(\s?)(\.)(\s?)))(0[1-9]|1[0-2])(\s?)(\.)(\s?)(0[1-9]|[12][0-9]|3[01])((\.|\,|\s)|\s*$)", "YMD", True),
+            # Y/M/D
+            (r"\s(((\d{4})(\s?)(\/)(\s?)))(0[1-9]|1[0-2])(\s?)(\/)(\s?)(0[1-9]|[12][0-9]|3[01])((\.|\,|\s)|\s*$)", "YMD", True),
+            # D-M-Y
+            (r"\s(0[1-9]|[12][0-9]|3[01])(\s?)(-)(\s?)(0[1-9]|1[0-2])(\s?)(-)(\s?)(\d{4})((\.|\,|\s)|\s*$)", "DMY", True),
+            # D.M.Y
+            (r"\s(0[1-9]|[12][0-9]|3[01])(\s?)(\.)(\s?)(0[1-9]|1[0-2])(\s?)(\.)(\s?)(\d{4})((\.|\,|\s)|\s*$)", "DMY", True),
+            # D/M/Y
+            (r"\s(0[1-9]|[12][0-9]|3[01])(\s?)(\/)(\s?)(0[1-9]|1[0-2])(\s?)(\/)(\s?)(\d{4})((\.|\,|\s)|\s*$)", "DMY", True),
+            # Y-M-D
+            (r"\s*(((\d{4})(\s?)(-)(\s?)))(0[1-9]|1[0-2])(\s?)(-)(\s?)(0[1-9]|[12][0-9]|3[01])((\.|\,|\s)|\s*$)", "YMD", False),
+            # Y.M.D
+            (r"\s*(((\d{4})(\s?)(\.)(\s?)))(0[1-9]|1[0-2])(\s?)(\.)(\s?)(0[1-9]|[12][0-9]|3[01])((\.|\,|\s)|\s*$)", "YMD", False),
+            # Y/M/D
+            (r"\s*(((\d{4})(\s?)(\/)(\s?)))(0[1-9]|1[0-2])(\s?)(\/)(\s?)(0[1-9]|[12][0-9]|3[01])((\.|\,|\s)|\s*$)", "YMD", False),
+            # D-M-Y
+            (r"\s*(0[1-9]|[12][0-9]|3[01])(\s?)(-)(\s?)(0[1-9]|1[0-2])(\s?)(-)(\s?)(\d{4})((\.|\,|\s)|\s*$)", "DMY", False),
+            # D.M.Y
+            (r"\s*(0[1-9]|[12][0-9]|3[01])(\s?)(\.)(\s?)(0[1-9]|1[0-2])(\s?)(\.)(\s?)(\d{4})((\.|\,|\s)|\s*$)", "DMY", False),
+            # D/M/Y
+            (r"\s*(0[1-9]|[12][0-9]|3[01])(\s?)(\/)(\s?)(0[1-9]|1[0-2])(\s?)(\/)(\s?)(\d{4})((\.|\,|\s)|\s*$)", "DMY", False)
         ]
 
-        start_pos = 0
-        while start_pos < len(act_line):
-            # start_pos = 0
-            # while start_pos < max_len:
+        res = None
+        found_one_date = False
+        for single_regex in regexlist:
+                                        
             res = None
-            for single_regex in regexlist:
+            start_pos = 0
+            while start_pos < len(act_line):
                 res = re.search(single_regex[0], act_line[start_pos:])
                 if res:
-                    settings_str = {'TIMEZONE': 'CEST', 'DATE_ORDER': single_regex[1]}
-                    if self.check_year_range(res, settings_str):                    # add complete settings here
-                        self.check_blacklist(res, settings_str)
-                    start_pos = start_pos + res.end()
-            if not res:
-                break
+                    is_regex_with_whitespace = single_regex[2]
+                    if res.start() != start_pos and start_pos == 0 and not is_regex_with_whitespace:
+                        start_pos = start_pos + res.end()
+                        break
 
+                    settings_str = {'TIMEZONE': 'CEST', 'DATE_ORDER': single_regex[1]}
+                    if self.check_year_range(res, settings_str):  # add complete settings here
+                        self.check_blacklist(res, settings_str)
+                        found_one_date = True
+                    start_pos = start_pos + res.end()
+                    # break
+                if not res:
+                    break
+
+#        found_one_date = False
+#        start_pos = 0
+#        while start_pos < len(act_line):
+#            # start_pos = 0
+#            # while start_pos < max_len:
+#            res = None
+#            for single_regex in regexlist:
+#                res = re.search(single_regex[0], act_line[start_pos:])
+#                if res:
+#                    is_regex_with_ws = single_regex[2]
+#                    if res.start() != start_pos and start_pos == 0 and not is_regex_with_ws:
+#                        start_pos = start_pos + res.end()
+#                        break
+
+#                    settings_str = {'TIMEZONE': 'CEST', 'DATE_ORDER': single_regex[1]}
+#                    if self.check_year_range(res, settings_str):                    # add complete settings here
+#                        self.check_blacklist(res, settings_str)
+#                        found_one_date = True
+#                    start_pos = start_pos + res.end()
+#                    break
+#            if not res:
+#                break
+
+        return found_one_date
+        
     def searchnearestdate(self):
         """
         get actual date
@@ -322,9 +377,7 @@ class FindDates:
             if not result:
                 break
 
-    def dummy(self, x, y):
-        return x + y
-
+ 
     def search_dates(self):
         """
         search for dates in self.fileWithTextFindings
