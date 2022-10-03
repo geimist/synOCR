@@ -16,6 +16,7 @@
 #                               HOW TO
 
 #   ! ! ! BITTE ZUNÄCHST EIN BACKUP DEINES QUELLORDNERS ANLEGEN ! ! !
+#   ! ! ! es empfiehlt sich ein Test mit einer Beispielverzeichnisstruktur ! ! !
 
 #   1.)
 #   Dieses Skript (die 3 Ordnervariablen müssen angepasst werden)
@@ -39,7 +40,6 @@
 #   4.)
 #   be happy :-)
 
-#   es empfiehlt sich ein Test mit einer Beispielverzeichnisstruktur
 
 #----------------------------------------------------------------------
 #                   ab hier nichts mehr ändern                        |
