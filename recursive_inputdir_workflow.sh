@@ -39,7 +39,7 @@
 #   4.)
 #   be happy :-)
 
-#   es empfiehlt sich ein Test mit einer Beispielverzeichnisstrucktur
+#   es empfiehlt sich ein Test mit einer Beispielverzeichnisstruktur
 
 #----------------------------------------------------------------------
 #                   ab hier nichts mehr ändern                        |
