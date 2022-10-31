@@ -18,7 +18,6 @@ known issues / limitations:
  -  Notification in the log when rule-based destination folders are found, but a conflicting setting is set in the GUI
  -  Profiles are now processed in alphabetical order (by profile name)
   IMPLEMENTATIONS:
- -  the necessary package permissions are now already set during installation (kkrell)
  -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
     - a pulsing status icon in the gui indicates an active monitoring
     - in combination with the inotify-tools, configuration in the task scheduler is no longer necessary as of this version
