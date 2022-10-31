@@ -4,7 +4,7 @@ Release Notes
 This version only supports DSM6.x
 DSM7 version you can found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/CHANGELOG
 
-1.3.0 [2022-xx-xx]
+1.3.0 [2022-11-01]
   BUGFIXES:
  -  counting of log and backup files to be deleted was not correct under certain situations
  -  catching an error message if there are no docker images to be cleaned up
