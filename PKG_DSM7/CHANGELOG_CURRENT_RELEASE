@@ -1,23 +1,50 @@
-1.2.0 [2022-01-11]
+known issues / limitations:
+ -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted 
+    and possibly not mounted does not work when running the program via the GUI
+    (due to the known rights restrictions)
+
+1.3.0 [2022-11-01]
   BUGFIXES:
- -  Creating the required user group 'docker' was not possible if a similarly named group already existed.
- -  RegEx with lookahead / lookbehind for tag names were not possible
- -  minor bugfixes (thx to tommes)
+ -  counting of log and backup files to be deleted was not correct under certain situations
+ -  catching an error message if there are no docker images to be cleaned up
   IMPROVEMENT:
- -  handling of special characters improved
- -  cleanup of unused docker images
- -  delete cron job who was generated with synOCR at DSM6
- -  DSM notifications work again
- -  DSM notifications: list all possible users
- -  indicator about valid directorys in GUI
- -  the order of the tags can now be defined
-    criterion is the alphabetical sorting of the rule names in the YAML file
- -  rewrite GUI (thx to tommes)
+ -  YAML rules: if the value for condition not set - fallback to any
+ -  Notification in the log when rule-based destination folders are found, but a conflicting setting is set in the GUI
+ -  Profiles are now processed in alphabetical order (by profile name)
   IMPLEMENTATIONS:
- -  renaming parameter for the year can now be 2 or 4 digits 
-    (§yocr2 §yocr4 §ynow2 §ynow4 §ysource2 §ysource4)
- -  added renaming parameter §pagecount (pages of current document)
- -  all renaming parameter can be used as path components in YAML-rules (except document title [§tit])
- -  target files can moved to folders named by year
- -  target files can moved to folders named by year/month
- -  number of backup files can now be limited (days or number)
+ -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
+    - a pulsing status icon in the gui indicates an active monitoring
+ -  🔥 new Python based date search implemented, which also finds written out months (gthorsten)
+    - a start year for date search can defined in GUI
+    - a year in future can be defined in GUI as latest year for search
+ -  🔥 support separator sheet - dokument split pattern can be configured in GUI
+    - in GUI user can define: splitpage is first page, is last page or discard
+ -  🔥 Pictures in the source folder can be converted automatically
+ -  option to reduce multiple spaces to one (helpful with RegEx)
+ -  the number of pages is now determined with Python - Exiftool and pdfinfo become obsolete
+ -  [YAML] all renaming parameter can be used as tagname components in YAML-rules (experimental)
+ -  [YAML] tagname & tagname_RegEx can be combined:
+    - use §tagname_RegEx in tagname and it will be replaced by tagname_RegEx
+ -  Metadata will be add with Python - Exiftool become obsolete
+    - set author (get author information from ocr options if set [--author john doe])
+    - set creation date (depending on which one was defined: OCR, file date, now)
+    - set keywords
+ -  the conversion from YAML to JSON is no longer done with the binary yq but by Python
+ -  logging deleted backup files in loglevel 2 
+ -  [GUI] notify about updates in main page (because cphub.net is not working)
+ -  [GUI] support for follow machine translated languages (by DeepL)
+    - Chinese simplified
+    - Czech
+    - Japanese
+    - Danish
+    - French
+    - Italian
+    - Dutch
+    - Polish
+    - Russian
+    - Spanish
+    - Swedish
+    - Hungarian
+    - Turkish
+    - Portuguese European
+    - Portuguese Brazilian
