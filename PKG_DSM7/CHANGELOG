@@ -9,7 +9,7 @@ known issues / limitations:
     and possibly not mounted does not work when running the program via the GUI
     (due to the known rights restrictions)
 
-1.3.0 [2022-xx-xx]
+1.3.0 [2022-11-01]
   BUGFIXES:
  -  counting of log and backup files to be deleted was not correct under certain situations
  -  catching an error message if there are no docker images to be cleaned up
@@ -20,7 +20,6 @@ known issues / limitations:
   IMPLEMENTATIONS:
  -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
     - a pulsing status icon in the gui indicates an active monitoring
-    - in combination with the inotify-tools, configuration in the task scheduler is no longer necessary as of this version
  -  🔥 new Python based date search implemented, which also finds written out months (gthorsten)
     - a start year for date search can defined in GUI
     - a year in future can be defined in GUI as latest year for search
