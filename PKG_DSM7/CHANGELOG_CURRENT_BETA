@@ -1,11 +1,9 @@
-synOCR 1.3.0 is released!
-
 known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted 
     and possibly not mounted does not work when running the program via the GUI
     (due to the known rights restrictions)
 
-1.x.x [2023-xx-xx]
+1.3.x [2023-xx-xx]
   BUGFIXES:
  -  
   IMPROVEMENT:
