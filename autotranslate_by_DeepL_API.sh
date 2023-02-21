@@ -8,6 +8,7 @@
     #######################################################################################################
 
 DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
+DeepLapiKey="2f00a009-3d71-9f82-000e-118d5bf61c6f:fx"
 
 
 # Mastersprache:
@@ -254,7 +255,7 @@ create_master() {
     printf "\n\nEs wurden $insertCount Datensätze in die Mastertabelle eingefügt, bzw. aktualisiert.\n"
 }
 
-import_manual() {
+manual_import() {
 
     # Diese Funktion ist nicht Teil des regulären Workflows, sondern dient dem erstmaligen Befüllen der DB, 
     # sofern bereits übersetzte Sprachdateien vorhanden sind. 
@@ -266,7 +267,7 @@ import_manual() {
     # ToDo:
     # sollten manuell importierte Werte den Status 'verified' erhalten?
     
-    printf "\n\nmanuell Import - importiere / aktualisiere bestehende Sprachdateien ... \n\n"
+    printf "\n\nmanueller Import - importiere / aktualisiere bestehende Sprachdateien ... \n\n"
     
     while read file; do
         unset skipped
@@ -570,7 +571,7 @@ masterLongName="$(echo "$languages" | awk -F'\t' '{print $3}')"
 # Funktionsaufrufe:
     create_db
     create_master
-    [ "$manualImport" = 1 ] && import_manual
+    [ "$manualImport" = 1 ] && manual_import
     translate
     [ "$exportLangFiles" = 1 ] && export_langfiles
 #######################
