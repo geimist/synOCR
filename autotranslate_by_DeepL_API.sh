@@ -16,7 +16,7 @@ DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
     # sollen nur einzelne Strings aktualisiert werden oder es wurden Variablen hinzugefügt, 
     # werden nur diese Werte im File benötigt. Bestehende gleiche Werte werden übersprungen.
     # Aufbau: variablename="value"
-    masterFile="/volume1/@appstore/synOCR/ui/lang/lang_ger.txt"
+    masterFile="/usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_ger.txt"
         
     # die Version wird für die Mastertabelle gesetzt und zeigt, ob einzelne Übersetzungs-Strings aktuell oder veraltet sind
     langVersion=1
@@ -37,7 +37,7 @@ DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
 #---------------------------------------------------------------------------------------------------
     # sollen abschließend die Sprachdateien exportiert werden?:
     exportLangFiles=1
-    exportPath="/volume1/@appstore/synOCR/ui/lang/"
+    exportPath="/usr/syno/synoman/webman/3rdparty/synOCR/lang/"
     
     # sollen bereits vorhandene Sprachdateien überschrieben werden?:
     overwrite=0
@@ -48,7 +48,7 @@ DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
     manuellImpmort=0
     
     # Ordner mit den zu importierenden Sprachdateien - dieser Pfad ist anzupassen:
-    langPath="/volume1/@appstore/synOCR/ui/lang/"
+    langPath="/usr/syno/synoman/webman/3rdparty/synOCR/lang/"
 
 ####################################################################################################
 
@@ -334,7 +334,7 @@ import_manuell() {
         
         printf "\n\nEs wurden $insertCount Datensätze eingefügt, bzw. aktualisiert.\n\n"
         
-    done <<<"$(ls -tp "/volume1/@appstore/synOCR/ui/lang/" | egrep -v '/$' )"
+    done <<<"$(ls -tp "/usr/syno/synoman/webman/3rdparty/synOCR/lang/" | egrep -v '/$' )"
 }
 
 translate() {
