@@ -2,7 +2,7 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.0.3 © 2022 by geimist                                                                        #
+    #     v1.0.4 © 2023 by geimist                                                                        #
     #                                                                                                     #
     #                                                                                                     #
     #######################################################################################################
@@ -158,12 +158,12 @@ if [ $(stat -c %s "$i18n_DB") -eq 0 ] || [ ! -f "$i18n_DB" ]; then
                          (4,'Chinese traditional','cht',''),
                          (5,'Czech','csy','CS'),
                          (6,'Japanese','jpn','JA'),
-                         (7,'Korean','krn',''),
+                         (7,'Korean','krn','KO'),
                          (8,'Danish','dan','DA'),
                          (9,'French','fre','FR'),
                          (10,'Italian','ita','IT'),
                          (11,'Dutch','nld','NL'),
-                         (12,'Norwegian','nor',''),
+                         (12,'Norwegian','nor','NB'),
                          (13,'Polish','plk','PL'),
                          (14,'Russian','rus','RU'),
                          (15,'Spanish','spn','ES'),
