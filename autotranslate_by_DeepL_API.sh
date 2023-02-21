@@ -1,9 +1,9 @@
 #!/bin/bash
+# /volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n_autotranslate_by_DeepL_API.sh
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.0.4 © 2023 by geimist                                                                        #
-    #                                                                                                     #
+    #     v1.0.5 © 2022 by geimist                                                                        #
     #                                                                                                     #
     #######################################################################################################
 
@@ -42,19 +42,21 @@ DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
     # sollen bereits vorhandene Sprachdateien überschrieben werden?:
     overwrite=0
 
-# manueller Import bereist vorhandener Sprachdateien
+# manueller Import bereits vorhandener Sprachdateien
 #---------------------------------------------------------------------------------------------------
     # das Masterfile "masterFile" für die Variablendefinition sollte dennoch oben angegeben werden
-    manuellImpmort=0
+    manualImport=1
     
     # Ordner mit den zu importierenden Sprachdateien - dieser Pfad ist anzupassen:
-    langPath="/usr/syno/synoman/webman/3rdparty/synOCR/lang/"
+    manFilePath="/usr/syno/synoman/webman/3rdparty/synOCR/lang/imp/"
 
 ####################################################################################################
 
 cCount=0
 error=0
 date_start=$(date +%s)
+exportPath="${exportPath%/}/"
+manFilePath="${manFilePath%/}/"
 
 if ! uname -a | grep -q synology ; then
     echo "! ! ! F E H L E R ! ! !"
@@ -194,7 +196,7 @@ create_master() {
     insertCount=0
     synoLangCode=$( echo "$masterFile" | cut -f 1 -d '.' | cut -f 2 -d '_')
     langID=$(sqlite3 "$i18n_DB" "SELECT langID FROM languages WHERE synoshortname='$synoLangCode'")
-    
+
     # Schleife über jede Zeile im ini-File, welche nicht auskommentiert oder leer ist:
     while read line; do
         key=$(echo "$line" | awk -F= '{print $1}')
@@ -247,26 +249,28 @@ create_master() {
         else
             let insertCount=$insertCount+1
         fi
-    done <<<"$(cat "$masterFile" | grep -v "^$" | grep -v ^[[:space:]]*# )"
+    done <<<"$(cat "$masterFile" | grep -v "^$" | grep -v ^[[:space:]]*# )" #| grep lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR )"
     
-    printf "\n\nEs wurden $insertCount Datensätze eingefügt, bzw. aktualisiert.\n"
+    printf "\n\nEs wurden $insertCount Datensätze in die Mastertabelle eingefügt, bzw. aktualisiert.\n"
 }
 
-import_manuell() {
+import_manual() {
 
     # Diese Funktion ist nicht Teil des regulären Workflows, sondern dient dem erstmaligen Befüllen der DB, 
-    # sofern bereits übersetzte Sprachdateien vorhanden sind.
-    # liest alle Dateien im angegebenen Ordner ($langPath) ein und speichert deren Werte in der DB.
+    # sofern bereits übersetzte Sprachdateien vorhanden sind. 
+    # Desweiteren dient es dem Import von verifizierten Sprachdateien.
+    # Liest alle Dateien im angegebenen Ordner ($manFilePath) ein und speichert deren Werte in der DB.
     # Die Sprachdateien müssen ini-Files mit folgendem Namensschema sein: lang_<synoLangCode>.txt
     
     
     # ToDo:
     # sollten manuell importierte Werte den Status 'verified' erhalten?
     
-    printf "\n\nImportiere / aktualisiere bestehende Sprachdateien ... \n\n"
+    printf "\n\nmanuell Import - importiere / aktualisiere bestehende Sprachdateien ... \n\n"
     
     while read file; do
-        masterFile="${langPath}${file}"
+        unset skipped
+        masterFile="${manFilePath}${file}"
         progress_start=0
         progress_end=$(cat "$masterFile" | grep -v "^$" | grep -v ^[[:space:]]*# | wc -l)
         cCount=0
@@ -288,11 +292,17 @@ import_manuell() {
             # identifiziere die ID des aktuellen Variable um sie mit der anderen Tabelle zu verknüpfen:
             varID=$(sqlite3 "$i18n_DB" "SELECT varID FROM variables WHERE varname='$key'")
             if [ -z "$varID" ]; then
-                printf "\n! ! ! F E H L E R ! ! !\nDie Variable $key konnte nicht in der DB gefunden werden.\nüberspringen ...\n"
+#                printf "\nDie Variable $key konnte nicht in der DB gefunden werden.\nüberspringen ...\n"
+                skipped="$( [ -n "$skipped" ] && printf "${skipped}\n")\n    ➜ Die Variable $key konnte nicht in der DB gefunden werden ➜ überspringen ...\n"
+
+                
+                
+                
+                
                 continue
             fi
     
-            # lese Info einer ggf. vorhandenen Version - prüfen, ob eine Aktualisierung nötig ist und erhöhe ggf. die Version:
+            # lese Info eines ggf. vorhandenen Datensatzes:
             checkValue=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT ID, version, langstring FROM strings WHERE varID='$varID' AND langID='$langID'" | head -n1) # head sollte eigentlich nicht nötig sein
     
             # ist die Zeile vorhanden, dann wird sie aktualisiert, sonst eine neue erstellt ("INSERT OR REPLACE …"):
@@ -315,7 +325,6 @@ import_manuell() {
     
             # nächster Datensatz wenn keine Änderung:
             checkLangstring=$(echo "$checkValue" | awk -F'\t' '{print $3}')
-        #   if [ -z "$checkLangstring" ] || [ "$checkLangstring" == "$value" ]; then
             if [ "$checkLangstring" == "$value" ]; then
                 continue
             fi
@@ -324,17 +333,23 @@ import_manuell() {
             value=$(echo "$value" | sed -e "s/'/''/g")
 
             # speichere die Werte in der strings-Tabelle:
-            sqlite3 "$i18n_DB" "INSERT OR REPLACE INTO strings ( $IDname varID, langID, version, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion', '$value' ) "
+            sqlite3 "$i18n_DB" "INSERT OR REPLACE INTO strings ( $IDname varID, langID, version, verified, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion','1','$value' ) "
             if [ $? -ne 0 ]; then
-                printf "\n! ! ! ERROR @ LINE: INSERT OR REPLACE INTO strings ( $IDname varID, langID, version, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion', '$value' )\n"
+                printf "\n! ! ! ERROR @ LINE: INSERT OR REPLACE INTO strings ( $IDname varID, langID, version, verified, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion','1','$value' )\n"
             else
                 let insertCount=$insertCount+1
             fi
         done <<<"$(cat "$masterFile" | grep -v "^$" | grep -v ^[[:space:]]*# )"
         
+        if [ -n "$skipped" ]; then
+            printf "\n! ! ! F E H L E R ! ! !\n"
+            printf "${skipped}\n"
+        fi
+
         printf "\n\nEs wurden $insertCount Datensätze eingefügt, bzw. aktualisiert.\n\n"
         
-    done <<<"$(ls -tp "/usr/syno/synoman/webman/3rdparty/synOCR/lang/" | egrep -v '/$' )"
+    done <<<"$(ls -tp "$manFilePath" | egrep -v '/$' )"
+
 }
 
 translate() {
@@ -345,6 +360,7 @@ translate() {
     printf "    Master Sprach-ID:     $masterLangID [$masterLongName]\n\n"
 
     while read langID; do
+        unset skipped  # verifizierte Einträge werde nicht automatisch übersetzt aber abschließend ausgegeben
         languages=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT deeplshortname, longname FROM languages WHERE langID='$langID'")
         targetDeeplShortName="$(echo "$languages" | awk -F'\t' '{print $1}')"
         targetLongName="$(echo "$languages" | awk -F'\t' '{print $2}')"
@@ -411,16 +427,32 @@ translate() {
                 # Progressbar:
                 progressbar ${cCount} ${progress_end}
 
-                # lese die Quelldaten:
+                # lese Quelldatensatz:
                 sourceRow=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT version, langstring FROM master_template WHERE langID='$masterLangID' AND varID='$varID'" )
                 # separiere die Sprachversion:
                 langVersion="$(echo "$sourceRow" | awk -F'\t' '{print $1}')"
-                # separiere den Sprachstring und maskierte single quotes:
+                # separiere den Sprachstring:
                 value="$(echo "$sourceRow" | awk -F'\t' '{print $2}')" 
+                
+                # lese Zieldatensatz:
+                targetRow=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT ID, version, verified, langstring FROM strings WHERE varID='$varID' AND langID='$langID'")
+                rowID="$(echo "$targetRow" | awk -F'\t' '{print $1}')"
+                # separiere die Sprachversion:
+                targetVersion="$(echo "$targetRow" | awk -F'\t' '{print $2}')"
+                # separiere den verified-Flag:
+                verified="$(echo "$targetRow" | awk -F'\t' '{print $3}')"
+                # separiere den verifizierten Sprachstring:
+                verifiedValue="$(echo "$targetRow" | awk -F'\t' '{print $4}')"
+
+                # gesperrte (verifizierte) Strings überspringen:
+                if [ "$verified" = 1 ]; then
+                    varName="$(sqlite3 "$i18n_DB" "SELECT varname FROM variables WHERE varID='$varID'" )"
+                    skipped="$( [ -n "$skipped" ] && printf "${skipped}\n")\n    ➜ Name:     ${varName}\n      master:   \"$value\"\n      verified: \"$verifiedValue\""
+                    continue
+                fi
 
                 # call API / translate
                 # https://www.deepl.com/de/docs-api/translating-text/
-
                 request_start=$(date +%s)
                 transValue=$(curl -s  --connect-timeout 5 \
                     --max-time 5 \
@@ -444,7 +476,7 @@ translate() {
                     continue
                 fi
 
-                # Hinweis bei langsamen DeepL
+                # Hinweis bei langsamen DeepL:
                 requestTime=$(($(date +%s)-$request_start))
                 [ "$requestTime" -gt 10 ] && printf "  lange DeepL Antwortzeit [$requestTime Sekunden] | Ergebnis: $transValue"
 
@@ -458,7 +490,7 @@ translate() {
 
                 # ToDo: $langList & $masterList mit ID auslesen und für den diff-Vergleich die Spalte ID abschneiden - so erspart man sich die erneute Abfrage
                 # ist die Zeile vorhanden (rowID = Zahl), dann wird sie aktualisiert, sonst wird ein neuer Datensatz erstellt ("INSERT OR REPLACE …"):
-                rowID=$(sqlite3 "$i18n_DB" "SELECT ID FROM strings WHERE varID='$varID' AND langID='$langID'")
+
 #               if echo "$rowID" | grep -q ^[[:digit:]]$; then # funktioniert nicht zuverlässig
                 if [ -n "$rowID" ]; then
                     IDname="ID, "
@@ -474,6 +506,11 @@ translate() {
                 progressbar ${cCount} ${progress_end}
 
             done <<<"$(echo "$diffNew" | awk -F'\t' '{print $1}')"
+
+            if [ -n "$skipped" ]; then
+                printf "\n\nFolgende Übersetzungen wurden geändert, haben jedoch in der bestehenden Version den Status 'verifiziert' und wurden daher nicht automatisch übersetzt / aktualisiert:"
+                printf "\n${skipped}\n"
+            fi
         fi
     done <<<"$(sqlite3 "$i18n_DB" "SELECT langID FROM languages WHERE deeplshortname IS NOT ''")"
 
@@ -487,7 +524,7 @@ export_langfiles() {
         languages=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT synoshortname, longname FROM languages WHERE langID='$langID'")
         synoShortName="$(echo "$languages" | awk -F'\t' '{print $1}')"
         targetLongName="$(echo "$languages" | awk -F'\t' '{print $2}')"
-        langFile="${exportPath}/lang_${synoShortName}.txt"
+        langFile="${exportPath}lang_${synoShortName}.txt"
         printf "\nverarbeite Sprach-ID: $langID [$targetLongName]\n"
 
         if [ "$overwrite" = 0 ] && [ -f "$langFile" ]; then
@@ -508,6 +545,8 @@ export_langfiles() {
             echo "    #######################################################################################################"
             echo -e
         } > "${langFile}"
+        
+        chmod 755 "${langFile}"
         
         content=$(sqlite3 -separator $'="' "$i18n_DB" "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='$langID'" )
         
@@ -531,7 +570,7 @@ masterLongName="$(echo "$languages" | awk -F'\t' '{print $3}')"
 # Funktionsaufrufe:
     create_db
     create_master
-    [ "$manuellImpmort" = 1 ] && import_manuell
+    [ "$manualImport" = 1 ] && import_manual
     translate
     [ "$exportLangFiles" = 1 ] && export_langfiles
 #######################
@@ -541,5 +580,3 @@ printf "\n\nStatistik:\n"
 limitState=$(curl -sH "Authorization: DeepL-Auth-Key $DeepLapiKey" https://api-free.deepl.com/v2/usage)
 printf "    Für die Übersetzung wurden $(( $(jq -r .character_count <<<"$limitState" )-$(jq -r .character_count <<<"$limitStateStart" ))) Zeichen berechnet.\n"
 printf "    Im aktuellen Zeitraum wurden $(jq -r .character_count <<<"$limitState" ) Zeichen von $(jq -r .character_limit <<<"$limitState" ) verbraucht.\n    "
-
-exit
