@@ -8,7 +8,6 @@
     #######################################################################################################
 
 DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
-DeepLapiKey="2f00a009-3d71-9f82-000e-118d5bf61c6f:fx"
 
 
 # Mastersprache:
