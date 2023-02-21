@@ -44,7 +44,7 @@ DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
 # manueller Import bereits vorhandener Sprachdateien
 #---------------------------------------------------------------------------------------------------
     # das Masterfile "masterFile" für die Variablendefinition sollte dennoch oben angegeben werden
-    manualImport=1
+    manualImport=0
     
     # Ordner mit den zu importierenden Sprachdateien - dieser Pfad ist anzupassen:
     manFilePath="/usr/syno/synoman/webman/3rdparty/synOCR/lang/imp/"
