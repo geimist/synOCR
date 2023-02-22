@@ -1,9 +1,9 @@
 #!/bin/sh
-
+ 
 #################################################################################
 #   description:    main script for running synOCR                              #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh          #
-#   © 2022 by geimist                                                           #
+#   © 2023 by geimist                                                           #
 #################################################################################
 
     echo "    -----------------------------------"
@@ -488,6 +488,7 @@ if [ "$type_of_rule" = advanced ]; then
         # execute subrules:
         for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
             grepresult=0
+            grep_opt=""
             sub_jq_value="$subtagrule"  # universal parameter name for function sub_jq
 
             VARsearchstring=$(sub_jq '.searchstring')
@@ -519,19 +520,30 @@ if [ "$type_of_rule" = advanced ]; then
                 [ "$loglevel" = "2" ] && echo "${log_indent}          [value for casesensitive is empty - \"false\" is used]"
                 VARcasesensitive=false
             fi
+
+            VARmultilineregex=$(sub_jq '.multilineregex' | tr '[:upper:]' '[:lower:]')
+            if [ "$VARmultilineregex" = null ] ; then
+                [ "$loglevel" = "2" ] && echo "${log_indent}          [value for multilineregex is empty - \"false\" is used]"
+                VARmultilineregex=false
+            fi
+
             if [ "$loglevel" = "2" ] ; then
                 echo "${log_indent}      >>> search for:      $VARsearchstring"
                 echo "${log_indent}          isRegEx:         $VARisRegEx"
                 echo "${log_indent}          searchtyp:       $VARsearchtyp"
                 echo "${log_indent}          source:          $VARsource"
                 echo "${log_indent}          casesensitive:   $VARcasesensitive"
+                echo "${log_indent}          multilineregex:  $VARmultilineregex"
             fi
 
-        # Ignore upper and lower case if necessary:
+        # Ignore upper and lower case if necessary (Parameter -i):
             if [ "$VARcasesensitive" = true ] ;then
-                grep_opt=""
-            else
                 grep_opt="i"
+            fi
+
+        # treat the file as one huge string (Parameter -z):
+            if [ "$VARmultilineregex" = true ] ;then
+                grep_opt="${grep_opt}z"
             fi
 
         # define search area:
@@ -872,6 +884,13 @@ yaml_validate()
            echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of casesensitive must be only \"true\" OR \"false\"]"
         fi
     done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^casesensitive:")"
+
+    # check, if value of multilineregex is "true" OR "false":
+    while read line ; do
+        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of multilineregex must be only \"true\" OR \"false\"]"
+        fi
+    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^multilineregex:")"
 
     echo -e
 
