@@ -3,6 +3,7 @@
 #################################################################################
 #   description:    - generates the configuration page for the GUI              #
 #   path:            /usr/syno/synoman/webman/3rdparty/synOCR/edit.sh           #
+#   © 2023 by geimist                                                           #
 #################################################################################
 
 dev_mode="false" # show field in development ...
@@ -126,6 +127,10 @@ samplefilecontent="    #########################################################
     #           - $lang_edit_yamlsample_15 >casesensitive: VALUE<  (${lang_edit_yamlsample_16})
     #           - $lang_edit_yamlsample_36 \"true\" / \"false\"
     #             $lang_edit_yamlsample_39 (\"false\")
+    #       > \"multilineregex:\"
+    #           - $lang_edit_yamlsample_15 >multilineregex: VALUE<  (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_36 \"true\" / \"false\"
+    #             $lang_edit_yamlsample_39 (\"false\")
     #
     #   - ${lang_edit_yamlsample_41}:
     #       https://codebeautify.org/yaml-validator
@@ -177,11 +182,13 @@ echo "
 #      isRegEx: false
 #      source: content
 #      casesensitive: true
+#      multilineregex: false
 #    - searchstring: dontfoundme
 #      searchtyp: is not
 #      isRegEx: false
 #      source: content
 #      casesensitive: false
+#      multilineregex: false
 
 #-----------------------------------------------------------
 # $lang_edit_yamlsample_42
