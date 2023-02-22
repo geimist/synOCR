@@ -11,7 +11,7 @@
     echo "    -----------------------------------"
     echo -e
 
-    DevChannel="Release"    # BETA
+    DevChannel="BETA"    # BETA / Release
     set -E -o functrace     # for function failure()
 
     failure()
