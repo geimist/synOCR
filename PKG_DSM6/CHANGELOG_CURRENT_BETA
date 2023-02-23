@@ -1,12 +1,13 @@
 
 1.3.0.2 [2023-02-23]
   BUGFIXES:
- -  
+ - caseinsensitive was not definable
+ - 
   IMPROVEMENT:
- -  
+ -  multilineregex can now be used for tagname_RegEx
   IMPLEMENTATIONS:
- -  [YAML] multilineregex: true can be set at subrule
-    set the parameter -z for grep to find results over multi lines
- -  [GUI] support for follow machine translated languages (by DeepL)
+ - [YAML] multilineregex: true can be set at subrule
+   set the parameter -z for grep to find results over multi lines
+ - [GUI] support for follow machine translated languages (by DeepL)
     - Korean
     - Norwegian
