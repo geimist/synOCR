@@ -179,6 +179,7 @@ echo "
 #    tagname: target_tag
 #    targetfolder: \"/<path>/\"
 #    tagname_RegEx: \"HUK[[:digit:]]{2}\"
+#    multilineregex: false
 #    condition: all
 #    subrules:
 #    - searchstring: foundme
