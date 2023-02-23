@@ -3,7 +3,7 @@
 #################################################################################
 #   description:    - generates the main page for the GUI                       #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/main.sh            #
-#   © 2022 by geimist                                                           #
+#   © 2023 by geimist                                                           #
 #################################################################################
 
 PATH=$PATH:/usr/local/bin:/opt/usr/bin
@@ -222,11 +222,8 @@ if [[ "$page" == "main" ]] || [[ "$page" == "" ]]; then
             <p class="text-center">
                 <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'$lang_main_buttonrun'</button>
                 <p class="text-center">'$lang_help_QS_1b' (<a href="https://synocommunity.com/package/inotify-tools" onclick="window.open(this.href); return false;" style="'$synocrred';"><b>'$lang_foot_buttondownDB' Inotify-Tools</b></a>)</p>
-                
-
-                
             </p><br />'
-        elif [ "${inotify_tools_ready}" -eq 1 ] && ("${dsmMajorVersion}" -eq 6 ] || [ "$monitoring_user" != root ]); then 
+        elif [ "${inotify_tools_ready}" -eq 1 ] && ([ "${dsmMajorVersion}" -eq 6 ] || [ "$monitoring_user" != root ]); then 
             if [ $(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}') ]; then
                 # stop / (re-)start monitoring:
                 echo '
