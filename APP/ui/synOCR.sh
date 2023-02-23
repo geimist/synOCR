@@ -11,7 +11,7 @@
     echo "    -----------------------------------"
     echo -e
 
-    DevChannel="BETA"    # BETA / Release
+    DevChannel="Release"    # BETA
     set -E -o functrace     # for function failure()
 
     failure()
@@ -469,10 +469,12 @@ if [ "$type_of_rule" = advanced ]; then
         searchtag=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
         targetfolder=$(echo "$tag_rule_content" | jq -r ".${tagrule}.targetfolder" )
         tagname_RegEx=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname_RegEx" )
+        tagname_multiline_RegEx=$(echo "$tag_rule_content" | jq -r ".${tagrule}.multilineregex" )
         if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] ; then
             echo "${log_indent}  [no actions defined - continue]"
             continue
         fi
+
         if [[ "$targetfolder" = null ]] ; then
             targetfolder=""
         fi
@@ -482,13 +484,18 @@ if [ "$type_of_rule" = advanced ]; then
         echo "${log_indent}  ➜ destination:      $targetfolder"
         if [[ "$tagname_RegEx" != null ]] ; then
             echo "${log_indent}  ➜ RegEx for tag:    $tagname_RegEx" # searchtag
+            if [ "$tagname_multiline_RegEx" = null ] ; then
+                [ "$loglevel" = "2" ] && echo "${log_indent}  ➜ multilineregex:   [value for multilineregex is empty - \"false\" is used]"
+                tagname_multiline_RegEx=false
+            else
+                echo "${log_indent}  ➜ multilineregex:   $tagname_multiline_RegEx" # true: set parameter -z to grep
+            fi
         fi
 
         [ "$loglevel" = "2" ] && echo "${log_indent}      [Subrule]:"
         # execute subrules:
         for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
             grepresult=0
-            grep_opt=""
             sub_jq_value="$subtagrule"  # universal parameter name for function sub_jq
 
             VARsearchstring=$(sub_jq '.searchstring')
@@ -527,17 +534,10 @@ if [ "$type_of_rule" = advanced ]; then
                 VARmultilineregex=false
             fi
 
-            if [ "$loglevel" = "2" ] ; then
-                echo "${log_indent}      >>> search for:      $VARsearchstring"
-                echo "${log_indent}          isRegEx:         $VARisRegEx"
-                echo "${log_indent}          searchtyp:       $VARsearchtyp"
-                echo "${log_indent}          source:          $VARsource"
-                echo "${log_indent}          casesensitive:   $VARcasesensitive"
-                echo "${log_indent}          multilineregex:  $VARmultilineregex"
-            fi
-
-        # Ignore upper and lower case if necessary (Parameter -i):
+        # Ignore upper and lower case if necessary:
             if [ "$VARcasesensitive" = true ] ;then
+                grep_opt=""
+            else
                 grep_opt="i"
             fi
 
@@ -551,6 +551,16 @@ if [ "$type_of_rule" = advanced ]; then
                 VARsearchfile="${searchfile}"
             else
                 VARsearchfile="${searchfilename}"
+            fi
+
+            if [ "$loglevel" = "2" ] ; then
+                echo "${log_indent}      >>> search for:      $VARsearchstring"
+                echo "${log_indent}          isRegEx:         $VARisRegEx"
+                echo "${log_indent}          searchtyp:       $VARsearchtyp"
+                echo "${log_indent}          source:          $VARsource"
+                echo "${log_indent}          casesensitive:   $VARcasesensitive"
+                echo "${log_indent}          multilineregex:  $VARmultilineregex"
+                echo "${log_indent}          grep parameter:  ${grep_opt}"
             fi
 
         # search … :
@@ -695,7 +705,15 @@ if [ "$type_of_rule" = advanced ]; then
 
             if [[ "$tagname_RegEx" != null ]] ; then
                 echo -n "${log_indent}              ➜ search RegEx for tag ➜ "
-                tagname_RegEx_result=$( grep -oP "$tagname_RegEx" "${VARsearchfile}" | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
+                
+                # treat the file as one huge string (Parameter -z):
+                if [ "$tagname_multiline_RegEx" = true ] ;then
+                    grep_opt="z"
+                else
+                    grep_opt=""
+                fi
+
+                tagname_RegEx_result=$( grep -oP${grep_opt} "$tagname_RegEx" "${VARsearchfile}" | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
                 if [ ! -z "$tagname_RegEx_result" ] ; then
                     if echo "$searchtag" | grep -q "§tagname_RegEx" ; then
                         searchtag=$(echo "$searchtag" | sed -e "s/§tagname_RegEx/$tagname_RegEx_result/g" )
