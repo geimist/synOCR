@@ -723,8 +723,7 @@ if [[ "$page" == "edit" ]]; then
         fi
 
     # Profile selection:
-    sSQL="SELECT profile_ID, profile FROM config "
-    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
+    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID, profile FROM config;" )
 
     echo '
     <p>&nbsp;</p>
@@ -733,7 +732,7 @@ if [[ "$page" == "edit" ]]; then
             <label for="getprofile" class="ms-4">'$lang_edit_change_profile'</label>
         </div>
         <div class="col-sm-5">
-            <select name="getprofile" id="getprofile" class="form-select form-select-sm">'
+            <select name="getprofile" id="getprofile" class="form-select form-select-sm" onchange="$(&quot;button[name='page'][value='edit']&quot;).click()"> '
 
                 IFS=$'\012'
                 for entry in $sqlerg; do
@@ -748,12 +747,16 @@ if [[ "$page" == "edit" ]]; then
                         echo '<option value='$profile_ID_DB'>'$profile_DB'</option>'
                     fi
                 done
+
                 echo '
             </select>
-        </div>
+        </div>'
+        # Button:
+        echo '
         <div class="col-sm-2">
             <button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'$lang_buttonchange'</button>
-        </div>
+        </div>'
+    echo '
     </div><br />'
 
 
