@@ -10,7 +10,6 @@ dev_mode="false" # show field in development ...
 # if [ "$dev_mode" = "true" ]; then
 # fi
 
-OLDIFS=$IFS
 APPDIR=$(cd $(dirname $0);pwd)
 cd ${APPDIR}
 #PATH=$PATH:/usr/local/bin:/opt/usr/bin
@@ -81,10 +80,6 @@ samplefilecontent="    #########################################################
     #           - $lang_edit_yamlsample_17
     #           - $lang_edit_yamlsample_17b
     #           - $lang_edit_yamlsample_18 (>tagname_RegEx:<)
-    #       > \"multilineregex:\"
-    #           - $lang_edit_yamlsample_15 >multilineregex: VALUE<  (${lang_edit_yamlsample_16})
-    #           - $lang_edit_yamlsample_36 \"true\" / \"false\"
-    #             $lang_edit_yamlsample_39 (\"false\")
     #       > \"targetfolder:\"
     #           - $lang_edit_yamlsample_19
     #           - $lang_edit_yamlsample_15 >targetfolder: VALUE< (${lang_edit_yamlsample_16})
@@ -179,7 +174,6 @@ echo "
 #    tagname: target_tag
 #    targetfolder: \"/<path>/\"
 #    tagname_RegEx: \"HUK[[:digit:]]{2}\"
-#    multilineregex: false
 #    condition: all
 #    subrules:
 #    - searchstring: foundme
@@ -734,10 +728,7 @@ if [[ "$page" == "edit" ]]; then
         <div class="col-sm-5">
             <select name="getprofile" id="getprofile" class="form-select form-select-sm" onchange="$(&quot;button[name='page'][value='edit']&quot;).click()"> '
 
-                IFS=$'\012'
-                for entry in $sqlerg; do
-                    IFS=$OLDIFS
-
+                while read entry; do
                     profile_ID_DB=$(echo "$entry" | awk -F'\t' '{print $1}')
                     profile_DB=$(echo "$entry" | awk -F'\t' '{print $2}')
 
@@ -746,7 +737,7 @@ if [[ "$page" == "edit" ]]; then
                     else
                         echo '<option value='$profile_ID_DB'>'$profile_DB'</option>'
                     fi
-                done
+                done <<<"$sqlerg"
 
                 echo '
             </select>
@@ -1113,9 +1104,7 @@ if [[ "$page" == "edit" ]]; then
                                     imagelist+=("geimist/ocrmypdf-polyglot:latest")
                                 fi
 
-                                IFS=$'\012'
                                 for entry in ${imagelist[@]}; do
-                                    IFS=$OLDIFS
                                     if [[ "$dockercontainer" == "${entry}" ]]; then
                                         echo "<option value=${entry} selected>${entry}</option>"
                                     else
@@ -2154,17 +2143,15 @@ if [[ "$page" == "edit" ]]; then
                     user_list=$(cat /etc/passwd)
                     user_list_array=()
                     user_list_array+=( "-" )
-                    IFS=$'\012'
 
-                    for user in $user_list ; do
-                        IFS=$oldIFS
+                    while read user; do
                         user_name=$(echo $user | awk -F: '{print $1}')
                         user_id=$( id -u $user_name )
                         # sort out system user:
                         if [ $user_id -ge 1000 ] && [ $user_id -le 100000 ] ; then
                             user_list_array+=( "$user_name" )
                         fi
-                    done
+                    done <<< "$user_list"
 
                     echo '
                     <div class="row mb-3">
@@ -2175,7 +2162,6 @@ if [[ "$page" == "edit" ]]; then
                             <select name="MessageTo" id="MessageTo" class="form-select form-select-sm">'
 
                                 for entry in ${user_list_array[@]}; do
-                                    IFS=$OLDIFS
                                     if [[ "$MessageTo" == "${entry}" ]]; then
                                         echo "<option value=${entry} selected>${entry}</option>"
                                     else
