@@ -2,7 +2,7 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.0.5 © 2022 by geimist                                                                        #
+    #     v1.0.6 © 2023 by geimist                                                                        #
     #                                                                                                     #
     #######################################################################################################
 
@@ -293,11 +293,6 @@ manual_import() {
             if [ -z "$varID" ]; then
 #                printf "\nDie Variable $key konnte nicht in der DB gefunden werden.\nüberspringen ...\n"
                 skipped="$( [ -n "$skipped" ] && printf "${skipped}\n")\n    ➜ Die Variable $key konnte nicht in der DB gefunden werden ➜ überspringen ...\n"
-
-                
-                
-                
-                
                 continue
             fi
     
@@ -408,7 +403,7 @@ translate() {
                 # ToDo: $langList & $masterList mit ID auslesen und für den diff-Vergleich die Spalte ID abschneiden - so erspart man sich die erneute Abfrage
                 # ist die Zeile vorhanden (rowID = Zahl), dann wird sie aktualisiert, sonst wird ein neuer Datensatz erstellt ("INSERT OR REPLACE …"):
                 rowID=$(sqlite3 "$i18n_DB" "SELECT ID FROM strings WHERE varID='$varID' AND langID='$langID'" | head -n1)
-                if echo "$rowID" | grep -q ^[[:digit:]]$; then
+                if [ -n "$rowID" ]; then
                     IDname="ID, "
                     rowID="'$rowID',"
                 else
