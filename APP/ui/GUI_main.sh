@@ -3,7 +3,7 @@
 #################################################################################
 #   description:    - generates the main page for the GUI                       #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/main.sh            #
-#   © 2022 by geimist                                                           #
+#   © 2023 by geimist                                                           #
 #################################################################################
 
 PATH=$PATH:/usr/local/bin:/opt/usr/bin
