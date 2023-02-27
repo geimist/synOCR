@@ -9,6 +9,7 @@ BUGFIXES:
 IMPROVEMENT:
  -  multilineregex can now be used for tagname_RegEx
  -  [GUI] Profile changes automatically when another name is selected in the listbox (thx @HolerZ)
+ -  [GUI] The warning for an invalid source directory now also contains the name of the affected profile
 IMPLEMENTATIONS:
  - [YAML] multilineregex: true can be set at subrule
    set the parameter -z for grep to find results over multi lines
