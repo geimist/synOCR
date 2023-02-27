@@ -8,7 +8,7 @@
 #   arguments:      - start (starts inotifywait / restarts it, if needed)       #
 #                   - stop (stop inotifywait)                                   #
 #                   - GUI (log formated as html)                                #
-#   © 2022 by geimist                                                           #
+#   © 2023 by geimist                                                           #
 #################################################################################
 
 callFrom=shell
@@ -235,11 +235,12 @@ fi
             if [ "$callFrom" = GUI ] ; then
                 echo '
                 <p class="text-center">
-                    <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_lost_input' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span>
-                </p>'
+                    <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_lost_input' ! ! !</b><br>'$lang_synOCR_start_abort' ('$profile' [ID: '$profile_ID'])<br></span>
+                </p>
+                '
             else
                 echo "! ! ! $lang_synOCR_start_lost_input ! ! !"
-                echo "$lang_synOCR_start_abort"
+                echo "$lang_synOCR_start_abort (${profile} [ID: ${profile_ID}])"
             fi
             continue
         fi
