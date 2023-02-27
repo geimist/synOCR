@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="0"
@@ -368,7 +368,7 @@ lang_synOCR_start_runs="synOCR is running"
 lang_synOCR_start_wait1="Please wait until the files"
 lang_synOCR_start_wait2="have been processed."
 lang_synOCR_start_lost_input="Check source directory or permission in the configuration"
-lang_synOCR_start_abort="Program run is terminated."
+lang_synOCR_start_abort="The following profile is skipped:"
 lang_synOCR_start_umount_target="encrypted taget folder not mounted"
 lang_synOCR_start_check_target="Check target directory in the configuration"
 lang_synOCR_start_target_created="Target directory was created."

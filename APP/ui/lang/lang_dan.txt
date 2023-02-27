@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -368,7 +368,7 @@ lang_synOCR_start_runs="synOCR blev lanceret"
 lang_synOCR_start_wait1="Vent venligst, indtil filerne"
 lang_synOCR_start_wait2="er blevet afsluttet."
 lang_synOCR_start_lost_input="Kontroller kildemappen eller godkendelsen i konfigurationen"
-lang_synOCR_start_abort="Programkørslen afsluttes."
+lang_synOCR_start_abort="Den følgende profil springes over:"
 lang_synOCR_start_umount_target="Krypteret destinationsmappe ikke monteret"
 lang_synOCR_start_check_target="Kontroller målmappen i konfigurationen"
 lang_synOCR_start_target_created="Målmappen er blevet oprettet."

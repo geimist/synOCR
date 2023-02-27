@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="0"
@@ -370,7 +370,7 @@ lang_synOCR_start_runs="synOCR byla spuštěna"
 lang_synOCR_start_wait1="Počkejte prosím, dokud se soubory"
 lang_synOCR_start_wait2="byly dokončeny."
 lang_synOCR_start_lost_input="Zkontrolujte zdrojový adresář nebo oprávnění v konfiguraci"
-lang_synOCR_start_abort="Běh programu je ukončen."
+lang_synOCR_start_abort="Následující profil je vynechán:"
 lang_synOCR_start_umount_target="Šifrovaná cílová složka není připojena"
 lang_synOCR_start_check_target="Zkontrolujte cílový adresář v konfiguraci"
 lang_synOCR_start_target_created="Cílový adresář byl vytvořen."

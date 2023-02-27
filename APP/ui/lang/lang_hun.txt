@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -370,7 +370,7 @@ lang_synOCR_start_runs="A synOCR elindult"
 lang_synOCR_start_wait1="Kérjük, várjon, amíg a fájlok"
 lang_synOCR_start_wait2="befejeződött."
 lang_synOCR_start_lost_input="Ellenőrizze a forráskönyvtárat vagy az engedélyezést a konfigurációban"
-lang_synOCR_start_abort="A programfuttatás befejeződik."
+lang_synOCR_start_abort="A következő profil kihagyásra kerül:"
 lang_synOCR_start_umount_target="A titkosított célmappa nincs csatlakoztatva"
 lang_synOCR_start_check_target="Célkönyvtár ellenőrzése a konfigurációban"
 lang_synOCR_start_target_created="A célkönyvtár létrehozásra került."

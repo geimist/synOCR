@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -370,7 +370,7 @@ lang_synOCR_start_runs="Запущен проект synOCR"
 lang_synOCR_start_wait1="Пожалуйста, подождите, пока файлы"
 lang_synOCR_start_wait2="были завершены."
 lang_synOCR_start_lost_input="Проверьте исходный каталог или авторизацию в конфигурации"
-lang_synOCR_start_abort="Выполнение программы завершается."
+lang_synOCR_start_abort="Следующий профиль пропускается:"
 lang_synOCR_start_umount_target="Зашифрованная папка назначения не смонтирована"
 lang_synOCR_start_check_target="Проверка целевого каталога в конфигурации"
 lang_synOCR_start_target_created="Целевой каталог создан."

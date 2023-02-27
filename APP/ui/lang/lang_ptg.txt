@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -370,7 +370,7 @@ lang_synOCR_start_runs="foi lançado o synOCR"
 lang_synOCR_start_wait1="Por favor aguarde até os ficheiros"
 lang_synOCR_start_wait2="foram concluídas."
 lang_synOCR_start_lost_input="Verificar o directório de origem ou autorização na configuração"
-lang_synOCR_start_abort="A execução do programa está terminada."
+lang_synOCR_start_abort="O seguinte perfil é ignorado:"
 lang_synOCR_start_umount_target="Pasta de destino encriptada não montada"
 lang_synOCR_start_check_target="Verificar o directório de destino na configuração"
 lang_synOCR_start_target_created="Foi criado um directório de alvos."

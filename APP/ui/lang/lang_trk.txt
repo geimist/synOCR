@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -351,7 +351,7 @@ lang_synOCR_start_runs="synOCR piyasaya sürüldü"
 lang_synOCR_start_wait1="Lütfen dosyalar açılana kadar bekleyin"
 lang_synOCR_start_wait2="tamamlanmıştır."
 lang_synOCR_start_lost_input="Yapılandırmada kaynak dizini veya yetkilendirmeyi kontrol edin"
-lang_synOCR_start_abort="Program çalışması sonlandırılır."
+lang_synOCR_start_abort="Aşağıdaki profil atlanır:"
 lang_synOCR_start_umount_target="Şifrelenmiş hedef klasör takılı değil"
 lang_synOCR_start_check_target="Yapılandırmadaki hedef dizini kontrol edin"
 lang_synOCR_start_target_created="Hedef dizin oluşturuldu."

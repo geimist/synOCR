@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -369,7 +369,7 @@ lang_synOCR_start_runs="synOCR発売"
 lang_synOCR_start_wait1="ファイルが表示されるまでお待ちください。"
 lang_synOCR_start_wait2="が完成しました。"
 lang_synOCR_start_lost_input="コンフィギュレーションでソースディレクトリや権限を確認する"
-lang_synOCR_start_abort="プログラムの実行を終了します。"
+lang_synOCR_start_abort="次のプロファイルはスキップされます。"
 lang_synOCR_start_umount_target="暗号化された保存先フォルダがマウントされない"
 lang_synOCR_start_check_target="コンフィギュレーションでターゲットディレクトリを確認する"
 lang_synOCR_start_target_created="ターゲットディレクトリが作成されました。"

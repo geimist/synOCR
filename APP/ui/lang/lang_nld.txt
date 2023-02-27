@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -364,7 +364,7 @@ lang_synOCR_start_runs="synOCR werd gelanceerd"
 lang_synOCR_start_wait1="Wacht alstublieft tot de bestanden"
 lang_synOCR_start_wait2="zijn voltooid."
 lang_synOCR_start_lost_input="Controleer de bron map of de autorisatie in de configuratie"
-lang_synOCR_start_abort="De programma-afloop wordt beëindigd."
+lang_synOCR_start_abort="Het volgende profiel wordt overgeslagen:"
 lang_synOCR_start_umount_target="Gecodeerde doelmap niet gemount"
 lang_synOCR_start_check_target="Controleer de doelmap in de configuratie"
 lang_synOCR_start_target_created="Doelmap is aangemaakt."

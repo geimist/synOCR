@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -370,7 +370,7 @@ lang_synOCR_start_runs="synOCR lanserades"
 lang_synOCR_start_wait1="Vänligen vänta tills filerna"
 lang_synOCR_start_wait2="har slutförts."
 lang_synOCR_start_lost_input="Kontrollera källkatalogen eller behörigheten i konfigurationen"
-lang_synOCR_start_abort="Programkörningen avslutas."
+lang_synOCR_start_abort="Följande profil hoppas över:"
 lang_synOCR_start_umount_target="Krypterad målmapp är inte monterad"
 lang_synOCR_start_check_target="Kontrollera målkatalogen i konfigurationen"
 lang_synOCR_start_target_created="Målkatalogen har skapats."

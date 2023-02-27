@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -381,7 +381,7 @@ lang_help_about_3="Mais si quelqu'un souhaite me faire plaisir financièrement e
 lang_synOCR_start_is_running="synOCR déjà en cours d'exécution !"
 lang_synOCR_start_req_kill="Forcer l'arrêt ?"
 lang_synOCR_start_lost_input="Vérifier le répertoire source ou l'autorisation dans la configuration"
-lang_synOCR_start_abort="L'exécution du programme s'arrête"
+lang_synOCR_start_abort="Le profil suivant est ignoré :"
 lang_synOCR_start_errorexit="synOCR s'est terminé avec des erreurs !"
 lang_synOCR_start_loginfo="plus d'informations dans le LOG"
 lang_wizui_install_title="Remarque sur l'installation :"

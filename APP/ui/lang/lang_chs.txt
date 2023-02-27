@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="1"
@@ -370,7 +370,7 @@ lang_synOCR_start_runs="推出了synOCR"
 lang_synOCR_start_wait1="请等待，直到该文件"
 lang_synOCR_start_wait2="已经完成。"
 lang_synOCR_start_lost_input="检查源目录或配置中的授权"
-lang_synOCR_start_abort="程序运行被终止。"
+lang_synOCR_start_abort="下面的配置文件被跳过。"
 lang_synOCR_start_umount_target="加密的目标文件夹没有安装"
 lang_synOCR_start_check_target="检查配置中的目标目录"
 lang_synOCR_start_target_created="目标目录已被创建。"
