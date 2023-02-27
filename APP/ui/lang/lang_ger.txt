@@ -7,7 +7,7 @@
     # translation instructions can you found here:                                                        #
     #     https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md              #
     #                                                                                                     #
-    #     © 2022 by geimist                                                                               #
+    #     © 2023 by geimist                                                                               #
     #######################################################################################################
 
 machinetranslate="0"
@@ -381,7 +381,7 @@ lang_synOCR_start_runs="synOCR wurde gestartet"
 lang_synOCR_start_wait1="Bitte warten, bis die Dateien"
 lang_synOCR_start_wait2="fertig abgearbeitet wurden."
 lang_synOCR_start_lost_input="Quellverzeichnis oder Berechtigung in der Konfiguration prüfen"
-lang_synOCR_start_abort="Programmlauf wird beendet."
+lang_synOCR_start_abort="Folgendes Profil wird übersprungen:"
 lang_synOCR_start_umount_target="verschlüsselter Zielordner nicht eingehangen"
 lang_synOCR_start_check_target="Zielverzeichnis in der Konfiguration prüfen"
 lang_synOCR_start_target_created="Zielverzeichnis wurde erstellt."
