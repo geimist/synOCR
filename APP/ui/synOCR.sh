@@ -1995,7 +1995,8 @@ while read input ; do
                 endPage=$(echo "$line" | awk -F' ' '{print $3}')
 
                 # if two separation pages follow each other, this will result in an empty PDF file. This case will be skipped:
-                [ "$startPage" -ge "$endPage" ] && [ "$splitpagehandling" = discard ] && continue
+#               [ "$startPage" -ge "$endPage" ] && [ "$splitpagehandling" = discard ] && continue
+                [ "$startPage" -gt "$endPage" ] && [ "$splitpagehandling" = discard ] && continue
 
                 # split pages:
                 split_pages "$currentPart" "$startPage" "$endPage" "$SearchSuffix"
