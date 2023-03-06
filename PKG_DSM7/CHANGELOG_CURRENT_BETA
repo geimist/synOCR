@@ -6,7 +6,9 @@ known issues / limitations:
 BUGFIXES:
  - [YAML] caseinsensitive was not definable
  - [GUI] fixed syntax error that caused a navigation error in the GUI
- - if two separation pages follow each other, this was result in an empty PDF file
+ - [SHELL] if two separation pages follow each other, this was result in an empty PDF file
+ - [SHELL] If metadata was previously written, the PDF lost its PDF/A property. 
+   An updated version of PyPDF2 (>= 3.0.0) fixes this bug
 IMPROVEMENT:
  -  [GUI] profile changes automatically when another name is selected in the listbox (thx @HolerZ)
  -  [GUI] the warning for an invalid source directory now also contains the name of the affected profile
