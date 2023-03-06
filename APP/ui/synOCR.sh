@@ -40,8 +40,7 @@
     
     python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
-#   synOCR_python_module_list=( DateTime dateparser "PyPDF2==2.3.1" Pillow yq PyYAML )
-    synOCR_python_module_list=( DateTime dateparser PyPDF2 Pillow yq PyYAML )
+    synOCR_python_module_list=( DateTime dateparser "PyPDF2==3.0.1" Pillow yq PyYAML )
                                 # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     dashline1="-----------------------------------------------------------------------------------"
@@ -1891,7 +1890,7 @@ while read input ; do
                 echo "pages = [$pageRange]" # page 1, 3, 5
                 echo "pdf_Writer = PdfWriter()"
                 echo "for page_num in pages:"
-                echo "    pdf_Writer.addPage(pdf.getPage(page_num))"
+                echo "    pdf_Writer.add_page(pdf.pages[page_num])"
                 echo "with open('{0}_${1}${4}.pdf'.format(file_base_name), 'wb') as f:"
                 echo "    pdf_Writer.write(f)"
                 echo "    f.close()"
