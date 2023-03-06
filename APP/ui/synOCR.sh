@@ -40,7 +40,7 @@
     
     python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "PyPDF2==3.0.1" Pillow yq PyYAML )
+    synOCR_python_module_list=( DateTime dateparser "pypdf=3.5.1" Pillow yq PyYAML )
                                 # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     dashline1="-----------------------------------------------------------------------------------"
@@ -1286,7 +1286,7 @@ rename()
     echo -n "${log_indent}➜ insert metadata "
     
     if [ "$python_check" = "ok" ] && [ "$enablePyMetaData" -eq 1 ]; then
-        echo "(use python PyPDF2)"
+        echo "(use python pypdf)"
         unset py_meta
     
         py_meta="'/Author': '$documentAuthor',"
@@ -1301,7 +1301,7 @@ rename()
 
         get_previous_meta(){
             {   echo "import pprint"
-                echo "from PyPDF2 import PdfFileReader, PdfFileMerger"
+                echo "from pypdf import PdfFileReader, PdfFileMerger"
                 echo "if __name__ == '__main__':"
                 echo "    file_in = open('${outputtmp}', 'rb')"
                 echo "    pdf_reader = PdfFileReader(file_in)"
@@ -1317,7 +1317,7 @@ rename()
 
         {   echo "import pprint"
         
-            echo "from PyPDF2 import PdfReader, PdfMerger"
+            echo "from pypdf import PdfReader, PdfMerger"
         
             echo "if __name__ == '__main__':"
             echo "    reader = PdfReader('$outputtmp')"
@@ -1627,7 +1627,7 @@ py_page_count()
 # This function receives a PDF file path and give back number of pages                  #
 #########################################################################################
 
-    {   echo 'from PyPDF2 import PdfReader'
+    {   echo 'from pypdf import PdfReader'
         echo 'reader = PdfReader("'"$1"'")'
         echo 'number_of_pages = len(reader.pages)'
         echo 'print(number_of_pages)'
@@ -1883,7 +1883,7 @@ while read input ; do
 
         # https://learndataanalysis.org/how-to-extract-pdf-pages-and-save-as-a-separate-pdf-file-using-python/
         # ---------------------------------------------------------------------
-            {   echo "from PyPDF2 import PdfReader, PdfWriter"
+            {   echo "from pypdf import PdfReader, PdfWriter"
                 echo 'pdf_file_path = "'$outputtmp'"'
                 echo "file_base_name = pdf_file_path.replace('.pdf', '')"
                 echo "pdf = PdfReader(pdf_file_path)"
@@ -2082,7 +2082,7 @@ while read input ; do
 
     if [ "$python_check" = ok ]; then
         pagecount_latest=$( py_page_count "${input}" ) 
-        [ "$loglevel" = "2" ] && echo "${log_indent}(pages counted with python module PyPDF2)"
+        [ "$loglevel" = "2" ] && echo "${log_indent}(pages counted with python module pypdf)"
     elif [ $(which pdfinfo) ]; then
         pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
         [ "$loglevel" = "2" ] && echo "${log_indent}(pages counted with pdfinfo)"
@@ -2091,7 +2091,7 @@ while read input ; do
         [ "$loglevel" = "2" ] && echo "${log_indent}(pages counted with exiftool)"
     fi
 
-    [ -z "$pagecount_latest" ] && pagecount_latest=0 && echo "${log_indent}! ! ! ERROR - with pdfinfo / exiftool / PyPDF2 - \$pagecount was set to 0"
+    [ -z "$pagecount_latest" ] && pagecount_latest=0 && echo "${log_indent}! ! ! ERROR - with pdfinfo / exiftool / pypdf - \$pagecount was set to 0"
 
 
 # adapt counter:
