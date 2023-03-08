@@ -1900,7 +1900,7 @@ while read input ; do
     # calculate site ranges for splitting
     # ---------------------------------------------------------------------
         SplitPageCount=${#splitPages[@]}
-        [ "$loglevel" = 2 ] && echo "split page count: $SplitPageCount"
+        echo "${log_indent}split page count: $SplitPageCount"
 
         if (( "$SplitPageCount" > 0 )) && (( "$pageCount" > 1 )); then
             currentPart=0
