@@ -204,7 +204,7 @@
     echo "clean up spaces:          ${clean_up_spaces}"
     echo -n "Date search method:       "
     if [ "$date_search_method" = "python" ] ; then
-        echo "use Python (BETA)"
+        echo "use Python"
     else
         echo "use standard search via RegEx"
     fi
