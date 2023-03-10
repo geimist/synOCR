@@ -40,7 +40,7 @@
     
     python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf=3.5.1" Pillow yq PyYAML )
+    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" Pillow yq PyYAML )
                                 # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     dashline1="-----------------------------------------------------------------------------------"
