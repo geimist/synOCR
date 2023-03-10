@@ -998,7 +998,11 @@ prepare_python()
                 fi
             done
 
+        if [ "$python_check" = "ok" ]; then
             echo "$python_env_version" > "${python3_env}/synOCR_python_env_version"
+        else
+            echo "0" > "${python3_env}/synOCR_python_env_version"
+        fi
 
             [ "$synOCR_user" = root ] && chown -R synOCR:administrators /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
             [ "$synOCR_user" = root ] && chmod -R 755 /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
@@ -1706,7 +1710,7 @@ prepare_target_path()
             echo "${log_indent}  ➜ continue counting … ($destfilecount)"
         done
         output="${target_dir_path}${target_filename%.*} ($destfilecount).${target_fileext}"
-        echo "${log_indent}  ➜ File name already exists! Add counter ($destfilecount)"
+        printf "${log_indent}➜ File name already exists! Add counter ($destfilecount)\n\n"
     fi
 
 }
@@ -1799,7 +1803,7 @@ while read input ; do
     was_splitted=0
     split_error=0
 
-    outputtmp="${work_tmp}/${title}.pdf"
+    outputtmp="${work_tmp%/}/${title}.pdf"
     echo "${log_indent}  temp. target file: ${outputtmp}"
 
 
@@ -2117,20 +2121,31 @@ while read input ; do
     tmp_date_search_method="$date_search_method"    # able to use a temporary fallback to regex for each file
 
     if [ "$delSearchPraefix" = "yes" ] && [ ! -z "${SearchPraefix}" ]; then
-#        title=$( echo "${title}" | sed s/${SearchPraefix_tmp}//I )
         title=$( echo "${title}" | sed s/${SearchPraefix_tmp}//g )
     fi
 
 
+############################################################################
+# ToDo:    >>>>>>>>
+#   - wenn es keine Probleme (z.B. mit der Übertragung der Berechtigung) gibt, kann in der gesamten 
+#     Funktion möglicherweise die Variable $output durch $input ersetzt werden
+#   - prüfen, ob es Probleme gibt, wenn ein keine gültige Umbennungssyntax gibt 
+#     (es muss sichergestellt werden, dass die Datei im Ausgabeordner ankommt)
+
 # temporary output destination with seconds for uniqueness 
 # (otherwise there will be duplication if renaming syntax is missing)
 # ---------------------------------------------------------------------
-    output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
-
+#    output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
+#    output="${work_tmp%/}/temp_${title}_$(date +%s).pdf"
 
 # move temporary file to destination folder:
 # ---------------------------------------------------------------------
-    cp "${input}" "${output}"
+#    cp "${input}" "${output}"
+    output="${input}"
+
+# End ToDo <<<<<<<<
+############################################################################
+
 
 
 # source file permissions-Log:
@@ -2261,12 +2276,12 @@ while read input ; do
 # delete temporary working directory:
 # ---------------------------------------------------------------------
     echo "  delete tmp-files ..."
-    rm -rfv "$work_tmp" | sed -e "s/^/${log_indent}/g"
-    rm -rfv "$OUTPUTDIR_tmp" | sed -e "s/^/${log_indent}/g"
     rm -rfv "${input}" | sed -e "s/^/${log_indent}/g"   # rm ocred version - source file is backuped after ocrmypdf processing 
 
 done <<<"${files}"
 
+    rm -rfv "$work_tmp" | sed -e "s/^/${log_indent}/g"
+    rm -rfv "$OUTPUTDIR_tmp" | sed -e "s/^/${log_indent}/g"
 }
 
     printf "\n\n\n"
