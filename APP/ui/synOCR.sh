@@ -297,9 +297,6 @@
 
     OUTPUTDIR="${OUTPUTDIR%/}/"
     echo "Target directory:         ${OUTPUTDIR}"
-    OUTPUTDIR_tmp="${OUTPUTDIR%/}/synOCR_tmp_$(date +%s)/"
-    echo "Target temp directory:    ${OUTPUTDIR_tmp}"
-    mkdir -p "${OUTPUTDIR_tmp}"
 
     BACKUPDIR="${BACKUPDIR%/}/"
     if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
@@ -1786,8 +1783,12 @@ while read input ; do
 
 # create temporary working directory
 # ---------------------------------------------------------------------
-    work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
-    trap 'rm -rf "$work_tmp"; exit' EXIT
+    OUTPUTDIR_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
+    trap '[ -d "$OUTPUTDIR_tmp" ] && rm -rf "$OUTPUTDIR_tmp"; exit' EXIT
+    echo "Target temp directory:    ${OUTPUTDIR_tmp}"
+
+    work_tmp="${OUTPUTDIR_tmp%/}/step1_tmp_$(date +%s)/"
+    mkdir -p "${work_tmp}"
 
     printf "\n"
     filename=$(basename "$input")
@@ -2104,8 +2105,8 @@ while read input ; do
 
 # create temporary working directory
 # ---------------------------------------------------------------------
-    work_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
-    trap 'rm -rf "$work_tmp"; exit' EXIT
+    work_tmp="${OUTPUTDIR_tmp%/}/step2_tmp_$(date +%s)/"
+    mkdir -p "${work_tmp}"
 
     echo -e
     filename=$(basename "$input")
@@ -2261,6 +2262,7 @@ while read input ; do
 # ---------------------------------------------------------------------
     echo "  delete tmp-files ..."
     rm -rfv "$work_tmp" | sed -e "s/^/${log_indent}/g"
+    rm -rfv "$OUTPUTDIR_tmp" | sed -e "s/^/${log_indent}/g"
     rm -rfv "${input}" | sed -e "s/^/${log_indent}/g"   # rm ocred version - source file is backuped after ocrmypdf processing 
 
 done <<<"${files}"
