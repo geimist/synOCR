@@ -1784,13 +1784,8 @@ collect_input_files "${INPUTDIR}" "pdf"
 while read input ; do
     [ ! -f "$input" ] && continue
 
-
 # create temporary working directory
 # ---------------------------------------------------------------------
-    work_tmp_main=$(mktemp -d -t tmp.XXXXXXXXXX)
-    trap '[ -d "$work_tmp_main" ] && rm -rf "$work_tmp_main"; exit' EXIT
-    echo "Target temp directory:    ${work_tmp_main}"
-
     work_tmp_step1="${work_tmp_main%/}/step1_tmp_$(date +%s)/"
     mkdir -p "${work_tmp_step1}"
 
@@ -2314,6 +2309,12 @@ done <<<"${files}"
     if [ "$img2pdf" = true ]; then
         py_img2pdf
     fi
+
+# create temporary working directory
+# ---------------------------------------------------------------------
+    work_tmp_main=$(mktemp -d -t tmp.XXXXXXXXXX)
+    trap '[ -d "$work_tmp_main" ] && rm -rf "$work_tmp_main"; exit' EXIT
+    echo "Target temp directory:    ${work_tmp_main}"
 
     main_1st_step
     main_2nd_step
