@@ -6,7 +6,7 @@ known issues / limitations:
 BUGFIXES:
  - [YAML] caseinsensitive was not definable
  - [GUI] fixed syntax error that caused a navigation error in the GUI
- - [SHELL] if two separation pages follow each other, this was result in an empty PDF file
+ - [SHELL] if two separation pages follow each other, this was result in an empty PDF file (thx @DeeKay1)
  - [SHELL] if metadata was previously written, the PDF lost its PDF/A property.
    An updated version of PyPDF2 (>= 3.0.0) fixes this bug
  - [GUI] synOCR starts in a new window (adjustment to DSM7.2) (thx @Tommes) [only DSM >= 7.0]
