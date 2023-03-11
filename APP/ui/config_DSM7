@@ -1,7 +1,7 @@
 {
     ".url": {
         "SYNO.SDS.ThirdParty.App.synOCR": {
-            "type": "legacy",
+            "type": "url",
             "title": "synOCR",
             "desc": "synOCR",
             "allUsers": false,
