@@ -102,6 +102,7 @@ exit 1
 
 #   buildversion=${1:-latest}
     taggedversions=$(git tag)
+    set_spk_version=""
 
     printf "\n-----------------------------------------------------------------------------------\n"
     printf " - INFO: Create the temporary build folder and copy sources into it ..."
@@ -109,8 +110,6 @@ exit 1
 
     git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
     pushd "$build_tmp"
-    #set_spk_version="latest-$(date +%s)-$(git log -1 --format="%h")"
-    set_spk_version="$(git branch --show-current)_latest_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
 
     if echo "$taggedversions" | egrep -q "$buildversion"; then
         echo "git checkout to $buildversion"
@@ -289,6 +288,12 @@ exit 1
     printf "   SPK will be created ..."
     printf "\n-----------------------------------------------------------------------------------\n\n"
     printf "\n - INFO: The following version is loaded and built:\n"
+
+    if [ -z "$set_spk_version" ]; then
+        #set_spk_version="latest-$(date +%s)-$(git log -1 --format="%h")"
+        set_spk_version="$(git branch --show-current)_latest_[$build_version]_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
+    fi
+
     echo "    $set_spk_version - BUILD-Version (INFO-File): $build_version"
 
 # Falls versteckter Ordners /.helptoc vorhanden, diesen nach /helptoc umbenennen
