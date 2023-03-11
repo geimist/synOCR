@@ -9,14 +9,14 @@ BUGFIXES:
  - [SHELL] if two separation pages follow each other, this was result in an empty PDF file
  - [SHELL] if metadata was previously written, the PDF lost its PDF/A property.
    An updated version of PyPDF2 (>= 3.0.0) fixes this bug
- - [SHELL] no temporary data is stored in the destination folder now
- - [GUI] synOCR starts in a new window (adjustment to DSM7.2)
+ - [GUI] synOCR starts in a new window (adjustment to DSM7.2) (thx @Tommes) [only DSM >= 7.0]
 IMPROVEMENT:
  - [GUI] profile changes automatically when another name is selected in the listbox (thx @HolerZ)
  - [GUI] the warning for an invalid source directory now also contains the name of the affected profile
  - [SHELL] update find_dates.py to version 1.0.4 (thx @GThorsten)
  - [SHELL] update PyPDF2 version 2.3.1 to pypdf version 3.5.1
- - TMP folder moved from destination directory to /tmp
+   Target files are now tagged with PDF version 1.7 (PDF/A), but are not yet fully compliant with the standard
+ - [SHELL] no temporary data is stored in the destination folder now
 IMPLEMENTATIONS:
  - [YAML] >multilineregex: true< can be set at subrule and for tagname_RegEx
    this will set the parameter -z for grep to find results over multi lines
