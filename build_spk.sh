@@ -110,7 +110,7 @@ exit 1
     git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
     pushd "$build_tmp"
     #set_spk_version="latest-$(date +%s)-$(git log -1 --format="%h")"
-    set_spk_version="$(git branch --show-current)_latest_[$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')]_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
+    set_spk_version="$(git branch --show-current)_latest_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
 
     if echo "$taggedversions" | egrep -q "$buildversion"; then
         echo "git checkout to $buildversion"
