@@ -2,6 +2,10 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.3.99.7 [2023-03-11]
+BUGFIXES:
+ - [SHELL] inconsistent creation of the temporary folder fixed
+
 1.3.99.6 [2023-03-11]
 BUGFIXES:
  - [YAML] caseinsensitive was not definable
