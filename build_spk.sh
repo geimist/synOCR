@@ -110,10 +110,10 @@ exit 1
     git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
     pushd "$build_tmp"
     #set_spk_version="latest-$(date +%s)-$(git log -1 --format="%h")"
-    set_spk_version="$(git branch --show-current)_latest_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
+    set_spk_version="$(git branch --show-current)_latest_[$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')]_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
 
     if echo "$taggedversions" | egrep -q "$buildversion"; then
-        echo "git checkout zu $buildversion"
+        echo "git checkout to $buildversion"
         git checkout "$buildversion"
         set_spk_version="$buildversion"
     else
@@ -321,6 +321,7 @@ exit 1
 # Creating the final SPK
     printf "\n - INFO: the SPK will be created ...\n"
     TargetName="${project}_DSM${TargetDSM}_${set_spk_version}${beta_status}.spk"
+    # $build_version
     $FAKEROOT tar -cf "$TargetName" *
     cp -f "$TargetName" "${APPDIR}"
 
