@@ -411,8 +411,8 @@ if [ -z "$taglist" ]; then
 elif [ -f "$taglist" ]; then
     if grep -q "synOCR_YAMLRULEFILE" "$taglist" ; then
         echo "${log_indent}source for tags is yaml based tag rule file [$taglist]"
-        cp "$taglist" "${work_tmp}/tmprulefile.txt"     # copy YAML file into the TMP folder, because the file can only be read incorrectly in ACL folders
-        taglisttmp="${work_tmp}/tmprulefile.txt"
+        cp "$taglist" "${work_tmp_step2}/tmprulefile.txt"     # copy YAML file into the TMP folder, because the file can only be read incorrectly in ACL folders
+        taglisttmp="${work_tmp_step2}/tmprulefile.txt"
         sed -i $'s/\r$//' "$taglisttmp"                 # convert DOS to Unix
         type_of_rule=advanced
 
@@ -1642,7 +1642,7 @@ collect_input_files()
 # This function search for valid files in input folder, which fit the current profile   #
 #########################################################################################
 
-    source_dir="$1"
+    source_dir="${1%/}/"
     if [ "$2" = "image" ]; then # image or pdf
         source_file_type="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\)"
     else
@@ -1787,12 +1787,12 @@ while read input ; do
 
 # create temporary working directory
 # ---------------------------------------------------------------------
-    OUTPUTDIR_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
-    trap '[ -d "$OUTPUTDIR_tmp" ] && rm -rf "$OUTPUTDIR_tmp"; exit' EXIT
-    echo "Target temp directory:    ${OUTPUTDIR_tmp}"
+    work_tmp_main=$(mktemp -d -t tmp.XXXXXXXXXX)
+    trap '[ -d "$work_tmp_main" ] && rm -rf "$work_tmp_main"; exit' EXIT
+    echo "Target temp directory:    ${work_tmp_main}"
 
-    work_tmp="${OUTPUTDIR_tmp%/}/step1_tmp_$(date +%s)/"
-    mkdir -p "${work_tmp}"
+    work_tmp_step1="${work_tmp_main%/}/step1_tmp_$(date +%s)/"
+    mkdir -p "${work_tmp_step1}"
 
     printf "\n"
     filename=$(basename "$input")
@@ -1803,7 +1803,7 @@ while read input ; do
     was_splitted=0
     split_error=0
 
-    outputtmp="${work_tmp%/}/${title}.pdf"
+    outputtmp="${work_tmp_step1%/}/${title}.pdf"
     echo "${log_indent}  temp. target file: ${outputtmp}"
 
 
@@ -1840,7 +1840,7 @@ while read input ; do
             [ "$loglevel" != 0 ] && cp "$current_logfile" "${output}.log"
             echo "${log_indent}              ┖➜ move to ERRORFILES"
         fi
-        rm -rf "$work_tmp"
+        rm -rf "$work_tmp_step1"
         continue
     else
         printf "${log_indent}target file (OK): ${outputtmp}\n\n"
@@ -2005,12 +2005,12 @@ while read input ; do
                 # split pages:
                 split_pages "$currentPart" "$startPage" "$endPage" "$SearchSuffix"
 
-                # move splitted file to OUTPUTDIR_tmp with override protection
+                # move splitted file to work_tmp_main with override protection
                 splitted_file_name="${title}_${currentPart}${SearchSuffix}.pdf"
-                splitted_file="$work_tmp/${splitted_file_name}"
+                splitted_file="$work_tmp_step1/${splitted_file_name}"
 
                 if [ -f "$splitted_file" ]; then
-                    prepare_target_path "${OUTPUTDIR_tmp}" "${splitted_file_name}"
+                    prepare_target_path "${work_tmp_main}" "${splitted_file_name}"
                     mv "$splitted_file" "${output}"
                     copy_attributes "${input}" "${output}"
                     echo "${log_indent}➜ move the split file to: ${output}"
@@ -2046,10 +2046,10 @@ while read input ; do
     fi
 
     if [ "$was_splitted" = 0 ] || [ "$split_error" = 1 ]; then
-        mv "${outputtmp}" "${OUTPUTDIR_tmp}"
+        mv "${outputtmp}" "${work_tmp_main}"
     fi
 
-    rm -rfv "$work_tmp" | sed -e "s/^/${log_indent}/g"
+    rm -rfv "$work_tmp_step1" | sed -e "s/^/${log_indent}/g"
 
 
 # Stats:
@@ -2072,12 +2072,11 @@ main_2nd_step()
 #########################################################################################
 printf "\n  %s\n  ● %-80s●\n  %s\n\n" "${dashline2}" "STEP 2 - SEARCH TAGS / RENAME / SORT:" "${dashline2}"
 
-collect_input_files "${OUTPUTDIR_tmp}" "pdf"
-
+collect_input_files "${work_tmp_main}" "pdf"
 
 # make special characters visible if necessary
 # ---------------------------------------------------------------------
-    [ "$loglevel" = "2" ] && printf "\n${log_indent}list files in INPUT with transcoded special characters:\n" && ls "${OUTPUTDIR_tmp}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
+    [ "$loglevel" = "2" ] && printf "\n${log_indent}list files in INPUT with transcoded special characters:\n" && ls "${work_tmp_main}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
 
 
 # count pages / files:
@@ -2109,8 +2108,8 @@ while read input ; do
 
 # create temporary working directory
 # ---------------------------------------------------------------------
-    work_tmp="${OUTPUTDIR_tmp%/}/step2_tmp_$(date +%s)/"
-    mkdir -p "${work_tmp}"
+    work_tmp_step2="${work_tmp_main%/}/step2_tmp_$(date +%s)/"
+    mkdir -p "${work_tmp_step2}"
 
     echo -e
     filename=$(basename "$input")
@@ -2136,12 +2135,12 @@ while read input ; do
 # (otherwise there will be duplication if renaming syntax is missing)
 # ---------------------------------------------------------------------
 #    output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
-#    output="${work_tmp%/}/temp_${title}_$(date +%s).pdf"
+    output="${work_tmp_step2%/}/temp_${title}_$(date +%s).pdf"
 
 # move temporary file to destination folder:
 # ---------------------------------------------------------------------
-#    cp "${input}" "${output}"
-    output="${input}"
+    cp "${input}" "${output}"
+#    output="${input}"
 
 # End ToDo <<<<<<<<
 ############################################################################
@@ -2159,8 +2158,8 @@ while read input ; do
 
 # exact text
 # ---------------------------------------------------------------------
-    searchfile="${work_tmp}/synOCR.txt"
-    searchfilename="${work_tmp}/synOCR_filename.txt"    # for search in file name
+    searchfile="${work_tmp_step2}/synOCR.txt"
+    searchfilename="${work_tmp_step2}/synOCR_filename.txt"    # for search in file name
     echo "${title}" > "${searchfilename}"
 
 
@@ -2280,8 +2279,8 @@ while read input ; do
 
 done <<<"${files}"
 
-    rm -rfv "$work_tmp" | sed -e "s/^/${log_indent}/g"
-    rm -rfv "$OUTPUTDIR_tmp" | sed -e "s/^/${log_indent}/g"
+    [ -d "${$work_tmp_step2}" ] && rm -rfv "$work_tmp_step2" | sed -e "s/^/${log_indent}/g"
+    [ -d "${work_tmp_main}" ] && rm -rfv "$work_tmp_main" | sed -e "s/^/${log_indent}/g"
 }
 
     printf "\n\n\n"
@@ -2321,7 +2320,7 @@ done <<<"${files}"
     purge_log
     purge_backup
 
-    rmdir -v "${OUTPUTDIR_tmp}" | sed -e "s/^/  /g"
+    [ -d "${work_tmp_main}" ] && rmdir -v "${work_tmp_main}" | sed -e "s/^/  /g"
 
     printf "\n  runtime all files:              ➜ $(sec_to_time $(( $(date +%s) - ${date_start_all} )))"
     printf "\n\n\n"
