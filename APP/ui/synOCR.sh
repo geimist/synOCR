@@ -1868,6 +1868,8 @@ while read input ; do
     
     # split document:
     # ---------------------------------------------------------------------
+        unset splitJob
+
         split_pages(){
 
             echo "${log_indent}part:            $1"
@@ -1900,7 +1902,7 @@ while read input ; do
     # calculate site ranges for splitting
     # ---------------------------------------------------------------------
         SplitPageCount=${#splitPages[@]}
-        echo "${log_indent}split page count: $SplitPageCount"
+        printf "${log_indent}splitpage count: $SplitPageCount\n\n"
 
         if (( "$SplitPageCount" > 0 )) && (( "$pageCount" > 1 )); then
             currentPart=0
