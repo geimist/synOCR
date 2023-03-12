@@ -998,11 +998,11 @@ prepare_python()
                 fi
             done
 
-        if [ "$python_check" = "ok" ]; then
-            echo "$python_env_version" > "${python3_env}/synOCR_python_env_version"
-        else
-            echo "0" > "${python3_env}/synOCR_python_env_version"
-        fi
+            if [ "$python_check" = "ok" ]; then
+                echo "$python_env_version" > "${python3_env}/synOCR_python_env_version"
+            else
+                echo "0" > "${python3_env}/synOCR_python_env_version"
+            fi
 
             [ "$synOCR_user" = root ] && chown -R synOCR:administrators /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
             [ "$synOCR_user" = root ] && chmod -R 755 /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
