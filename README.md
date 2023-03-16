@@ -1,15 +1,15 @@
 auto translate: 
-[Čeština](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=cs&_x_tr_hl=en) | 
-[中文简体](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=zh-CN&_x_tr_hl=en) |
-[English](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=en&_x_tr_hl=en) | 
-[Español](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=es&_x_tr_hl=en) | 
-[Français](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=fr&_x_tr_hl=en) | 
-[Italiano](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=it&_x_tr_hl=en) | 
-[한국어](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=ko&_x_tr_hl=en) | 
-[Nederlands](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=nl&_x_tr_hl=en) | 
-[Polski](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=pl&_x_tr_hl=en) | 
-[Русский](https://git-geimist-eu.translate.goog/geimist/synOCR/?_x_tr_sl=de&_x_tr_tl=ru&_x_tr_hl=en)   
-<hr>
+[![de](https://flagcdn.com/w20/de.png)](https://github.com/geimist/synOCR)
+[![cz](https://flagcdn.com/w20/cz.png)](http://translate.google.com/translate?js=n&sl=auto&tl=cs&u=https://github.com/geimist/synOCR)
+[![zh](https://flagcdn.com/w20/cn.png)](http://translate.google.com/translate?js=n&sl=auto&tl=zh-CN&u=https://github.com/geimist/synOCR)
+[![en](https://flagcdn.com/w20/us.png)](http://translate.google.com/translate?js=n&sl=auto&tl=en&u=https://github.com/geimist/synOCR)
+[![sp](https://flagcdn.com/w20/es.png)](http://translate.google.com/translate?js=n&sl=auto&tl=es&u=https://github.com/geimist/synOCR)
+[![fr](https://flagcdn.com/w20/fr.png)](http://translate.google.com/translate?js=n&sl=auto&tl=fr&u=https://github.com/geimist/synOCR)
+[![it](https://flagcdn.com/w20/it.png)](http://translate.google.com/translate?js=n&sl=auto&tl=it&u=https://github.com/geimist/synOCR)
+[![kor](https://flagcdn.com/w20/kr.png)](http://translate.google.com/translate?js=n&sl=auto&tl=kor&u=https://github.com/geimist/synOCR)
+[![nl](https://flagcdn.com/w20/nl.png)](http://translate.google.com/translate?js=n&sl=auto&tl=nl&u=https://github.com/geimist/synOCR)
+[![pl](https://flagcdn.com/w20/pl.png)](http://translate.google.com/translate?js=n&sl=auto&tl=pl&u=https://github.com/geimist/synOCR)
+[![ru](https://flagcdn.com/w20/ru.png)](http://translate.google.com/translate?js=n&sl=auto&tl=ru&u=https://github.com/geimist/synOCR)
   
 
 # synOCR - [DOWNLOAD](https://geimist.eu/synOCR)
