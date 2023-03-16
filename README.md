@@ -12,8 +12,14 @@ auto translate:
 [![ru](https://flagcdn.com/w20/ru.png)](http://translate.google.com/translate?js=n&sl=auto&tl=ru&u=https://github.com/geimist/synOCR)
   
 
-# synOCR - [DOWNLOAD](https://geimist.eu/synOCR)
+### Hier findest du den Download der aktuellen stabilen Version:    
+- [DSM6](https://geimist.eu/synOCR/synOCR_DSM6_latest.html)
+- [DSM7](https://geimist.eu/synOCR/synOCR_DSM7_latest.html)
 
+### Hier findest du den Download der aktuelle BETA Version:       
+- [DSM6](https://geimist.eu/synOCR/synOCR_DSM6_snapshot_build.html)
+- [DSM7](https://geimist.eu/synOCR/synOCR_DSM7_snapshot_build.html)
+<hr>
 ## synOCR macht deine Synology DiskStation zum papierlosen Büro
 
 Damit kannst du einfach OCR auf PDF-Dokumente anwenden. synOCR kann anschließend nach Tags und Datum in den Dokumenten suchen, diese nach einem individuellen Muster umbenennen und nach Kategorien in Unterordner einsortieren. Durch Verwendung von Hardlinks entsteht kein erhöhter Speicherplatzbedarf, wenn ein Dokument in mehrere Kategorieordner einsortiert werden muss.   
