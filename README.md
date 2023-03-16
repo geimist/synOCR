@@ -32,7 +32,7 @@ Alle Dokumente verbleiben im Benutzerdateisystem und du bist mit der Nutzung von
 - macht PDF-Scans mit der Texterkennung von OCRmyPDF durchsuchbar
 - teilt Dokumente mit Hilfe von Trennblättern auf
 - sucht nach Datum im Text und passt den Dateinamen nach eigenen Muster an
-- es sind einfache Regeln in der GUI und sogar komplexe YAML-Regeln (auf Wunsch auch als RegEx) definierbar
+- es sind einfache Regeln in der GUI sowie komplexe YAML-Regeln (auf Wunsch auch als RegEx) definierbar
 - Sortierung der Dokumente in Regel basierte Ordner oder nach Datum
 - und so manches mehr …
 
