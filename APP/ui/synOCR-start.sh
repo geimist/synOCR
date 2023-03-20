@@ -195,7 +195,7 @@ fi
             highest_version=$(printf "${online_version}\n${local_version}" | sort -V | tail -n1)
             if [[ "${local_version}" != "$highest_version" ]] ; then
                 if [ "$dsm_version" = "7" ] ; then
-                    synodsmnotify -c SYNO.SDS.ThirdParty.App.synOCR @administrators synOCR:app:app_name synOCR:app:update_available
+                    synodsmnotify -c SYNO.SDS.synOCR.Application @administrators synOCR:app:app_name synOCR:app:update_available
                 else
                     synodsmnotify @administrators "synOCR" "Update available [version ${online_version}]"
                 fi
