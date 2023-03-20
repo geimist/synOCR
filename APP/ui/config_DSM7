@@ -1,24 +1,31 @@
 {
-    ".url": {
-        "SYNO.SDS.ThirdParty.App.synOCR": {
-            "type": "url",
-            "title": "synOCR",
-            "desc": "synOCR",
-            "allUsers": false,
-            "allowMultiInstance": false,
-            "grantPrivilege": "all",
-            "advanceGrantPrivilege": true,
-            "configablePrivilege": true,
-            "icon": "images/synOCR_{0}.png",
-            "appWindow": "SYNO.SDS.ThirdParty.App.synOCR",
-            "texts": "texts",
-            "width": 992,
-            "height": 560,
-            "url": "/webman/3rdparty/synOCR/index.cgi",
-            "preloadTexts": [
+	"synOCR.js": {
+		"SYNO.SDS.synOCR.Application": {
+			"type": "app",
+			"title": "synOCR",
+			"appWindow": "SYNO.SDS.synOCR.MainWindow",
+			"desc": "synOCR turns your Synology DiskStation into a paperless office",
+			"icon": "images\/synOCR_{0}.png",
+			"allowMultiInstance": false,
+			"allowStandalone": true,
+			"allowSharing": true,
+			"allUsers": true,
+			"grantPrivilege": "all",
+			"advanceGrantPrivilege": true,
+			"texts": "texts",
+			"depend": ["SYNO.SDS.synOCR.MainWindow"],
+			"preloadTexts": [
                 "app:app_name",
                 "app:job_successful"
-                ]
-        }
-    }
+				]
+		},
+		"SYNO.SDS.synOCR.MainWindow": {
+			"type": "lib",
+			"title": "synOCR",
+			"icon": "images\/synOCR_{0}.png",	
+			"texts": "texts",
+			"depend": ["SYNO.SDS.synOCR.Utils"]
+		},
+		"SYNO.SDS.synOCR.Utils": []
+	}
 }

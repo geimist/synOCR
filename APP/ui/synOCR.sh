@@ -2222,7 +2222,7 @@ while read input ; do
     if [ "$dsmtextnotify" = "on" ] ; then
         file_notify=$(basename "${output}")
         if [ "$dsm_version" = "7" ] ; then
-            synodsmnotify -c SYNO.SDS.ThirdParty.App.synOCR $MessageTo synOCR:app:app_name synOCR:app:job_successful
+            synodsmnotify -c SYNO.SDS.synOCR.Application $MessageTo synOCR:app:app_name synOCR:app:job_successful
         else
            synodsmnotify $MessageTo "synOCR" "File [${file_notify}] was processed"
         fi
