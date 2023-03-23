@@ -3,8 +3,11 @@ known issues / limitations:
     does not work when running the program without root privileges (due to the known rights restrictions)
 
 1.3.99.9 [2023-xx-xx]
-BUGFIXES:
+IMPROVEMENT:
  - [GUI] Compatibility adapted for DSM7.2 (thx @Tommes)
+ - [GUI] update Bootstrap framework to 5.2.3 (thx @Tommes)
+ - [GUI] update Bootstrap JavaScript to 5.2.3 (thx @Tommes)
+ - [GUI] update jQuery to 3.6.4 (thx @Tommes)
 
 1.3.99.8 [2023-03-12]
 BUGFIXES:
