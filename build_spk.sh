@@ -9,10 +9,6 @@ beta_status=""              # will be set by script
 #----------------------------------------------------------------------------------------
 # ./APP --> Working environment
 # ./PKG  --> Archive folder for building the SPK (start scripts etc.)
-#
-#buildversion=
-# git fetch --all;git reset --hard origin/DSM_unibuild;git checkout DSM_unibuild
-
 
 # Usage info
 # ---------------------------------------------------------------------
@@ -24,6 +20,7 @@ Usage:      ./${0##*/} -v=<synOCR-Version> --dsm=<target DSM-Version>
 Example:    ./${0##*/} -v=1.2.0 --dsm=7
 
     -v= --version=          specifies which synOCR version is to be built
+                            "local" will be used the local files without git interaction
         --DSM=              specifies for which DSM version is to be built
 
     -h  --help              display this help and exit
@@ -62,16 +59,51 @@ exit 1
     echo "requested synOCR version: $buildversion"
     echo "target DSM version:       $TargetDSM"
 
+    # adjust sed to compatible with macOS
+    # https://stackoverflow.com/questions/19456518/error-when-using-sed-with-find-command-on-os-x-invalid-command-code
+    shopt -s expand_aliases
+    if echo $(uname -a) grep -q "Darwin" >>/dev/null ; then
+        alias sed_i='sed -i ""'
+    else
+        alias sed_i='sed -i'
+    fi
+ 
+    synosetkeyvalue() {
+    # this function is a workaround replacement of synology DSM binary synosetkeyvalue
+    # $1 = file
+    # $2 = key
+    # $3 = value
+    sed_i 's~^'$2'=.*~key='$3'~' "$1"
+    }
+
+    get_key_value() {
+    # this function is a workaround replacement of synology DSM binary get_key_value
+    # $1 = file
+    # $2 = key
+    cat "$1" | grep "^$2" | sed -e 's~^'$2'=~~;s~^"~~g;s~"$~~g'   
+    }
 
 # preparation:
 # ---------------------------------------------------------------------
+    set -E -o functrace     # for function failure()
+
+    failure() {
+    # this function show error line
+    # --------------------------------------------------------------
+        # https://unix.stackexchange.com/questions/462156/how-do-i-find-the-line-number-in-bash-when-an-error-occured
+        local lineno=$1
+        local msg=$2
+        echo "ERROR at line $lineno: $msg"
+    }
+    trap 'failure ${LINENO} "$BASH_COMMAND"' ERR
+    
     set -euo pipefail
     IFS=$'\n\t'
 
     build_tmp=$(mktemp -d -t tmp.XXXXXXXXXX)
 
     function finish {
-        git worktree remove --force "$build_tmp"
+        [ "$buildversion" != local ] && git worktree remove --force "$build_tmp"
         rm -rf "$build_tmp"
     }
     trap finish EXIT
@@ -98,23 +130,29 @@ exit 1
     APPDIR=$(cd "$(dirname $0)";pwd)
     cd "${APPDIR}"
 
-    git pull
+    printf "\n-----------------------------------------------------------------------------------\n"
+    printf " - INFO: Create the temporary build folder and copy sources into it ..."
+    printf "\n-----------------------------------------------------------------------------------\n\n"
+
+	if [ "$buildversion" = local ]; then
+	    cp -r ./ "$build_tmp"
+	else
+        git pull
+        git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
+    fi
 
 #   buildversion=${1:-latest}
     taggedversions=$(git tag)
     set_spk_version=""
 
-    printf "\n-----------------------------------------------------------------------------------\n"
-    printf " - INFO: Create the temporary build folder and copy sources into it ..."
-    printf "\n-----------------------------------------------------------------------------------\n\n"
-
-    git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
-    pushd "$build_tmp"
+    pushd "$build_tmp"	>>/dev/null
 
     if echo "$taggedversions" | egrep -q "$buildversion"; then
         echo "git checkout to $buildversion"
         git checkout "$buildversion"
         set_spk_version="$buildversion"
+    elif [ "$buildversion" = local ]; then
+    	set_spk_version="$buildversion"
     else
         echo "ATTENTION: The requested version was not found in the repository!"
         echo "The $(git rev-parse --abbrev-ref HEAD)-branch will be used!"
@@ -196,27 +234,29 @@ exit 1
 
     defaultSourceLang="$build_tmp/APP/ui/lang/lang_enu.txt"
     # PKG_DSMx/INFO
+
     synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$defaultSourceLang" lang_INFO_description)
 
     # install_uifile
     install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
     create_install_uifile "$install_uifile_lang"
-    sed -i "s|lang_wizui_install_title|$(get_key_value "$defaultSourceLang" lang_wizui_install_title)|"  "$install_uifile_lang"
-    sed -i "s|lang_wizui_install_desc|$(get_key_value "$defaultSourceLang" lang_wizui_install_desc)|"  "$install_uifile_lang"
+
+    sed_i "s|lang_wizui_install_title|$(get_key_value "$defaultSourceLang" lang_wizui_install_title)|"  "$install_uifile_lang"
+    sed_i "s|lang_wizui_install_desc|$(get_key_value "$defaultSourceLang" lang_wizui_install_desc)|"  "$install_uifile_lang"
 
     # uninstall_uifile
     uninstall_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile"
     create_uninstall_uifile "$uninstall_uifile_lang"
-    sed -i "s|lang_wizui_uninstall_title|$(get_key_value "$defaultSourceLang" lang_wizui_uninstall_title)|" "$uninstall_uifile_lang"
-    sed -i "s|lang_wizui_uninstall_desc_1|$(get_key_value "$defaultSourceLang" lang_wizui_uninstall_desc_1)|" "$uninstall_uifile_lang"
-    sed -i "s|lang_wizui_uninstall_desc_2|$(get_key_value "$defaultSourceLang" lang_wizui_uninstall_desc_2)|" "$uninstall_uifile_lang"
+    sed_i "s|lang_wizui_uninstall_title|$(get_key_value "$defaultSourceLang" lang_wizui_uninstall_title)|" "$uninstall_uifile_lang"
+    sed_i "s|lang_wizui_uninstall_desc_1|$(get_key_value "$defaultSourceLang" lang_wizui_uninstall_desc_1)|" "$uninstall_uifile_lang"
+    sed_i "s|lang_wizui_uninstall_desc_2|$(get_key_value "$defaultSourceLang" lang_wizui_uninstall_desc_2)|" "$uninstall_uifile_lang"
 
     # upgrade_uifile
     if [ "$TargetDSM" = 6 ]; then
         upgrade_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile"
         create_upgrade_uifile "$upgrade_uifile_lang"
-        sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$defaultSourceLang" lang_wizui_upgrade_title)|" "$upgrade_uifile_lang"
-        sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$defaultSourceLang" lang_wizui_upgrade_desc)|" "$upgrade_uifile_lang"
+        sed_i "s|lang_wizui_upgrade_title|$(get_key_value "$defaultSourceLang" lang_wizui_upgrade_title)|" "$upgrade_uifile_lang"
+        sed_i "s|lang_wizui_upgrade_desc|$(get_key_value "$defaultSourceLang" lang_wizui_upgrade_desc)|" "$upgrade_uifile_lang"
     fi
 
     for lang in ${languages[@]}; do
@@ -229,8 +269,8 @@ exit 1
         mkdir -p "$langDir"
         create_notify_file "$notifyFileLang"
 
-        sed -i "s|lang_notify_file_job_successful|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_job_successful)|" "${notifyFileLang}"
-        sed -i "s|lang_notify_file_update_available|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_update_available)|" "${notifyFileLang}"
+        sed_i "s|lang_notify_file_job_successful|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_job_successful)|" "${notifyFileLang}"
+        sed_i "s|lang_notify_file_update_available|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_update_available)|" "${notifyFileLang}"
 
         # PKG_DSMx/scripts/lang/${lang}
         scripts_lang_lang="$build_tmp/$PKG/scripts/lang/${lang}"
@@ -251,23 +291,23 @@ exit 1
         # install_uifile:
         install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
         create_install_uifile "${install_uifile_lang}"
-        sed -i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_title)|" "${install_uifile_lang}"
-        sed -i "s|lang_wizui_install_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_desc)|" "${install_uifile_lang}"
+        sed_i "s|lang_wizui_install_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_title)|" "${install_uifile_lang}"
+        sed_i "s|lang_wizui_install_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_install_desc)|" "${install_uifile_lang}"
 
         # uninstall_uifile:
         uninstall_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/uninstall_uifile_${lang}"
         create_uninstall_uifile "${uninstall_uifile_lang}"
-        sed -i "s|lang_wizui_uninstall_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_title)|" "${uninstall_uifile_lang}"
-        sed -i "s|lang_wizui_uninstall_desc_1|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc_1)|" "${uninstall_uifile_lang}"
-        sed -i "s|lang_wizui_uninstall_desc_2|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc_2)|" "${uninstall_uifile_lang}"
+        sed_i "s|lang_wizui_uninstall_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_title)|" "${uninstall_uifile_lang}"
+        sed_i "s|lang_wizui_uninstall_desc_1|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc_1)|" "${uninstall_uifile_lang}"
+        sed_i "s|lang_wizui_uninstall_desc_2|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_uninstall_desc_2)|" "${uninstall_uifile_lang}"
  
         # upgrade_uifile (only for refresh notify after upgrade):
         # (currently without fallback to plain english file)
         if [ "$TargetDSM" = 6 ]; then
             upgrade_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}"
             create_upgrade_uifile "${upgrade_uifile_lang}"
-            [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_title)|" "${upgrade_uifile_lang}"
-            [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed -i "s|lang_wizui_upgrade_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_desc)|" "${upgrade_uifile_lang}"
+            [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed_i "s|lang_wizui_upgrade_title|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_title)|" "${upgrade_uifile_lang}"
+            [ -f "$build_tmp/$PKG/WIZARD_UIFILES/upgrade_uifile_${lang}" ] && sed_i "s|lang_wizui_upgrade_desc|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_wizui_upgrade_desc)|" "${upgrade_uifile_lang}"
         fi
     done
 
@@ -336,4 +376,3 @@ exit 1
     printf "\n-----------------------------------------------------------------------------------\n\n"
 
 exit 0
-
