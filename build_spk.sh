@@ -59,15 +59,30 @@ exit 1
     echo "requested synOCR version: $buildversion"
     echo "target DSM version:       $TargetDSM"
 
+    shopt -s expand_aliases
+
     # adjust sed to compatible with macOS
     # https://stackoverflow.com/questions/19456518/error-when-using-sed-with-find-command-on-os-x-invalid-command-code
-    shopt -s expand_aliases
     if echo $(uname -a) grep -q "Darwin" >>/dev/null ; then
         alias sed_i='sed -i ""'
     else
         alias sed_i='sed -i'
     fi
- 
+
+    # adjust synosetkeyvalue and get_key_value for different OS
+    # at DSM set alias with full path, otherwise call only the same named function
+    if [ -x "$(which synosetkeyvalue)" ]; then
+        alias synosetkeyvalue='$(which synosetkeyvalue)'
+    else
+        alias synosetkeyvalue='synosetkeyvalue'
+    fi
+
+    if [ -x "$(which get_key_value)" ]; then
+        alias get_key_value='$(which get_key_value)'
+    else
+        alias get_key_value='get_key_value'
+    fi
+
     synosetkeyvalue() {
     # this function is a workaround replacement of synology DSM binary synosetkeyvalue
     # $1 = file
