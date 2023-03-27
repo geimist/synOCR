@@ -1028,11 +1028,11 @@ find_date()
 #########################################################################################
 
 founddatestr=""
-format=$1   # for regex search: 1 = dd mm [yy]yy
-            #                   2 = [yy]yy mm dd
+format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
+            #                   2 = (yy|yyyy)[./-]mm[./-]dd
             #                   3 = mm[./-]dd[./-]yy(yy) american
 
-# python search and set regex fallback, if needed
+# python search and set regex fallback, if needed:
 # ---------------------------------------------------------------------
     if [ "$tmp_date_search_method" = "python" ] && [ "$python_check" = "ok" ]; then
         format=2
@@ -1044,25 +1044,12 @@ format=$1   # for regex search: 1 = dd mm [yy]yy
 
         founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
         [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
-    
-    
-    # test and maybe fallback to RegEx search, if result of python search not valid:
-    # ---------------------------------------------------------------------
-        date "+%d/%m/%Y" -d $(awk -F- '{print $2}' <<<"$founddatestr" )/$(awk -F- '{print $3}' <<<"$founddatestr" )/$(awk -F- '{print $1}' <<<"$founddatestr" ) > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
-        if [ $? -ne 0 ]; then
-            printf "\n${log_indent}! ! ! failed ...\n${log_indent}fallback to RegEx search\n\n"
-            tmp_date_search_method=regex
-            format=1
-        fi
-    fi
 
-
-# RegEx search
+# RegEx search:
 # ---------------------------------------------------------------------
-    if [ "$tmp_date_search_method" = "regex" ]; then
+    elif [ "$tmp_date_search_method" = "regex" ]; then
         # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
-        
-        # alphanum example:
+        # ToDo – alphanum example:
         # (?i)\b(([0-9]?[0-9])[. ][ ]?([0-9]?[0-9][. ]|Jan.*|Feb.*|Mär.*|Apr.*|Mai|Jun.*|Jul.*|Aug.*|Sep.*|Okt.*|Nov.*|Dez.*)[ ]?([0-9]?[0-9]?[0-9][0-9]))\b
         
         echo "${log_indent}run RegEx date search - search for date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
@@ -1135,7 +1122,7 @@ format=$1   # for regex search: 1 = dd mm [yy]yy
         done
     fi
 
-# not found? Next loop with other schema
+# not found in regex search? Next loop with other schema:
 # ---------------------------------------------------------------------
     if [ "$dateIsFound" = no ]; then
         if [ "$format" -eq 1 ]; then
