@@ -63,7 +63,9 @@ exit 1
 
     # adjust sed to compatible with macOS
     # https://stackoverflow.com/questions/19456518/error-when-using-sed-with-find-command-on-os-x-invalid-command-code
-    if echo $(uname -a) grep -q "Darwin" >>/dev/null ; then
+
+#   if echo $(uname -a) grep -q "Darwin" >>/dev/null ; then
+    if [ $(uname -s) = Darwin ]; then
         alias sed_i='sed -i ""'
     else
         alias sed_i='sed -i'
