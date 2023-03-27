@@ -27,12 +27,12 @@ For questions: synocr [@] geimist.eu
 - cht = Chinese traditional ❌
 - csy = Czech ✔️
 - jpn = Japanese ✔️
-- krn = Korean ❌
+- krn = Korean ✔️
 - dan = Danish ✔️
 - fre = French ✔️
 - ita = Italian ✔️
 - nld = Dutch ✔️
-- nor = Norwegian ❌
+- nor = Norwegian ✔️
 - plk = Polish ✔️
 - rus = Russian ✔️
 - spn = Spanish ✔️
