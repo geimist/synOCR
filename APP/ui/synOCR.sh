@@ -411,9 +411,13 @@ if [ -z "$taglist" ]; then
 elif [ -f "$taglist" ]; then
     if grep -q "synOCR_YAMLRULEFILE" "$taglist" ; then
         echo "${log_indent}source for tags is yaml based tag rule file [$taglist]"
-        cp "$taglist" "${work_tmp_step2}/tmprulefile.txt"     # copy YAML file into the TMP folder, because the file can only be read incorrectly in ACL folders
+
+        # copy YAML file into the TMP folder, because the file can only be read incorrectly in ACL folders
+        cp "$taglist" "${work_tmp_step2}/tmprulefile.txt"
         taglisttmp="${work_tmp_step2}/tmprulefile.txt"
-        sed -i $'s/\r$//' "$taglisttmp"                 # convert DOS to Unix
+
+        # convert DOS to Unix:
+        sed -i $'s/\r$//' "$taglisttmp"
         type_of_rule=advanced
 
         yaml_validate
@@ -1042,7 +1046,7 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
             arg_searchnearest="-searchnearest=off"
         fi
 
-        founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" $arg_searchnearest -dateBlackList "$ignoredDate" -dbg_file $current_logfile -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
+        founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" "$arg_searchnearest" -dateBlackList "$ignoredDate" -dbg_file "$current_logfile" -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
         [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
 
 # RegEx search:

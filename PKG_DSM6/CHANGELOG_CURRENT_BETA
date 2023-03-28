@@ -1,5 +1,7 @@
 
 1.3.99.9 [2023-xx-xx]
+BUGFIXES:
+ - [SHELL] if the path to the log file contained a hash, the date search via Python failed
 IMPROVEMENT:
  - [GUI] Compatibility adapted for DSM7.2 (thx @Tommes)
  - [GUI] update Bootstrap framework to 5.2.3 (thx @Tommes)
