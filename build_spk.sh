@@ -54,9 +54,15 @@ exit 1
     done
 
     [ -z $buildversion ] && echo "wrong or empty value for synOCR version - set to \"latest\"" && buildversion="latest"
-    [[ ! $TargetDSM = 6 ]] && [[ ! $TargetDSM = 7 ]] && echo "wrong or empty value for target DSM version - set to 7" && TargetDSM=7
+    [ ! "$TargetDSM" = 6 ] && [ ! "$TargetDSM" = 7 ] && echo "wrong or empty value for target DSM version - set to 7" && TargetDSM=7
 
-    echo "requested synOCR version: $buildversion"
+    if [ -x "$(command -v git)" ]; then
+        echo "requested synOCR version: $buildversion"
+    else
+        buildversion=local
+        echo "git is not installed – use build version \"local\""
+    fi
+
     echo "target DSM version:       $TargetDSM"
 
     shopt -s expand_aliases
@@ -124,11 +130,6 @@ exit 1
         rm -rf "$build_tmp"
     }
     trap finish EXIT
-
-    if ! [ -x "$(command -v git)" ]; then
-        echo 'Error: git is not installed.' >&2
-        exit 1
-    fi
 
     if ! [ -x "$(command -v fakeroot)" ]; then
         if [ $(whoami) != "root" ]; then
