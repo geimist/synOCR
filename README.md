@@ -37,7 +37,7 @@ Alle Dokumente verbleiben im Benutzerdateisystem und du bist mit der Nutzung von
 - und so manches mehr …
 
 
-Anleitung und Hilfe findest du im [Wiki (befindet sich noch im Aufbau)](https://git.geimist.eu/geimist/synOCR/wiki).
+Anleitung und Hilfe findest du im [Wiki (befindet sich noch im Aufbau)](https://github.com/geimist/synOCR/wiki).
 
 ___
 
@@ -56,11 +56,11 @@ All documents remain in the user file system and you are not bound to a propriet
 - sort documents into rule based folders or by date
 - and many more ...
 
-Instructions and help can be found in the [Wiki (still under construction [currently only in german])](https://git.geimist.eu/geimist/synOCR/wiki).
+Instructions and help can be found in the [Wiki (still under construction [currently only in german])](https://github.com/geimist/synOCR/wiki).
 
 ___
 
-<img src="https://git.geimist.eu/geimist/synOCR/raw/branch/master/synOCR_screenshot_1.png" width="800" />
+<img src="https://github.com/geimist/synOCR/raw/master/wiki_resources/synOCR_screenshot_1.png" width="800" />
 <br>    
-<img src="https://git.geimist.eu/geimist/synOCR/raw/branch/master/synOCR_screenshot_2.png" width="800" />
+<img src="https://github.com/geimist/synOCR/raw/master/wiki_resources/synOCR_screenshot_2.png" width="800" />
 <br> 
