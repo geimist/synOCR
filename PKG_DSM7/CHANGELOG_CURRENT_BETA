@@ -10,6 +10,7 @@ IMPROVEMENT:
  - [GUI] update Bootstrap framework to 5.2.3 (thx @Tommes)
  - [GUI] update Bootstrap JavaScript to 5.2.3 (thx @Tommes)
  - [GUI] update jQuery to 3.6.4 (thx @Tommes)
+ - [SHELL] splitting: change from pypdf to pikepdf because pypdf breaks the PDF/A attribute (thx @Gthorsten)
 
 1.3.99.8 [2023-03-12]
 BUGFIXES:
