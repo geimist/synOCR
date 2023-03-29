@@ -1046,7 +1046,7 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
             arg_searchnearest="-searchnearest=off"
         fi
 
-        [ "$loglevel" = "2" ] && printf "\n${log_indent}call find_dates.py: -fileWithTextFindings $searchfile  $arg_searchnearest -dateBlackList $ignoredDate -dbg_file $current_logfile -dbg_lvl $loglevel -minYear $minYear -maxYear $maxYear"
+        [ "$loglevel" = "2" ] && printf "\n${log_indent}call find_dates.py: -fileWithTextFindings \"$searchfile\"  \"$arg_searchnearest\" -dateBlackList \"$ignoredDate\" -dbg_file \"$current_logfile\" -dbg_lvl \"$loglevel\" -minYear \"$minYear\" -maxYear \"$maxYear\""
 
         founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" \
                                                             "$arg_searchnearest" \
@@ -1891,7 +1891,7 @@ while read input ; do
             #  -dbg_file:     filename to write debug info
             #  -dbg_lvl:      debug level (1=info, 2=debug, 0=0ff)
 
-            [ "$loglevel" = "2" ] && printf "\n${log_indent}call handlePdf.py: -dbg_lvl $loglevel -dbg_file $current_logfile -task split -inputFile $outputtmp -startPage $2 -endPage $3 -outputFile $4\n\n"
+            [ "$loglevel" = "2" ] && printf "\n${log_indent}call handlePdf.py: -dbg_lvl \"$loglevel\" -dbg_file \"$current_logfile\" -task split -inputFile \"$outputtmp\" -startPage \"$2\" -endPage \"$3\" -outputFile \"$4\"\n\n"
 
             python3 ./includes/handlePdf.py -dbg_lvl "$loglevel" \
                                             -dbg_file "$current_logfile" \
