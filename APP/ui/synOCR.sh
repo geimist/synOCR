@@ -1128,7 +1128,7 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
 
 # not found in regex search? Next loop with other schema:
 # ---------------------------------------------------------------------
-    if [ "$dateIsFound" = no ]; then
+    if [ "$dateIsFound" = no ] && [ "$tmp_date_search_method" = "regex" ]; then
         if [ "$format" -eq 1 ]; then
             find_date 2
         elif [ "$format" -eq 2 ]; then
