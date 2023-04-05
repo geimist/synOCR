@@ -7,18 +7,19 @@ BUGFIXES:
  - [SHELL] if the path to the log file contained a hash, the date search via Python failed
 IMPROVEMENT:
  - [GUI] Compatibility adapted for DSM7.2 (thx @Tommes)
- - [GUI] update Bootstrap framework to 5.2.3 (thx @Tommes)
- - [GUI] update Bootstrap JavaScript to 5.2.3 (thx @Tommes)
- - [GUI] update jQuery to 3.6.4 (thx @Tommes)
+ - [GUI] Bump Bootstrap framework to 5.2.3 (thx @Tommes)
+ - [GUI] Bump Bootstrap JavaScript to 5.2.3 (thx @Tommes)
+ - [GUI] Bump jQuery to 3.6.4 (thx @Tommes)
+ - improve DSM notification
 
 1.3.99.8 [2023-03-12]
 BUGFIXES:
- - [SHELL] inconsistent creation of the temporary folder fixed
+ - [BETAFIX] inconsistent creation of the temporary folder fixed
  - [SHELL] incorrect separator page behavior for consecutive documents with separator pages
 
 1.3.99.6 [2023-03-11]
 BUGFIXES:
- - [YAML] caseinsensitive was not definable
+ - [BETAFIX/YAML] caseinsensitive was not definable
  - [GUI] fixed syntax error that caused a navigation error in the GUI
  - [SHELL] if two separation pages follow each other, this was result in an empty PDF file (thx @DeeKay1)
  - [SHELL] if metadata was previously written, the PDF lost its PDF/A property.

@@ -16,7 +16,8 @@
 			"depend": ["SYNO.SDS.synOCR.MainWindow"],
 			"preloadTexts": [
                 "app:app_name",
-                "app:job_successful"
+                "app:job_successful",
+                "app:update_available"
 				]
 		},
 		"SYNO.SDS.synOCR.MainWindow": {

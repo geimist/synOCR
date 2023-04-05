@@ -195,8 +195,8 @@ exit 1
     create_notify_file() {
         {   echo '[app]'
             echo 'app_name="synOCR"'
-            echo 'job_successful="lang_notify_file_job_successful"'
-            echo 'update_available="lang_notify_file_update_available (https://geimist.eu/synocr)"'
+            echo 'job_successful="lang_notify_file_job_successful {0}"'
+            echo 'update_available="lang_notify_file_update_available lang_notify_file_update_version_installed: {0} lang_notify_file_update_version_online: {1}"'
         } > "$1"
     }
 
@@ -289,6 +289,8 @@ exit 1
 
         sed_i "s|lang_notify_file_job_successful|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_job_successful)|" "${notifyFileLang}"
         sed_i "s|lang_notify_file_update_available|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_update_available)|" "${notifyFileLang}"
+        sed_i "s|lang_notify_file_update_version_installed|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_update_version_installed)|" "${notifyFileLang}"
+        sed_i "s|lang_notify_file_update_version_online|$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_notify_file_update_version_online)|" "${notifyFileLang}"
 
         # PKG_DSMx/scripts/lang/${lang}
         scripts_lang_lang="$build_tmp/$PKG/scripts/lang/${lang}"
