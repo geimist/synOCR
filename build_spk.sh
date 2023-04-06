@@ -195,7 +195,7 @@ exit 1
     create_notify_file() {
         {   echo '[app]'
             echo 'app_name="synOCR"'
-            echo 'job_successful="lang_notify_file_job_successful {0}"'
+            echo 'job_successful="lang_notify_file_job_successful [{0}]"'
             echo 'update_available="lang_notify_file_update_available lang_notify_file_update_version_installed: {0} lang_notify_file_update_version_online: {1}"'
         } > "$1"
     }
