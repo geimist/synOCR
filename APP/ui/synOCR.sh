@@ -1287,49 +1287,40 @@ rename()
     echo -n "${log_indent}➜ insert metadata "
     
     if [ "$python_check" = "ok" ] && [ "$enablePyMetaData" -eq 1 ]; then
-        echo "(use python pypdf)"
+        echo "(use python pikepdf)"
         unset py_meta
     
         py_meta="'/Author': '$documentAuthor',"
         py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
-        py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\'")"
+        py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
+        py_meta="$(printf "$py_meta\n'/CreatorTool': \'synOCR $local_version\'")"
 
-        # reset pdf standard to PDF/A (https://stackoverflow.com/a/35042680/10763442):
-        # https://avepdf.com/pdfa-validation
-    #    py_meta="$(printf "$py_meta\n'/Version': 'PDF-1.7'")"  # dosn't work ...
-    
         echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
 
-        get_previous_meta(){
-            {   echo "import pprint"
-                echo "from pypdf import PdfFileReader, PdfFileMerger"
-                echo "if __name__ == '__main__':"
-                echo "    file_in = open('${outputtmp}', 'rb')"
-                echo "    pdf_reader = PdfFileReader(file_in)"
-                echo "    metadata = pdf_reader.getDocumentInfo()"
-                echo "    pprint.pprint(metadata)"
-                echo "    file_in.close()"
-            } | python3
-        }
         # get previous metadata - maybe for feature use:
+#        get_previous_meta(){
+#            {   echo "import pprint"
+#                echo "from pypdf import PdfFileReader, PdfFileMerger"
+#                echo "if __name__ == '__main__':"
+#                echo "    file_in = open('${outputtmp}', 'rb')"
+#                echo "    pdf_reader = PdfFileReader(file_in)"
+#                echo "    metadata = pdf_reader.getDocumentInfo()"
+#                echo "    pprint.pprint(metadata)"
+#                echo "    file_in.close()"
+#            } | python3
+#        }
 #       previous_meta=$(get_previous_meta)
-    
+
         outputtmpMeta="${outputtmp}_meta.pdf"
 
-        {   echo "import pprint"
-        
-            echo "from pypdf import PdfReader, PdfMerger"
-        
-            echo "if __name__ == '__main__':"
-            echo "    reader = PdfReader('$outputtmp')"
-            echo "    metadata = reader.metadata"
-        
-            echo "    merger = PdfMerger()"
-            echo "    merger.append(reader)"
-            echo "    merger.add_metadata({$py_meta})"
-            echo "    with open('$outputtmpMeta', 'wb') as fp:"
-            echo "        merger.write(fp)"
-        } | python3
+        [ "$loglevel" = "2" ] && printf "\n${log_indent}call handlePdf.py -dbg_lvl \"$loglevel\" -dbg_file \"$current_logfile\" -task metadata -inputFile \"$outputtmp\" -metaData \"{$py_meta}\" -outputFile \"$outputtmpMeta\"\n\n"
+
+        python3 ./includes/handlePdf.py -dbg_lvl "$loglevel" \
+                                        -dbg_file "$current_logfile" \
+                                        -task metadata \
+                                        -inputFile "$outputtmp" \
+                                        -metaData "{$py_meta}"  \
+                                        -outputFile "$outputtmpMeta"
 
         if [ $? != 0 ] || [ $(stat -c %s "${outputtmpMeta}") -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
             echo "${log_indent}  ⚠️ ERROR with writing metadata ... "
@@ -1338,6 +1329,7 @@ rename()
         fi
         unset outputtmpMeta
     
+    # Fallback for exiftool DSM6.2, if needed:
     elif which exiftool > /dev/null  2>&1 ; then
         echo -n "(exiftool ok) "
         exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
