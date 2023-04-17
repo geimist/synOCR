@@ -15,19 +15,21 @@
 # -------------------------------------------------------------------------------------
 # DSM WebGUI folder
 # /usr/syno/synoman/webman/3rdparty/[Package Name] -> /var/packages/[Package Name]/target
-WEBGUI_FOLDER="/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}"
+    WEBGUI_FOLDER="/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}"
 
 # Soft link
 # /var/packages/[Package Name]/target -> /volume1/@appstore/[Package Name]
-PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
+    PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
 
 # Timestamp - Formatting the Timestamp to terminate log entries
-TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
+    TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 # -------------------------------------------------------------------------------------
 
 
 # Action...
 # -------------------------------------------------------------------------------------
+# remove python environment on DSM7 and above:
+    [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ] && rm -rf "/var/packages/${SYNOPKG_PKGNAME}/etc/python3_env" 
 
 # rm /tmp/${SYNOPKG_PKGNAME}.*
 

@@ -2199,11 +2199,11 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
-                    # PushBullet token
+                    # Apprise notify service
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="PBTOKEN">'$lang_edit_set3_PBTOKEN_title'</label>
+                            <label for="PBTOKEN">'$lang_edit_set3_APPRISE_title'</label>
                         </div>
                         <div class="col-sm-5">'
 
@@ -2227,9 +2227,10 @@ if [[ "$page" == "edit" ]]; then
                             <div class="collapse" id="PBTOKEN-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
-                                        '$lang_edit_set3_PBTOKEN_help1'<br />
-                                        '$lang_edit_set3_PBTOKEN_help2'<br />
-                                        '$lang_edit_set3_PBTOKEN_help3'
+                                        '$lang_edit_set3_APPRISE_help1'<br />
+                                        (<code><span style="font-hight:1.1em;">ifttt://webhooksID/Event mqtts://user:pass@hostname:9883/topic</span></code>)<br>
+                                        '$lang_edit_set3_APPRISE_help2' <a href="https://github.com/caronc/apprise#productivity-based-notifications" onclick="window.open(this.href); return false;" style="'$synocrred';">github.com/caronc/apprise</a><br /><br />
+                                        '$lang_edit_set3_APPRISE_help3'
                                     </span>
                                 </div>
                             </div>

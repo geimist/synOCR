@@ -38,11 +38,9 @@
     # /usr/syno/bin/synosetkeyvalue "/usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh" enablePyMetaData 0
     enablePyMetaData=1            
     
-    python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
     synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML )
                                 # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
-    python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     dashline1="-----------------------------------------------------------------------------------"
     dashline2="●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
 
@@ -59,10 +57,13 @@
 
 
 # check DSM version:
-# ---------------------------------------------------------------------
-    dsm_version=6
+# -------------------------------------
     if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
         dsm_version=7
+        python3_env="/var/packages/synOCR/etc/python3_env"                  # is preserved during a package update
+    else
+        dsm_version=6
+        python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"  # must be rebuild after a package update
     fi
 
 
@@ -104,7 +105,7 @@
     NameSyntax=$(echo "$sqlerg" | awk -F'\t' '{print $14}')
     ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
     dockercontainer=$(echo "$sqlerg" | awk -F'\t' '{print $16}')
-    PBTOKEN=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
+    apprise_call=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
     dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
     MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
     [ -z "$MessageTo" ] || [ "$MessageTo" == "-" ] && MessageTo="@administrators" # group administrators (standard)
@@ -936,7 +937,7 @@ prepare_python()
         [ ! -d "$python3_env" ] && python3 -m venv "$python3_env"
         source "${python3_env}/bin/activate"
 
-        if [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "$python_env_version" ]; then
+        if [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "$local_version" ]; then
             [ "$loglevel" = "2" ] && printf "${log_indent}  python3 already installed ($(which python3))\n"
 
         # check / install pip:
@@ -1003,7 +1004,7 @@ prepare_python()
             done
 
             if [ "$python_check" = "ok" ]; then
-                echo "$python_env_version" > "${python3_env}/synOCR_python_env_version"
+                echo "$local_version" > "${python3_env}/synOCR_python_env_version"
             else
                 echo "0" > "${python3_env}/synOCR_python_env_version"
             fi
@@ -2214,6 +2215,7 @@ while read input ; do
 # Notification:
 # ---------------------------------------------------------------------
     # ToDo: the automatic language setting should be included here:
+    # DSM Message:
     if [ "$dsmtextnotify" = "on" ] ; then
         file_notify=$(basename "${output}")
         if [ "$dsm_version" = "7" ] ; then
@@ -2223,25 +2225,28 @@ while read input ; do
         fi
     fi
 
-    if [ "$dsmbeepnotify" = "on" ] ; then
-        if [ "$synOCR_user" = root ] ; then
-            echo 2 > /dev/ttyS1 #short beep
-        else
-            echo "${log_indent}  peep notify not possible - you are not root!" 
-        fi
+    # Beep:
+    if [ "$dsmbeepnotify" = "on" ] && [ "$synOCR_user" = root ] ; then
+        echo 2 > /dev/ttyS1 #short beep
     fi
 
-    if [ ! -z "$PBTOKEN" ] ; then
-        PB_LOG=$(curl $cURLloglevel --header "Access-Token:${PBTOKEN}" https://api.pushbullet.com/v2/pushes -d type=note -d title="synOCR" -d body="Datei [$(basename "${output}")] ist fertig.")
+    # individual apprise notification:
+    if [ ! -z "$apprise_call" ] && [ "$python_check" = "ok" ]; then
+        # ToDo: language should be defineable
+        apprise_LOG=$(apprise -vv -t 'synOCR success' -b 'File ['"$(basename "${output}")"'] was processed.' "$apprise_call")
+
+        # with target file as attachment:
+#        apprise_LOG=$(apprise -vv -t 'synOCR success' -b 'File ['"$(basename "${output}")"'] was processed.' --attach "${output}" "$apprise_call")
+
         if [ "$loglevel" = "2" ] ; then
-            echo "${log_indent}  PushBullet-LOG:"
-            echo "$PB_LOG" | sed -e "s/^/${log_indent}/g"
-        elif echo "$PB_LOG" | grep -q "error"; then # for log level 1 only error output
-            echo -n "${log_indent}  PushBullet-Error: "
-            echo "$PB_LOG" | jq -r '.error_code'
+            echo "${log_indent}  APPRISE-LOG:"
+            echo "$apprise_LOG" | sed -e "s/^/${log_indent}/g"
+        elif echo "$apprise_LOG" | grep -q "error"; then # for log level 1 only error output
+            echo -n "${log_indent}  APPRISE-Error: "
+            echo "$apprise_LOG" | sed -e "s/^/${log_indent}/g"
         fi
     else
-        echo "${log_indent}  INFO: (PushBullet-TOKEN not set)"
+        echo "${log_indent}  INFO: Notify for apprise not defined ..."
     fi
 
 
