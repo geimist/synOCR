@@ -40,7 +40,7 @@
     
     python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" Pillow yq PyYAML )
+    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML )
                                 # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     dashline1="-----------------------------------------------------------------------------------"
@@ -1046,7 +1046,16 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
             arg_searchnearest="-searchnearest=off"
         fi
 
-        founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" "$arg_searchnearest" -dateBlackList "$ignoredDate" -dbg_file "$current_logfile" -dbg_lvl "$loglevel" -minYear "$minYear" -maxYear "$maxYear" 2>&1)
+        [ "$loglevel" = "2" ] && printf "\n${log_indent}call find_dates.py: -fileWithTextFindings \"$searchfile\"  \"$arg_searchnearest\" -dateBlackList \"$ignoredDate\" -dbg_file \"$current_logfile\" -dbg_lvl \"$loglevel\" -minYear \"$minYear\" -maxYear \"$maxYear\""
+
+        founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" \
+                                                            "$arg_searchnearest" \
+                                                            -dateBlackList "$ignoredDate" \
+                                                            -dbg_file "$current_logfile" \
+                                                            -dbg_lvl "$loglevel" \
+                                                            -minYear "$minYear" \
+                                                            -maxYear "$maxYear" 2>&1)
+
         [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
 
 # RegEx search:
@@ -1866,28 +1875,31 @@ while read input ; do
             echo "${log_indent}part:            $1"
             echo "${log_indent}first page:      $2"
             echo "${log_indent}last page:       $3"
-            echo "${log_indent}search suffix:   $4"
+#           echo "${log_indent}splitted file:   $4"
 
-            PyPDF2StartPage=$(($2-1))
-            PyPDF2EndPage=$(($3-1))
-            pageRange=$(seq -s ", " $PyPDF2StartPage 1 $PyPDF2EndPage )
+            pageRange=$(seq -s ", " $2 1 $3 )
+            echo "${log_indent}used pages:      $pageRange"
 
-            echo "${log_indent}used pages:      $pageRange  (zero based)"
+            #######################################################################
+            #  Split pdf files to separate pages
+            #  parameter:
+            #  -task:         split, writeMetadata(not implemented)
+            #  -inputFile:    input pdf filename (with path)
+            #  -outputFile:   output pdf filename (with path)
+            #  -startPage:    first page from inputfile transfered to outputfile (1 based)
+            #  -endPage:      last page ( 1 based )
+            #  -dbg_file:     filename to write debug info
+            #  -dbg_lvl:      debug level (1=info, 2=debug, 0=0ff)
 
-        # https://learndataanalysis.org/how-to-extract-pdf-pages-and-save-as-a-separate-pdf-file-using-python/
-        # ---------------------------------------------------------------------
-            {   echo "from pypdf import PdfReader, PdfWriter"
-                echo 'pdf_file_path = "'$outputtmp'"'
-                echo "file_base_name = pdf_file_path.replace('.pdf', '')"
-                echo "pdf = PdfReader(pdf_file_path)"
-                echo "pages = [$pageRange]" # page 1, 3, 5
-                echo "pdf_Writer = PdfWriter()"
-                echo "for page_num in pages:"
-                echo "    pdf_Writer.add_page(pdf.pages[page_num])"
-                echo "with open('{0}_${1}${4}.pdf'.format(file_base_name), 'wb') as f:"
-                echo "    pdf_Writer.write(f)"
-                echo "    f.close()"
-            } | python3
+            [ "$loglevel" = "2" ] && printf "\n${log_indent}call handlePdf.py: -dbg_lvl \"$loglevel\" -dbg_file \"$current_logfile\" -task split -inputFile \"$outputtmp\" -startPage \"$2\" -endPage \"$3\" -outputFile \"$4\"\n\n"
+
+            python3 ./includes/handlePdf.py -dbg_lvl "$loglevel" \
+                                            -dbg_file "$current_logfile" \
+                                            -task split \
+                                            -inputFile "$outputtmp" \
+                                            -startPage "$2"  \
+                                            -endPage "$3"  \
+                                            -outputFile "$4"
         }
 
     # calculate site ranges for splitting
@@ -1991,12 +2003,12 @@ while read input ; do
                 [ "$startPage" -gt "$endPage" ] && [ "$splitpagehandling" = discard ] && continue
 
                 # split pages:
-                split_pages "$currentPart" "$startPage" "$endPage" "$SearchSuffix"
-
-                # move splitted file to work_tmp_main with override protection
                 splitted_file_name="${title}_${currentPart}${SearchSuffix}.pdf"
                 splitted_file="$work_tmp_step1/${splitted_file_name}"
+                split_pages "$currentPart" "$startPage" "$endPage" "$splitted_file"
 
+
+                # move splitted file to work_tmp_main with override protection
                 if [ -f "$splitted_file" ]; then
                     prepare_target_path "${work_tmp_main}" "${splitted_file_name}"
                     mv "$splitted_file" "${output}"
