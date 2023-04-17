@@ -8,10 +8,15 @@ BUGFIXES:
 IMPROVEMENT:
  - [GUI] Compatibility adapted for DSM7.2 (thx @Tommes)
  - [SHELL] splitting: change from pypdf to pikepdf because pypdf breaks the PDF/A attribute (thx @Gthorsten)
+ - [SHELL] write metadata: change from pypdf to pikepdf because pypdf breaks the PDF/A attribute (thx @Gthorsten)
+ - [SHELL] write metadata additionally as XMP data (thx @Gthorsten)
+ - [SHELL] Python environment is preserved now during a package update
  - [GUI] Bump Bootstrap framework to 5.2.3 (thx @Tommes)
  - [GUI] Bump Bootstrap JavaScript to 5.2.3 (thx @Tommes)
  - [GUI] Bump jQuery to 3.6.4 (thx @Tommes)
  - improve DSM notification
+IMPLEMENTATIONS:
+ - 🔥 inclusion of APPRISE library to support many notification services (native PushBullet support has been removed)
 
 1.3.99.8 [2023-03-12]
 BUGFIXES:

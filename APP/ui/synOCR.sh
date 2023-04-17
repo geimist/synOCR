@@ -38,11 +38,9 @@
     # /usr/syno/bin/synosetkeyvalue "/usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh" enablePyMetaData 0
     enablePyMetaData=1            
     
-    python_env_version=1        # is written to an info file after setting up the python env to skip a full check of the python env on each run
     python_check=ok             # will be set to failed if the test fails
     synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML )
                                 # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
-    python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     dashline1="-----------------------------------------------------------------------------------"
     dashline2="●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
 
@@ -59,10 +57,13 @@
 
 
 # check DSM version:
-# ---------------------------------------------------------------------
-    dsm_version=6
+# -------------------------------------
     if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
         dsm_version=7
+        python3_env="/var/packages/synOCR/etc/python3_env"                  # is preserved during a package update
+    else
+        dsm_version=6
+        python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"  # must be rebuild after a package update
     fi
 
 
@@ -104,7 +105,7 @@
     NameSyntax=$(echo "$sqlerg" | awk -F'\t' '{print $14}')
     ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
     dockercontainer=$(echo "$sqlerg" | awk -F'\t' '{print $16}')
-    PBTOKEN=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
+    apprise_call=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
     dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
     MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
     [ -z "$MessageTo" ] || [ "$MessageTo" == "-" ] && MessageTo="@administrators" # group administrators (standard)
@@ -936,7 +937,7 @@ prepare_python()
         [ ! -d "$python3_env" ] && python3 -m venv "$python3_env"
         source "${python3_env}/bin/activate"
 
-        if [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "$python_env_version" ]; then
+        if [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "$local_version" ]; then
             [ "$loglevel" = "2" ] && printf "${log_indent}  python3 already installed ($(which python3))\n"
 
         # check / install pip:
@@ -1003,7 +1004,7 @@ prepare_python()
             done
 
             if [ "$python_check" = "ok" ]; then
-                echo "$python_env_version" > "${python3_env}/synOCR_python_env_version"
+                echo "$local_version" > "${python3_env}/synOCR_python_env_version"
             else
                 echo "0" > "${python3_env}/synOCR_python_env_version"
             fi
@@ -1287,49 +1288,40 @@ rename()
     echo -n "${log_indent}➜ insert metadata "
     
     if [ "$python_check" = "ok" ] && [ "$enablePyMetaData" -eq 1 ]; then
-        echo "(use python pypdf)"
+        echo "(use python pikepdf)"
         unset py_meta
     
         py_meta="'/Author': '$documentAuthor',"
         py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
-        py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\'")"
+        py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
+        py_meta="$(printf "$py_meta\n'/CreatorTool': \'synOCR $local_version\'")"
 
-        # reset pdf standard to PDF/A (https://stackoverflow.com/a/35042680/10763442):
-        # https://avepdf.com/pdfa-validation
-    #    py_meta="$(printf "$py_meta\n'/Version': 'PDF-1.7'")"  # dosn't work ...
-    
         echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
 
-        get_previous_meta(){
-            {   echo "import pprint"
-                echo "from pypdf import PdfFileReader, PdfFileMerger"
-                echo "if __name__ == '__main__':"
-                echo "    file_in = open('${outputtmp}', 'rb')"
-                echo "    pdf_reader = PdfFileReader(file_in)"
-                echo "    metadata = pdf_reader.getDocumentInfo()"
-                echo "    pprint.pprint(metadata)"
-                echo "    file_in.close()"
-            } | python3
-        }
         # get previous metadata - maybe for feature use:
+#        get_previous_meta(){
+#            {   echo "import pprint"
+#                echo "from pypdf import PdfFileReader, PdfFileMerger"
+#                echo "if __name__ == '__main__':"
+#                echo "    file_in = open('${outputtmp}', 'rb')"
+#                echo "    pdf_reader = PdfFileReader(file_in)"
+#                echo "    metadata = pdf_reader.getDocumentInfo()"
+#                echo "    pprint.pprint(metadata)"
+#                echo "    file_in.close()"
+#            } | python3
+#        }
 #       previous_meta=$(get_previous_meta)
-    
+
         outputtmpMeta="${outputtmp}_meta.pdf"
 
-        {   echo "import pprint"
-        
-            echo "from pypdf import PdfReader, PdfMerger"
-        
-            echo "if __name__ == '__main__':"
-            echo "    reader = PdfReader('$outputtmp')"
-            echo "    metadata = reader.metadata"
-        
-            echo "    merger = PdfMerger()"
-            echo "    merger.append(reader)"
-            echo "    merger.add_metadata({$py_meta})"
-            echo "    with open('$outputtmpMeta', 'wb') as fp:"
-            echo "        merger.write(fp)"
-        } | python3
+        [ "$loglevel" = "2" ] && printf "\n${log_indent}call handlePdf.py -dbg_lvl \"$loglevel\" -dbg_file \"$current_logfile\" -task metadata -inputFile \"$outputtmp\" -metaData \"{$py_meta}\" -outputFile \"$outputtmpMeta\"\n\n"
+
+        python3 ./includes/handlePdf.py -dbg_lvl "$loglevel" \
+                                        -dbg_file "$current_logfile" \
+                                        -task metadata \
+                                        -inputFile "$outputtmp" \
+                                        -metaData "{$py_meta}"  \
+                                        -outputFile "$outputtmpMeta"
 
         if [ $? != 0 ] || [ $(stat -c %s "${outputtmpMeta}") -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
             echo "${log_indent}  ⚠️ ERROR with writing metadata ... "
@@ -1338,6 +1330,7 @@ rename()
         fi
         unset outputtmpMeta
     
+    # Fallback for exiftool DSM6.2, if needed:
     elif which exiftool > /dev/null  2>&1 ; then
         echo -n "(exiftool ok) "
         exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
@@ -2222,6 +2215,7 @@ while read input ; do
 # Notification:
 # ---------------------------------------------------------------------
     # ToDo: the automatic language setting should be included here:
+    # DSM Message:
     if [ "$dsmtextnotify" = "on" ] ; then
         file_notify=$(basename "${output}")
         if [ "$dsm_version" = "7" ] ; then
@@ -2231,25 +2225,28 @@ while read input ; do
         fi
     fi
 
-    if [ "$dsmbeepnotify" = "on" ] ; then
-        if [ "$synOCR_user" = root ] ; then
-            echo 2 > /dev/ttyS1 #short beep
-        else
-            echo "${log_indent}  peep notify not possible - you are not root!" 
-        fi
+    # Beep:
+    if [ "$dsmbeepnotify" = "on" ] && [ "$synOCR_user" = root ] ; then
+        echo 2 > /dev/ttyS1 #short beep
     fi
 
-    if [ ! -z "$PBTOKEN" ] ; then
-        PB_LOG=$(curl $cURLloglevel --header "Access-Token:${PBTOKEN}" https://api.pushbullet.com/v2/pushes -d type=note -d title="synOCR" -d body="Datei [$(basename "${output}")] ist fertig.")
+    # individual apprise notification:
+    if [ ! -z "$apprise_call" ] && [ "$python_check" = "ok" ]; then
+        # ToDo: language should be defineable
+        apprise_LOG=$(apprise -vv -t 'synOCR success' -b 'File ['"$(basename "${output}")"'] was processed.' "$apprise_call")
+
+        # with target file as attachment:
+#        apprise_LOG=$(apprise -vv -t 'synOCR success' -b 'File ['"$(basename "${output}")"'] was processed.' --attach "${output}" "$apprise_call")
+
         if [ "$loglevel" = "2" ] ; then
-            echo "${log_indent}  PushBullet-LOG:"
-            echo "$PB_LOG" | sed -e "s/^/${log_indent}/g"
-        elif echo "$PB_LOG" | grep -q "error"; then # for log level 1 only error output
-            echo -n "${log_indent}  PushBullet-Error: "
-            echo "$PB_LOG" | jq -r '.error_code'
+            echo "${log_indent}  APPRISE-LOG:"
+            echo "$apprise_LOG" | sed -e "s/^/${log_indent}/g"
+        elif echo "$apprise_LOG" | grep -q "error"; then # for log level 1 only error output
+            echo -n "${log_indent}  APPRISE-Error: "
+            echo "$apprise_LOG" | sed -e "s/^/${log_indent}/g"
         fi
     else
-        echo "${log_indent}  INFO: (PushBullet-TOKEN not set)"
+        echo "${log_indent}  INFO: Notify for apprise not defined ..."
     fi
 
 
