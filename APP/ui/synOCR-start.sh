@@ -226,8 +226,8 @@ fi
             config 
         WHERE 
             active='1'
-		ORDER BY 
-		    profile COLLATE NOCASE ASC;"
+        ORDER BY 
+            profile COLLATE NOCASE ASC;"
 
     while read entry; do
         profile_ID=$(echo "$entry" | awk -F'\t' '{print $1}')

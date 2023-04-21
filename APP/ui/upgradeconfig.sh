@@ -4,7 +4,7 @@
 #   description:    checks / create the configuration DB for new variables      #
 #                   and adds them if necessary                                  #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/upgradeconfig.sh   #
-#   © 2022 by geimist                                                           #
+#   © 2023 by geimist                                                           #
 #################################################################################
 
 log=""
@@ -52,25 +52,27 @@ OLDIFS=$IFS
                     (
                         \"profile_ID\" INTEGER PRIMARY KEY ,
                         \"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,
-                        \"profile\" varchar ,
-                        \"active\" varchar DEFAULT ('1') ,
-                        \"INPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_INPUT') ,
-                        \"OUTPUTDIR\" varchar DEFAULT ('/volume1/<PATH>/_OUTPUT') ,
-                        \"BACKUPDIR\" varchar DEFAULT ('/volume1/<PATH>/_BACKUP') ,
-                        \"LOGDIR\" varchar DEFAULT ('/volume1/<PATH>/_LOG') ,
-                        \"LOGmax\" varchar DEFAULT ('10') ,
-                        \"SearchPraefix\" varchar ,
-                        \"delSearchPraefix\" varchar(5) DEFAULT ('yes') ,
-                        \"taglist\" varchar ,
-                        \"searchAll\" varchar DEFAULT ('no') ,
-                        \"moveTaggedFiles\" varchar DEFAULT ('useCatDir') ,
-                        \"NameSyntax\" varchar DEFAULT ('§yocr-§mocr-§docr_§tag_§tit') ,
-                        \"ocropt\" varchar DEFAULT ('-srd -l deu+eng') ,
-                        \"dockercontainer\" varchar DEFAULT ('jbarlow83/ocrmypdf:v12.7.2') ,
-                        \"PBTOKEN\" varchar ,
-                        \"dsmtextnotify\" varchar DEFAULT ('on') ,
-                        \"MessageTo\" varchar DEFAULT ('admin') ,
-                        \"dsmbeepnotify\" varchar DEFAULT ('on') ,
+                        \"profile\" VARCHAR ,
+                        \"active\" VARCHAR DEFAULT ('1') ,
+                        \"INPUTDIR\" VARCHAR DEFAULT ('/volume1/<PATH>/_INPUT') ,
+                        \"OUTPUTDIR\" VARCHAR DEFAULT ('/volume1/<PATH>/_OUTPUT') ,
+                        \"BACKUPDIR\" VARCHAR DEFAULT ('/volume1/<PATH>/_BACKUP') ,
+                        \"LOGDIR\" VARCHAR DEFAULT ('/volume1/<PATH>/_LOG') ,
+                        \"LOGmax\" VARCHAR DEFAULT ('10') ,
+                        \"SearchPraefix\" VARCHAR ,
+                        \"delSearchPraefix\" VARCHAR(5) DEFAULT ('yes') ,
+                        \"taglist\" VARCHAR ,
+                        \"searchAll\" VARCHAR DEFAULT ('no') ,
+                        \"moveTaggedFiles\" VARCHAR DEFAULT ('useCatDir') ,
+                        \"NameSyntax\" VARCHAR DEFAULT ('§yocr-§mocr-§docr_§tag_§tit') ,
+                        \"ocropt\" VARCHAR DEFAULT ('-srd -l deu+eng') ,
+                        \"dockercontainer\" VARCHAR DEFAULT ('jbarlow83/ocrmypdf:v12.7.2') ,
+                        \"apprise_call\" VARCHAR ,
+                        \"apprise_attachment\" VARCHAR DEFAULT ('false'),
+                        \"notify_lang\" VARCHAR DEFAULT ('enu') ,
+                        \"dsmtextnotify\" VARCHAR DEFAULT ('on') ,
+                        \"MessageTo\" VARCHAR DEFAULT ('admin') ,
+                        \"dsmbeepnotify\" VARCHAR DEFAULT ('on') ,
                         \"loglevel\" varchar DEFAULT ('1') ,
                         \"filedate\" VARCHAR DEFAULT ('ocr') ,
                         \"tagsymbol\" VARCHAR DEFAULT ('#') ,
@@ -84,9 +86,12 @@ OLDIFS=$IFS
                         \"date_search_method\" VARCHAR  DEFAULT ('python') ,
                         \"clean_up_spaces\" VARCHAR  DEFAULT ('false') ,
                         \"img2pdf\" VARCHAR  DEFAULT ('false') ,
-                        \"DateSearchMinYear\" varchar DEFAULT ('0') ,
-                        \"DateSearchMaxYear\" varchar DEFAULT ('0') ,
-                        \"splitpagehandling\" VARCHAR DEFAULT ('discard')
+                        \"DateSearchMinYear\" VARCHAR DEFAULT ('0') ,
+                        \"DateSearchMaxYear\" VARCHAR DEFAULT ('0') ,
+                        \"splitpagehandling\" VARCHAR DEFAULT ('discard') ,
+                        \"blank_page_detection_switch\" VARCHAR DEFAULT ('false') ,
+                        \"blank_page_detection_threshold_bw\" VARCHAR DEFAULT ('150') ,
+                        \"blank_page_detection_threshold_black_pxl\" VARCHAR DEFAULT ('10')
                     ) ;"
         sleep 1
 
@@ -105,7 +110,7 @@ OLDIFS=$IFS
         # write default data:
         # ---------------------------------------------------------------------
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))')"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '8')"
+        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '9')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('checkmon', '')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1')"
         sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0')"
@@ -440,7 +445,6 @@ fi
 # DB-update from v6 to v7:
 # ---------------------------------------------------------------------
     if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'") -eq 6 ] ; then
-        echo ""
 
         # should convert images to pdf?:
         # ---------------------------------------------------------------------
@@ -464,7 +468,6 @@ fi
 # DB-update from v7 to v8:
 # ---------------------------------------------------------------------
     if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'") -eq 7 ] ; then
-        echo ""
 
         # DateSearchMinYear:
         # ---------------------------------------------------------------------
@@ -506,23 +509,96 @@ fi
         error=0
     fi
 
+
+# DB-update from v8 to v9:
+# ---------------------------------------------------------------------
+    if [ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'") -eq 8 ] ; then
+
+        # apprise - rename column PBTOKEN to apprise_call for apprise library:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       RENAME COLUMN \"PBTOKEN\" TO \"apprise_call\" "
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q apprise_call ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be renamed (PBTOKEN to apprise_call)"
+            error=1
+        fi
+
+        # apprise - notification language:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"notify_lang\" VARCHAR DEFAULT ('enu')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q notify_lang ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (notify_lang)"
+            error=1
+        fi
+
+        # apprise use attachment:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"apprise_attachment\" VARCHAR DEFAULT ('false')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q apprise_attachment ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (apprise_attachment)"
+            error=1
+        fi
+
+        # blank page detection - on/off:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_switch\" VARCHAR DEFAULT ('false')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q blank_page_detection_switch ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_switch)"
+            error=1
+        fi
+
+        # blank page detection - threshold_bw:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_threshold_bw\" VARCHAR DEFAULT ('150')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_bw ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_threshold_bw)"
+            error=1
+        fi
+
+        # blank page detection - threshold_black_pxl:
+        # ---------------------------------------------------------------------
+        sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_threshold_black_pxl\" VARCHAR DEFAULT ('10')"
+        # check:
+        if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_black_pxl ) ; then
+            log="$log 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_threshold_black_pxl)"
+            error=1
+        fi
+
+        if [[ "$error" == "0" ]]; then
+            # lift DB version:
+            lift_db 8 9
+        fi
+        error=0
+    fi
+
 # adjust permissions:
 # ---------------------------------------------------------------------
-    chmod 766 ./etc/synOCR.sqlite
+    [ $(whoami) = root ] && chmod 766 ./etc/synOCR.sqlite
 
 echo "$log"
 
 exit 0
 
-# bei DB-Upgrade auch …
-# ➜ upgradeconfig.sh: das initiales DB-Createstatement anpassen (inkl. DB-Version)
-# ➜ edit.sh: Parameter in 'Profil duplizieren' anpassen (bei Änderungen an Tabelle config)
-# ➜ edit.sh: Parameter in 'Datensatz in DB schreiben' anpassen
-# ➜ edit.sh: "$page" == "edit" Profil einlesen anpassen
-# ➜ edit.sh: GUI Element ggf. einfügen / anpassen
-
-# ➜ synOCR.sh: DB-Einlesen anpassen
-'
-ToDo:
-
-    '
+# ToDo-List bei DB-Upgrade:
+# ➜ upgradeconfig.sh:   das initiales DB-Createstatement anpassen (inkl. DB-Version)
+# ➜ edit.sh:            Parameter in 'Profil duplizieren' anpassen (bei Änderungen an Tabelle config)
+# ➜ edit.sh:            Parameter in 'Datensatz in DB schreiben' anpassen
+# ➜ edit.sh:            "$page" == "edit" Profil einlesen anpassen
+# ➜ edit.sh:            GUI Element ggf. einfügen / anpassen
+# ➜ synOCR.sh:          DB-Einlesen anpassen

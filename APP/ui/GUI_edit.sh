@@ -6,7 +6,7 @@
 #   © 2023 by geimist                                                           #
 #################################################################################
 
-dev_mode="false" # show field in development ...
+dev_mode=false # false # show field in development ...
 # if [ "$dev_mode" = "true" ]; then
 # fi
 
@@ -418,11 +418,11 @@ if [[ "$page" == "edit-dup-profile-query" ]] || [[ "$page" == "edit-dup-profile"
                             if [ $(sqlite3 ./etc/synOCR.sqlite "$sSQL") = "0" ] ; then
                                 sqlite3 ./etc/synOCR.sqlite "INSERT INTO config 
                                     ( 
-                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling
+                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_threshold_bw, blank_page_detection_threshold_black_pxl
                                     ) 
                                         VALUES 
                                     ( 
-                                        '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$PBTOKEN', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type', '$search_nearest_date', '$date_search_method', '$clean_up_spaces', '$img2pdf', '$DateSearchMinYear', '$DateSearchMaxYear', '$splitpagehandling' 
+                                        '$new_profile_value', '$active', '$INPUTDIR', '$OUTPUTDIR', '$BACKUPDIR', '$LOGDIR', '$LOGmax', '$SearchPraefix', '$delSearchPraefix', '$documentSplitPattern', '$taglist', '$searchAll', '$moveTaggedFiles', '$NameSyntax', '$(sed -e "s/'/''/g" <<<"$ocropt")', '$dockercontainer', '$apprise_call', '$apprise_attachment', '$notify_lang', '$dsmtextnotify', '$MessageTo', '$dsmbeepnotify', '$loglevel', '$filedate', '$tagsymbol', '$ignoredDate', '$backup_max', '$backup_max_type', '$search_nearest_date', '$date_search_method', '$clean_up_spaces', '$img2pdf', '$DateSearchMinYear', '$DateSearchMaxYear', '$splitpagehandling', '$blank_page_detection_switch',  '$blank_page_detection_threshold_bw',  '$blank_page_detection_threshold_black_pxl' 
                                     )"
 
                                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='$new_profile_value' "
@@ -589,7 +589,8 @@ if [[ "$page" == "edit-save" ]]; then
                                 NameSyntax='$NameSyntax', 
                                 ocropt='$(sed -e "s/'/''/g" <<<"$ocropt")', 
                                 dockercontainer='$dockercontainer', 
-                                PBTOKEN='$PBTOKEN',
+                                apprise_call='$apprise_call',
+                                notify_lang='$notify_lang',
                                 dsmtextnotify='$dsmtextnotify', 
                                 MessageTo='$MessageTo', 
                                 dsmbeepnotify='$dsmbeepnotify', 
@@ -606,7 +607,11 @@ if [[ "$page" == "edit-save" ]]; then
                                 img2pdf='$img2pdf',
                                 DateSearchMinYear='$DateSearchMinYear',
                                 DateSearchMaxYear='$DateSearchMaxYear',
-                                splitpagehandling='$splitpagehandling'
+                                splitpagehandling='$splitpagehandling',
+                                apprise_attachment='$apprise_attachment',
+                                blank_page_detection_switch='$blank_page_detection_switch',
+                                blank_page_detection_threshold_bw='$blank_page_detection_threshold_bw',
+                                blank_page_detection_threshold_black_pxl='$blank_page_detection_threshold_black_pxl'
                             WHERE 
                                 profile_ID='$profile_ID' "
 
@@ -644,8 +649,8 @@ if [[ "$page" == "edit" ]]; then
     if [ -z "$getprofile" ] ; then
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
-                NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling
+                NameSyntax, ocropt, dockercontainer, apprise_call, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, blank_page_detection_switch, blank_page_detection_threshold_bw, blank_page_detection_threshold_black_pxl
             FROM 
                 config 
             WHERE 
@@ -653,8 +658,8 @@ if [[ "$page" == "edit" ]]; then
     else
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
-                NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling
+                NameSyntax, ocropt, dockercontainer, apprise_call, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, blank_page_detection_switch, blank_page_detection_threshold_bw, blank_page_detection_threshold_black_pxl
             FROM 
                 config 
             WHERE 
@@ -679,25 +684,30 @@ if [[ "$page" == "edit" ]]; then
         NameSyntax=$(echo "$sqlerg" | awk -F'\t' '{print $14}')
         ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
         dockercontainer=$(echo "$sqlerg" | awk -F'\t' '{print $16}')
-        PBTOKEN=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
-        dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
-        MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
-        dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
-        loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
-        active=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
-        filedate=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
-        tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
-        documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
-        ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $26}')
-        backup_max=$(echo "$sqlerg" | awk -F'\t' '{print $27}')
-        backup_max_type=$(echo "$sqlerg" | awk -F'\t' '{print $28}')
-        search_nearest_date=$(echo "$sqlerg" | awk -F'\t' '{print $29}')
-        date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $30}')
-        clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
-        img2pdf=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
-        DateSearchMinYear=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
-        DateSearchMaxYear=$(echo "$sqlerg" | awk -F'\t' '{print $34}')
-        splitpagehandling=$(echo "$sqlerg" | awk -F'\t' '{print $35}')
+        apprise_call=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
+        notify_lang=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
+        dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
+        MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
+        dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
+        loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
+        active=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
+        filedate=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
+        tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
+        documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $26}')
+        ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $27}')
+        backup_max=$(echo "$sqlerg" | awk -F'\t' '{print $28}')
+        backup_max_type=$(echo "$sqlerg" | awk -F'\t' '{print $29}')
+        search_nearest_date=$(echo "$sqlerg" | awk -F'\t' '{print $30}')
+        date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
+        clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
+        img2pdf=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
+        DateSearchMinYear=$(echo "$sqlerg" | awk -F'\t' '{print $34}')
+        DateSearchMaxYear=$(echo "$sqlerg" | awk -F'\t' '{print $35}')
+        splitpagehandling=$(echo "$sqlerg" | awk -F'\t' '{print $36}')
+        apprise_attachment=$(echo "$sqlerg" | awk -F'\t' '{print $37}')
+        blank_page_detection_switch=$(echo "$sqlerg" | awk -F'\t' '{print $38}')
+        blank_page_detection_threshold_bw=$(echo "$sqlerg" | awk -F'\t' '{print $39}')
+        blank_page_detection_threshold_black_pxl=$(echo "$sqlerg" | awk -F'\t' '{print $40}')
 
     # read global values:
         dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -1401,6 +1411,129 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
+                    # blank_page_detection
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="blank_page_detection_switch">'$lang_edit_set2_blank_page_detection_switch_title'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="blank_page_detection_switch" id="blank_page_detection_switch" class="form-select form-select-sm">'
+
+                                if [[ "$blank_page_detection_switch" == "false" ]]; then
+                                    echo '<option value="false" selected>'$lang_no'</option>'
+                                else
+                                    echo '<option value="false">'$lang_no'</option>'
+                                fi
+                                if [[ "$blank_page_detection_switch" == "true" ]]; then
+                                    echo '<option value="true" selected>'$lang_yes'</option>'
+                                else
+                                    echo '<option value="true">'$lang_yes'</option>'
+                                fi
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_switch-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_switch-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="blank_page_detection_switch-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set2_blank_page_detection_switch_help1'<br />
+                                        '$lang_edit_set2_blank_page_detection_switch_help2'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # blank_page_detection_threshold_bw
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="blank_page_detection_threshold_bw">'$lang_edit_set2_blank_page_detection_threshold_bw_title'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="blank_page_detection_threshold_bw" id="blank_page_detection_threshold_bw" class="form-select form-select-sm">'
+
+                                threshold_bw_array=($(seq -s " " 0 1 255))
+
+                                for entry in ${threshold_bw_array[@]}; do
+                                    if [[ "$blank_page_detection_threshold_bw" == "${entry}" ]]; then
+                                        echo "<option value=${entry} selected>${entry}</option>"
+                                    else
+                                        echo "<option value=${entry}>${entry}</option>"
+                                    fi
+                                done
+
+                            echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_threshold_bw-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_threshold_bw-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="blank_page_detection_threshold_bw-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                         '$lang_edit_set2_blank_page_detection_threshold_bw_help1'<br><br>
+                                         '$lang_edit_set2_blank_page_detection_threshold_bw_help2 '
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # blank_page_detection_threshold_black_pxl
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="blank_page_detection_threshold_black_pxl">'$lang_edit_set2_blank_page_detection_threshold_black_pxl_title'</label>
+                        </div>
+                        <div class="col-sm-5">'
+
+                            if [ -n "$blank_page_detection_threshold_black_pxl" ]; then
+                                echo '<input type="text" name="blank_page_detection_threshold_black_pxl" id="blank_page_detection_threshold_black_pxl" class="form-control form-control-sm" value="'$blank_page_detection_threshold_black_pxl'" />'
+                            else
+                                echo '<input type="text" name="blank_page_detection_threshold_black_pxl" id="blank_page_detection_threshold_black_pxl" class="form-control form-control-sm" value="" />'
+                            fi
+
+                            echo '
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_threshold_black_pxl-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_threshold_black_pxl-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="blank_page_detection_threshold_black_pxl-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                         '$lang_edit_set2_blank_page_detection_threshold_black_pxl_help1'<br><br>
+                                         '$lang_edit_set2_blank_page_detection_threshold_black_pxl_help2 '
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
 
                     echo '<hr><br>'
 
@@ -2100,6 +2233,58 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
+                    # LOGlevel
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="loglevel">'$lang_edit_set3_loglevel_title'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="loglevel" id="loglevel" class="form-select form-select-sm">'
+
+                                if [[ "$loglevel" == "0" ]]; then
+                                    echo '<option value="0" selected>'$lang_edit_set3_loglevel_off'</option>'
+                                else
+                                    echo '<option value="0">'$lang_edit_set3_loglevel_off'</option>'
+                                fi
+                                if [[ "$loglevel" == "1" ]]; then
+                                    echo '<option value="1" selected>'$lang_edit_set3_loglevel_1'</option>'
+                                else
+                                    echo '<option value="1">'$lang_edit_set3_loglevel_1'</option>'
+                                fi
+                                if [[ "$loglevel" == "2" ]]; then
+                                    echo '<option value="2" selected>'$lang_edit_set3_loglevel_2'</option>'
+                                else
+                                    echo '<option value="2">'$lang_edit_set3_loglevel_2'</option>'
+                                fi
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#loglevel-info" role="button" aria-expanded="false" aria-controls="loglevel-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="loglevel-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set3_loglevel_help1'<br />
+                                        '$lang_edit_set3_loglevel_help2'<br />
+                                        '$lang_edit_set3_loglevel_help3'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    echo '<hr><br>'
+
                     # dsmtextnotify
                     echo '
                     <div class="row mb-3">
@@ -2161,7 +2346,7 @@ if [[ "$page" == "edit" ]]; then
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="MessageTo">'$lang_edit_set3_MessageTo_title'</label>
+                            <label for="MessageTo">'$lang_edit_set3_MessageTo_title' (DSM)</label>
                         </div>
                         <div class="col-sm-5">
                             <select name="MessageTo" id="MessageTo" class="form-select form-select-sm">'
@@ -2203,34 +2388,149 @@ if [[ "$page" == "edit" ]]; then
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="PBTOKEN">'$lang_edit_set3_APPRISE_title'</label>
+                            <label for="apprise_call">'$lang_edit_set3_APPRISE_title'</label>
                         </div>
                         <div class="col-sm-5">'
 
-                            if [ -n "$PBTOKEN" ]; then
-                                echo '<input type="text" name="PBTOKEN" id="PBTOKEN" class="form-control form-control-sm" value="'$PBTOKEN'" />'
+                            if [ -n "$apprise_call" ]; then
+                                echo '<input type="text" name="apprise_call" id="apprise_call" class="form-control form-control-sm" value="'$apprise_call'" />'
                             else
-                                echo '<input type="text" name="PBTOKEN" id="PBTOKEN" class="form-control form-control-sm" value="" />'
+                                echo '<input type="text" name="apprise_call" id="apprise_call" class="form-control form-control-sm" value="" />'
                             fi
 
                             echo '
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
-                                <a data-bs-toggle="collapse" href="#PBTOKEN-info" role="button" aria-expanded="false" aria-controls="PBTOKEN-info">
+                                <a data-bs-toggle="collapse" href="#apprise_call-info" role="button" aria-expanded="false" aria-controls="apprise_call-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-sm-10">
-                            <div class="collapse" id="PBTOKEN-info">
+                            <div class="collapse" id="apprise_call-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set3_APPRISE_help1'<br />
-                                        (<code><span style="font-hight:1.1em;">ifttt://webhooksID/Event mqtts://user:pass@hostname:9883/topic</span></code>)<br>
+                                        <code><span style="font-hight:1.1em;">ifttt://webhooksID/Event mqtts://user:pass@hostname:9883/topic ...</span></code><br><br>
                                         '$lang_edit_set3_APPRISE_help2' <a href="https://github.com/caronc/apprise#productivity-based-notifications" onclick="window.open(this.href); return false;" style="'$synocrred';">github.com/caronc/apprise</a><br /><br />
                                         '$lang_edit_set3_APPRISE_help3'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # apprise_attachment
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="apprise_attachment">'$lang_edit_set3_apprise_attachment_title'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="apprise_attachment" id="apprise_attachment" class="form-select form-select-sm">'
+                                if [[ "$apprise_attachment" == "true" ]]; then
+                                    echo '<option value="true" selected>'$lang_edit_set3_apprise_attachment_true'</option>'
+                                else
+                                    echo '<option value="true">'$lang_edit_set3_apprise_attachment_true'</option>'
+                                fi
+                                if [[ "$apprise_attachment" == "false" ]]; then
+                                    echo '<option value="false" selected>'$lang_edit_set3_apprise_attachment_false'</option>'
+                                else
+                                    echo '<option value="false">'$lang_edit_set3_apprise_attachment_false'</option>'
+                                fi
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#apprise_attachment-info" role="button" aria-expanded="false" aria-controls="apprise_attachment-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="apprise_attachment-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set3_apprise_attachment_help1'<br><br>
+                                        '$lang_edit_set3_apprise_attachment_help2'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # notify language:
+                    languages=()
+                    while read line; do
+                        languages+=($line)
+                    done <<<"$(ls -tp "./lang/" | egrep -v '/$' | cut -f 1 -d '.' | cut -f 2 -d '_' | sort )"
+
+                    chs=$lang_chs
+                    csy=$lang_csy
+                    dan=$lang_dan
+                    enu=$lang_enu
+                    fre=$lang_fre
+                    ger=$lang_ger
+                    hun=$lang_hun
+                    ita=$lang_ita
+                    jpn=$lang_jpn
+                    krn=$lang_krn
+                    nld=$lang_nld
+                    nor=$lang_nor
+                    plk=$lang_plk
+                    ptb=$lang_ptb
+                    ptg=$lang_ptg
+                    rus=$lang_rus
+                    spn=$lang_spn
+                    sve=$lang_sve
+                    trk=$lang_trk
+
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="notify_lang">'$lang_edit_set3_notify_lang_title'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="notify_lang" id="notify_lang" class="form-select form-select-sm">'
+
+                                for entry in ${languages[@]}; do
+                                    # combine language code with translatet variable:
+                                    eval langvar=\$$entry
+
+                                    if [[ "$notify_lang" == "${entry}" ]]; then
+                                        echo "<option value=${entry} selected>${langvar}</option>"
+                                    else
+                                        echo "<option value=${entry}>${langvar}</option>"
+                                    fi
+                                done
+
+                                eval ownlangvar=\$$lang
+
+                                echo '
+                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#notify_lang-info" role="button" aria-expanded="false" aria-controls="notify_lang-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="notify_lang-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set3_notify_lang_help1'<br />
+                                        '$lang_edit_set3_notify_lang_help2' <code><span style="font-hight:1.1em;">'$ownlangvar'</span></code><br />
+                                        '$lang_edit_set3_notify_lang_help3'
                                     </span>
                                 </div>
                             </div>
@@ -2274,56 +2574,6 @@ if [[ "$page" == "edit" ]]; then
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                         '$lang_edit_set3_dsmbeepnotify_help1'
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-2"></div>
-                    </div>'
-
-                    # LOGlevel
-                    echo '
-                    <div class="row mb-3">
-                        <div class="col-sm-5">
-                            <label for="loglevel">'$lang_edit_set3_loglevel_title'</label>
-                        </div>
-                        <div class="col-sm-5">
-                            <select name="loglevel" id="loglevel" class="form-select form-select-sm">'
-
-                                if [[ "$loglevel" == "0" ]]; then
-                                    echo '<option value="0" selected>'$lang_edit_set3_loglevel_off'</option>'
-                                else
-                                    echo '<option value="0">'$lang_edit_set3_loglevel_off'</option>'
-                                fi
-                                if [[ "$loglevel" == "1" ]]; then
-                                    echo '<option value="1" selected>'$lang_edit_set3_loglevel_1'</option>'
-                                else
-                                    echo '<option value="1">'$lang_edit_set3_loglevel_1'</option>'
-                                fi
-                                if [[ "$loglevel" == "2" ]]; then
-                                    echo '<option value="2" selected>'$lang_edit_set3_loglevel_2'</option>'
-                                else
-                                    echo '<option value="2">'$lang_edit_set3_loglevel_2'</option>'
-                                fi
-
-                                echo '
-                            </select>
-                        </div>
-                        <div class="col-sm-2">
-                            <div class="float-end">
-                                <a data-bs-toggle="collapse" href="#loglevel-info" role="button" aria-expanded="false" aria-controls="loglevel-info">
-                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-10">
-                            <div class="collapse" id="loglevel-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
-                                    <span>
-                                        '$lang_edit_set3_loglevel_help1'<br />
-                                        '$lang_edit_set3_loglevel_help2'<br />
-                                        '$lang_edit_set3_loglevel_help3'
                                     </span>
                                 </div>
                             </div>

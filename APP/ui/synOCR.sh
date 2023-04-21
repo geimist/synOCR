@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
  
 #################################################################################
 #   description:    main script for running synOCR                              #
@@ -79,10 +79,11 @@
 # ---------------------------------------------------------------------
     sSQL="SELECT 
             profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
-            delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN,
+            delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call,
             dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate, 
             backup_max, backup_max_type, pagecount, ocrcount, search_nearest_date, date_search_method, clean_up_spaces, 
-            img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling
+            img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, notify_lang, 
+            blank_page_detection_switch, blank_page_detection_threshold_bw, blank_page_detection_threshold_black_pxl
         FROM 
             config 
         WHERE 
@@ -108,13 +109,13 @@
     apprise_call=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
     dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
     MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
-    [ -z "$MessageTo" ] || [ "$MessageTo" == "-" ] && MessageTo="@administrators" # group administrators (standard)
+    [ -z "$MessageTo" ] || [ "$MessageTo" == "-" ] && MessageTo="@administrators" # group administrators (default)
     dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
     loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
     filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
     tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
     documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
-    ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $25}')
+    ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $25}' | sed -e 's/2021-02-29//g;s/2020-11-31//g;s/^ *//g') # remove (invalid) example dates
     backup_max=$(echo "$sqlerg" | awk -F'\t' '{print $26}')
     backup_max_type=$(echo "$sqlerg" | awk -F'\t' '{print $27}')
     pagecount_profile=$(echo "$sqlerg" | awk -F'\t' '{print $28}')
@@ -126,6 +127,12 @@
     DateSearchMinYear=$(echo "$sqlerg" | awk -F'\t' '{print $34}')
     DateSearchMaxYear=$(echo "$sqlerg" | awk -F'\t' '{print $35}')
     splitpagehandling=$(echo "$sqlerg" | awk -F'\t' '{print $36}')
+    apprise_attachment=$(echo "$sqlerg" | awk -F'\t' '{print $37}')
+    notify_lang=$(echo "$sqlerg" | awk -F'\t' '{print $38}')
+    blank_page_detection_switch=$(echo "$sqlerg" | awk -F'\t' '{print $39}')
+    blank_page_detection_threshold_bw=$(echo "$sqlerg" | awk -F'\t' '{print $40}')
+    blank_page_detection_threshold_black_pxl=$(echo "$sqlerg" | awk -F'\t' '{print $41}')
+    
 
 # read global values:
     dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -143,6 +150,8 @@
 
 # System Information and log settings:
 # ---------------------------------------------------------------------
+    source "./lang/lang_${notify_lang}.txt"
+
     local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
     highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
     echo "synOCR-version:           $local_version"
@@ -202,6 +211,9 @@
     tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "Document split pattern:   ${documentSplitPattern}"
     echo "split page handling:      ${splitpagehandling}"
+    echo "delete blank pages:       ${blank_page_detection_switch}"
+    echo "threshold black/white:    ${blank_page_detection_threshold_bw}"
+    echo "threshold black pixels:   ${blank_page_detection_threshold_black_pxl}"
     echo "clean up spaces:          ${clean_up_spaces}"
     echo -n "Date search method:       "
     if [ "$date_search_method" = "python" ] ; then
@@ -258,6 +270,9 @@
         echo "WARNING: Docker could not be found. Please check if the Docker package has been installed!"
     fi
     echo "DSM notify to user:       ${MessageTo}"
+    echo "apprise notify service:   ${apprise_call}"
+    echo "apprise attachment:       ${apprise_attachment}"
+    echo "notify language:          ${notify_lang}"
 
 
 # Configuration for LogLevel:
@@ -2033,6 +2048,7 @@ while read input ; do
         prepare_target_path "${BACKUPDIR}" "$filename"
         mv "$input" "$output"
         echo "${log_indent}➜ backup source file to: $output"
+        [ -f "$output" ] && echo ok || echo failed …
     else
         rm -f "$input"
         echo "${log_indent}➜ delete source file ($filename)"
@@ -2215,13 +2231,15 @@ while read input ; do
 # Notification:
 # ---------------------------------------------------------------------
     # ToDo: the automatic language setting should be included here:
+
+    file_notify=$(basename "${output}")
     # DSM Message:
     if [ "$dsmtextnotify" = "on" ] ; then
-        file_notify=$(basename "${output}")
         if [ "$dsm_version" = "7" ] ; then
-            synodsmnotify -c "SYNO.SDS.synOCR.Application" "$MessageTo" "synOCR:app:app_name" "synOCR:app:job_successful" "[${file_notify}]"
+#           synodsmnotify -c "SYNO.SDS.synOCR.Application" "$MessageTo" "synOCR:app:app_name" "synOCR:app:job_successful" "[${file_notify}]"
+            synodsmnotify -c "SYNO.SDS.synOCR.Application" "$MessageTo" "synOCR:app:app_name" "synOCR:app:job_successful" "${lang_notify_file_job_successful} [${file_notify}]"
         else
-           synodsmnotify "$MessageTo" "synOCR" "File [${file_notify}] was processed"
+           synodsmnotify "$MessageTo" "synOCR" "${lang_notify_file_job_successful} [${file_notify}]"
         fi
     fi
 
@@ -2231,12 +2249,14 @@ while read input ; do
     fi
 
     # individual apprise notification:
-    if [ ! -z "$apprise_call" ] && [ "$python_check" = "ok" ]; then
-        # ToDo: language should be defineable
-        apprise_LOG=$(apprise -vv -t 'synOCR success' -b 'File ['"$(basename "${output}")"'] was processed.' "$apprise_call")
-
-        # with target file as attachment:
-#        apprise_LOG=$(apprise -vv -t 'synOCR success' -b 'File ['"$(basename "${output}")"'] was processed.' --attach "${output}" "$apprise_call")
+    if [ -n "$apprise_call" ] && [ "$python_check" = "ok" ]; then
+        if [ "${apprise_attachment}" = true ]; then
+            # with target file as attachment (The user must ensure that the requested service accepts attachments):
+            apprise_LOG=$(apprise -vv -t 'synOCR' -b "${lang_notify_file_job_successful} [${file_notify}]." --attach "${output}" "$apprise_call")
+        else
+            # without attachment:
+            apprise_LOG=$(apprise -vv -t 'synOCR' -b "${lang_notify_file_job_successful} [${file_notify}]." "$apprise_call")
+        fi
 
         if [ "$loglevel" = "2" ] ; then
             echo "${log_indent}  APPRISE-LOG:"
