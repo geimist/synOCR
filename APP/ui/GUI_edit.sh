@@ -6,7 +6,7 @@
 #   © 2023 by geimist                                                           #
 #################################################################################
 
-dev_mode=false # false # show field in development ...
+dev_mode=true # false # show field in development ...
 # if [ "$dev_mode" = "true" ]; then
 # fi
 
@@ -1160,21 +1160,13 @@ if [[ "$page" == "edit" ]]; then
                             <label for="dockerimageupdate">'$lang_edit_set2_dockerimageupdate_title'</label>
                         </div>
                         <div class="col-sm-5">
-                            <select name="dockerimageupdate" id="dockerimageupdate" class="form-select form-select-sm">'
-
-                                if [[ "$dockerimageupdate" == "0" ]]; then
-                                    echo '<option value="0" selected>'$lang_edit_set2_dockerimageupdate_no'</option>'
-                                else
-                                    echo '<option value="0">'$lang_edit_set2_dockerimageupdate_no'</option>'
-                                fi
-                                if [[ "$dockerimageupdate" == "1" ]]; then
-                                    echo '<option value="1" selected>'$lang_edit_set2_dockerimageupdate_yes'</option>'
-                                else
-                                    echo '<option value="1">'$lang_edit_set2_dockerimageupdate_yes'</option>'
-                                fi
-
-                                echo '
-                            </select>
+                            <input class="form-check-input" type="radio" id="dockerimageupdate-on" name="dockerimageupdate" value='; \
+                                [[ "$dockerimageupdate" == "1" ]] && echo -n '"1" checked />' || echo -n '"1" />'
+                            echo '<label for="dockerimageupdate-1" class="form-check-label ps-2 pe-4">'$lang_yes'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="dockerimageupdate-off" name="dockerimageupdate" value='; \
+                                [[ "$dockerimageupdate" == "0" ]] && echo -n '"0" checked />' || echo -n '"0" />'
+                            echo '<label for="dockerimageupdate-0" class="form-check-label ps-2">'$lang_no'</label>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -1204,23 +1196,17 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="img2pdf">'$lang_edit_set2_img2pdf_title'</label>
                         </div>
+                        
                         <div class="col-sm-5">
-                            <select name="img2pdf" id="img2pdf" class="form-select form-select-sm">'
-
-                                if [[ "$img2pdf" == "false" ]]; then
-                                    echo '<option value="false" selected>'$lang_edit_set2_img2pdf_no'</option>'
-                                else
-                                    echo '<option value="false">'$lang_edit_set2_img2pdf_no'</option>'
-                                fi
-                                if [[ "$img2pdf" == "true" ]]; then
-                                    echo '<option value="true" selected>'$lang_edit_set2_img2pdf_yes'</option>'
-                                else
-                                    echo '<option value="true">'$lang_edit_set2_img2pdf_yes'</option>'
-                                fi
-
-                                echo '
-                            </select>
+                            <input class="form-check-input" type="radio" id="img2pdf-true" name="img2pdf" value='; \
+                                [[ "$img2pdf" == "true" ]] && echo -n '"true" checked />' || echo -n '"true" />'
+                            echo '<label for="img2pdf-true" class="form-check-label ps-2 pe-4">'$lang_yes'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="img2pdf-false" name="img2pdf" value='; \
+                                [[ "$img2pdf" == "false" ]] && echo -n '"false" checked />' || echo -n '"false" />'
+                            echo '<label for="img2pdf-false" class="form-check-label ps-2">'$lang_no'</label>
                         </div>
+                        
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#img2pdf-info" role="button" aria-expanded="false" aria-controls="img2pdf-info">
@@ -1288,23 +1274,17 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="delSearchPraefix">'$lang_edit_set2_delsearchpref_title'</label>
                         </div>
+                        
                         <div class="col-sm-5">
-                            <select name="delSearchPraefix" id="delSearchPraefix" class="form-select form-select-sm">'
-
-                                if [[ "$delSearchPraefix" == "no" ]]; then
-                                    echo '<option value="no" selected>'$lang_edit_set2_delsearchpref_keep'</option>'
-                                else
-                                    echo '<option value="no">'$lang_edit_set2_delsearchpref_keep'</option>'
-                                fi
-                                if [[ "$delSearchPraefix" == "yes" ]]; then
-                                    echo '<option value="yes" selected>'$lang_edit_set2_delsearchpref_delete'</option>'
-                                else
-                                    echo '<option value="yes">'$lang_edit_set2_delsearchpref_delete'</option>'
-                                fi
-
-                                echo '
-                            </select>
+                            <input class="form-check-input" type="radio" id="delSearchPraefix-yes" name="delSearchPraefix" value='; \
+                                [[ "$delSearchPraefix" == "yes" ]] && echo -n '"yes" checked />' || echo -n '"yes" />'
+                            echo '<label for="delSearchPraefix-yes" class="form-check-label ps-2 pe-4">'$lang_edit_set2_delsearchpref_delete'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="delSearchPraefix-no" name="delSearchPraefix" value='; \
+                                [[ "$delSearchPraefix" == "no" ]] && echo -n '"no" checked />' || echo -n '"no" />'
+                            echo '<label for="delSearchPraefix-no" class="form-check-label ps-2">'$lang_edit_set2_delsearchpref_keep'</label>
                         </div>
+                        
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#delSearchPraefix-info" role="button" aria-expanded="false" aria-controls="delSearchPraefix-info">
@@ -1411,29 +1391,27 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
+
+if [ "$dev_mode" = "true" ]; then
+                    echo '<hr><br>'
+
                     # blank_page_detection
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
                             <label for="blank_page_detection_switch">'$lang_edit_set2_blank_page_detection_switch_title'</label>
                         </div>
+                        
                         <div class="col-sm-5">
-                            <select name="blank_page_detection_switch" id="blank_page_detection_switch" class="form-select form-select-sm">'
-
-                                if [[ "$blank_page_detection_switch" == "false" ]]; then
-                                    echo '<option value="false" selected>'$lang_no'</option>'
-                                else
-                                    echo '<option value="false">'$lang_no'</option>'
-                                fi
-                                if [[ "$blank_page_detection_switch" == "true" ]]; then
-                                    echo '<option value="true" selected>'$lang_yes'</option>'
-                                else
-                                    echo '<option value="true">'$lang_yes'</option>'
-                                fi
-
-                                echo '
-                            </select>
+                            <input class="form-check-input" type="radio" id="blank_page_detection_switch-true" name="blank_page_detection_switch" value='; \
+                                [[ "$blank_page_detection_switch" == "true" ]] && echo -n '"true" checked />' || echo -n '"true" />'
+                            echo '<label for="blank_page_detection_switch-true" class="form-check-label ps-2 pe-4">'$lang_yes'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="blank_page_detection_switch-false" name="blank_page_detection_switch" value='; \
+                                [[ "$blank_page_detection_switch" == "false" ]] && echo -n '"false" checked />' || echo -n '"false" />'
+                            echo '<label for="blank_page_detection_switch-false" class="form-check-label ps-2">'$lang_no'</label>
                         </div>
+
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#blank_page_detection_switch-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_switch-info">
@@ -1534,6 +1512,7 @@ if [[ "$page" == "edit" ]]; then
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
+fi
 
                     echo '<hr><br>'
 
@@ -1983,7 +1962,6 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
-
                     # search_nearest_date
                     echo '
                     <div class="row mb-3">
@@ -2159,21 +2137,13 @@ if [[ "$page" == "edit" ]]; then
                         # Ausgeblendeter Label-Tag: $lang_edit_set3_backuprotatetype_title
                         echo '
                         <div class="col-sm-3">
-                            <select name="backup_max_type" id="backup_max_type" class="form-select form-select-sm">'
-
-                                if [[ "$backup_max_type" == "files" ]]; then
-                                    echo '<option value="files" selected>'$lang_edit_set3_backuprotatetype_files'</option>'
-                                else
-                                    echo '<option value="files">'$lang_edit_set3_backuprotatetype_files'</option>'
-                                fi
-                                if [[ "$backup_max_type" == "days" ]]; then
-                                    echo '<option value="days" selected>'$lang_edit_set3_backuprotatetype_days'</option>'
-                                else
-                                    echo '<option value="days">'$lang_edit_set3_backuprotatetype_days'</option>'
-                                fi
-
-                                echo '
-                            </select>
+                            <input class="form-check-input" type="radio" id="backup_max_type-files" name="backup_max_type" value='; \
+                                [[ "$backup_max_type" == "files" ]] && echo -n '"files" checked />' || echo -n '"files" />'
+                            echo '<label for="backup_max_type-files" class="form-check-label ps-2 pe-4">'$lang_edit_set3_backuprotatetype_files'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="backup_max_type-days" name="backup_max_type" value='; \
+                                [[ "$backup_max_type" == "days" ]] && echo -n '"days" checked />' || echo -n '"days" />'
+                            echo '<label for="backup_max_type-days" class="form-check-label ps-2">'$lang_edit_set3_backuprotatetype_days'</label>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -2240,26 +2210,17 @@ if [[ "$page" == "edit" ]]; then
                             <label for="loglevel">'$lang_edit_set3_loglevel_title'</label>
                         </div>
                         <div class="col-sm-5">
-                            <select name="loglevel" id="loglevel" class="form-select form-select-sm">'
-
-                                if [[ "$loglevel" == "0" ]]; then
-                                    echo '<option value="0" selected>'$lang_edit_set3_loglevel_off'</option>'
-                                else
-                                    echo '<option value="0">'$lang_edit_set3_loglevel_off'</option>'
-                                fi
-                                if [[ "$loglevel" == "1" ]]; then
-                                    echo '<option value="1" selected>'$lang_edit_set3_loglevel_1'</option>'
-                                else
-                                    echo '<option value="1">'$lang_edit_set3_loglevel_1'</option>'
-                                fi
-                                if [[ "$loglevel" == "2" ]]; then
-                                    echo '<option value="2" selected>'$lang_edit_set3_loglevel_2'</option>'
-                                else
-                                    echo '<option value="2">'$lang_edit_set3_loglevel_2'</option>'
-                                fi
-
-                                echo '
-                            </select>
+                            <input class="form-check-input" type="radio" id="loglevel-0" name="loglevel" value='; \
+                                [[ "$loglevel" == "0" ]] && echo -n '"0" checked />' || echo -n '"0" />'
+                            echo '<label for="loglevel-0" class="form-check-label ps-2 pe-4">'$lang_edit_set3_loglevel_off'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="loglevel-1" name="loglevel" value='; \
+                                [[ "$loglevel" == "1" ]] && echo -n '"1" checked />' || echo -n '"1" />'
+                            echo '<label for="loglevel-1" class="form-check-label ps-2">'$lang_edit_set3_loglevel_1'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="loglevel-2" name="loglevel" value='; \
+                                [[ "$loglevel" == "2" ]] && echo -n '"2" checked />' || echo -n '"2" />'
+                            echo '<label for="loglevel-2" class="form-check-label ps-2">'$lang_edit_set3_loglevel_2'</label>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -2291,23 +2252,17 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="dsmtextnotify">'$lang_edit_set3_dsmtextnotify_title'</label>
                         </div>
+                    
                         <div class="col-sm-5">
-                            <select name="dsmtextnotify" id="dsmtextnotify" class="form-select form-select-sm">'
-
-                                if [[ "$dsmtextnotify" == "off" ]]; then
-                                    echo '<option value="off" selected>'$lang_edit_set3_dsmtextnotify_off'</option>'
-                                else
-                                    echo '<option value="off">'$lang_edit_set3_dsmtextnotify_off'</option>'
-                                fi
-                                if [[ "$dsmtextnotify" == "on" ]]; then
-                                    echo '<option value="on" selected>'$lang_edit_set3_dsmtextnotify_on'</option>'
-                                else
-                                    echo '<option value="on">'$lang_edit_set3_dsmtextnotify_on'</option>'
-                                fi
-
-                                echo '
-                            </select>
+                            <input class="form-check-input" type="radio" id="dsmtextnotify-on" name="dsmtextnotify" value='; \
+                                [[ "$dsmtextnotify" == "on" ]] && echo -n '"on" checked />' || echo -n '"on" />'
+                            echo '<label for="dsmtextnotify-on" class="form-check-label ps-2 pe-4">'$lang_edit_set3_dsmtextnotify_on'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="dsmtextnotify-off" name="dsmtextnotify" value='; \
+                                [[ "$dsmtextnotify" == "off" ]] && echo -n '"off" checked />' || echo -n '"off" />'
+                            echo '<label for="dsmtextnotify-off" class="form-check-label ps-2">'$lang_edit_set3_dsmtextnotify_off'</label>
                         </div>
+                    
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#dsmtextnotify-info" role="button" aria-expanded="false" aria-controls="dsmtextnotify-info">
@@ -2430,20 +2385,13 @@ if [[ "$page" == "edit" ]]; then
                             <label for="apprise_attachment">'$lang_edit_set3_apprise_attachment_title'</label>
                         </div>
                         <div class="col-sm-5">
-                            <select name="apprise_attachment" id="apprise_attachment" class="form-select form-select-sm">'
-                                if [[ "$apprise_attachment" == "true" ]]; then
-                                    echo '<option value="true" selected>'$lang_edit_set3_apprise_attachment_true'</option>'
-                                else
-                                    echo '<option value="true">'$lang_edit_set3_apprise_attachment_true'</option>'
-                                fi
-                                if [[ "$apprise_attachment" == "false" ]]; then
-                                    echo '<option value="false" selected>'$lang_edit_set3_apprise_attachment_false'</option>'
-                                else
-                                    echo '<option value="false">'$lang_edit_set3_apprise_attachment_false'</option>'
-                                fi
-
-                                echo '
-                            </select>
+                            <input class="form-check-input" type="radio" id="apprise_attachment-true" name="apprise_attachment" value='; \
+                                [[ "$apprise_attachment" == "true" ]] && echo -n '"true" checked />' || echo -n '"true" />'
+                            echo '<label for="apprise_attachment-true" class="form-check-label ps-2 pe-4">'$lang_edit_set3_apprise_attachment_true'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="apprise_attachment-false" name="apprise_attachment" value='; \
+                                [[ "$apprise_attachment" == "false" ]] && echo -n '"false" checked />' || echo -n '"false" />'
+                            echo '<label for="apprise_attachment-false" class="form-check-label ps-2">'$lang_edit_set3_apprise_attachment_false'</label>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -2544,23 +2492,17 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="dsmbeepnotify">'$lang_edit_set3_dsmbeepnotify_title'</label>
                         </div>
+
                         <div class="col-sm-5">
-                            <select name="dsmbeepnotify" id="dsmbeepnotify" class="form-select form-select-sm">'
-
-                                if [[ "$dsmbeepnotify" == "off" ]]; then
-                                    echo '<option value="off" selected>'$lang_edit_set3_dsmbeepnotify_off'</option>'
-                                else
-                                    echo '<option value="off">'$lang_edit_set3_dsmbeepnotify_off'</option>'
-                                fi
-                                if [[ "$dsmbeepnotify" == "on" ]]; then
-                                    echo '<option value="on" selected>'$lang_edit_set3_dsmbeepnotify_on'</option>'
-                                else
-                                    echo '<option value="on">'$lang_edit_set3_dsmbeepnotify_on'</option>'
-                                fi
-
-                                echo '
-                            </select>
+                            <input class="form-check-input" type="radio" id="dsmbeepnotify-on" name="dsmbeepnotify" value='; \
+                                [[ "$dsmbeepnotify" == "on" ]] && echo -n '"on" checked />' || echo -n '"on" />'
+                            echo '<label for="dsmbeepnotify-on" class="form-check-label ps-2 pe-4">'$lang_edit_set3_dsmbeepnotify_on'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="dsmbeepnotify-off" name="dsmbeepnotify" value='; \
+                                [[ "$dsmbeepnotify" == "off" ]] && echo -n '"off" checked />' || echo -n '"off" />'
+                            echo '<label for="dsmbeepnotify-off" class="form-check-label ps-2">'$lang_edit_set3_dsmbeepnotify_off'</label>
                         </div>
+
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#dsmbeepnotify-info" role="button" aria-expanded="false" aria-controls="dsmbeepnotify-info">
