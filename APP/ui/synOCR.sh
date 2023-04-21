@@ -705,9 +705,8 @@ if [ "$type_of_rule" = advanced ]; then
 
     done
 
-    # replace parameters with values (rulenames can contain placeholders, which are replaced here)
     # meta_keyword_list: unique / without tagsymbol / separated with komma and space >, <:
-    meta_keyword_list=$(replace_variables "${renameTag}" | tr ' ' '\n' | awk '!x[$0]++' | sed -e "s/^%20//g;s/^${tagsymbol}//g" | tr '\n' ' ' | sed -e "s/ /, /g;s/%20/ /g;s/, $//g" | sed -e "s/, $//g")
+    meta_keyword_list=$(echo "${renameTag}" | tr ' ' '\n' | awk '!x[$0]++' | sed -e "s/^%20//g;s/^${tagsymbol}//g" | tr '\n' ' ' | sed -e "s/ /, /g;s/%20/ /g;s/, $//g" | sed -e "s/, $//g")
     # ranameTag: unique / spaces masked with %20:
     renameTag=$(echo "$renameTag" | tr ' ' '\n' | awk '!x[$0]++' | tr '\n' ' ' | sed -e "s/ //g" )
 else
@@ -762,9 +761,8 @@ else
         i=$((i + 1))
     done
     
-    # replace parameters with values (rulenames can contain placeholders, which are replaced here)
     # meta_keyword_list: without tagsymbol / separated with komma and space >, <:
-    meta_keyword_list=$(replace_variables "${renameTag}" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g;s/%20/ /g")
+    meta_keyword_list=$(echo "${renameTag}" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g;s/%20/ /g")
 fi
 
 # remove last whitespace:
@@ -1253,7 +1251,9 @@ rename()
     if [ "$python_check" = "ok" ] && [ "$enablePyMetaData" -eq 1 ]; then
         echo "(use python PyPDF2)"
         unset py_meta
-    
+
+        meta_keyword_list=$(replace_variables "${meta_keyword_list}")
+
         py_meta="'/Author': '$documentAuthor',"
         py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
         py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\'")"
