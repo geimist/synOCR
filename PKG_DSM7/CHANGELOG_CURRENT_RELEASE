@@ -3,6 +3,7 @@ known issues / limitations:
     and possibly not mounted does not work when running the program via the GUI
     (due to the known rights restrictions)
 
-1.3.2 [2023-04-21]
+1.3.3 [2023-04-23]
 BUGFIXES:
  - Renaming parameters used as tag name components in YAML rules were not written as metadata
+ - fix wrong version in 1.3.2
