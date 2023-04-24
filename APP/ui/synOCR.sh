@@ -741,7 +741,7 @@ if [ "$type_of_rule" = advanced ]; then
             # notify_lang
             if [[ "$VARnotify_lang" != null ]] ; then
                 notify_lang="${VARnotify_lang}"
-                echo "${log_indent}              ➜ set notify_lang to ${VARapprise_call}"
+                echo "${log_indent}              ➜ set notify_lang to ${VARnotify_lang}"
             fi
 
             # ---------------------------------------------------------------------
@@ -2290,11 +2290,13 @@ while read input ; do
 # ---------------------------------------------------------------------
     # ToDo: the automatic language setting should be included here:
 
+    # notify message in user/rule defined language:
+    lang_notify_file_job_successful=$(synogetkeyvalue "./lang/lang_${notify_lang}.txt" lang_notify_file_job_successful)
+
     file_notify=$(basename "${output}")
     # DSM Message:
     if [ "$dsmtextnotify" = "on" ] ; then
         if [ "$dsm_version" = "7" ] ; then
-#           synodsmnotify -c "SYNO.SDS.synOCR.Application" "$MessageTo" "synOCR:app:app_name" "synOCR:app:job_successful" "[${file_notify}]"
             synodsmnotify -c "SYNO.SDS.synOCR.Application" "$MessageTo" "synOCR:app:app_name" "synOCR:app:job_successful" "${lang_notify_file_job_successful} [${file_notify}]"
         else
            synodsmnotify "$MessageTo" "synOCR" "${lang_notify_file_job_successful} [${file_notify}]"
@@ -2318,10 +2320,10 @@ while read input ; do
 
         if [ "$?" -eq 0 ] ; then
             echo "${log_indent}  APPRISE-LOG:"
-            echo "$apprise_LOG" | sed -e "s/^/${log_indent}/g"
+            echo "$apprise_LOG" | sed -e "s/^/${log_indent}  /g"
         elif [ "$?" -ne 0 ] || [ "$loglevel" = "2" ]; then # for log level 1 only error output
             echo -n "${log_indent}  APPRISE-Error: "
-            echo "$apprise_LOG" | sed -e "s/^/${log_indent}/g"
+            echo "$apprise_LOG" | sed -e "s/^/${log_indent}  /g"
         fi
     else
         echo "${log_indent}  INFO: Notify for apprise not defined ..."
