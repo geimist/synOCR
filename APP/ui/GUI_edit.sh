@@ -1062,13 +1062,15 @@ if [[ "$page" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="ocropt">'$lang_edit_set2_ocropt_title'</label>
                         </div>
-                        <div class="col-sm-5">'
+                        <div class="col-sm-5">
+                            <code>'
                             if [ -n "$ocropt" ]; then
                                 echo '<input type="text" name="ocropt" id="ocropt" class="form-control form-control-sm" value="'$ocropt'" />'
                             else
                                 echo '<input type="text" name="ocropt" id="ocropt" class="form-control form-control-sm" value="" />'
                             fi
                             echo '
+                            </code>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">

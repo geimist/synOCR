@@ -487,6 +487,10 @@ if [ "$type_of_rule" = advanced ]; then
         targetfolder=$(echo "$tag_rule_content" | jq -r ".${tagrule}.targetfolder" )
         tagname_RegEx=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname_RegEx" )
         tagname_multiline_RegEx=$(echo "$tag_rule_content" | jq -r ".${tagrule}.multilineregex" )
+        VARapprise_call=$(echo "$tag_rule_content" | jq -r ".${tagrule}.apprise_call" )
+        VARapprise_attachment=$(echo "$tag_rule_content" | jq -r ".${tagrule}.apprise_attachment" )
+        VARnotify_lang=$(echo "$tag_rule_content" | jq -r ".${tagrule}.notify_lang" )
+        
         if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] ; then
             echo "${log_indent}  [no actions defined - continue]"
             continue
@@ -720,9 +724,30 @@ if [ "$type_of_rule" = advanced ]; then
         if [ "$found" -eq 1 ] ; then
             echo "${log_indent}          >>> Rule is satisfied" ; echo -e
 
+            # ---------------------------------------------------------------------
+            # modify (global) settings with yaml rules:
+            # apprise_call
+            if [[ "$VARapprise_call" != null ]] ; then
+                apprise_call="${VARapprise_call} ${apprise_call}"
+                echo "${log_indent}              ➜ add apprise_call ${VARapprise_call}"
+            fi
+
+            # apprise_attachment
+            if [[ "$VARapprise_attachment" != null ]] ; then
+                apprise_attachment="${VARapprise_attachment}"
+                echo "${log_indent}              ➜ set apprise_attachment to ${VARapprise_attachment}"
+            fi
+
+            # notify_lang
+            if [[ "$VARnotify_lang" != null ]] ; then
+                notify_lang="${VARnotify_lang}"
+                echo "${log_indent}              ➜ set notify_lang to ${VARapprise_call}"
+            fi
+
+            # ---------------------------------------------------------------------
+            # tagname_RegEx
             if [[ "$tagname_RegEx" != null ]] ; then
                 echo -n "${log_indent}              ➜ search RegEx for tag ➜ "
-                
                 # treat the file as one huge string (Parameter -z):
                 if [ "$tagname_multiline_RegEx" = true ] ;then
                     grep_opt="z"
@@ -753,7 +778,7 @@ if [ "$type_of_rule" = advanced ]; then
     done
 
     # meta_keyword_list: unique / without tagsymbol / separated with komma and space >, <:
-    meta_keyword_list=$(echo "$renameTag" | tr ' ' '\n' | awk '!x[$0]++' | sed -e "s/^%20//g;s/^${tagsymbol}//g" | tr '\n' ' ' | sed -e "s/ /, /g;s/%20/ /g;s/, $//g" | sed -e "s/, $//g")
+    meta_keyword_list=$(echo "${renameTag}" | tr ' ' '\n' | awk '!x[$0]++' | sed -e "s/^%20//g;s/^${tagsymbol}//g" | tr '\n' ' ' | sed -e "s/ /, /g;s/%20/ /g;s/, $//g" | sed -e "s/, $//g")
     # ranameTag: unique / spaces masked with %20:
     renameTag=$(echo "$renameTag" | tr ' ' '\n' | awk '!x[$0]++' | tr '\n' ' ' | sed -e "s/ //g" )
 else
@@ -807,9 +832,9 @@ else
         fi
         i=$((i + 1))
     done
-
-    # # meta_keyword_list: without tagsymbol / separated with komma and space >, <:
-    meta_keyword_list=$(echo "$renameTag" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g;s/%20/ /g")
+    
+    # meta_keyword_list: without tagsymbol / separated with komma and space >, <:
+    meta_keyword_list=$(echo "${renameTag}" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g;s/%20/ /g")
 fi
 
 # remove last whitespace:
@@ -926,6 +951,28 @@ yaml_validate()
            echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of multilineregex must be only \"true\" OR \"false\"]"
         fi
     done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^multilineregex:")"
+
+    # check apprise_call:
+    # ToDo: which regex can check this?
+#    while read line ; do
+#        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+#           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of apprise_call must be only \"true\" OR \"false\"]"
+#        fi
+#    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^apprise_call:")"
+
+    # check, if value of apprise_attachment is "true" OR "false":
+    while read line ; do
+        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of apprise_attachment must be only \"true\" OR \"false\"]"
+        fi
+    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^apprise_attachment:")"
+
+    # check, if value of notify_lang is a valid language:
+    while read line ; do
+        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(chs|cht|csy|dan|enu|fre|ger|hun|ita|jpn|krn|nld|nor|plk|ptb|ptg|rus|spn|sve|tha|trk)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [notify_lang must be only one of this values \"chs\" \"cht\" \"csy\" \"dan\" \"enu\" \"fre\" \"ger\" \"hun\" \"ita\" \"jpn\" \"krn\" \"nld\" \"nor\" \"plk\" \"ptb\" \"ptg\" \"rus\" \"spn\" \"sve\" \"tha\" \"trk\"]"
+        fi
+    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^notify_lang:")"
 
     echo -e
 
@@ -1305,7 +1352,10 @@ rename()
     if [ "$python_check" = "ok" ] && [ "$enablePyMetaData" -eq 1 ]; then
         echo "(use python pikepdf)"
         unset py_meta
-    
+
+        # replace parameters with values (rulenames can contain placeholders, which are replaced here)
+        meta_keyword_list=$(replace_variables "${meta_keyword_list}")
+
         py_meta="'/Author': '$documentAuthor',"
         py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
         py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
@@ -2087,11 +2137,19 @@ collect_input_files "${work_tmp_main}" "pdf"
 # ---------------------------------------------------------------------
     [ "$loglevel" = "2" ] && printf "\n${log_indent}list files in INPUT with transcoded special characters:\n" && ls "${work_tmp_main}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
 
+# save different global settings to be able to adjust them individually with yaml rules in each loop:
+    apprise_call_saved="$apprise_call"
+    apprise_attachment_saved="$apprise_attachment"
+    notify_lang_saved="$notify_lang"
 
-# count pages / files:
 # ---------------------------------------------------------------------
 while read input ; do
     [ ! -f "$input" ] && continue
+
+    # reset global settings for new file:
+    apprise_call="$apprise_call_saved"
+    apprise_attachment="$apprise_attachment_saved"
+    notify_lang="$notify_lang_safed"
 
     if [ "$python_check" = ok ]; then
         pagecount_latest=$( py_page_count "${input}" ) 
@@ -2252,16 +2310,16 @@ while read input ; do
     if [ -n "$apprise_call" ] && [ "$python_check" = "ok" ]; then
         if [ "${apprise_attachment}" = true ]; then
             # with target file as attachment (The user must ensure that the requested service accepts attachments):
-            apprise_LOG=$(apprise -vv -t 'synOCR' -b "${lang_notify_file_job_successful} [${file_notify}]." --attach "${output}" "$apprise_call")
+            apprise_LOG=$(apprise --interpret-escapes -vv -t 'synOCR' -b "${lang_notify_file_job_successful}\n\r${file_notify}\n\n" --attach "${output}" "$apprise_call")
         else
             # without attachment:
-            apprise_LOG=$(apprise -vv -t 'synOCR' -b "${lang_notify_file_job_successful} [${file_notify}]." "$apprise_call")
+            apprise_LOG=$(apprise --interpret-escapes -vv -t 'synOCR' -b "${lang_notify_file_job_successful}\n\r${file_notify}" "$apprise_call")
         fi
 
-        if [ "$loglevel" = "2" ] ; then
+        if [ "$?" -eq 0 ] ; then
             echo "${log_indent}  APPRISE-LOG:"
             echo "$apprise_LOG" | sed -e "s/^/${log_indent}/g"
-        elif echo "$apprise_LOG" | grep -q "error"; then # for log level 1 only error output
+        elif [ "$?" -ne 0 ] || [ "$loglevel" = "2" ]; then # for log level 1 only error output
             echo -n "${log_indent}  APPRISE-Error: "
             echo "$apprise_LOG" | sed -e "s/^/${log_indent}/g"
         fi
