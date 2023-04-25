@@ -14,6 +14,7 @@ IMPROVEMENT:
 IMPLEMENTATIONS:
  - 🔥 inclusion of APPRISE library to support many notification services (native PushBullet support has been removed)
    apprise_call (apprise service) apprise_attachment (true/false) notify_lang (DSM lang code) can be defined and overwrite in every YAML rule
+ - with value postscript: in YAML can be defined post scripts (command or path to script)
  
 1.3.99.8 [2023-03-12]
 BUGFIXES:

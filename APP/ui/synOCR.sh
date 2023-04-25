@@ -33,6 +33,7 @@
     workprofile="$1"            # the profile submitted by the start script
     current_logfile="$2"        # current logfile / is submitted by start script
     shopt -s globstar           # enable 'globstar' shell option (to use ** for directionary wildcard)
+    shopt -s expand_aliases     # store & call aliases in an array
     date_start_all=$(date +%s)
     # hard coded setting to enable / disable metadata integration
     # /usr/syno/bin/synosetkeyvalue "/usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh" enablePyMetaData 0
@@ -490,14 +491,19 @@ if [ "$type_of_rule" = advanced ]; then
         VARapprise_call=$(echo "$tag_rule_content" | jq -r ".${tagrule}.apprise_call" )
         VARapprise_attachment=$(echo "$tag_rule_content" | jq -r ".${tagrule}.apprise_attachment" )
         VARnotify_lang=$(echo "$tag_rule_content" | jq -r ".${tagrule}.notify_lang" )
-        
-        if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] ; then
-            echo "${log_indent}  [no actions defined - continue]"
+        postscript=$(echo "$tag_rule_content" | jq -r ".${tagrule}.postscript" )
+
+        if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] && [[ "$postscript" = null ]] ; then
+            echo "${log_indent}   [no actions defined - continue]"
             continue
         fi
 
-        if [[ "$targetfolder" = null ]] ; then
+        if [[ "$targetfolder" = null ]]; then
             targetfolder=""
+        fi
+
+        if [[ "$searchtag" = null ]]; then
+            searchtag=""
         fi
 
         echo "${log_indent}  ➜ condition:        $condition"     # "all" OR "any" OR "none"
@@ -722,7 +728,7 @@ if [ "$type_of_rule" = advanced ]; then
         done
 
         if [ "$found" -eq 1 ] ; then
-            echo "${log_indent}          >>> Rule is satisfied" ; echo -e
+            echo "${log_indent}          >>> Rule is satisfied"
 
             # ---------------------------------------------------------------------
             # modify (global) settings with yaml rules:
@@ -745,6 +751,15 @@ if [ "$type_of_rule" = advanced ]; then
             fi
 
             # ---------------------------------------------------------------------
+            # store user defined (YAML) post scripts as alias in an array:
+            if [[ "$postscript" != null ]] ; then
+                aliasname="postscript_${tagrule}_$(date +%N)"
+                postscriptarray+=( $aliasname )
+                alias $aliasname="$postscript"
+                echo "${log_indent}              ➜ activate post script: ${postscript}"
+            fi
+
+            # ---------------------------------------------------------------------
             # tagname_RegEx
             if [[ "$tagname_RegEx" != null ]] ; then
                 echo -n "${log_indent}              ➜ search RegEx for tag ➜ "
@@ -762,18 +777,19 @@ if [ "$type_of_rule" = advanced ]; then
                     else
                         searchtag="$tagname_RegEx_result"
                     fi
-                    echo "$searchtag"
+                    printf "\n$searchtag\n\n"
                 else
-                    echo "RegEx not found (fallback to $searchtag)"
+                    printf "\nRegEx not found (fallback to $searchtag)\n\n"
                 fi
-                echo -e
             fi
 
-            renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # with temporary space separator to finally check tags for uniqueness
-            renameCat="$(echo "${targetfolder}" | sed -e "s/ /%20/g") ${renameCat}"
+            [ -n "${searchtag}" ] && renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # with temporary space separator to finally check tags for uniqueness
+            [ -n "${targetfolder}" ] && renameCat="$(echo "${targetfolder}" | sed -e "s/ /%20/g") ${renameCat}"
         else
-            echo "${log_indent}          >>> Rule is not satisfied" ; echo -e
+            echo "${log_indent}          >>> Rule is not satisfied"
         fi
+
+        printf "\n"
 
     done
 
@@ -853,9 +869,7 @@ fi
 
 
 
-echo "${log_indent}rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\""
-
-echo -e
+printf "\n${log_indent}rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\"\n\n"
 
 if [ "$loglevel" = "2" ] ; then
     printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
@@ -2098,7 +2112,6 @@ while read input ; do
         prepare_target_path "${BACKUPDIR}" "$filename"
         mv "$input" "$output"
         echo "${log_indent}➜ backup source file to: $output"
-        [ -f "$output" ] && echo ok || echo failed …
     else
         rm -f "$input"
         echo "${log_indent}➜ delete source file ($filename)"
@@ -2329,11 +2342,19 @@ while read input ; do
         echo "${log_indent}  INFO: Notify for apprise not defined ..."
     fi
 
+    # run user defined (YAML) post scripts:
+    printf "\nrun user defined post scripts:\n"
+    for cmd in ${postscriptarray[@]}; do
+    #    [ "$loglevel" = "2" ] && 
+        echo " ➜ $cmd"
+        eval "$cmd"
+        unalias $cmd
+    done
+    unset postscriptarray
 
 # update file count profile:
 # ---------------------------------------------------------------------
-    echo -e
-    echo "Stats:"
+    printf "\nStats:\n"
 
     sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$global_pagecount_new' WHERE key='global_pagecount'"
     sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$global_ocrcount_new' WHERE key='global_ocrcount'"
@@ -2348,7 +2369,6 @@ while read input ; do
     echo -e
     echo "cleanup:"
 
-
 # delete temporary working directory:
 # ---------------------------------------------------------------------
     echo "  delete tmp-files ..."
@@ -2356,7 +2376,7 @@ while read input ; do
 
 done <<<"${files}"
 
-    [ -d "${$work_tmp_step2}" ] && rm -rfv "$work_tmp_step2" | sed -e "s/^/${log_indent}/g"
+    [ -d "${work_tmp_step2}" ] && rm -rfv "$work_tmp_step2" | sed -e "s/^/${log_indent}/g"
     [ -d "${work_tmp_main}" ] && rm -rfv "$work_tmp_main" | sed -e "s/^/${log_indent}/g"
 }
 

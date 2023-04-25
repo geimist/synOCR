@@ -80,6 +80,9 @@ samplefilecontent="    #########################################################
     #           - $lang_edit_yamlsample_17
     #           - $lang_edit_yamlsample_17b
     #           - $lang_edit_yamlsample_18 (>tagname_RegEx:<)
+    #       > \"postscript:\"
+    #           - $lang_edit_yamlsample_15 >postscript: command or path< (${lang_edit_yamlsample_16})
+    #           - $lang_edit_yamlsample_43
     #       > \"multilineregex:\"		
     #           - $lang_edit_yamlsample_15 >multilineregex: VALUE<  (${lang_edit_yamlsample_16})		
     #           - $lang_edit_yamlsample_36 \"true\" / \"false\"		
@@ -179,6 +182,7 @@ echo "
 #    targetfolder: \"/<path>/\"
 #    tagname_RegEx: \"HUK[[:digit:]]{2}\"
 #    multilineregex: false
+#    postscript: 
 #    condition: all
 #    subrules:
 #    - searchstring: foundme

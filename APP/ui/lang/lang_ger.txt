@@ -338,6 +338,7 @@ lang_edit_yamlsample_39="wenn der Parameter fehlt, wird der Standardwert verwend
 lang_edit_yamlsample_40="definiert Suchbegriff als Text oder RegEx"
 lang_edit_yamlsample_41="abschließend kann die Konfigurationsdatei online überprüft und validiert werden"
 lang_edit_yamlsample_42="nachstehend die automatisch konvertieren Benutzerregeln:"
+lang_edit_yamlsample_43="Verwende diese Funktion mit Vorsicht!"
 lang_edit_yamlsample_button="Regeldatei erstellen / konvertieren"
 lang_edit_yamlsample_button_help_headline="Die externe Regeldatei bietet wesentlich komplexere Suchmuster"
 lang_edit_yamlsample_button_help_01="- konvertiert die bestehenden Regeln ins YAML-Format"
