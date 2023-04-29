@@ -2,12 +2,12 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.0.6 © 2023 by geimist                                                                        #
+    #     v1.0.7 © 2023 by geimist                                                                        #
     #                                                                                                     #
     #######################################################################################################
 
 DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
-
+# /volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n_autotranslate_by_DeepL_API.sh
 
 # Mastersprache:
 #---------------------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
     exportPath="/usr/syno/synoman/webman/3rdparty/synOCR/lang/"
     
     # sollen bereits vorhandene Sprachdateien überschrieben werden?:
-    overwrite=0
+    overwrite=1
 
 # manueller Import bereits vorhandener Sprachdateien
 #---------------------------------------------------------------------------------------------------
@@ -150,7 +150,8 @@ if [ $(stat -c %s "$i18n_DB") -eq 0 ] || [ ! -f "$i18n_DB" ]; then
                         CREATE TABLE IF NOT EXISTS \"variables\" (
                         	\"varID\"	INTEGER,
                         	\"varname\"	TEXT UNIQUE,
-                        	\"verified\"	INTEGER DEFAULT 0,
+                        	\"verified\"	INTEGER DEFAULT 0, 
+                        	\"inuse\" VARCHAR DEFAULT ('true'),
                         	PRIMARY KEY(\"varID\" AUTOINCREMENT)
                         );
                         INSERT INTO \"languages\" VALUES (1,'German','ger','DE'),
@@ -196,6 +197,9 @@ create_master() {
     synoLangCode=$( echo "$masterFile" | cut -f 1 -d '.' | cut -f 2 -d '_')
     langID=$(sqlite3 "$i18n_DB" "SELECT langID FROM languages WHERE synoshortname='$synoLangCode'")
 
+    # setze bisherige Variablen auf false um nur die der Mastertabelle auf aktiv zu stellen
+    sqlite3 "$i18n_DB" "UPDATE variables SET inuse = false;"
+    
     # Schleife über jede Zeile im ini-File, welche nicht auskommentiert oder leer ist:
     while read line; do
         key=$(echo "$line" | awk -F= '{print $1}')
@@ -211,7 +215,10 @@ create_master() {
             echo "! ! ! ERROR @ LINE: INSERT OR IGNORE INTO variables ( varname ) VALUES ( '$key' )"
         fi
 
-        # identifiziere die ID des aktuellen Variable um sie mit der anderen Tabelle zu verknüpfen:
+        # setze genutzte Variable auf true:
+        sqlite3 "$i18n_DB" "UPDATE variables SET inuse = true WHERE varname='$key';"
+
+        # identifiziere die ID der aktuellen Variable um den Wert mit der String-Tabelle zu verknüpfen:
         varID=$(sqlite3 "$i18n_DB" "SELECT varID FROM variables WHERE varname='$key'")
 
         # lese Info einer ggf. vorhandenen Version - prüfen, ob eine Aktualisierung nötig ist und erhöhe ggf. die Version:
@@ -251,6 +258,7 @@ create_master() {
     done <<<"$(cat "$masterFile" | grep -v "^$" | grep -v ^[[:space:]]*# )" #| grep lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR )"
     
     printf "\n\nEs wurden $insertCount Datensätze in die Mastertabelle eingefügt, bzw. aktualisiert.\n"
+
 }
 
 manual_import() {
@@ -293,6 +301,11 @@ manual_import() {
             if [ -z "$varID" ]; then
 #                printf "\nDie Variable $key konnte nicht in der DB gefunden werden.\nüberspringen ...\n"
                 skipped="$( [ -n "$skipped" ] && printf "${skipped}\n")\n    ➜ Die Variable $key konnte nicht in der DB gefunden werden ➜ überspringen ...\n"
+
+                
+                
+                
+                
                 continue
             fi
     
@@ -347,8 +360,8 @@ manual_import() {
 }
 
 translate() {
-    # diese Funktion list die Musterübersetzung und übersetzt sie, sofern sie in der Zielsprache fehlt 
-    # oder deren Version nicht mit der Version in der Mastertabelle übereinstimmt
+    # diese Funktion list die Tabelle mit der Musterübersetzung und übersetzt sie, sofern sie in der 
+    # Zielsprache fehlt oder deren Version nicht mit der Version in der Mastertabelle übereinstimmt
 
     printf "\n\nPrüfe auf fehlende oder veraltete Übersetzungen und aktualisiere sie ggf. ... \n"
     printf "    Master Sprach-ID:     $masterLangID [$masterLongName]\n\n"
@@ -361,7 +374,9 @@ translate() {
         printf "\n\nverarbeite Sprach-ID: $langID [$targetLongName]\n"
 
         # lese aktuelle Version der Mastertabelle und der Übersetzungstabelle
-        masterList=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT varID, version FROM master_template WHERE langID='$masterLangID'" | sort -g)
+#       masterList=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT varID, version FROM master_template WHERE langID='$masterLangID'" | sort -g)
+        masterList=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT t1.varID, t1.version FROM (master_template t1, variables t2) WHERE t1.varID = t2.varID AND inuse='1' AND t1.langID='$masterLangID';" | sort -g)
+
         langList=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT varID, version FROM strings WHERE langID='$langID'" | sort -g)
         
         # gibt es eine Variable mit Namen >machinetranslate<? Welche ID hat sie? 
@@ -403,6 +418,8 @@ translate() {
                 # ToDo: $langList & $masterList mit ID auslesen und für den diff-Vergleich die Spalte ID abschneiden - so erspart man sich die erneute Abfrage
                 # ist die Zeile vorhanden (rowID = Zahl), dann wird sie aktualisiert, sonst wird ein neuer Datensatz erstellt ("INSERT OR REPLACE …"):
                 rowID=$(sqlite3 "$i18n_DB" "SELECT ID FROM strings WHERE varID='$varID' AND langID='$langID'" | head -n1)
+            
+            #   if echo "$rowID" | grep -q ^[[:digit:]]$; then
                 if [ -n "$rowID" ]; then
                     IDname="ID, "
                     rowID="'$rowID',"
@@ -415,7 +432,6 @@ translate() {
             done <<<"$(echo "$diffNew" | awk -F'\t' '{print $1}')"
         else
             # Übersetzung nötig - Zielsprache weicht von Quellsprache ab - es wird übersetzt und in die Übersetzungstabelle geschrieben:
-
             while read varID; do
 
                 # Progressbar:

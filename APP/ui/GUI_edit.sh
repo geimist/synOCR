@@ -6,7 +6,7 @@
 #   © 2023 by geimist                                                           #
 #################################################################################
 
-dev_mode=true # false # show field in development ...
+dev_mode=false #true # false # show field in development ...
 # if [ "$dev_mode" = "true" ]; then
 # fi
 

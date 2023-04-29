@@ -523,6 +523,9 @@ fi
             log="$log 
             ➜ ERROR: the DB column could not be renamed (PBTOKEN to apprise_call)"
             error=1
+        else
+            # delete old PushBullet token:
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET apprise_call = NULL;"
         fi
 
         # apprise - notification language:
