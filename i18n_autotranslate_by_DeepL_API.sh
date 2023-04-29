@@ -549,7 +549,7 @@ export_langfiles() {
             printf "    # %-100s#\n"  "    /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_${synoShortName}.txt"
             printf "    # %-100s#\n"  ""
             printf "    # %-100s#\n"  "translation instructions can you found here: "
-            printf "    # %-100s#\n"  "    https://git.geimist.eu/geimist/synOCR/src/branch/master/translation_instruction.md"
+            printf "    # %-100s#\n"  "    https://github.com/geimist/synOCR/blob/master/translation_instruction.md"
             printf "    # %-100s#\n"  ""
             printf "    # %-101s#\n"  "    © $(date +%Y) by geimist"
             echo "    #######################################################################################################"
@@ -558,7 +558,7 @@ export_langfiles() {
         
         chmod 755 "${langFile}"
         
-        content=$(sqlite3 -separator $'="' "$i18n_DB" "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='$langID'" )
+        content=$(sqlite3 -separator $'="' "$i18n_DB" "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='$langID' ORDER BY varname ASC" )
         
         while read line; do
             echo "$line\"" >> "${langFile}"
