@@ -1,5 +1,11 @@
 #!/bin/bash
-#  /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh [start|stop]
+
+#############################################################################################
+#   description:    start / stop monitoring with inotify                                    #
+#                                                                                           #
+#   path:           /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh [start|stop]  #
+#   © 2023 by geimist                                                                       #
+#############################################################################################
 
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
 inotify_process_id=$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}')

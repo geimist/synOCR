@@ -1,5 +1,11 @@
 #!/bin/bash
-# /usr/syno/synoman/webman/3rdparty/synOCR/index.cgi
+
+#############################################################################################
+#   description:    initiate SPK GUI                                                        #
+#                                                                                           #
+#   path:           /usr/syno/synoman/webman/3rdparty/synOCR/index.cgi                      #
+#   © 2023 by geimist                                                                       #
+#############################################################################################
 
 # Initiate system
 # ---------------------------------------------------------------------

@@ -5,7 +5,7 @@
 #                   - create group docker                                           #
 #                   - set docker and admin permission to user synOCR                #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/check_permissions.sh   #
-#   © 2022 by geimist                                                               #
+#   © 2023 by geimist                                                               #
 #####################################################################################
 
 echo -n "    ➜ check docker group and permissions: "

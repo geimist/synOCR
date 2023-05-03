@@ -1,5 +1,10 @@
 #!/bin/bash
-# /usr/syno/synoman/webman/3rdparty/synOCR/help.sh
+
+#################################################################################
+#   description:    - generates the help page for the GUI                       #
+#   path:           /usr/syno/synoman/webman/3rdparty/synOCR/help.sh            #
+#   © 2023 by geimist                                                           #
+#################################################################################
 
 # -> Headline
 echo '
