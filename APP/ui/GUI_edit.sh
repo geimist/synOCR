@@ -2252,6 +2252,43 @@ fi
 
                     echo '<hr><br>'
 
+                    # dsmbeepnotify
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="dsmbeepnotify">'$lang_edit_set3_dsmbeepnotify_title'</label>
+                        </div>
+
+                        <div class="col-sm-5">
+                            <input class="form-check-input" type="radio" id="dsmbeepnotify-on" name="dsmbeepnotify" value='; \
+                                [[ "$dsmbeepnotify" == "on" ]] && echo -n '"on" checked />' || echo -n '"on" />'
+                            echo '<label for="dsmbeepnotify-on" class="form-check-label ps-2 pe-4">'$lang_edit_set3_dsmbeepnotify_on'</label>'
+                            echo -n '
+                            <input class="form-check-input" type="radio" id="dsmbeepnotify-off" name="dsmbeepnotify" value='; \
+                                [[ "$dsmbeepnotify" == "off" ]] && echo -n '"off" checked />' || echo -n '"off" />'
+                            echo '<label for="dsmbeepnotify-off" class="form-check-label ps-2">'$lang_edit_set3_dsmbeepnotify_off'</label>
+                        </div>
+
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#dsmbeepnotify-info" role="button" aria-expanded="false" aria-controls="dsmbeepnotify-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="dsmbeepnotify-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '$lang_edit_set3_dsmbeepnotify_help1'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
                     # dsmtextnotify
                     echo '
                     <div class="row mb-3">
@@ -2485,43 +2522,6 @@ fi
                                         '$lang_edit_set3_notify_lang_help1'<br />
                                         '$lang_edit_set3_notify_lang_help2' <code><span style="font-hight:1.1em;">'$ownlangvar'</span></code><br />
                                         '$lang_edit_set3_notify_lang_help3'
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-2"></div>
-                    </div>'
-
-                    # dsmbeepnotify
-                    echo '
-                    <div class="row mb-3">
-                        <div class="col-sm-5">
-                            <label for="dsmbeepnotify">'$lang_edit_set3_dsmbeepnotify_title'</label>
-                        </div>
-
-                        <div class="col-sm-5">
-                            <input class="form-check-input" type="radio" id="dsmbeepnotify-on" name="dsmbeepnotify" value='; \
-                                [[ "$dsmbeepnotify" == "on" ]] && echo -n '"on" checked />' || echo -n '"on" />'
-                            echo '<label for="dsmbeepnotify-on" class="form-check-label ps-2 pe-4">'$lang_edit_set3_dsmbeepnotify_on'</label>'
-                            echo -n '
-                            <input class="form-check-input" type="radio" id="dsmbeepnotify-off" name="dsmbeepnotify" value='; \
-                                [[ "$dsmbeepnotify" == "off" ]] && echo -n '"off" checked />' || echo -n '"off" />'
-                            echo '<label for="dsmbeepnotify-off" class="form-check-label ps-2">'$lang_edit_set3_dsmbeepnotify_off'</label>
-                        </div>
-
-                        <div class="col-sm-2">
-                            <div class="float-end">
-                                <a data-bs-toggle="collapse" href="#dsmbeepnotify-info" role="button" aria-expanded="false" aria-controls="dsmbeepnotify-info">
-                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-10">
-                            <div class="collapse" id="dsmbeepnotify-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
-                                    <span>
-                                        '$lang_edit_set3_dsmbeepnotify_help1'
                                     </span>
                                 </div>
                             </div>
