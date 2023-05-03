@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #################################################################################
 #   description:    checks / create the configuration DB for new variables      #
