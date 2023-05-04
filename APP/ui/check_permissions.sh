@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=
 
 #####################################################################################
 #   description:    - runs on DSM7 and above                                        #
