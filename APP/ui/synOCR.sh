@@ -13,6 +13,7 @@
     echo -e
 
     set -E -o functrace     # for function failure()
+    IFSsaved=IFS
 
     # shellcheck disable=SC2317  # Don't warn about "unreachable commands" in this function
     failure()
@@ -1510,7 +1511,8 @@ rename()
         renameCat=$(replace_variables "${renameCat}")
 
         # define target folder as array
-        tagarray=( "${renameCat}" )
+##      tagarray=( ${renameCat} )
+        IFS=" " read -r -a tagarray <<< "${renameCat}" && IFS="${IFSsaved}"
         
         # temp. list of used destination folders to avoid file duplicates (different tags, but one category):
         DestFolderList=""
