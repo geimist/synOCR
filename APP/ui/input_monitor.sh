@@ -1,4 +1,5 @@
 #!/bin/bash
+# shell-check disable=
 
 #############################################################################################
 #   description:    start / stop monitoring with inotify                                    #
@@ -8,18 +9,17 @@
 #############################################################################################
 
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
-inotify_process_id=$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}')
-
+inotify_process_id=$(pgrep -f "inotifywait.*--fromfile.*inotify.list")
 
 # create list (array need for tee) with all active log folders:
 # --------------------------------------------------------------
 LOG_DIR_LIST=()
-while read value ; do
+while read -r value ; do
     [ -d "${value%/*}" ] && LOG_DIR_LIST+=( "$value" )
-done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
+done <<< "$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
 
 
-if [ ! $(which inotifywait) ]; then
+if [ ! "$(which inotifywait)" ]; then
     echo "ERROR: inotify-tools are not installed" | tee -a "${LOG_DIR_LIST[@]}"
     echo "You can install the SPK from https://synocommunity.com/package/inotify-tools" | tee -a "${LOG_DIR_LIST[@]}"
     exit 1
@@ -29,12 +29,12 @@ fi
 inotify_start() {
 # start monitoring:
 # --------------------------------------------------------------
-    printf "\n---------- START MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
+    printf "\n%s\n" "---------- START MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
     nohup inotifywait --fromfile "${monitored_folders}" -e moved_to -e close_write --monitor --timeout -1 | 
-        while read line ; do 
-            printf "\n---------------- EVENT --------------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n"
-            printf "detected event: $line\n"
-            printf "\nsynOCR-start.sh Log:\n"
+        while read -r line ; do 
+            printf "\n%s\n" "---------------- EVENT --------------- $(date +%Y-%m-%d_%H-%M-%S) ----------"
+            printf "%s\n" "detected event: ${line}"
+            printf "\n%s\n" "synOCR-start.sh Log:"
             /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
         done | tee -a "${LOG_DIR_LIST[@]}" &
 
@@ -46,10 +46,9 @@ inotify_stop()
 {
 # stop monitoring:
 # --------------------------------------------------------------
-    printf "\n---------- STOP  MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------\n" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
+    printf "\n%s\n" "---------- STOP  MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
     [ -f "${monitored_folders}" ] && rm -f "${monitored_folders}"
-    kill $inotify_process_id
-    if [ $? = 0 ]; then
+    if kill "${inotify_process_id}"; then
         echo "Monitoring ended" | tee -a "${LOG_DIR_LIST[@]}" #> /dev/null
     else
         echo "ERROR when stopping the monitoring!" | tee -a "${LOG_DIR_LIST[@]}" #> /dev/null
