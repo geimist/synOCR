@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# shellcheck disable=SC1091,SC2094,SC2154
 
 #################################################################################
 #   description:    - changes to synOCR directory and starts synOCR             #
@@ -22,14 +23,15 @@ umask 0011   # so that creaded files can also be edited by other users / http://
 # create list (array need for tee) with all active log folders:
 # --------------------------------------------------------------
 log_dir_list=()
-while read value ; do
-    [ -d "${value%/*}" ] && log_dir_list+=( "$value" ) #&& chmod 766 "$value"
+while read -r value ; do
+    [ -d "${value%/*}" ] && log_dir_list+=( "${value}" ) #&& chmod 766 "$value"
 done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
 
 
 inotify_process_id () {
-    # print process id of inotify in
-    ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}'
+    # print process id of inotify
+##  ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}'
+    pgrep -f "inotifywait.*--fromfile.*inotify.list"
 }
 
 # reading parameters:
@@ -39,12 +41,12 @@ for i in "$@" ; do
             # (re)start-monitoring:
             monitor=off
             loop_count=0
-            while [ "$monitor" = off ] ; do
+            while [ "${monitor}" = off ] ; do
 
                 # terminate parallel instances:
-                if [ $(echo $(inotify_process_id) | awk '{ print NF; }') -gt 1 ]; then 
+                if [ "$(inotify_process_id | awk '{ print NF; }')" -gt 1 ]; then 
                     echo "parallel processes active - terminate ..." | tee -a "${log_dir_list[@]}"
-                    kill $(inotify_process_id)
+                    kill "$(inotify_process_id)"
                 fi
 
                 # start, if not running:
@@ -56,7 +58,7 @@ for i in "$@" ; do
                     # check if restart is necessary:
                     sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
 
-                    if [ "$(cat "$monitored_folders" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
+                    if [ "$(cat "${monitored_folders}" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
                         echo "still running, but change noticed in the watched folders - restart monitoring ..." | tee -a "${log_dir_list[@]}"
                         rm -f "${monitored_folders}_tmp"
 
@@ -75,10 +77,10 @@ for i in "$@" ; do
                 fi
 
                 loop_count=$((loop_count + 1))
-                echo "loop count: $loop_count" | tee -a "${log_dir_list[@]}"
+                echo "loop count: ${loop_count}" | tee -a "${log_dir_list[@]}"
 
-                if [ "$loop_count" -gt 10 ]; then
-                    echo "! ! ! ERROR: failed to start monitoring after $loop_count trys" | tee -a "${log_dir_list[@]}"
+                if [ "${loop_count}" -gt 10 ]; then
+                    echo "! ! ! ERROR: failed to start monitoring after ${loop_count} trys" | tee -a "${log_dir_list[@]}"
                     break 1
                 fi
             done
@@ -106,19 +108,19 @@ done
 
 
 # Read working directory and change into it:
-    APPDIR=$(cd $(dirname $0);pwd)
-    cd ${APPDIR}
+    APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
+    cd "${APPDIR}" || exit 1
 
-if [ "$callFrom" = shell ] ; then
+if [ "${callFrom}" = shell ] ; then
     # adjust PATH:
-    if [ $machinetyp = "x86_64" ]; then
+    if [ "${machinetyp}" = "x86_64" ]; then
         PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
-    elif [ $machinetyp = "aarch64" ]; then
+    elif [ "${machinetyp}" = "aarch64" ]; then
         PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
     fi
 
     # set docker and admin permission to user synOCR for DSM7 and above
-    if [ "$dsm_version" -ge 7 ]; then
+    if [ "${dsm_version}" -ge 7 ]; then
         echo "synOCR run at DSM7 or above"
         source "./check_permissions.sh"
     fi
@@ -131,30 +133,30 @@ fi
 # Check DB (ggf. erstellen / upgrade):
     DBupgradelog=$(./upgradeconfig.sh)
 
-    if [ ! -z "$DBupgradelog" ] ; then
-        echo "${lang_edit_dbupdate}: $DBupgradelog"
+    if [ -n "${DBupgradelog}" ] ; then
+        echo "${lang_edit_dbupdate}: ${DBupgradelog}"
     fi
 
 # is an instance of synOCR already running?
     synOCR_pid=$( /bin/pidof synOCR.sh )
-    if [ ! -z "$synOCR_pid" ] ; then
-        if [ "$callFrom" = GUI ] ; then
+    if [ -n "${synOCR_pid}" ] ; then
+        if [ "${callFrom}" = GUI ] ; then
             echo '
             <p class="text-center synocr-text-red">
-                <b>'$lang_synOCR_start_is_running'</b><br>(Prozess-ID: '$synOCR_pid')
+                <b>'"${lang_synOCR_start_is_running}"'</b><br>(Prozess-ID: '"${synOCR_pid}"')
             </p><br />'
             echo '
             <p class="text-center">
-                <button name="page" value="main-kill-synocr" style="color: #BD0010;">('$lang_synOCR_start_req_kill')</button>
+                <button name="page" value="main-kill-synocr" style="color: #BD0010;">('"${lang_synOCR_start_req_kill}"')</button>
             </p><br />'
         else
-            echo "$lang_synOCR_start_is_running (Prozess-ID: ${synOCR_pid})"
+            echo "${lang_synOCR_start_is_running} (Prozess-ID: ${synOCR_pid})"
         fi
         exit
     else
-        if [ "$callFrom" = GUI ] ; then
+        if [ "${callFrom}" = GUI ] ; then
             echo '
-            <h2 class="synocr-text-blue mt-3">'$lang_synOCR_start_runs' ...</h2>
+            <h2 class="synocr-text-blue mt-3">'"${lang_synOCR_start_runs}"' ...</h2>
             <p>&nbsp;</p>
             <center>
                 <table id="system_msg" style="width: 40%; table-align: center;">
@@ -163,14 +165,14 @@ fi
                             <img class="float-start" alt="status_loading" src="images/status_loading.gif">
                         </th>
                         <th style="width: 85%;">
-                            <p class="text-center mt-2"><span style="color: #424242; font-weight:normal;">'$lang_synOCR_start_wait1'<br>'$lang_synOCR_start_wait2'</span></p>
+                            <p class="text-center mt-2"><span style="color: #424242; font-weight:normal;">'"${lang_synOCR_start_wait1}"'<br>'"${lang_synOCR_start_wait2}"'</span></p>
                         </th>
                     </tr>
                 </table>
             </center>'
         else
-            echo "$lang_synOCR_start_runs ..."
-            echo "$lang_synOCR_start_wait1 $lang_synOCR_start_wait2"
+            echo "${lang_synOCR_start_runs} ..."
+            echo "${lang_synOCR_start_wait1} ${lang_synOCR_start_wait2}"
         fi
     fi
 
@@ -185,18 +187,18 @@ fi
         sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon'"
         if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") = $(date +%m) ]]; then
             server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}&device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")" )
-            online_version=$(echo "$server_info" | jq -r .dsm.dsm${dsm_version}.${release_channel}.version)
-            downloadUrl=$(echo "$server_info" | jq -r .dsm.dsm${dsmMajorVersion}.${release_channel}.downloadUrl )
-            changeLogUrl=$(echo "$server_info" | jq -r .dsm.dsm${dsmMajorVersion}.${release_channel}.changeLogUrl )
+            online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_version}"."${release_channel}".version)
+#            downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_version}"."${release_channel}".downloadUrl )
+#            changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_version}"."${release_channel}".changeLogUrl )
  
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${online_version}' WHERE key='online_version'"
             # reset checkmon if failed get version:
-            if grep -qvE ^[0-9.]+$ <<<"$online_version"; then
+            if grep -qvE '^[0-9.]+$' <<< "${online_version}"; then
                 sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date -d "-1 month" +%m)' WHERE key='checkmon'"
             fi
-            highest_version=$(printf "${online_version}\n${local_version}" | sort -V | tail -n1)
-            if [[ "${local_version}" != "$highest_version" ]] ; then
-                if [ "$dsm_version" = "7" ] ; then
+            highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
+            if [[ "${local_version}" != "${highest_version}" ]] ; then
+                if [ "${dsm_version}" = 7 ] ; then
                 
                 # synodsmnotify dosn't rendering html / how works the switch -p html/plain?
                 #    msg_download='<br><a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">DOWNLOAD VERSION '${online_version}' </a>'
@@ -229,63 +231,63 @@ fi
         ORDER BY 
             profile COLLATE NOCASE ASC;"
 
-    while read entry; do
-        profile_ID=$(echo "$entry" | awk -F'\t' '{print $1}')
-        INPUTDIR=$(echo "$entry" | awk -F'\t' '{print $2}')
-        OUTPUTDIR=$(echo "$entry" | awk -F'\t' '{print $3}')
-        LOGDIR=$(echo "$entry" | awk -F'\t' '{print $4}')
-        SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $5}')
-        loglevel=$(echo "$entry" | awk -F'\t' '{print $6}')
-        profile=$(echo "$entry" | awk -F'\t' '{print $7}')
-        img2pdf=$(echo "$entry" | awk -F'\t' '{print $8}')
+    while read -r entry; do
+        profile_ID=$(echo "${entry}" | awk -F'\t' '{print $1}')
+        INPUTDIR=$(echo "${entry}" | awk -F'\t' '{print $2}')
+        OUTPUTDIR=$(echo "${entry}" | awk -F'\t' '{print $3}')
+        LOGDIR=$(echo "${entry}" | awk -F'\t' '{print $4}')
+        SearchPraefix=$(echo "${entry}" | awk -F'\t' '{print $5}')
+        loglevel=$(echo "${entry}" | awk -F'\t' '{print $6}')
+        profile=$(echo "${entry}" | awk -F'\t' '{print $7}')
+        img2pdf=$(echo "${entry}" | awk -F'\t' '{print $8}')
 
     # is the source directory present and is the path valid?
-        if [ ! -d "${INPUTDIR}" ] || ! $(echo "${INPUTDIR}" | grep -q "/volume") ; then
-            if [ "$callFrom" = GUI ] ; then
+        if [ ! -d "${INPUTDIR}" ] || ! echo "${INPUTDIR}" | grep -q "/volume" ; then
+            if [ "${callFrom}" = GUI ] ; then
                 echo '
                 <p class="text-center">
-                    <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_lost_input' ! ! !</b><br>'$lang_synOCR_start_abort' ('$profile' [ID: '$profile_ID'])<br></span>
+                    <span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_lost_input}"' ! ! !</b><br>'"${lang_synOCR_start_abort}"' ('"${profile}"' [ID: '"${profile_ID}"'])<br></span>
                 </p>
                 '
             else
-                echo "! ! ! $lang_synOCR_start_lost_input ! ! !"
-                echo "$lang_synOCR_start_abort (${profile} [ID: ${profile_ID}])"
+                echo "! ! ! ${lang_synOCR_start_lost_input} ! ! !"
+                echo "${lang_synOCR_start_abort} (${profile} [ID: ${profile_ID}])"
             fi
             continue
         fi
 
     # must the target directory be created and is the path allowed?
-        if [ ! -d "$OUTPUTDIR" ] && echo "$OUTPUTDIR" | grep -q "/volume" ; then
-            if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$OUTPUTDIR" | awk -F/ '{print $3}') ; then
+        if [ ! -d "${OUTPUTDIR}" ] && echo "${OUTPUTDIR}" | grep -q "/volume" ; then
+            if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${OUTPUTDIR}" | awk -F/ '{print $3}')" ; then
                 # is it an encrypted folder and is it mounted?
-                if [ "$callFrom" = GUI ] ; then
+                if [ "${callFrom}" = GUI ] ; then
                     echo '
                     <p class="text-center"><
-                        span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_target' ! ! !</b><br>EXIT SCRIPT!<br></span>
+                        span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_umount_target}"' ! ! !</b><br>EXIT SCRIPT!<br></span>
                     </p>'
                 else
-                    echo "$lang_synOCR_start_umount_target    ➜    EXIT SCRIPT!"
+                    echo "${lang_synOCR_start_umount_target}    ➜    EXIT SCRIPT!"
                 fi
                 continue
             fi
-            mkdir -p "$OUTPUTDIR"
-            if [ "$callFrom" = GUI ] ; then
+            mkdir -p "${OUTPUTDIR}"
+            if [ "${callFrom}" = GUI ] ; then
                 echo '
                 <p class="text-center">
-                    <span style="color: #BD0010;"><b>'$lang_synOCR_start_target_created'</b></span>
+                    <span style="color: #BD0010;"><b>'"${lang_synOCR_start_target_created}"'</b></span>
                 </p>'
             else
-                echo "$lang_synOCR_start_target_created"
+                echo "${lang_synOCR_start_target_created}"
             fi
-        elif [ ! -d "$OUTPUTDIR" ] || ! $(echo "$OUTPUTDIR" | grep -q "/volume") ; then
-            if [ "$callFrom" = GUI ] ; then
+        elif [ ! -d "${OUTPUTDIR}" ] || ! echo "${OUTPUTDIR}" | grep -q "/volume" ; then
+            if [ "${callFrom}" = GUI ] ; then
                 echo '
                 <p class="text-center">
-                    <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_check_target' ! ! !</b><br>'$lang_synOCR_start_abort'<br></span>
+                    <span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_check_target}"' ! ! !</b><br>'"${lang_synOCR_start_abort}"'<br></span>
                 </p>'
             else
-                echo "! ! ! $lang_synOCR_start_check_target ! ! !"
-                echo "$lang_synOCR_start_abort"
+                echo "! ! ! ${lang_synOCR_start_check_target} ! ! !"
+                echo "${lang_synOCR_start_abort}"
             fi
             continue
         fi
@@ -294,37 +296,48 @@ fi
         exclusion=false
         count_input_file=0
 
-        if [ "$img2pdf" = true ]; then
-            source_file_type=".jpg$|.png$|.tiff$|.jpeg$|.pdf$"
+        if [ "${img2pdf}" = true ]; then
+#            source_file_type=".jpg$|.png$|.tiff$|.jpeg$|.pdf$"
+            source_file_type="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\|PDF\|pdf\)"
         else
-            source_file_type=".pdf$"
+#            source_file_type=".pdf$"
+            source_file_type="\(PDF\|pdf\)"
         fi
 
-        if echo "${SearchPraefix}" | grep -qE '^!' ; then
+##      if echo "${SearchPraefix}" | grep -qE '^!' ; then
+        if [[ "${SearchPraefix}" =~ ^! ]]; then
             # is the prefix / suffix an exclusion criterion?
             exclusion=true
-            SearchPraefix=$(echo "${SearchPraefix}" | sed -e 's/^!//')
+##          SearchPraefix=$(echo "${SearchPraefix}" | sed -e 's/^!//')
+            SearchPraefix="${SearchPraefix#!}"
         fi
 
-        if echo "${SearchPraefix}" | grep -q "\$"$ ; then
+##      if echo "${SearchPraefix}" | grep -q "\$"$ ; then
+        if [[ "${SearchPraefix}" =~ \$+$ ]]; then
             # is suffix
-            SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
-            if [[ "$exclusion" = false ]] ; then
-                count_input_file=$(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^.*${SearchPraefix}(${source_file_type})" | wc -l)
-            elif [[ "$exclusion" = true ]] ; then
-                count_input_file=$(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^.*(${source_file_type})" | cut -f 1 -d '.' | egrep -iv "${SearchPraefix}$" | wc -l)
+##          SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
+            SearchPraefix="${SearchPraefix%?}"
+            if [[ "${exclusion}" = false ]] ; then
+##              count_input_file=$(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iEc "^.*${SearchPraefix}(${source_file_type})")
+                count_input_file=$(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*${SearchPraefix}\.${source_file_type}$" -type f -printf '.' | wc -c )
+            elif [[ "${exclusion}" = true ]] ; then
+##              count_input_file=$(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iE "^.*(${source_file_type})" | cut -f 1 -d '.' | grep -ivEc "${SearchPraefix}$")
+                count_input_file=$(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*\.${source_file_type}$" -not -iname "*${SearchPraefix}.*" -type f -printf '.' | wc -c )
             fi
         else
             # is prefix
-            SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
-            if [[ "$exclusion" = false ]] ; then
-                count_input_file=$(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^${SearchPraefix}.*(${source_file_type})" | wc -l)
-            elif [[ "$exclusion" = true ]] ; then
-                count_input_file=$(ls -tp "${INPUTDIR}" | egrep -v '/$' | egrep -i "^.*(${source_file_type})" | egrep -iv "^${SearchPraefix}.*(${source_file_type})" | wc -l)
+##          SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
+            SearchPraefix="${SearchPraefix%%\$}"
+            if [[ "${exclusion}" = false ]] ; then
+##              count_input_file=$(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iEc "^${SearchPraefix}.*(${source_file_type})")
+                count_input_file=$(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}${SearchPraefix}.*\.${source_file_type}$" -type f -printf '.' | wc -c )
+            elif [[ "${exclusion}" = true ]] ; then
+##              count_input_file=$(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iE "^.*(${source_file_type})" | grep -ivEc "^${SearchPraefix}.*(${source_file_type})")
+                count_input_file=$(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*\.${source_file_type}$" -not -iname "${SearchPraefix}*" -type f -printf '.' | wc -c )
             fi
         fi
 
-        if [ "$count_input_file" -eq 0 ] ;then
+        if [ "${count_input_file}" -eq 0 ] ;then
             continue
         fi
 
@@ -332,47 +345,52 @@ fi
         LOGDIR="${LOGDIR%/}/"
         LOGFILE="${LOGDIR}synOCR_$(date +%Y-%m-%d_%H-%M-%S).log"
 
-        if echo "$LOGDIR" | grep -q "/volume" && [ -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
-            ./synOCR.sh "$profile_ID" "$LOGFILE" >> "$LOGFILE" 2>&1     # $LOGFILE is passed as a parameter to synOCR, since the file may be needed there for ERRORFILES
-        elif echo "$LOGDIR" | grep -q "/volume" && [ ! -d "$LOGDIR" ] && [ "$loglevel" != 0 ] ;then
-            if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$LOGDIR" | awk -F/ '{print $3}') ; then
-                if [ "$callFrom" = GUI ] ; then
+        if echo "${LOGDIR}" | grep -q "/volume" && [ -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] ;then
+            ./synOCR.sh "${profile_ID}" "${LOGFILE}" >> "${LOGFILE}" 2>&1     # $LOGFILE is passed as a parameter to synOCR, since the file may be needed there for ERRORFILES
+        elif echo "${LOGDIR}" | grep -q "/volume" && [ ! -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] ;then
+            if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${LOGDIR}" | awk -F/ '{print $3}')" ; then
+                if [ "${callFrom}" = GUI ] ; then
                     echo '
                     <p class="text-center">
-                        <span style="color: #BD0010;"><b>! ! ! '$lang_synOCR_start_umount_log' ! ! !</b><br>EXIT SCRIPT!<br></span>
+                        <span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_umount_log}"' ! ! !</b><br>EXIT SCRIPT!<br></span>
                     </p>'
                 else
-                    echo "$lang_synOCR_start_umount_log    ➜    EXIT SCRIPT!"
+                    echo "${lang_synOCR_start_umount_log}    ➜    EXIT SCRIPT!"
                 fi
                 continue
             fi
-            mkdir -p "$LOGDIR"
-            ./synOCR.sh "$profile_ID" "$LOGFILE" >> "$LOGFILE" 2>&1
+            mkdir -p "${LOGDIR}"
+            ./synOCR.sh "${profile_ID}" "${LOGFILE}" >> "${LOGFILE}" 2>&1
         else
             loglevel=0
-            ./synOCR.sh "$profile_ID"
+            ./synOCR.sh "${profile_ID}"
         fi
 
+        # shellcheck disable=SC2181
         if (( $? == 0 )); then
-            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" >> $LOGFILE
-            echo "  ● ---------------------------------- ●" >> $LOGFILE
-            echo "  ● |    ==> END OF FUNCTIONS <==    | ●" >> $LOGFILE
-            echo "  ● ---------------------------------- ●" >> $LOGFILE
-            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" >> $LOGFILE
+            {
+            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
+            echo "  ● ---------------------------------- ●"
+            echo "  ● |    ==> END OF FUNCTIONS <==    | ●"
+            echo "  ● ---------------------------------- ●"
+            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
+            } >> "${LOGFILE}"
         else
-            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" >> $LOGFILE
-            echo "  ● ---------------------------------- ●" >> $LOGFILE
-            echo "  ● |    ==> EXIT WITH ERROR! <==    | ●" >> $LOGFILE
-            echo "  ● ---------------------------------- ●" >> $LOGFILE
-            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●" >> $LOGFILE
+            {
+            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
+            echo "  ● ---------------------------------- ●"
+            echo "  ● |    ==> EXIT WITH ERROR! <==    | ●"
+            echo "  ● ---------------------------------- ●"
+            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
+            } >> "${LOGFILE}"
 
-            echo "$lang_synOCR_start_errorexit"
-            echo "$lang_synOCR_start_loginfo: $LOGFILE"
+            echo "${lang_synOCR_start_errorexit}"
+            echo "${lang_synOCR_start_loginfo}: ${LOGFILE}"
             exit_status=ERROR
         fi
-    done <<<"$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")"
+    done <<<"$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")"
 
-if  [ "$exit_status" = "ERROR" ] ; then
+if  [ "${exit_status}" = ERROR ] ; then
     exit 1
 else
     exit 0
