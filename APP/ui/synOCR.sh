@@ -1,5 +1,6 @@
 #!/bin/bash
- 
+# shellcheck disable=SC2181,SC1091,SC2001
+
 #################################################################################
 #   description:    main script for running synOCR                              #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh          #
@@ -11,25 +12,24 @@
     echo "    -----------------------------------"
     echo -e
 
-    DevChannel=BETA #"Release"    # BETA
     set -E -o functrace     # for function failure()
 
+    # shellcheck disable=SC2317  # Don't warn about "unreachable commands" in this function
     failure()
     {
     # this function show error line
     # --------------------------------------------------------------
         # https://unix.stackexchange.com/questions/462156/how-do-i-find-the-line-number-in-bash-when-an-error-occured
-        local lineno=$1
-        local msg=$2
-        echo "ERROR at line $lineno: $msg"
+        local lineno="${1}"
+        local msg="${2}"
+        echo "ERROR at line ${lineno}: ${msg}"
     }
-    trap 'failure ${LINENO} "$BASH_COMMAND"' ERR
+    trap 'failure ${LINENO} "${BASH_COMMAND}"' ERR
 
 
 # ---------------------------------------------------------------------------------
 #           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
 # ---------------------------------------------------------------------------------
-    niceness=15                 # The priority is in the range from -20 to +19 (in integer steps), where -20 is the highest priority (=most computing power) and 19 is the lowest priority (=lowest computing power). The default priority is 0. NEGATIVE VALUES SHOULD NEVER BE DEFAULTED!
     workprofile="$1"            # the profile submitted by the start script
     current_logfile="$2"        # current logfile / is submitted by start script
     shopt -s globstar           # enable 'globstar' shell option (to use ** for directionary wildcard)
@@ -48,18 +48,18 @@
 
 # to which user/group the DSM notification should be sent:
 # ---------------------------------------------------------------------
-    synOCR_user=$(whoami); echo "synOCR-user:              $synOCR_user"
-    if cat /etc/group | grep administrators | grep -q "$synOCR_user" || [ "$synOCR_user" = root ] ; then
+    synOCR_user=$(whoami); echo "synOCR-user:              ${synOCR_user}"
+    if grep administrators </etc/group | grep -q "${synOCR_user}" || [ "${synOCR_user}" = root ] ; then
         isAdmin=yes
     else
         isAdmin=no
     fi
-    echo "synOCR-user is admin:     $isAdmin"
+    echo "synOCR-user is admin:     ${isAdmin}"
 
 
 # check DSM version:
 # -------------------------------------
-    if [ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -ge 7 ]; then
+    if [ "$(synogetkeyvalue /etc.defaults/VERSION majorversion)" -ge 7 ]; then
         dsm_version=7
         python3_env="/var/packages/synOCR/etc/python3_env"                  # is preserved during a package update
     else
@@ -70,9 +70,9 @@
 
 # read out and change into the working directory:
 # ---------------------------------------------------------------------
-    SAVED_IFS=$IFS                 # Save original field separator
-    APPDIR=$(cd $(dirname $0);pwd)
-    cd ${APPDIR}
+    APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
+    cd "${APPDIR}" || exit 1
+    
     source ./includes/functions.sh
 
 
@@ -88,51 +88,51 @@
         FROM 
             config 
         WHERE 
-            profile_ID='$workprofile' "
+            profile_ID='${workprofile}' "
 
-    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "$sSQL")
+    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")
 
-    profile_ID=$(echo "$sqlerg" | awk -F'\t' '{print $1}')
-    profile=$(echo "$sqlerg" | awk -F'\t' '{print $3}')
-    INPUTDIR=$(echo "$sqlerg" | awk -F'\t' '{print $4}')
-    OUTPUTDIR=$(echo "$sqlerg" | awk -F'\t' '{print $5}')
-    BACKUPDIR=$(echo "$sqlerg" | awk -F'\t' '{print $6}')
-    LOGDIR=$(echo "$sqlerg" | awk -F'\t' '{print $7}')
-    LOGmax=$(echo "$sqlerg" | awk -F'\t' '{print $8}')
-    SearchPraefix=$(echo "$sqlerg" | awk -F'\t' '{print $9}')
-    delSearchPraefix=$(echo "$sqlerg" | awk -F'\t' '{print $10}')
-    taglist=$(echo "$sqlerg" | awk -F'\t' '{print $11}')
-    searchAll=$(echo "$sqlerg" | awk -F'\t' '{print $12}')
-    moveTaggedFiles=$(echo "$sqlerg" | awk -F'\t' '{print $13}')
-    NameSyntax=$(echo "$sqlerg" | awk -F'\t' '{print $14}')
-    ocropt=$(echo "$sqlerg" | awk -F'\t' '{print $15}')
-    dockercontainer=$(echo "$sqlerg" | awk -F'\t' '{print $16}')
-    apprise_call=$(echo "$sqlerg" | awk -F'\t' '{print $17}')
-    dsmtextnotify=$(echo "$sqlerg" | awk -F'\t' '{print $18}')
-    MessageTo=$(echo "$sqlerg" | awk -F'\t' '{print $19}')
-    [ -z "$MessageTo" ] || [ "$MessageTo" == "-" ] && MessageTo="@administrators" # group administrators (default)
-    dsmbeepnotify=$(echo "$sqlerg" | awk -F'\t' '{print $20}')
-    loglevel=$(echo "$sqlerg" | awk -F'\t' '{print $21}')
-    filedate=$(echo "$sqlerg" | awk -F'\t' '{print $22}')
-    tagsymbol=$(echo "$sqlerg" | awk -F'\t' '{print $23}')
-    documentSplitPattern=$(echo "$sqlerg" | awk -F'\t' '{print $24}')
-    ignoredDate=$(echo "$sqlerg" | awk -F'\t' '{print $25}' | sed -e 's/2021-02-29//g;s/2020-11-31//g;s/^ *//g') # remove (invalid) example dates
-    backup_max=$(echo "$sqlerg" | awk -F'\t' '{print $26}')
-    backup_max_type=$(echo "$sqlerg" | awk -F'\t' '{print $27}')
-    pagecount_profile=$(echo "$sqlerg" | awk -F'\t' '{print $28}')
-    ocrcount_profile=$(echo "$sqlerg" | awk -F'\t' '{print $29}')
-    search_nearest_date=$(echo "$sqlerg" | awk -F'\t' '{print $30}')
-    date_search_method=$(echo "$sqlerg" | awk -F'\t' '{print $31}')
-    clean_up_spaces=$(echo "$sqlerg" | awk -F'\t' '{print $32}')
-    img2pdf=$(echo "$sqlerg" | awk -F'\t' '{print $33}')
-    DateSearchMinYear=$(echo "$sqlerg" | awk -F'\t' '{print $34}')
-    DateSearchMaxYear=$(echo "$sqlerg" | awk -F'\t' '{print $35}')
-    splitpagehandling=$(echo "$sqlerg" | awk -F'\t' '{print $36}')
-    apprise_attachment=$(echo "$sqlerg" | awk -F'\t' '{print $37}')
-    notify_lang=$(echo "$sqlerg" | awk -F'\t' '{print $38}')
-    blank_page_detection_switch=$(echo "$sqlerg" | awk -F'\t' '{print $39}')
-    blank_page_detection_threshold_bw=$(echo "$sqlerg" | awk -F'\t' '{print $40}')
-    blank_page_detection_threshold_black_pxl=$(echo "$sqlerg" | awk -F'\t' '{print $41}')
+    profile_ID=$(echo "${sqlerg}" | awk -F'\t' '{print $1}')
+    profile=$(echo "${sqlerg}" | awk -F'\t' '{print $3}')
+    INPUTDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $4}')
+    OUTPUTDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $5}')
+    BACKUPDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $6}')
+    LOGDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $7}')
+    LOGmax=$(echo "${sqlerg}" | awk -F'\t' '{print $8}')
+    SearchPraefix=$(echo "${sqlerg}" | awk -F'\t' '{print $9}')
+    delSearchPraefix=$(echo "${sqlerg}" | awk -F'\t' '{print $10}')
+    taglist=$(echo "${sqlerg}" | awk -F'\t' '{print $11}')
+    searchAll=$(echo "${sqlerg}" | awk -F'\t' '{print $12}')
+    moveTaggedFiles=$(echo "${sqlerg}" | awk -F'\t' '{print $13}')
+    NameSyntax=$(echo "${sqlerg}" | awk -F'\t' '{print $14}')
+    ocropt=$(echo "${sqlerg}" | awk -F'\t' '{print $15}')
+    dockercontainer=$(echo "${sqlerg}" | awk -F'\t' '{print $16}')
+    apprise_call=$(echo "${sqlerg}" | awk -F'\t' '{print $17}')
+    dsmtextnotify=$(echo "${sqlerg}" | awk -F'\t' '{print $18}')
+    MessageTo=$(echo "${sqlerg}" | awk -F'\t' '{print $19}')
+    [ -z "${MessageTo}" ] || [ "${MessageTo}" == "-" ] && MessageTo="@administrators" # group administrators (default)
+    dsmbeepnotify=$(echo "${sqlerg}" | awk -F'\t' '{print $20}')
+    loglevel=$(echo "${sqlerg}" | awk -F'\t' '{print $21}')
+    filedate=$(echo "${sqlerg}" | awk -F'\t' '{print $22}')
+    tagsymbol=$(echo "${sqlerg}" | awk -F'\t' '{print $23}')
+    documentSplitPattern=$(echo "${sqlerg}" | awk -F'\t' '{print $24}')
+    ignoredDate=$(echo "${sqlerg}" | awk -F'\t' '{print $25}' | sed -e 's/2021-02-29//g;s/2020-11-31//g;s/^ *//g') # remove (invalid) example dates
+    backup_max=$(echo "${sqlerg}" | awk -F'\t' '{print $26}')
+    backup_max_type=$(echo "${sqlerg}" | awk -F'\t' '{print $27}')
+    pagecount_profile=$(echo "${sqlerg}" | awk -F'\t' '{print $28}')
+    ocrcount_profile=$(echo "${sqlerg}" | awk -F'\t' '{print $29}')
+    search_nearest_date=$(echo "${sqlerg}" | awk -F'\t' '{print $30}')
+    date_search_method=$(echo "${sqlerg}" | awk -F'\t' '{print $31}')
+    clean_up_spaces=$(echo "${sqlerg}" | awk -F'\t' '{print $32}')
+    img2pdf=$(echo "${sqlerg}" | awk -F'\t' '{print $33}')
+    DateSearchMinYear=$(echo "${sqlerg}" | awk -F'\t' '{print $34}')
+    DateSearchMaxYear=$(echo "${sqlerg}" | awk -F'\t' '{print $35}')
+    splitpagehandling=$(echo "${sqlerg}" | awk -F'\t' '{print $36}')
+    apprise_attachment=$(echo "${sqlerg}" | awk -F'\t' '{print $37}')
+    notify_lang=$(echo "${sqlerg}" | awk -F'\t' '{print $38}')
+    blank_page_detection_switch=$(echo "${sqlerg}" | awk -F'\t' '{print $39}')
+    blank_page_detection_threshold_bw=$(echo "${sqlerg}" | awk -F'\t' '{print $40}')
+    blank_page_detection_threshold_black_pxl=$(echo "${sqlerg}" | awk -F'\t' '{print $41}')
     
 
 # read global values:
@@ -143,73 +143,75 @@
     online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
 
 # Preset variables for correct calculation in the loop:
-    global_pagecount_new=$global_pagecount
-    global_ocrcount_new=$global_ocrcount
-    pagecount_profile_new=$pagecount_profile
-    ocrcount_profile_new=$ocrcount_profile
+    global_pagecount_new="${global_pagecount}"
+    global_ocrcount_new="${global_ocrcount}"
+    pagecount_profile_new="${pagecount_profile}"
+    ocrcount_profile_new="${ocrcount_profile}"
 
 
 # System Information and log settings:
 # ---------------------------------------------------------------------
+    # shellcheck source=./lang/lang_enu.txt
     source "./lang/lang_${notify_lang}.txt"
 
     local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
-    highest_version=$(printf "$online_version\n$local_version" | sort -V | tail -n1)
-    echo "synOCR-version:           $local_version"
-    if [[ "$local_version" != "$highest_version" ]] ; then
-        echo "UPDATE AVAILABLE:         online version: $online_version"
-        echo "                          please visit cphub.net / geimist.eu/synOCR/ or check your pakage center"
+    highest_version=$(printf "%s\n" "${online_version}" "${local_version}" | sort -V | tail -n1)
+    echo "synOCR-version:           ${local_version}"
+    if [[ "${local_version}" != "${highest_version}" ]] ; then
+        echo "UPDATE AVAILABLE:         online version: ${online_version}"
+        echo "                          please visit https://geimist.eu/synOCR/ or check your pakage center"
     fi
 
-    machinetyp=$(uname --machine); echo "Architecture:             $machinetyp"
-    dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                $dsmbuild"
-    read MAC </sys/class/net/eth0/address
-    sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)"
+    machinetyp=$(uname --machine); echo "Architecture:             ${machinetyp}"
+    dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                ${dsmbuild}"
+    devID=$(printf '%010d' "$(cksum </sys/class/net/eth0/address | awk '{print $1}')")
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
 
-    echo "Device:                   $device ($sysID)"
-    echo "current Profil:           $profile"
+    echo "Device:                   ${device} (${devID})"
+    echo "current Profil:           ${profile}"
     echo -n "monitor is running?:      "
-    if [ "$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}')" ]; then
+    if pgrep -f "inotifywait.*--fromfile.*inotify.list" > /dev/null; then
         echo "yes"
     else
         echo "no"
     fi
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
-    echo "used image (created):     $dockercontainer ($(docker inspect -f '{{ .Created }}' "$dockercontainer" 2>/dev/null | awk -F. '{print $1}'))"
+    echo "used image (created):     ${dockercontainer} ($(docker inspect -f '{{ .Created }}' "${dockercontainer}" 2>/dev/null | awk -F. '{print $1}'))"
 
-    documentAuthor=$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" $ocropt" | grep "\-\-author" | sed -e 's/--author //')
-    echo "document author:          $documentAuthor"
+    documentAuthor=$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}" | grep "\-\-author" | sed -e 's/--author //')
+    echo "document author:          ${documentAuthor}"
 
-    echo "used ocr-parameter (raw): $ocropt"
+    echo "used ocr-parameter (raw): ${ocropt}"
     # arguments with spaces must be submit as array (https://github.com/ocrmypdf/OCRmyPDF/issues/878)
     # for loop split all parameters, which start with > -<:
     c=0
     ocropt_arr=()
+
+    # shellcheck disable=SC2162  # Don't warn about "read without -r will mangle backslashes."
     while read value ; do
         c=$((c+1))
         # now, split parameters with additional arguments:
-        if [[ $(awk -F'[ ]' '{print NF}' <<<"$value") -gt 1 ]]; then
-            value_1=$(awk -F'[ ]' '{print $1}' <<<"$value")
-            [ "$loglevel" = "2" ] && echo "OCR-arg $c:                $value_1"
+        if [[ $(awk -F'[ ]' '{print NF}' <<< "${value}") -gt 1 ]]; then
+            value_1=$(awk -F'[ ]' '{print $1}' <<< "${value}")
+            [ "${loglevel}" = 2 ] && echo "OCR-arg ${c}:                ${value_1}"
             c=$((c+1))
-            value_2=$(echo "$value" | sed "s/$value_1 //g")
-            [ "$loglevel" = "2" ] && echo "OCR-arg $c:                $value_2"
-            ocropt_arr+=( "$value_1" "$value_2" )
+            value_2=${value//${value_1} /}
+            [ "${loglevel}" = 2 ] && echo "OCR-arg ${c}:                ${value_2}"
+            ocropt_arr+=( "${value_1}" "${value_2}" )
         else
-            [ "$loglevel" = "2" ] && echo "OCR-arg $c:                $value"
-            ocropt_arr+=( "$value" )
+            [ "${loglevel}" = 2 ] && echo "OCR-arg ${c}:                ${value}"
+            ocropt_arr+=( "${value}" )
         fi
-    done <<<"$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" $ocropt")"
+    done <<<"$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}")"
     unset c
 
-    echo "ocropt_array:             ${ocropt_arr[@]}"
-    echo "search prefix:            $SearchPraefix"
-    echo "replace search prefix:    $delSearchPraefix"
-    echo "renaming syntax:          $NameSyntax"
+    echo "ocropt_array:             ${ocropt_arr[*]}"
+    echo "search prefix:            ${SearchPraefix}"
+    echo "replace search prefix:    ${delSearchPraefix}"
+    echo "renaming syntax:          ${NameSyntax}"
     echo "Symbol for tag marking:   ${tagsymbol}"
+    tagsymbol="${tagsymbol// /%20}"   # mask spaces
     echo "target file handling:     ${moveTaggedFiles}"
-    tagsymbol=$(echo "${tagsymbol}" | sed -e "s/ /%20/g")   # mask spaces
     echo "Document split pattern:   ${documentSplitPattern}"
     echo "split page handling:      ${splitpagehandling}"
     echo "delete blank pages:       ${blank_page_detection_switch}"
@@ -217,7 +219,7 @@
     echo "threshold black pixels:   ${blank_page_detection_threshold_black_pxl}"
     echo "clean up spaces:          ${clean_up_spaces}"
     echo -n "Date search method:       "
-    if [ "$date_search_method" = "python" ] ; then
+    if [ "${date_search_method}" = python ] ; then
         echo "use Python"
     else
         echo "use standard search via RegEx"
@@ -228,22 +230,26 @@
 
     validate_date_range() {
         # filter special characters
-        local year="$( echo "$1" | tr -cd [:alnum:] )"
-        local length=$( printf "$year" | wc -c )
-        local functionType="$2"
+        local year
+        local length
+        local functionType
+        year="$( echo "${1}" | tr -cd '[:alnum:]' )"
+        length=$( printf "%s" "${year}" | wc -c )
+        functionType="${2}"
 
-        if [ "$year" = 0 ] || [ -z "$year" ]; then
+        if [ "${year}" = 0 ] || [ -z "${year}" ]; then
             # value is zero or not set
             printf 0
             return
-        elif [[ $(echo "$year" | grep -E ^[[:digit:]]+$ ) ]]; then
+##      elif [[ $(echo "${year}" | grep -E "^[[:digit:]]+$" ) ]]; then
+        elif grep -Eq "^[[:digit:]]+$" <<< "${year}"; then
             # value is a digit
-            if [ "$length" -eq 4 ]; then
+            if [ "${length}" -eq 4 ]; then
                 # is absolute year
-                printf "$year"
+                printf "%s" "${year}"
                 return
-            elif [ "$length" -lt 4 ]; then
-                printf "$(($(date +%Y) $functionType $year))"
+            elif [ "${length}" -lt 4 ]; then
+                printf "%s" $(("${year}""${functionType}""$(date +%Y)"))
                 return
             else
                 # more than 4 digits not supported
@@ -257,12 +263,12 @@
         fi
     }
 
-    minYear=$( validate_date_range "$DateSearchMinYear" "-" )
-    echo "date range in past:       ${DateSearchMinYear} [absolute: $minYear]"
-    maxYear=$( validate_date_range "$DateSearchMaxYear" "+" )
-    echo "date range in future:     ${DateSearchMaxYear} [absolute: $maxYear]"
+    minYear=$( validate_date_range "${DateSearchMinYear}" "-" )
+    echo "date range in past:       ${DateSearchMinYear} [absolute: ${minYear}]"
+    maxYear=$( validate_date_range "${DateSearchMaxYear}" "+" )
+    echo "date range in future:     ${DateSearchMaxYear} [absolute: ${maxYear}]"
 
-    [ "$loglevel" = "2" ] && \
+    [ "${loglevel}" = 2 ] && \
     echo "PATH-Variable:            $PATH"
     echo -n "Docker test:              "
     if docker --version 2>/dev/null | grep -q "version"  ; then
@@ -280,24 +286,20 @@
 # ---------------------------------------------------------------------
     # LOGlevel:     0 ➜ logging disable / 1 ➜ normal / 2 ➜ debug
     log_indent="                "
-    if [ "$loglevel" = "1" ] ; then
+    if [ "${loglevel}" = 1 ] ; then
         echo "Loglevel:                 normal"
-        cURLloglevel="-s"
-        wgetloglevel="-q"
         rm_log_level=""
-    elif [ "$loglevel" = "2" ] ; then
+    elif [ "${loglevel}" = 2 ] ; then
         echo "Loglevel:                 debug"
         # set -x
-        cURLloglevel="-v"
-        wgetloglevel="-v"
         ocropt_arr+=( "-v2" )
         rm_log_level="v"
     fi
     echo "max. count of logfiles:   ${LOGmax}"
-    if [ -z "$backup_max" ] || [ "$backup_max" == 0 ]; then
+    if [ -z "${backup_max}" ] || [ "${backup_max}" == 0 ]; then
         echo "rotate backupfiles after: (purge backup deactivated)"
     else
-        echo "rotate backupfiles after: $backup_max $backup_max_type"
+        echo "rotate backupfiles after: ${backup_max} ${backup_max_type}"
     fi
 
 
@@ -305,8 +307,8 @@
 # ---------------------------------------------------------------------
     # Adjust variable correction for older Konfiguration.txt and slash:
     INPUTDIR="${INPUTDIR%/}/"
-    if [ -d "$INPUTDIR" ] ; then
-        echo "Source directory:         $INPUTDIR"
+    if [ -d "${INPUTDIR}" ] ; then
+        echo "Source directory:         ${INPUTDIR}"
     else
         echo "Source directory invalid or not set!"
         exit 1
@@ -316,19 +318,19 @@
     echo "Target directory:         ${OUTPUTDIR}"
 
     BACKUPDIR="${BACKUPDIR%/}/"
-    if [ -d "$BACKUPDIR" ] && echo "$BACKUPDIR" | grep -q "/volume" ; then
-        echo "BackUp directory:         $BACKUPDIR"
+    if [ -d "${BACKUPDIR}" ] && echo "${BACKUPDIR}" | grep -q "/volume" ; then
+        echo "BackUp directory:         ${BACKUPDIR}"
         backup=true
-    elif echo "$BACKUPDIR" | grep -q "/volume" ; then
-        if /usr/syno/sbin/synoshare --enum ENC | grep -q $(echo "$BACKUPDIR" | awk -F/ '{print $3}') ; then
+    elif echo "${BACKUPDIR}" | grep -q "/volume" ; then
+        if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${BACKUPDIR}" | awk -F/ '{print $3}')" ; then
             echo "BackUP folder not mounted    ➜    EXIT SCRIPT!"
             exit 1
         fi
-        mkdir -p "$BACKUPDIR"
-        echo "BackUp directory was created [$BACKUPDIR]"
+        mkdir -p "${BACKUPDIR}"
+        echo "BackUp directory was created [${BACKUPDIR}]"
         backup=true
     else
-        echo "Files are deleted immediately! / No valid directory [$BACKUPDIR]"
+        echo "Files are deleted immediately! / No valid directory [${BACKUPDIR}]"
         backup=false
     fi
 
@@ -351,36 +353,35 @@ update_dockerimage()
 
     check_date=$(date +%Y-%m-%d)
 
-    if echo $dockercontainer | grep -qE "latest$" && [ "$dockerimageupdate" = 1 ] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='$dockercontainer' ") = "$check_date" ]];then
+    if echo "${dockercontainer}" | grep -qE "latest$" && [ "${dockerimageupdate}" = 1 ] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='${dockercontainer}' ") = "${check_date}" ]]; then
         printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "checks for ocrmypdf image update:" "${dashline1}"
-        echo -n "${log_indent}➜ update image [$dockercontainer] ➜ "
-        updatelog=$(docker pull $dockercontainer 2>/dev/null)
+        echo -n "${log_indent}➜ update image [${dockercontainer}] ➜ "
+        updatelog=$(docker pull "${dockercontainer}" 2>/dev/null)
 
     # purge only untaged ocrmypdf images:
-        if [[ $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "ocrmypdf") ]]; then 
-            log_purge=$(docker rmi -f $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" 2>/dev/null | grep "ocrmypdf" | awk -F: '{print $1}') 2>/dev/null)
+##      if [[ $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "ocrmypdf") ]]; then 
+        if docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "ocrmypdf"; then 
+            log_purge=$(docker rmi -f "$(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" 2>/dev/null | grep "ocrmypdf" | awk -F: '{print $1}')" 2>/dev/null)
         else
             log_purge="nothing to do ..."
         fi
 
-        if [ -z $(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='$dockercontainer'") ]; then
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '$dockercontainer', '$check_date' )"
+        if [ -z "$(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='${dockercontainer}'")" ]; then
+            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '${dockercontainer}', '${check_date}' )"
         else
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE dockerupdate SET date_checked='$check_date' WHERE image='$dockercontainer' "
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE dockerupdate SET date_checked='${check_date}' WHERE image='${dockercontainer}' "
         fi
 
-        if echo "$updatelog" | grep -q "Image is up to date"; then
+        if echo "${updatelog}" | grep -q "Image is up to date"; then
             echo "image is up to date"
-        elif echo "$updatelog" | grep -q "Downloaded newer image"; then
+        elif echo "${updatelog}" | grep -q "Downloaded newer image"; then
             echo "updated successfully"
         fi
 
-        if [ "$loglevel" = "2" ] ; then
-            echo "${log_indent}Update-Log:"
-            echo "$updatelog" | sed -e "s/^/${log_indent}/g"
-            echo "${log_indent}docker purge Log:"
-            echo "$log_purge" | sed -e "s/^/${log_indent}/g"
-        fi
+        echo "${log_indent}Update-Log:"
+        echo "${updatelog}" | sed -e "s/^/${log_indent}/g"
+        echo "${log_indent}docker purge Log:"
+        echo "${log_purge}" | sed -e "s/^/${log_indent}/g"
     fi
 }
 
@@ -402,14 +403,15 @@ sec_to_time()
     local hours=$(( seconds / 3600 ))
     local minutes=$(( (seconds % 3600) / 60 ))
     seconds=$(( seconds % 60 ))
-    printf "%s%02d:%02d:%02d" "$sign" $hours $minutes $seconds
+    printf "%s%02d:%02d:%02d" "${sign}" ${hours} ${minutes} ${seconds}
 }
 
 
 OCRmyPDF()
 {
+    # shellcheck disable=SC2002  # Don't warn about "Useless cat" in this function
     # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
-   cat "$input" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr $dockercontainer "${ocropt_arr[@]}" - - | cat - > "$outputtmp"
+    cat "${input}" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
 }
 
 
@@ -422,185 +424,186 @@ unset renameCat
 # standard rules or advanced rules (YAML file)
 type_of_rule=standard
 
-if [ -z "$taglist" ]; then
+if [ -z "${taglist}" ]; then
     echo "${log_indent}no tags defined"
     return
-elif [ -f "$taglist" ]; then
-    if grep -q "synOCR_YAMLRULEFILE" "$taglist" ; then
-        echo "${log_indent}source for tags is yaml based tag rule file [$taglist]"
+elif [ -f "${taglist}" ]; then
+    if grep -q "synOCR_YAMLRULEFILE" "${taglist}" ; then
+        echo "${log_indent}source for tags is yaml based tag rule file [${taglist}]"
 
         # copy YAML file into the TMP folder, because the file can only be read incorrectly in ACL folders
-        cp "$taglist" "${work_tmp_step2}/tmprulefile.txt"
+        cp "${taglist}" "${work_tmp_step2}/tmprulefile.txt"
         taglisttmp="${work_tmp_step2}/tmprulefile.txt"
 
         # convert DOS to Unix:
-        sed -i $'s/\r$//' "$taglisttmp"
+        sed -i $'s/\r$//' "${taglisttmp}"
         type_of_rule=advanced
 
         yaml_validate
 
-        if [ "$python_check" = "ok" ]; then
-            [ "$loglevel" = "2" ] && echo "${log_indent}check and convert yaml 2 json with python"
+        if [ "${python_check}" = "ok" ]; then
+            [ "${loglevel}" = 2 ] && echo "${log_indent}check and convert yaml 2 json with python"
             tag_rule_content=$( ${python3_env}/bin/python3 -c 'import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin.read()), indent=2, sort_keys=False))' < "${taglisttmp}")
             if [ $? != 0 ]; then
-                printf "${log_indent}ERROR - YAML-check failed!"
+                printf "%s" "${log_indent}ERROR - YAML-check failed!"
                 return 1  # file not further processable
                 # ToDo: cancel run to preserve PDF source file / possibly move to Errorfiles? (rather not)
             fi
         else
-            [ "$loglevel" = "2" ] && echo "${log_indent}check and convert yaml 2 json with yq_bin"
+            [ "${loglevel}" = 2 ] && echo "${log_indent}check and convert yaml 2 json with yq_bin"
             yamlcheck=$(yq_bin v "${taglist}" 2>&1)
             if [ $? != 0 ]; then
-                printf "${log_indent}ERROR - YAML-check failed!\n${log_indent}ERROR-Message:"
-                echo "$yamlcheck" | sed -e "s/^/${log_indent}/g"
+                printf "%s" "${log_indent}ERROR - YAML-check failed!\n${log_indent}ERROR-Message:"
+                echo "${yamlcheck}" | sed -e "s/^/${log_indent}/g"
                 return 1  # file not further processable
                 # ToDo: cancel run to preserve PDF source file / possibly move to Errorfiles? (rather not)
             fi
-            tag_rule_content=$(yq_bin read "$taglisttmp" -jP 2>&1)
-            echo "$tag_rule_content" > "${LOGDIR}${taglist}.yq_bin.json"
+            tag_rule_content=$(yq_bin read "${taglisttmp}" -jP 2>&1)
+            echo "${tag_rule_content}" > "${LOGDIR}${taglist}.yq_bin.json"
         fi
     else
-        echo "${log_indent}source for tags is file [$taglist]"
-        sed -i $'s/\r$//' "$taglist"                    # convert DOS to Unix
-        taglist=$(cat "$taglist")
+        echo "${log_indent}source for tags is file [${taglist}]"
+        sed -i $'s/\r$//' "${taglist}"                    # convert DOS to Unix
+##      taglist=$(cat "${taglist}")
+        taglist=$(< "${taglist}")
     fi
 else
     echo "${log_indent}source for tags is the list from the GUI"
 fi
 
-if [ "$type_of_rule" = advanced ]; then
+if [ "${type_of_rule}" = advanced ]; then
 # process complex tag rules:
     # list tagrules:
-    for tagrule in $(echo "$tag_rule_content" | jq -r ". | to_entries | .[] | .key" | sort -r) ; do
+    for tagrule in $(echo "${tag_rule_content}" | jq -r ". | to_entries | .[] | .key" | sort -r) ; do
         found=0
 
-        [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
 
         echo "${log_indent}search by tag rule: \"${tagrule}\" ➜  "
 
-        condition=$(echo "$tag_rule_content" | jq -r ".${tagrule}.condition" | tr '[:upper:]' '[:lower:]')
-        if [ "$condition" = null ] ; then
+        condition=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.condition" | tr '[:upper:]' '[:lower:]')
+        if [ "${condition}" = null ] ; then
             echo "${log_indent}          [value for condition must not be empty - fallback to any]"
             condition=any
         fi
 
-        searchtag=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
-        targetfolder=$(echo "$tag_rule_content" | jq -r ".${tagrule}.targetfolder" )
-        tagname_RegEx=$(echo "$tag_rule_content" | jq -r ".${tagrule}.tagname_RegEx" )
-        tagname_multiline_RegEx=$(echo "$tag_rule_content" | jq -r ".${tagrule}.multilineregex" )
-        VARapprise_call=$(echo "$tag_rule_content" | jq -r ".${tagrule}.apprise_call" )
-        VARapprise_attachment=$(echo "$tag_rule_content" | jq -r ".${tagrule}.apprise_attachment" )
-        VARnotify_lang=$(echo "$tag_rule_content" | jq -r ".${tagrule}.notify_lang" )
-        postscript=$(echo "$tag_rule_content" | jq -r ".${tagrule}.postscript" )
+        searchtag=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
+        targetfolder=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.targetfolder" )
+        tagname_RegEx=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.tagname_RegEx" )
+        tagname_multiline_RegEx=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.multilineregex" )
+        VARapprise_call=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.apprise_call" )
+        VARapprise_attachment=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.apprise_attachment" )
+        VARnotify_lang=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.notify_lang" )
+        postscript=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.postscript" )
 
-        if [[ "$searchtag" = null ]] && [[ "$targetfolder" = null ]] && [[ "$postscript" = null ]] ; then
+        if [[ "${searchtag}" = null ]] && [[ "${targetfolder}" = null ]] && [[ "${postscript}" = null ]] ; then
             echo "${log_indent}   [no actions defined - continue]"
             continue
         fi
 
-        if [[ "$targetfolder" = null ]]; then
+        if [[ "${targetfolder}" = null ]]; then
             targetfolder=""
         fi
 
-        if [[ "$searchtag" = null ]]; then
+        if [[ "${searchtag}" = null ]]; then
             searchtag=""
         fi
 
-        echo "${log_indent}  ➜ condition:        $condition"     # "all" OR "any" OR "none"
-        echo "${log_indent}  ➜ tag:              $searchtag"
-        echo "${log_indent}  ➜ destination:      $targetfolder"
-        if [[ "$tagname_RegEx" != null ]] ; then
-            echo "${log_indent}  ➜ RegEx for tag:    $tagname_RegEx" # searchtag
-            if [ "$tagname_multiline_RegEx" = null ] ; then
-                [ "$loglevel" = "2" ] && echo "${log_indent}  ➜ multilineregex:   [value for multilineregex is empty - \"false\" is used]"
+        echo "${log_indent}  ➜ condition:        ${condition}"     # "all" OR "any" OR "none"
+        echo "${log_indent}  ➜ tag:              ${searchtag}"
+        echo "${log_indent}  ➜ destination:      ${targetfolder}"
+        if [[ "${tagname_RegEx}" != null ]] ; then
+            echo "${log_indent}  ➜ RegEx for tag:    ${tagname_RegEx}" # searchtag
+            if [ "${tagname_multiline_RegEx}" = null ] ; then
+                [ "${loglevel}" = 2 ] && echo "${log_indent}  ➜ multilineregex:   [value for multilineregex is empty - \"false\" is used]"
                 tagname_multiline_RegEx=false
             else
-                echo "${log_indent}  ➜ multilineregex:   $tagname_multiline_RegEx" # true: set parameter -z to grep
+                echo "${log_indent}  ➜ multilineregex:   ${tagname_multiline_RegEx}" # true: set parameter -z to grep
             fi
         fi
 
-        [ "$loglevel" = "2" ] && echo "${log_indent}      [Subrule]:"
+        [ "${loglevel}" = 2 ] && echo "${log_indent}      [Subrule]:"
         # execute subrules:
-        for subtagrule in $(echo "$tag_rule_content" | jq -c ".$tagrule.subrules[] | @base64 ") ; do
+        for subtagrule in $(echo "${tag_rule_content}" | jq -c ".${tagrule}.subrules[] | @base64 ") ; do
             grepresult=0
-            sub_jq_value="$subtagrule"  # universal parameter name for function sub_jq
+            sub_jq_value="${subtagrule}"  # universal parameter name for function sub_jq
 
             VARsearchstring=$(sub_jq '.searchstring')
-            if [ "$VARsearchstring" = null ] ; then
+            if [ "${VARsearchstring}" = null ] ; then
                 echo "${log_indent}          [value for searchstring must not be empty - continue]"
                 continue
             fi
 
             VARisRegEx=$(sub_jq '.isRegEx' | tr '[:upper:]' '[:lower:]')
-            if [ "$VARisRegEx" = null ] ; then
-                [ "$loglevel" = "2" ] && echo "${log_indent}          [value for isRegEx is empty - \"false\" is used]"
+            if [ "${VARisRegEx}" = null ] ; then
+                [ "${loglevel}" = 2 ] && echo "${log_indent}          [value for isRegEx is empty - \"false\" is used]"
                 VARisRegEx=false
             fi
 
             VARsearchtyp=$(sub_jq '.searchtyp' | tr '[:upper:]' '[:lower:]')
-            if [ "$VARsearchtyp" = null ] ; then
-                [ "$loglevel" = "2" ] && echo "${log_indent}          [value for searchtyp is empty - \"contains\" is used]"
+            if [ "${VARsearchtyp}" = null ] ; then
+                [ "${loglevel}" = 2 ] && echo "${log_indent}          [value for searchtyp is empty - \"contains\" is used]"
                 VARsearchtyp=contains
             fi
 
             VARsource=$(sub_jq '.source' | tr '[:upper:]' '[:lower:]')
-            if [ "$VARsource" = null ] ; then
-                [ "$loglevel" = "2" ] && echo "${log_indent}          [value for source is empty - \"content\" is used]"
+            if [ "${VARsource}" = null ] ; then
+                [ "${loglevel}" = 2 ] && echo "${log_indent}          [value for source is empty - \"content\" is used]"
                 VARsource=content
             fi
 
             VARcasesensitive=$(sub_jq '.casesensitive' | tr '[:upper:]' '[:lower:]')
-            if [ "$VARcasesensitive" = null ] ; then
-                [ "$loglevel" = "2" ] && echo "${log_indent}          [value for casesensitive is empty - \"false\" is used]"
+            if [ "${VARcasesensitive}" = null ] ; then
+                [ "${loglevel}" = 2 ] && echo "${log_indent}          [value for casesensitive is empty - \"false\" is used]"
                 VARcasesensitive=false
             fi
 
             VARmultilineregex=$(sub_jq '.multilineregex' | tr '[:upper:]' '[:lower:]')
-            if [ "$VARmultilineregex" = null ] ; then
-                [ "$loglevel" = "2" ] && echo "${log_indent}          [value for multilineregex is empty - \"false\" is used]"
+            if [ "${VARmultilineregex}" = null ] ; then
+                [ "${loglevel}" = 2 ] && echo "${log_indent}          [value for multilineregex is empty - \"false\" is used]"
                 VARmultilineregex=false
             fi
 
         # Ignore upper and lower case if necessary:
-            if [ "$VARcasesensitive" = true ] ;then
+            if [ "${VARcasesensitive}" = true ] ;then
                 grep_opt=""
             else
                 grep_opt="i"
             fi
 
         # treat the file as one huge string (Parameter -z):
-            if [ "$VARmultilineregex" = true ] ;then
+            if [ "${VARmultilineregex}" = true ] ;then
                 grep_opt="${grep_opt}z"
             fi
 
         # define search area:
-            if [ "$VARsource" = content ] ;then
+            if [ "${VARsource}" = content ] ;then
                 VARsearchfile="${searchfile}"
             else
                 VARsearchfile="${searchfilename}"
             fi
 
-            if [ "$loglevel" = "2" ] ; then
-                echo "${log_indent}      >>> search for:      $VARsearchstring"
-                echo "${log_indent}          isRegEx:         $VARisRegEx"
-                echo "${log_indent}          searchtyp:       $VARsearchtyp"
-                echo "${log_indent}          source:          $VARsource"
-                echo "${log_indent}          casesensitive:   $VARcasesensitive"
-                echo "${log_indent}          multilineregex:  $VARmultilineregex"
+            if [ "${loglevel}" = 2 ] ; then
+                echo "${log_indent}      >>> search for:      ${VARsearchstring}"
+                echo "${log_indent}          isRegEx:         ${VARisRegEx}"
+                echo "${log_indent}          searchtyp:       ${VARsearchtyp}"
+                echo "${log_indent}          source:          ${VARsource}"
+                echo "${log_indent}          casesensitive:   ${VARcasesensitive}"
+                echo "${log_indent}          multilineregex:  ${VARmultilineregex}"
                 echo "${log_indent}          grep parameter:  ${grep_opt}"
             fi
 
         # search … :
-#                if [ "$VARisRegEx" = true ] ;then
+#                if [ "${VARisRegEx}" = true ] ;then
             # no additional restriction via 'searchtyp' for regex search
 #                    echo "                          searchtyp:       [ignored - RegEx based]"
 #                    if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
 #                        grepresult=1
 #                    fi
 #                else
-            case "$VARsearchtyp" in
+            case "${VARsearchtyp}" in
                 is)
-                    if [ "$VARisRegEx" = true ] ;then
+                    if [ "${VARisRegEx}" = true ] ;then
                         if grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                             grepresult=1
                         fi
@@ -611,7 +614,7 @@ if [ "$type_of_rule" = advanced ]; then
                     fi
                     ;;
                 "is not")
-                    if [ "$VARisRegEx" = true ] ;then
+                    if [ "${VARisRegEx}" = true ] ;then
                         if ! grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                             grepresult=1
                         fi
@@ -622,7 +625,7 @@ if [ "$type_of_rule" = advanced ]; then
                     fi
                     ;;
                 contains)
-                    if [ "$VARisRegEx" = true ] ;then
+                    if [ "${VARisRegEx}" = true ] ;then
                         if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                             grepresult=1
                         fi
@@ -633,7 +636,7 @@ if [ "$type_of_rule" = advanced ]; then
                     fi
                     ;;
                 "does not contain")
-                    if [ "$VARisRegEx" = true ] ;then
+                    if [ "${VARisRegEx}" = true ] ;then
                         if ! grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
                             grepresult=1
                         fi
@@ -644,49 +647,49 @@ if [ "$type_of_rule" = advanced ]; then
                     fi
                     ;;
                 "starts with")
-                    if [ "$VARisRegEx" = true ] ;then
+                    if [ "${VARisRegEx}" = true ] ;then
                         if grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
                             grepresult=1
                         fi
                     else
                         tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporary hit list with RegEx
-                        if echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
+                        if echo "${tmp_result}" | grep -qF${grep_opt} "${VARsearchstring}" ;then
                             grepresult=1
                         fi
                     fi
                     ;;
                 "does not starts with")
-                    if [ "$VARisRegEx" = true ] ;then
+                    if [ "${VARisRegEx}" = true ] ;then
                         if ! grep -qP${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}" ;then
                             grepresult=1
                         fi
                     else
                         tmp_result=$(grep -oE${grep_opt} "\<${VARsearchstring}" "${VARsearchfile}")     # temporary hit list with RegEx
-                        if ! echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
+                        if ! echo "${tmp_result}" | grep -qF${grep_opt} "${VARsearchstring}" ;then
                             grepresult=1
                         fi
                     fi
                     ;;
                 "ends with")
-                    if [ "$VARisRegEx" = true ] ;then
+                    if [ "${VARisRegEx}" = true ] ;then
                         if grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
                             grepresult=1
                         fi
                     else
                         tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporary hit list with RegEx
-                        if echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
+                        if echo "${tmp_result}" | grep -qF${grep_opt} "${VARsearchstring}" ;then
                             grepresult=1
                         fi
                     fi
                     ;;
                 "does not ends with")
-                    if [ "$VARisRegEx" = true ] ;then
+                    if [ "${VARisRegEx}" = true ] ;then
                         if ! grep -qP${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}" ;then
                             grepresult=1
                         fi
                     else
                         tmp_result=$(grep -oE${grep_opt} "${VARsearchstring}\>" "${VARsearchfile}")     # temporary hit list with RegEx
-                        if ! echo "$tmp_result" | grep -qF${grep_opt} "${VARsearchstring}" ;then
+                        if ! echo "${tmp_result}" | grep -qF${grep_opt} "${VARsearchstring}" ;then
                             grepresult=1
                         fi
                     fi
@@ -694,97 +697,100 @@ if [ "$type_of_rule" = advanced ]; then
             esac
 #                fi
 
-            [ "$loglevel" = "2" ] && [ "$grepresult" = "1" ] && echo "${log_indent}          ➜ Subrule matched"
-            [ "$loglevel" = "2" ] && [ ! "$grepresult" = "1" ] && echo "${log_indent}          ➜ Subrule don't matched"
+            [ "${loglevel}" = 2 ] && [ "${grepresult}" = "1" ] && echo "${log_indent}          ➜ Subrule matched"
+            [ "${loglevel}" = 2 ] && [ ! "${grepresult}" = "1" ] && echo "${log_indent}          ➜ Subrule don't matched"
 
         # Check condition:
-            case "$condition" in
+            case "${condition}" in
                 any)
-                    if [ "$grepresult" -eq 1 ] ; then
+                    if [ "${grepresult}" -eq 1 ] ; then
                         # cancel search when 1st found
                         found=1
                         break
                     fi
                     ;;
                 all)
-                    if [ "$grepresult" -eq 0 ] ; then
+                    if [ "${grepresult}" -eq 0 ] ; then
                         # Cancel search during 1st negative search run
                         found=0
                         break
-                    elif [ "$grepresult" -eq 1 ] ; then
+                    elif [ "${grepresult}" -eq 1 ] ; then
                         found=1
                     fi
                     ;;
                 none)
-                    if [ "$grepresult" -eq 1 ] ; then
+                    if [ "${grepresult}" -eq 1 ] ; then
                         # cancel search when 1st found
                         found=0 # null, because condition not met
                         break
-                    elif [ "$grepresult" -eq 0 ] ; then
+                    elif [ "${grepresult}" -eq 0 ] ; then
                         found=1
                     fi
                     ;;
             esac
         done
 
-        if [ "$found" -eq 1 ] ; then
+        if [ "${found}" -eq 1 ] ; then
             echo "${log_indent}          >>> Rule is satisfied"
 
             # ---------------------------------------------------------------------
             # modify (global) settings with yaml rules:
             # apprise_call
-            if [[ "$VARapprise_call" != null ]] ; then
+            if [[ "${VARapprise_call}" != null ]] ; then
                 apprise_call="${VARapprise_call} ${apprise_call}"
                 echo "${log_indent}              ➜ add apprise_call ${VARapprise_call}"
             fi
 
             # apprise_attachment
-            if [[ "$VARapprise_attachment" != null ]] ; then
+            if [[ "${VARapprise_attachment}" != null ]] ; then
                 apprise_attachment="${VARapprise_attachment}"
                 echo "${log_indent}              ➜ set apprise_attachment to ${VARapprise_attachment}"
             fi
 
             # notify_lang
-            if [[ "$VARnotify_lang" != null ]] ; then
+            if [[ "${VARnotify_lang}" != null ]] ; then
                 notify_lang="${VARnotify_lang}"
                 echo "${log_indent}              ➜ set notify_lang to ${VARnotify_lang}"
             fi
 
             # ---------------------------------------------------------------------
             # store user defined (YAML) post scripts as alias in an array:
-            if [[ "$postscript" != null ]] ; then
+            if [[ "${postscript}" != null ]] ; then
                 aliasname="postscript_${tagrule}_$(date +%N)"
-                postscriptarray+=( $aliasname )
-                alias $aliasname="$postscript"
+                postscriptarray+=( "${aliasname}" )
+                # shellcheck disable=SC2139  # Don't warn about "expands when defined, not when used"
+                alias "${aliasname}"="${postscript}"
                 echo "${log_indent}              ➜ activate post script: ${postscript}"
             fi
-
             # ---------------------------------------------------------------------
             # tagname_RegEx
-            if [[ "$tagname_RegEx" != null ]] ; then
+            if [[ "${tagname_RegEx}" != null ]] ; then
                 echo -n "${log_indent}              ➜ search RegEx for tag ➜ "
                 # treat the file as one huge string (Parameter -z):
-                if [ "$tagname_multiline_RegEx" = true ] ;then
+                if [ "${tagname_multiline_RegEx}" = true ] ;then
                     grep_opt="z"
                 else
                     grep_opt=""
                 fi
 
-                tagname_RegEx_result=$( grep -oP${grep_opt} "$tagname_RegEx" "${VARsearchfile}" | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
-                if [ ! -z "$tagname_RegEx_result" ] ; then
-                    if echo "$searchtag" | grep -q "§tagname_RegEx" ; then
-                        searchtag=$(echo "$searchtag" | sed -e "s/§tagname_RegEx/$tagname_RegEx_result/g" )
+                tagname_RegEx_result=$( grep -oP${grep_opt} "${tagname_RegEx}" "${VARsearchfile}" | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
+                if [ -n "${tagname_RegEx_result}" ] ; then
+                    if echo "${searchtag}" | grep -q "§{tagname_RegEx}" ; then
+##                      searchtag=$(echo "${searchtag}" | sed -e "s/§tagname_RegEx/${tagname_RegEx_result}/g" )
+                        searchtag="${searchtag//§tagname_RegEx/${tagname_RegEx_result}}"
                     else
-                        searchtag="$tagname_RegEx_result"
+                        searchtag="${tagname_RegEx_result}"
                     fi
-                    printf "\n$searchtag\n\n"
+                    printf "\n%s\n\n" "${searchtag}"
                 else
-                    printf "\nRegEx not found (fallback to $searchtag)\n\n"
+                    printf "\n%s\n\n" "RegEx not found (fallback to ${searchtag})"
                 fi
             fi
 
-            [ -n "${searchtag}" ] && renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # with temporary space separator to finally check tags for uniqueness
-            [ -n "${targetfolder}" ] && renameCat="$(echo "${targetfolder}" | sed -e "s/ /%20/g") ${renameCat}"
+##          [ -n "${searchtag}" ] && renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # with temporary space separator to finally check tags for uniqueness
+##          [ -n "${targetfolder}" ] && renameCat="$(echo "${targetfolder}" | sed -e "s/ /%20/g") ${renameCat}"
+            [ -n "${searchtag}" ] && renameTag="${tagsymbol}${searchtag// /%20} ${renameTag}" # with temporary space separator to finally check tags for uniqueness
+            [ -n "${targetfolder}" ] && renameCat="${targetfolder// /%20} ${renameCat}"
         else
             echo "${log_indent}          >>> Rule is not satisfied"
         fi
@@ -796,50 +802,61 @@ if [ "$type_of_rule" = advanced ]; then
     # meta_keyword_list: unique / without tagsymbol / separated with komma and space >, <:
     meta_keyword_list=$(echo "${renameTag}" | tr ' ' '\n' | awk '!x[$0]++' | sed -e "s/^%20//g;s/^${tagsymbol}//g" | tr '\n' ' ' | sed -e "s/ /, /g;s/%20/ /g;s/, $//g" | sed -e "s/, $//g")
     # ranameTag: unique / spaces masked with %20:
-    renameTag=$(echo "$renameTag" | tr ' ' '\n' | awk '!x[$0]++' | tr '\n' ' ' | sed -e "s/ //g" )
+    renameTag=$(echo "${renameTag}" | tr ' ' '\n' | awk '!x[$0]++' | tr '\n' ' ' | sed -e "s/ //g" )
 else
 # process simple tag rules:
-    taglist2=$( echo "$taglist" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # encode spaces in tags and convert semicolons to spaces (for array)
-    tagarray=( $taglist2 )   # define tags as array
+    taglist2=$( echo "${taglist}" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # encode spaces in tags and convert semicolons to spaces (for array)
+    tagarray=( "${taglist2}" )   # define tags as array
     i=0
     maxID=${#tagarray[*]}
-    echo "${log_indent}          tag count:       $maxID"
+    echo "${log_indent}          tag count:       ${maxID}"
 
     # ToDo: possibly change loop …
     #    for i in ${tagarray[@]}; do
     #        echo $a
     #    done
     while (( i < maxID )); do
-
-        [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )) )]"
 
         if echo "${tagarray[$i]}" | grep -q "=" ;then
             # for combination of tag and category
-            if echo $(echo "${tagarray[$i]}" | awk -F'=' '{print $1}') | grep -q  "^§" ;then
+##          if echo "$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}')" | grep -q  "^§" ;then
+            if echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | grep -q  "^§" ;then
                grep_opt="-qiw" # find single tag
             else
                 grep_opt="-qi"
             fi
-            tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
-            searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
+##          tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
+
+            # shellcheck disable=SC2004  # Don't warn about "$/${} is unnecessary on arithmetic variables" in this function
+            tagarray[$i]="${tagarray[$i]#§}"
+
+##          searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
+            searchtag=$(awk -F'=' '{gsub(/%20/, " "); print $1}' <<< "${tagarray[$i]}")
             categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
             echo -n "${log_indent}  Search by tag:   \"${searchtag}\" ➜  "
-            if grep $grep_opt "${searchtag}" "$searchfile" ;then
+            if grep $grep_opt "${searchtag}" "${searchfile}" ;then
                 echo "OK (Cat: \"${categorietag}\")"
-                renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g")${renameTag}"
-                renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
+##              renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g")${renameTag}"
+##              renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
+                renameTag="${tagsymbol}${searchtag// /%20}${renameTag}"
+                renameCat="${categorietag// /%20} ${renameCat}"
             else
                 echo "-"
             fi
         else
-            if echo $(echo ${tagarray[$i]} | sed -e "s/%20/ /g") | grep -q  "^§" ;then
+##          if echo "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")" | grep -q  "^§" ;then
+            if [[ "${tagarray[$i]//%20/ }" == §* ]]; then
                 grep_opt="-qiw" # find single tag
             else
                 grep_opt="-qi"
             fi
-            tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
-            echo -n "${log_indent}  Search by tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
-            if grep $grep_opt "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g" | sed -e "s/^§//g")" "$searchfile" ;then
+##          tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
+            # shellcheck disable=SC2004  # Don't warn about "$/${} is unnecessary on arithmetic variables" in this function
+            tagarray[$i]="${tagarray[$i]#§}"
+##          echo -n "${log_indent}  Search by tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
+            printf "%s" "${log_indent}  Search by tag:   \"${tagarray[$i]//%20/ }\" ➜  "
+            if grep "${grep_opt}" "$(echo "${tagarray[$i]}" | sed -e "s/%20/ /g;s/^§//g")" "${searchfile}" ; then
                 echo "OK"
                 renameTag="${tagsymbol}${tagarray[$i]}${renameTag}"
             else
@@ -858,21 +875,20 @@ fi
 
 # remove starting and ending spaces, or all spaces if no destination folder is defined:
     renameCat=$(echo "${renameCat}" | sed 's/^ *//;s/ *$//')
-    if [ ! -z "$renameCat" ] && [ "$moveTaggedFiles" != useCatDir ] ; then
-        printf "\n${log_indent}! ! ! ATTENTION ! ! !\n"
-        printf "${log_indent}You have defined rule-based directories, but defined the GUI setting is: $moveTaggedFiles\n"
-        printf "${log_indent}Please change the GUI-setting, if you want to use the rule based directories.\n\n"
+    if [ -n "${renameCat}" ] && [ "${moveTaggedFiles}" != useCatDir ] ; then
+        printf "\n%s\n" "${log_indent}! ! ! ATTENTION ! ! !"
+        printf "%s\n" "${log_indent}You have defined rule-based directories, but defined the GUI setting is: ${moveTaggedFiles}"
+        printf "%s\n\n" "${log_indent}Please change the GUI-setting, if you want to use the rule based directories."
     fi
 
 # unmodified for tag folder / tag folder with spaces otherwise not possible:
-    renameTag_raw="$renameTag"
+    renameTag_raw="${renameTag}"
 
 
+printf "\n%s\n\n" "${log_indent}rename tag is: \"${renameTag//%20/ /}\""
 
-printf "\n${log_indent}rename tag is: \"$(echo "$renameTag" | sed -e "s/%20/ /g")\"\n\n"
-
-if [ "$loglevel" = "2" ] ; then
-    printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+if [ "${loglevel}" = 2 ] ; then
+    printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
 fi
 
 }
@@ -886,7 +902,7 @@ sub_jq()
 #                                                                                       #
 #########################################################################################
 
-    echo "${sub_jq_value}" | base64 -i --decode | jq -r ${1}
+    echo "${sub_jq_value}" | base64 -i --decode | jq -r "${1}"
 
 }
 
@@ -900,10 +916,11 @@ yaml_validate()
 
 # check & adjust the rule names (only numbers and letters / no number at the beginning):
 # ---------------------------------------------------------------------
-    rulenames=$(cat "${taglisttmp}" | egrep -v '^[[:space:]]|^#|^$' | egrep ':[[:space:]]?$')
+##  rulenames=$(cat "${taglisttmp}" | grep -Ev '^[[:space:]]|^#|^$' | grep -E ':[[:space:]]?$')
+    rulenames=$(grep -Ev '^[[:space:]]|^#|^$' "${taglisttmp}" | grep -E ':[[:space:]]?$')
     for i in ${rulenames} ; do
-        i2=$(echo "${i}" | sed -e 's/[^a-zA-Z0-9_:]/_/g')    # replace all nonconfom chars / only latin letters!
-        if echo "${i2}" | egrep -q '^[^a-zA-Z]' ; then
+        i2="${i//[^a-zA-Z0-9_:]/_}"    # replace all nonconfom chars / only latin letters!
+        if echo "${i2}" | grep -Eq '^[^a-zA-Z]' ; then
             i2="_${i2}"   # currently it is not checked if there are duplicates of the rule name due to the adjustment
         fi
 
@@ -916,77 +933,88 @@ yaml_validate()
 
 # check uniqueness of parent nodes:
 # ---------------------------------------------------------------------
-    if [ $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l ) -ge 1 ] ; then # check for the number of duplicate lines
+##  if [ "$(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l )" -ge 1 ] ; then # check for the number of duplicate lines
+    if [ "$(grep "^[a-zA-Z0-9_].*[: *]$" "${taglisttmp}" | sed 's/ *$//' | sort | uniq -d | wc -l )" -ge 1 ] ; then # check for the number of duplicate lines
         echo "${log_indent}main keywords are not unique!"
-        echo "${log_indent}dublicats are: $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d)"
+##      echo "${log_indent}dublicats are: $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d)"
+        echo "${log_indent}dublicats are: $(grep "^[a-zA-Z0-9_].*[: *]$" "${taglisttmp}" | sed 's/ *$//' | sort | uniq -d)"
     fi
 
 
 # check parameter validity:
 # ---------------------------------------------------------------------
     # check, if value of condition is "all" OR "any" OR "none":
-    while read line ; do
-        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of condition must be only \"all\" OR \"any\" OR \"none\"]"
+    while read -r line ; do
+        if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of condition must be only \"all\" OR \"any\" OR \"none\"]"
         fi
-    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^condition:")"
+##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^condition:")"
+    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^condition:")"
 
     # check, if value of isRegEx is "true" OR "false":
-    while read line ; do
-        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of isRegEx must be only \"true\" OR \"false\"]"
+    while read -r line ; do
+        if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of isRegEx must be only \"true\" OR \"false\"]"
         fi
-    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^isRegEx:")"
+##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^isRegEx:")"
+    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^isRegEx:")"
 
     # check, if value of source is "content" OR "filename":
-    while read line ; do
-        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(content|filename)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of source must be only \"content\" OR \"filename\"]"
+    while read -r line ; do
+        if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(content|filename)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of source must be only \"content\" OR \"filename\"]"
         fi
-    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^source:")"
+##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^source:")"
+    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^source:")"
 
     # check of corect value of searchtyp:
-    while read line ; do
-        if ! echo "$line" | awk -F: '{print $3}' | sed 's/^ *//;s/ *$//' | tr -cd '[:alnum:][:blank:]' | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of searchtyp must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
+    while read -r line ; do
+        if ! echo "${line}" | awk -F: '{print $3}' | sed 's/^ *//;s/ *$//' | tr -cd '[:alnum:][:blank:]' | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of searchtyp must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
         fi
-    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^searchtyp:")"
+##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^searchtyp:")"
+    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^searchtyp:")"
 
     # check, if value of casesensitive is "true" OR "false":
-    while read line ; do
-        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of casesensitive must be only \"true\" OR \"false\"]"
+    while read -r line ; do
+        if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of casesensitive must be only \"true\" OR \"false\"]"
         fi
-    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^casesensitive:")"
+##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^casesensitive:")"
+    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^casesensitive:")"
 
     # check, if value of multilineregex is "true" OR "false":
-    while read line ; do
-        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of multilineregex must be only \"true\" OR \"false\"]"
+    while read -r line ; do
+        if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of multilineregex must be only \"true\" OR \"false\"]"
         fi
-    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^multilineregex:")"
+##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^multilineregex:")"
+    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^multilineregex:")"
 
     # check apprise_call:
     # ToDo: which regex can check this?
-#    while read line ; do
-#        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-#           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of apprise_call must be only \"true\" OR \"false\"]"
+#    while read -r line ; do
+#        if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+#           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of apprise_call must be only \"true\" OR \"false\"]"
 #        fi
 #    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^apprise_call:")"
+#   done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^apprise_call:")"
 
     # check, if value of apprise_attachment is "true" OR "false":
-    while read line ; do
-        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [value of apprise_attachment must be only \"true\" OR \"false\"]"
+    while read -r line ; do
+        if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of apprise_attachment must be only \"true\" OR \"false\"]"
         fi
-    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^apprise_attachment:")"
+##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^apprise_attachment:")"
+    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^apprise_attachment:")"
 
     # check, if value of notify_lang is a valid language:
-    while read line ; do
-        if ! echo "$line" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(chs|cht|csy|dan|enu|fre|ger|hun|ita|jpn|krn|nld|nor|plk|ptb|ptg|rus|spn|sve|tha|trk)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "$line" | awk -F: '{print $1}') [notify_lang must be only one of this values \"chs\" \"cht\" \"csy\" \"dan\" \"enu\" \"fre\" \"ger\" \"hun\" \"ita\" \"jpn\" \"krn\" \"nld\" \"nor\" \"plk\" \"ptb\" \"ptg\" \"rus\" \"spn\" \"sve\" \"tha\" \"trk\"]"
+    while read -r line ; do
+        if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(chs|cht|csy|dan|enu|fre|ger|hun|ita|jpn|krn|nld|nor|plk|ptb|ptg|rus|spn|sve|tha|trk)$' > /dev/null  2>&1 ; then
+           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [notify_lang must be only one of this values \"chs\" \"cht\" \"csy\" \"dan\" \"enu\" \"fre\" \"ger\" \"hun\" \"ita\" \"jpn\" \"krn\" \"nld\" \"nor\" \"plk\" \"ptb\" \"ptg\" \"rus\" \"spn\" \"sve\" \"tha\" \"trk\"]"
         fi
-    done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^notify_lang:")"
+##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^notify_lang:")"
+    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^notify_lang:")"
 
     echo -e
 
@@ -1003,24 +1031,25 @@ prepare_python()
 
 # check python3:
 # ---------------------------------------------------------------------
-    [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check Python:\n"
-    if [ ! $(which python3) ]; then
+    [ "${loglevel}" = 2 ] && printf "\n%s\n" "${log_indent}  Check Python:"
+    if [ ! "$(which python3)" ]; then
         echo "${log_indent}  (Python3 is not installed / use fallback search with regex"
         echo "${log_indent}  for more precise search results Python3 is required)"
         python_check=failed
         return 1
     else
-        [ ! -d "$python3_env" ] && python3 -m venv "$python3_env"
+        [ ! -d "${python3_env}" ] && python3 -m venv "${python3_env}"
         source "${python3_env}/bin/activate"
 
-        if [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "$local_version" ]; then
-            [ "$loglevel" = "2" ] && printf "${log_indent}  python3 already installed ($(which python3))\n"
+##      if [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "${local_version}" ]; then
+        if [ "$(head -n1 "${python3_env}/synOCR_python_env_version" 2>/dev/null)" != "${local_version}" ]; then
+            [ "${loglevel}" = 2 ] && printf "%s\n" "${log_indent}  python3 already installed ($(which python3))"
 
         # check / install pip:
         # ---------------------------------------------------------------------
-            [ "$loglevel" = "2" ] && printf "\n${log_indent}  Check pip:\n"
+            [ "${loglevel}" = 2 ] && printf "\n%s\n" "${log_indent}  Check pip:"
             if ! python3 -m pip --version > /dev/null  2>&1 ; then
-                printf "${log_indent}  Python3 pip was not found and will be now installed ➜ "
+                printf "%s" "${log_indent}  Python3 pip was not found and will be now installed ➜ "
                 # install pip:
                 tmp_log1=$(python3 -m ensurepip --default-pip)
                 # upgrade pip:
@@ -1031,46 +1060,46 @@ prepare_python()
                 else
                     echo "failed ! ! ! (please install Python3 pip manually)"
                     echo "${log_indent}  install log:"
-                    echo "$tmp_log1" | sed -e "s/^/${log_indent}  /g"
-                    echo "$tmp_log2" | sed -e "s/^/${log_indent}  /g"
+                    echo "${tmp_log1}" | sed -e "s/^/${log_indent}  /g"
+                    echo "${tmp_log2}" | sed -e "s/^/${log_indent}  /g"
                     python_check=failed
                     return 1
                 fi
             else
                 if python3 -m pip list 2>&1 | grep -q "version.*is available" ; then
-                    printf "${log_indent}  pip already installed ($(python3 -m pip --version)) / upgrade available ...\n"
+                    printf "%s\n" "${log_indent}  pip already installed ($(python3 -m pip --version)) / upgrade available ..."
                     python3 -m pip install --upgrade pip | sed -e "s/^/${log_indent}  /g"
                 else
-                    [ "$loglevel" = "2" ] && printf "${log_indent}  pip already installed ($(python3 -m pip --version))\n"
+                    [ "${loglevel}" = 2 ] && printf "%s\n" "${log_indent}  pip already installed ($(python3 -m pip --version))"
                 fi
             fi
 
-            [ "$loglevel" = "2" ] && printf "\n${log_indent}  read installed python modules:\n"
+            [ "${loglevel}" = 2 ] && printf "\n%s\n" "${log_indent}  read installed python modules:"
 
             moduleList=$(python3 -m pip list 2>/dev/null)
 
-            [ "$loglevel" = "2" ] && echo "$moduleList" | sed -e "s/^/${log_indent}  /g"
+            [ "${loglevel}" = 2 ] && echo "${moduleList}" | sed -e "s/^/${log_indent}  /g"
 
             # check / install python modules:
             # ---------------------------------------------------------------------
             echo -e
-            for module in ${synOCR_python_module_list[@]}; do
-                moduleName=$(echo "$module" | awk -F'=' '{print $1}' )
+            for module in "${synOCR_python_module_list[@]}"; do
+                moduleName=$(echo "${module}" | awk -F'=' '{print $1}' )
 
                 unset tmp_log1
-                printf "${log_indent}  ➜ check python module \"$module\": ➜ "
-                if !  grep -qi "$moduleName" <<<"$moduleList"; then
-                    printf "$module was not found and will be installed ➜ "
+                printf "%s" "${log_indent}➜ check python module \"${module}\": ➜ "
+                if !  grep -qi "${moduleName}" <<<"${moduleList}"; then
+                    printf "%s" "${module} was not found and will be installed ➜ "
 
                     # install module:
-                    tmp_log1=$(python3 -m pip install "$module")
+                    tmp_log1=$(python3 -m pip install "${module}")
 
                     # check install:
-                    if grep -qi "$moduleName" <<<"$(python3 -m pip list 2>/dev/null)" ; then
+                    if grep -qi "${moduleName}" <<<"$(python3 -m pip list 2>/dev/null)" ; then
                         echo "ok"
                     else
-                        echo "failed ! ! ! (please install $module manually)"
-                        echo "${log_indent}  install log:" && echo "$tmp_log1" | sed -e "s/^/${log_indent}  /g"
+                        echo "failed ! ! ! (please install ${module} manually)"
+                        echo "${log_indent}  install log:" && echo "${tmp_log1}" | sed -e "s/^/${log_indent}  /g"
                         python_check=failed
                         return 1
                     fi
@@ -1079,20 +1108,20 @@ prepare_python()
                 fi
             done
 
-            if [ "$python_check" = "ok" ]; then
-                echo "$local_version" > "${python3_env}/synOCR_python_env_version"
+            if [ "${python_check}" = ok ]; then
+                echo "${local_version}" > "${python3_env}/synOCR_python_env_version"
             else
                 echo "0" > "${python3_env}/synOCR_python_env_version"
             fi
 
-            [ "$synOCR_user" = root ] && chown -R synOCR:administrators /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
-            [ "$synOCR_user" = root ] && chmod -R 755 /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
+            [ "${synOCR_user}" = root ] && chown -R synOCR:administrators /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
+            [ "${synOCR_user}" = root ] && chmod -R 755 /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
 
             printf "\n"
         fi
     fi
 
-    [ "$loglevel" = "2" ] && printf "\n${log_indent}  module list:\n" && python3 -m pip list | sed -e "s/^/${log_indent}  /g" && printf "\n"
+    [ "${loglevel}" = 2 ] && printf "\n%s\n" "${log_indent}  module list:" && python3 -m pip list | sed -e "s/^/${log_indent}  /g" && printf "\n"
 
     return 0
 
@@ -1115,43 +1144,43 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
 
 # python search and set regex fallback, if needed:
 # ---------------------------------------------------------------------
-    if [ "$tmp_date_search_method" = "python" ] && [ "$python_check" = "ok" ]; then
+    if [ "${tmp_date_search_method}" = python ] && [ "${python_check}" = ok ]; then
         format=2
-        if [ "$search_nearest_date" = "nearest" ]; then
+        if [ "${search_nearest_date}" = nearest ]; then
             arg_searchnearest="-searchnearest=on"
         else
             arg_searchnearest="-searchnearest=off"
         fi
 
-        [ "$loglevel" = "2" ] && printf "\n${log_indent}call find_dates.py: -fileWithTextFindings \"$searchfile\"  \"$arg_searchnearest\" -dateBlackList \"$ignoredDate\" -dbg_file \"$current_logfile\" -dbg_lvl \"$loglevel\" -minYear \"$minYear\" -maxYear \"$maxYear\""
+        [ "${loglevel}" = 2 ] && printf "\n%s\n" "${log_indent}call find_dates.py: -fileWithTextFindings \"${searchfile}\"  \"${arg_searchnearest}\" -dateBlackList \"${ignoredDate}\" -dbg_file \"${current_logfile}\" -dbg_lvl \"${loglevel}\" -minYear \"${minYear}\" -maxYear \"${maxYear}\""
 
-        founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "$searchfile" \
-                                                            "$arg_searchnearest" \
-                                                            -dateBlackList "$ignoredDate" \
-                                                            -dbg_file "$current_logfile" \
-                                                            -dbg_lvl "$loglevel" \
-                                                            -minYear "$minYear" \
-                                                            -maxYear "$maxYear" 2>&1)
+        founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "${searchfile}" \
+                                                            "${arg_searchnearest}" \
+                                                            -dateBlackList "${ignoredDate}" \
+                                                            -dbg_file "${current_logfile}" \
+                                                            -dbg_lvl "${loglevel}" \
+                                                            -minYear "${minYear}" \
+                                                            -maxYear "${maxYear}" 2>&1)
 
-        [ "$loglevel" = "2" ] && echo "${log_indent}find_dates.py result:" && echo "$founddatestr" | sed -e "s/^/${log_indent}/g"
+        [ "${loglevel}" = 2 ] && echo "${log_indent}find_dates.py result:" && echo "${founddatestr}" | sed -e "s/^/${log_indent}/g"
 
 # RegEx search:
 # ---------------------------------------------------------------------
-    elif [ "$tmp_date_search_method" = "regex" ]; then
+    elif [ "${tmp_date_search_method}" = "regex" ]; then
         # by DeeKay1 https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/post-906195
         # ToDo – alphanum example:
         # (?i)\b(([0-9]?[0-9])[. ][ ]?([0-9]?[0-9][. ]|Jan.*|Feb.*|Mär.*|Apr.*|Mai|Jun.*|Jul.*|Aug.*|Sep.*|Okt.*|Nov.*|Dez.*)[ ]?([0-9]?[0-9]?[0-9][0-9]))\b
         
         echo "${log_indent}run RegEx date search - search for date format: ${format} (1 = dd mm [yy]yy; 2 = [yy]yy mm dd; 3 = mm dd [yy]yy)"
-        if [ "$format" -eq 1 ]; then
+        if [ "${format}" -eq 1 ]; then
             # search by format: dd[./-]mm[./-]yy(yy)
-            founddatestr=$( egrep -o "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
-        elif [ "$format" -eq 2 ]; then
+            founddatestr=$( grep -Eo "\b([1-9]|[012][0-9]|3[01])[\./-]([1-9]|[01][0-9])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "${content}" | head )
+        elif [ "${format}" -eq 2 ]; then
             # search by format: yy(yy)[./-]mm[./-]dd
-            founddatestr=$( egrep -o "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "$content" | head )
-        elif  [ "$format" -eq 3 ]; then
+            founddatestr=$( grep -Eo "\b(19[0-9]{2}|20[0-9]{2}|[0-9]{2})[\./-]([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])\b" <<< "${content}" | head )
+        elif  [ "${format}" -eq 3 ]; then
             # search by format: mm[./-]dd[./-]yy(yy) american
-            founddatestr=$( egrep -o "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "$content" | head )
+            founddatestr=$( grep -Eo "\b([1-9]|[01][0-9])[\./-]([1-9]|[012][0-9]|3[01])[\./-](19[0-9]{2}|20[0-9]{2}|[0-9]{2})\b" <<< "${content}" | head )
         fi
     fi
 
@@ -1160,32 +1189,34 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
 # (the loop to filter & check multiple results is obsolete 
 # in the current version)
 # ---------------------------------------------------------------------
-    if [ ! -z "$founddatestr" ]; then
-        readarray -t founddates <<<"$founddatestr"
+    if [ -n "${founddatestr}" ]; then
+        readarray -t founddates <<<"${founddatestr}"
         cntDatesFound=${#founddates[@]}
         echo "${log_indent}  Dates found: ${cntDatesFound}"
     
         for currentFoundDate in "${founddates[@]}" ; do
-            if [ "$format" -eq 1 ]; then
-                echo "${log_indent}  check date (dd mm [yy]yy): $currentFoundDate"
-                date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
-                date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}') )))
-                date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
-            elif [ "$format" -eq 2 ]; then
-                echo "${log_indent}  check date ([yy]yy mm dd): $currentFoundDate"
-                date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
-                date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}') )))
-                date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
-            elif  [ "$format" -eq 3 ]; then
-                echo "${log_indent}  check date (mm dd [yy]yy): $currentFoundDate"
-                date_dd=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
-                date_mm=$(printf '%02d' $(( 10#$(echo $currentFoundDate | awk -F'[./-]' '{print $1}') )))
-                date_yy=$(echo $currentFoundDate | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
+            if [ "${format}" -eq 1 ]; then
+                echo "${log_indent}  check date (dd mm [yy]yy): ${currentFoundDate}"
+                date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
+                date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}') )))
+                date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
+            elif [ "${format}" -eq 2 ]; then
+                echo "${log_indent}  check date ([yy]yy mm dd): ${currentFoundDate}"
+                date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
+##              date_dd="${currentFoundDate:0-2}"
+                date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}') )))
+##              date_mm=${currentFoundDate:3:2}
+                date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
+            elif  [ "${format}" -eq 3 ]; then
+                echo "${log_indent}  check date (mm dd [yy]yy): ${currentFoundDate}"
+                date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
+                date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}') )))
+                date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             fi
     
         # check century:
-            if [ $(echo -n $date_yy | wc -m) -eq 2 ]; then
-                if [ "$date_yy" -gt $(date +%y) ]; then
+            if [ "$(echo -n "${date_yy}" | wc -m)" -eq 2 ]; then
+                if [ "${date_yy}" -gt "$(date +%y)" ]; then
                     date_yy="$(($(date +%C) - 1))${date_yy}"
                     echo "${log_indent}  Date is most probably in the last century. Setting year to ${date_yy}"
                 else
@@ -1193,9 +1224,9 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
                 fi
             fi
     
-            date "+%d/%m/%Y" -d ${date_mm}/${date_dd}/${date_yy} > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
+            date "+%d/%m/%Y" -d "${date_mm}"/"${date_dd}"/"${date_yy}" > /dev/null  2>&1    # valid date? https://stackoverflow.com/questions/18731346/validate-date-format-in-a-shell-script
             if [ $? -eq 0 ]; then
-                if grep -q "${date_yy}-${date_mm}-${date_dd}" <<< "$ignoredDate" ; then
+                if grep -q "${date_yy}-${date_mm}-${date_dd}" <<< "${ignoredDate}" ; then
                     echo "${log_indent}  Date ${date_yy}-${date_mm}-${date_dd} is on ignore list. Skipping this date."
                     continue
                 else
@@ -1214,10 +1245,10 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
 
 # not found in regex search? Next loop with other schema:
 # ---------------------------------------------------------------------
-    if [ "$dateIsFound" = no ] && [ "$tmp_date_search_method" = "regex" ]; then
-        if [ "$format" -eq 1 ]; then
+    if [ "${dateIsFound}" = no ] && [ "${tmp_date_search_method}" = regex ]; then
+        if [ "${format}" -eq 1 ]; then
             find_date 2
-        elif [ "$format" -eq 2 ]; then
+        elif [ "${format}" -eq 2 ]; then
             find_date 3
         fi
     fi
@@ -1233,8 +1264,8 @@ adjust_attributes()
 
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "adjusts the attributes of the target file:" "${dashline1}"
 
-    local source_file="$1"
-    local target_file="$2"
+    local source_file="${1}"
+    local target_file="${2}"
 
 
 # adjust file permissions;
@@ -1248,16 +1279,16 @@ adjust_attributes()
 # ---------------------------------------------------------------------
     echo -n "${log_indent}➜ Adapt file date (Source: "
 
-    if [ "$filedate" == "ocr" ]; then
-        if [ "$dateIsFound" = no ]; then
+    if [ "${filedate}" = ocr ]; then
+        if [ "${dateIsFound}" = no ]; then
             echo "Source file [OCR selected but not found])"
             touch --reference="${source_file}" "${target_file}"
         else
             echo "OCR)"
-            TZ=UTC touch -t ${date_yy}${date_mm}${date_dd}0000 "${target_file}"
+            TZ=UTC touch -t "${date_yy}""${date_mm}""${date_dd}"0000 "${target_file}"
         #   TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
         fi
-    elif [ "$filedate" == "now" ]; then
+    elif [ "${filedate}" = now ]; then
         echo "NOW)"
         #TZ=$(date +%Z)
         touch --time=modify "${target_file}"
@@ -1269,7 +1300,7 @@ adjust_attributes()
 
 # File permissions-Log:
 # ---------------------------------------------------------------------
-    if [ "$loglevel" = "2" ] ; then
+    if [ "${loglevel}" = 2 ] ; then
         echo "${log_indent}➜ File permissions target file:"
         echo "${log_indent}  $(ls -l "${target_file}")"
     fi
@@ -1283,8 +1314,8 @@ copy_attributes()
 # This function copy the attributes from source to target file                          #
 #########################################################################################
 
-    local source_file="$1"
-    local target_file="$2"
+    local source_file="${1}"
+    local target_file="${2}"
 
 # adjust file permissions and date;
 # ---------------------------------------------------------------------
@@ -1314,15 +1345,15 @@ replace_variables()
 rename()
 {
 
-    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
 
 
 # rename target file:
 # ---------------------------------------------------------------------
     echo "${log_indent}➜ renaming:"
-    outputtmp=${output}
+    outputtmp="${output}"
     
-    if [ -z "$NameSyntax" ]; then
+    if [ -z "${NameSyntax}" ]; then
         # if no renaming syntax was specified by the user, the source filename will be used
         NameSyntax="§tit"
     fi
@@ -1341,39 +1372,46 @@ rename()
 
 # replace parameters with values:
 # ---------------------------------------------------------------------
-    NewName=$(replace_variables "$NameSyntax")
+    NewName=$(replace_variables "${NameSyntax}")
 
     # parameters without replace_variables function:
-    NewName=$( echo "$NewName" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" )
+    NewName=$( echo "${NewName}" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" )
     
-    # fallback to old  parameters:
-    NewName=$( echo "$NewName" | sed "s/§d/${date_dd}/g" )
-    NewName=$( echo "$NewName" | sed "s/§m/${date_mm}/g" )
-    NewName=$( echo "$NewName" | sed "s/§y/${date_yy}/g" )
+    # fallback to old  parameters:    
+    NewName="${NewName//§d/${date_dd}}"
+    NewName="${NewName//§m/${date_mm}}"
+    NewName="${NewName//§y/${date_yy}}"
 
     # decode special characters:
-    NewName=$(urldecode "$NewName")
+    NewName=$(urldecode "${NewName}")
     renameTag=$(urldecode "${renameTag}")
-    echo "$NewName"
+    echo "${NewName}"
     
-    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
 
     
 # set metadata:
 # ---------------------------------------------------------------------
     echo -n "${log_indent}➜ insert metadata "
     
-    if [ "$python_check" = "ok" ] && [ "$enablePyMetaData" -eq 1 ]; then
+    if [ "${python_check}" = ok ] && [ "${enablePyMetaData}" -eq 1 ]; then
         echo "(use python pikepdf)"
         unset py_meta
 
         # replace parameters with values (rulenames can contain placeholders, which are replaced here)
         meta_keyword_list=$(replace_variables "${meta_keyword_list}")
 
-        py_meta="'/Author': '$documentAuthor',"
-        py_meta="$(printf "$py_meta\n'/Keywords': \'$( echo "$meta_keyword_list" | sed -e "s/^${tagsymbol}//g" )\',")"
-        py_meta="$(printf "$py_meta\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
-        py_meta="$(printf "$py_meta\n'/CreatorTool': \'synOCR $local_version\'")"
+        py_meta="'/Author': '${documentAuthor}',"
+        # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
+        py_meta="$(printf "${py_meta}\n'/Keywords': \'$( echo "${meta_keyword_list}" | sed -e "s/^${tagsymbol}//g" )\',")"
+        # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
+        py_meta="$(printf "${py_meta}\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
+        # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
+        py_meta="$(printf "${py_meta}\n'/CreatorTool': \'synOCR ${local_version}\'")"
+
+##      py_meta="$(printf "%s\n%s" "$py_meta" "'/Keywords': \'$( echo "${meta_keyword_list}" | sed -e "s/^${tagsymbol}//g" )\',")"
+##      py_meta="$(printf "%s\n%s" "$py_meta" "'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
+##      py_meta="$(printf "%s\n%s" "$py_meta" "'/CreatorTool': \'synOCR ${local_version}\'")"
 
         echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
 
@@ -1393,16 +1431,16 @@ rename()
 
         outputtmpMeta="${outputtmp}_meta.pdf"
 
-        [ "$loglevel" = "2" ] && printf "\n${log_indent}call handlePdf.py -dbg_lvl \"$loglevel\" -dbg_file \"$current_logfile\" -task metadata -inputFile \"$outputtmp\" -metaData \"{$py_meta}\" -outputFile \"$outputtmpMeta\"\n\n"
+        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}call handlePdf.py -dbg_lvl \"${loglevel}\" -dbg_file \"${current_logfile}\" -task metadata -inputFile \"${outputtmp}\" -metaData \"{$py_meta}\" -outputFile \"${outputtmpMeta}\""
 
-        python3 ./includes/handlePdf.py -dbg_lvl "$loglevel" \
-                                        -dbg_file "$current_logfile" \
+        python3 ./includes/handlePdf.py -dbg_lvl "${loglevel}" \
+                                        -dbg_file "${current_logfile}" \
                                         -task metadata \
-                                        -inputFile "$outputtmp" \
+                                        -inputFile "${outputtmp}" \
                                         -metaData "{$py_meta}"  \
-                                        -outputFile "$outputtmpMeta"
+                                        -outputFile "${outputtmpMeta}"
 
-        if [ $? != 0 ] || [ $(stat -c %s "${outputtmpMeta}") -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
+        if [ $? != 0 ] || [ "$(stat -c %s "${outputtmpMeta}")" -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
             echo "${log_indent}  ⚠️ ERROR with writing metadata ... "
         else
             mv "${outputtmpMeta}" "${outputtmp}"
@@ -1412,18 +1450,18 @@ rename()
     # Fallback for exiftool DSM6.2, if needed:
     elif which exiftool > /dev/null  2>&1 ; then
         echo -n "(exiftool ok) "
-        exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo $renameTag | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
+        exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo "${renameTag}" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
     else
         echo "FAILED! - exiftool not found / Python-check failed or enablePyMetaData was set to false manualy! Please install it when you need it and when you want to insert metadata"
     fi
     
-    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
     
     
 # move target files:
 # ---------------------------------------------------------------------
     i=0
-    if [ "$moveTaggedFiles" = useYearDir ] ; then
+    if [ "${moveTaggedFiles}" = useYearDir ] ; then
     # move to folder each year:
     # ---------------------------------------------------------------------
         echo "${log_indent}➜ move to folder each year ( …/target/YYYY/file.pdf)"
@@ -1438,11 +1476,12 @@ rename()
     
         prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
     
-        echo "${log_indent}  target file: $(basename "${output}")"
+        echo "${log_indent}  target file: ${output##*/}"
+
         mv "${outputtmp}" "${output}"
 
         adjust_attributes "${input}" "${output}"
-    elif [ "$moveTaggedFiles" = useYearMonthDir ] ; then
+    elif [ "${moveTaggedFiles}" = useYearMonthDir ] ; then
     # move to folder each year & month:
     # ---------------------------------------------------------------------
         echo "${log_indent}➜ move to folder each year & month ( …/target/YYYY/MM/file.pdf)"
@@ -1462,23 +1501,24 @@ rename()
     
         adjust_attributes "${input}" "${output}"
     
-    elif [ ! -z "$renameCat" ] && [ "$moveTaggedFiles" = useCatDir ] ; then
+    elif [ -n "${renameCat}" ] && [ "${moveTaggedFiles}" = useCatDir ] ; then
     # use sorting in category folder:
     # ---------------------------------------------------------------------
         echo "${log_indent}➜ move to category directory"
     
         # replace date parameters:
-        renameCat=$(replace_variables "$renameCat")
+        renameCat=$(replace_variables "${renameCat}")
 
         # define target folder as array
-        tagarray=( $renameCat )
+        tagarray=( "${renameCat}" )
         
         # temp. list of used destination folders to avoid file duplicates (different tags, but one category):
         DestFolderList=""
         maxID=${#tagarray[*]}
     
         while (( i < maxID )); do
-            tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+##          tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+            tagdir="${tagarray[$i]//%20/ }"
     
             echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
     
@@ -1504,10 +1544,10 @@ rename()
     
             prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
     
-            echo "${log_indent}  target:   ${subOUTPUTDIR}$(basename "${output}")"
+            echo "${log_indent}  target:   ${subOUTPUTDIR}${output##*/}"
     
             # check if the same file has already been sorted into this category (different tags, but same category)
-            if $(echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$") ; then
+            if echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$" ; then
                 echo "${log_indent}  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
             else
                 if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
@@ -1518,10 +1558,10 @@ rename()
                     echo "${log_indent}  set a hard link"
                     commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
                     # check: - creating hard link don't fails / - target file is valid (not empty)
-                    if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
-                        echo "${log_indent}  $commandlog"
+                    if [ $? != 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
+                        echo "${log_indent}  ${commandlog}"
                         echo "${log_indent}  Creating a hard link failed! A file copy is used."
-                        if [ "$loglevel" = "2" ] ; then
+                        if [ "${loglevel}" = 2 ] ; then
                             echo "${log_indent}list of mounted volumes:"
                             df -h --output=source,target | sed -e "s/^/${log_indent}      /g"
                             echo -e
@@ -1539,23 +1579,25 @@ rename()
         done
     
         rm "${outputtmp}"
-    elif [ ! -z "$renameTag" ] && [ "$moveTaggedFiles" = useTagDir ] ; then
+    elif [ -n "${renameTag}" ] && [ "${moveTaggedFiles}" = useTagDir ] ; then
     # use sorting in tag folder:
     # ---------------------------------------------------------------------
         echo "${log_indent}➜ move to tag directory"
     
-        if [ ! -z "$tagsymbol" ]; then
-            renameTag=$( echo $renameTag_raw | sed -e "s/${tagsymbol}/ /g" )
+        if [ -n "${tagsymbol}" ]; then
+            renameTag="${renameTag_raw//${tagsymbol}/ }"
         else
-            renameTag="$renameTag_raw"
+            renameTag="${renameTag_raw}"
         fi
     
         # define tags as array
-        tagarray=( $renameTag )
+        tagarray=( "${renameTag}" )
         maxID=${#tagarray[*]}
     
         while (( i < maxID )); do
-            tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+##          tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
+            tagdir="${tagarray[$i]//%20/ }"
+
             echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
     
             if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
@@ -1567,7 +1609,7 @@ rename()
     
             prepare_target_path "${OUTPUTDIR}${tagdir}" "${NewName}.pdf"
     
-            echo "${log_indent}  target:   ./${tagdir}/$(basename "${output}")"
+            echo "${log_indent}  target:   ./${tagdir}/${output##*/}"
     
             if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
                 echo "${log_indent}  do not set a hard link when copying across volumes"
@@ -1577,10 +1619,10 @@ rename()
                 echo "${log_indent}  set a hard link"
                 commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
                 # check: - creating hard link don't fails / - target file is valid (not empty)
-                if [ $? != 0 ] || [ $(stat -c %s "${output}") -eq 0 ] || [ ! -f "${output}" ];then
-                    echo "${log_indent}  $commandlog"
+                if [ $? != 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
+                    echo "${log_indent}  ${commandlog}"
                     echo "${log_indent}  Creating a hard link failed! A file copy is used."
-                    if [ "$loglevel" = "2" ] ; then
+                    if [ "${loglevel}" = 2 ] ; then
                         echo "${log_indent}list of mounted volumes:"
                         df -h --output=source,target | sed -e "s/^/${log_indent}      /g"
                         echo -e
@@ -1616,7 +1658,7 @@ purge_log()
 # This function cleans up older log files                                               #
 #########################################################################################
 
-    if [ -z "$LOGmax" ]; then
+    if [ -z "${LOGmax}" ]; then
         printf "\n  purge_log deactivated!\n"
         return
     fi
@@ -1626,27 +1668,48 @@ purge_log()
 
 # delete surplus logs:
 # ---------------------------------------------------------------------
-    count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR.*.log$' | wc -l) - $LOGmax ))
-    echo "  delete "$(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} | wc -l )" log files ( > $LOGmax files)"
+##  count2del=$(( $(ls -t "${LOGDIR}" | grep -Eo '^synOCR.*.log$' | wc -l) - "${LOGmax}" ))
+    count2del=$(( $(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR*.log' -printf '.' | wc -c) - LOGmax ))
+
+#    count=0
+#    for file in "${LOGDIR}"synOCR*.log; do
+#        if [[ -f "$file" ]]; then
+#            ((count++))
+#        fi
+#    done
+#   count2del=$(( count - LOGmax ))
+#   unset count
+
+##  echo "  delete $(ls -tr "${LOGDIR}" | grep -Eo '^synOCR.*.log$' | head -n${count2del} | wc -l ) log files ( > ${LOGmax} files)"
+    echo "  delete ${count2del} log files ( > ${LOGmax} files)"
+
 
     if [ "${count2del}" -gt 0 ]; then
-        while read line ; do
-            [ -z "$line" ] && continue
-            [ -f "${LOGDIR}$line" ] && rm "${LOGDIR}$line"
-        done <<<"$(ls -tr "${LOGDIR}" | egrep -o '^synOCR.*.log$' | head -n${count2del} )"
+        while read -r line ; do
+            [ -z "${line}" ] && continue
+            [ -f "${line}" ] && rm "${line}"
+##          [ -f "${LOGDIR}$line" ] && rm "${LOGDIR}$line"
+##      done <<< "$(ls -tr "${LOGDIR}" | grep -Eo '^synOCR.*.log$' | head -n${count2del} )"
+##      done <<< "$(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR*.log' | sort | head -n${count2del} )"
+        done <<< "$(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR*.log' -printf '%T@ %p\n' | sort -n | cut -d ' ' -f 2- | head -n${count2del} )"
+
     fi
 
 
 # delete surplus search text files:
 # ---------------------------------------------------------------------
-    count2del=$(( $(ls -t "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | wc -l) - $LOGmax ))
-    echo "  delete "$(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} | wc -l )" search files ( > $LOGmax files)"
+##  count2del=$(( $(ls -t "${LOGDIR}" | grep -Eo '^synOCR_searchfile.*.txt$' | wc -l) - "${LOGmax}" ))
+    count2del=$(( $(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR_searchfile*.txt' -printf '.' | wc -c) - LOGmax ))
+##  echo "  delete $(ls -tr "${LOGDIR}" | grep -Eo '^synOCR_searchfile.*.txt$' | head -n${count2del} | wc -l ) search files ( > $LOGmax files)"
+    echo "  delete ${count2del} search files ( > ${LOGmax} files)"
 
     if [ "${count2del}" -gt 0 ]; then
-        while read line ; do
-            [ -z "$line" ] && continue
-            [ -f "${LOGDIR}$line" ] && rm "${LOGDIR}$line"
-        done <<<"$(ls -tr "${LOGDIR}" | egrep -o '^synOCR_searchfile.*.txt$' | head -n${count2del} )"
+        while read -r line ; do
+            [ -z "${line}" ] && continue
+##          [ -f "${LOGDIR}$line" ] && rm "${LOGDIR}$line"
+            [ -f "${line}" ] && rm "${line}"
+##      done <<< "$(ls -tr "${LOGDIR}" | grep -Eo '^synOCR_searchfile.*.txt$' | head -n${count2del} )"
+        done <<< "$(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR_searchfile*.txt' -printf '%T@ %p\n' | sort -n | cut -d ' ' -f 2- | head -n${count2del} )"
     fi
 
 }
@@ -1658,36 +1721,42 @@ purge_backup()
 # This function cleans up older backup files                                            #
 #########################################################################################
 
-    if [ -z "$backup_max" ] || [ "$backup_max" = 0 ]; then
-        printf "\n  purge backup deactivated!\n"
+    if [ -z "${backup_max}" ] || [ "${backup_max}" = 0 ]; then
+        printf "\n%s\n" "  purge backup deactivated!"
         return
     fi
 
-    printf "\n  purge backup files ...\n"
+    printf "\n%s\n" "  purge backup files ..."
 
-    if [ "$img2pdf" = true ]; then
-        source_file_type4ls=".jpg$|.png$|.tiff$|.jpeg$|.pdf$"
+    if [ "${img2pdf}" = true ]; then
+##      source_file_type4ls=".jpg$|.png$|.tiff$|.jpeg$|.pdf$"
         source_file_type4find="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\|PDF\|pdf\)"
     else
-        source_file_type4ls=".pdf$"
+##      source_file_type4ls=".pdf$"
         source_file_type4find="\(PDF\|pdf\)"
     fi
 
 
 # delete surplus backup files:
 # ---------------------------------------------------------------------
-    if [[ "$backup_max_type" == days ]]; then
-        echo "  delete $(find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +$backup_max | wc -l) backup files ( > $backup_max days)"
-        find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +$backup_max -exec rm -f${rm_log_level} {} \; | sed -e "s/^/${log_indent}/g"
+    if [[ "${backup_max_type}" == days ]]; then
+        echo "  delete $(find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" | wc -l) backup files ( > ${backup_max} days)"
+        find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" -exec rm -f"${rm_log_level}" {} \; | sed -e "s/^/${log_indent}/g"
     else
-        echo "  delete "$(ls -tp "${BACKUPDIR}" | egrep -v '/$' | egrep -i "^.*${source_file_type4ls}" | tail -n+$(($backup_max+1)) | wc -l )" backup files ( > $backup_max files)"
-        count2del=$(( $(ls -tp "${BACKUPDIR}" | egrep -v '/$' | egrep -i "^.*${source_file_type4ls}" | wc -l) - $backup_max ))
+##      count2del=$(( $(ls -tp "${BACKUPDIR}" | grep -Ev '/$' | grep -Ei "^.*${source_file_type4ls}" | wc -l) - "${backup_max}" ))
+##      count2del=$(( $(ls -tp "${BACKUPDIR}" | grep -Ev '/$' | grep -Eic "^.*${source_file_type4ls}") - "${backup_max}" ))
+        count2del=$(( $(find "${BACKUPDIR}" -maxdepth 1 -type f -regex ".*\.${source_file_type4find}$" -printf '.' | wc -c) - backup_max ))
+##      echo "  delete $(ls -tp "${BACKUPDIR}" | grep -Ev '/$' | grep -Ei "^.*${source_file_type4ls}" | tail -n+$((backup_max+1)) | wc -l ) backup files ( > ${backup_max} files)"
+        echo "  delete ${count2del} backup files ( > ${backup_max} files)"
+
 
         if [ "${count2del}" -gt 0 ]; then
-            while read line ; do
-                [ -z "$line" ] && continue
-                [ -f "${BACKUPDIR}/${line}" ] && rm -fv "${BACKUPDIR}/${line}" | sed -e "s/^/${log_indent}/g"
-            done <<<"$(ls -trp "${BACKUPDIR}" | egrep -v '/$' | egrep -i "^.*${source_file_type4ls}" | head -n${count2del} )"
+            while read -r line ; do
+                [ -z "${line}" ] && continue
+##              [ -f "${BACKUPDIR}/${line}" ] && rm -fv "${BACKUPDIR}/${line}" | sed -e "s/^/${log_indent}/g"
+                [ -f "${line}" ] && rm -fv "${line}" | sed -e "s/^/${log_indent}/g"
+##          done <<< "$(ls -trp "${BACKUPDIR}" | grep -Ev '/$' | grep -Ei "^.*${source_file_type4ls}" | head -n${count2del} )"
+            done <<< "$(find "${BACKUPDIR}" -maxdepth 1 -type f -regex ".*\.${source_file_type4find}$" -printf '%T@ %p\n' | sort -n | cut -d ' ' -f 2- | head -n${count2del} )"
         fi
     fi
 
@@ -1715,39 +1784,44 @@ collect_input_files()
 #########################################################################################
 
     source_dir="${1%/}/"
-    if [ "$2" = "image" ]; then # image or pdf
+    if [ "${2}" = "image" ]; then # image or pdf
         source_file_type="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\)"
     else
         source_file_type="\(PDF\|pdf\)"
     fi
 
     exclusion=false
-    SearchPraefix_tmp="$SearchPraefix"
+    SearchPraefix_tmp="${SearchPraefix}"
     unset SearchSuffix     # defined in next step to correct rename splitted files
     unset files
 
-    if echo "${SearchPraefix_tmp}" | grep -qE '^!' ; then
+##  if echo "${SearchPraefix_tmp}" | grep -qE '^!' ; then
+    if [[ "${SearchPraefix_tmp}" =~ ^! ]]; then
         # is the prefix / suffix an exclusion criteria?
         exclusion=true
-        SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e 's/^!//')
+##      SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e 's/^!//')
+        SearchPraefix_tmp="${SearchPraefix_tmp#!}"
     fi
 
-    if echo "${SearchPraefix_tmp}" | grep -q "\$"$ ; then
-        SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
-        if [ "$exclusion" = false ] ; then
+##  if echo "${SearchPraefix_tmp}" | grep -q "\$"$ ; then
+    if [[ "${SearchPraefix_tmp}" =~ \$+$ ]]; then
+##      SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
+        SearchPraefix_tmp="${SearchPraefix_tmp%?}"
+        if [ "${exclusion}" = false ] ; then
             # is suffix
             files=$(find "${source_dir}" -maxdepth 1 -regex "${source_dir}.*${SearchPraefix_tmp}\.${source_file_type}$" )
-            SearchSuffix="$SearchPraefix_tmp"
-        elif [ "$exclusion" = true ] ; then
+            SearchSuffix="${SearchPraefix_tmp}"
+        elif [ "${exclusion}" = true ] ; then
             # is exclusion suffix
             files=$(find "${source_dir}" -maxdepth 1 -regex "${source_dir}.*\.${source_file_type}$" -not -iname "*${SearchPraefix_tmp}.*" -type f )
         fi
     else
-        SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
-        if [ "$exclusion" = false ] ; then
+##      SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
+        SearchPraefix_tmp="${SearchPraefix_tmp%%\$}"
+        if [ "${exclusion}" = false ] ; then
             # is prefix
             files=$(find "${source_dir}" -maxdepth 1 -regex "${source_dir}${SearchPraefix_tmp}.*\.${source_file_type}$" )
-        elif [ "$exclusion" = true ] ; then
+        elif [ "${exclusion}" = true ] ; then
             # is exclusion prefix
             files=$(find "${source_dir}" -maxdepth 1 -regex "${source_dir}.*\.${source_file_type}$" -not -iname "${SearchPraefix_tmp}*" -type f )
         fi
@@ -1773,16 +1847,19 @@ prepare_target_path()
     local target_filename="$2"
     local target_fileext="${2##*.}"
 
-    destfilecount=$(ls -t "${target_dir_path}" | grep -o "^${target_filename%.*}.*${target_fileext}" | wc -l)
-    if [ "$destfilecount" -eq 0 ]; then
+##  destfilecount=$(ls -t "${target_dir_path}" | grep -o "^${target_filename%.*}.*${target_fileext}" | wc -l)
+    destfilecount=$(find "${target_dir_path}" -maxdepth 1 -type f -name "${target_filename%.*}*${target_fileext}" -printf '.' | wc -c)    
+##  destfilecount=$(find "${target_dir_path}" -maxdepth 1 -type f -name "${target_filename%.*}${target_fileext}" -printf '.' | wc -c)
+
+    if [ "${destfilecount}" -eq 0 ]; then
         output="${target_dir_path}${target_filename%.*}.${target_fileext}"
     else
-        while [ -f "${target_dir_path}${target_filename%.*} ($destfilecount).${target_fileext}" ]; do
-            destfilecount=$(( $destfilecount + 1 ))
-            echo "${log_indent}  ➜ continue counting … ($destfilecount)"
+        while [ -f "${target_dir_path}${target_filename%.*} (${destfilecount}).${target_fileext}" ]; do
+            destfilecount=$(( destfilecount + 1 ))
+            echo "${log_indent}  ➜ continue counting … (${destfilecount})"
         done
-        output="${target_dir_path}${target_filename%.*} ($destfilecount).${target_fileext}"
-        printf "${log_indent}➜ File name already exists! Add counter ($destfilecount)\n\n"
+        output="${target_dir_path}${target_filename%.*} (${destfilecount}).${target_fileext}"
+        printf "%s\n\n" "${log_indent}➜ File name already exists! Add counter (${destfilecount})"
     fi
 
 }
@@ -1801,41 +1878,42 @@ collect_input_files "${INPUTDIR}" "image"
 
 [ -z "${files}" ] && echo "${log_indent}nothing to do ..." && return 0
 
-while read input ; do
-    [ ! -f "$input" ] && continue
+while read -r input ; do
+    [ ! -f "${input}" ] && continue
     printf "\n"
-    filename=$(basename "$input")
-    title=${filename%.*}
-    echo "CURRENT FILE:   ➜ source: $filename"
+##  filename=$(basename "$input")
+    filename="${input##*/}"
+    title="${filename%.*}"
+    echo "CURRENT FILE:   ➜ source: ${filename}"
     date_start=$(date +%s)
 
 
 # convert file
 # ---------------------------------------------------------------------
     prepare_target_path "${INPUTDIR}" "${title}${SearchSuffix}.pdf"
-    echo "${log_indent}➜ target: $output"
+    echo "${log_indent}➜ target: ${output}"
     {   echo 'import  PIL as pillow'
         echo 'from PIL import Image'
-        echo 'image_1 = Image.open(r"'$input'")'
+        echo 'image_1 = Image.open(r"'"${input}"'")'
         echo "im_1 = image_1.convert('RGB')"
-        echo 'im_1.save(r"'$output'")'
+        echo 'im_1.save(r"'"${output}"'")'
         echo 'exit()'
     } | python3 
 
 
 # backup source
 # ---------------------------------------------------------------------
-   if [ $(stat -c %s "${output}") -ne 0 ] && [ -f "${output}" ];then
-        if [ "$backup" = true ]; then
+   if [ "$(stat -c %s "${output}")" -ne 0 ] && [ -f "${output}" ];then
+        if [ "${backup}" = true ]; then
             echo "${log_indent}➜ backup source file" # to $output"
-            prepare_target_path "${BACKUPDIR}" "$filename"
-            mv "$input" "$output"
+            prepare_target_path "${BACKUPDIR}" "${filename}"
+            mv "${input}" "${output}"
         else
-            echo "${log_indent}➜ delete source file ($filename)"
-            rm -f "$input"
+            echo "${log_indent}➜ delete source file (${filename})"
+            rm -f "${input}"
         fi
     else
-        echo "${log_indent}➜ ERROR with $output"
+        echo "${log_indent}➜ ERROR with ${output}"
     fi
 
 done <<<"${files}"
@@ -1853,8 +1931,8 @@ printf "\n\n  %s\n  ● %-80s●\n  %s\n\n" "${dashline2}" "STEP 1 - RUN OCR / S
 
 collect_input_files "${INPUTDIR}" "pdf"
 
-while read input ; do
-    [ ! -f "$input" ] && continue
+while read -r input ; do
+    [ ! -f "${input}" ] && continue
 
 # create temporary working directory
 # ---------------------------------------------------------------------
@@ -1862,10 +1940,11 @@ while read input ; do
     mkdir -p "${work_tmp_step1}"
 
     printf "\n"
-    filename=$(basename "$input")
-    title=${filename%.*}
+##  filename=$(basename "${input}")
+    filename="${input##*/}"
+    title="${filename%.*}"
     echo "${dashline2}"
-    echo "CURRENT FILE:   ➜ $filename"
+    echo "CURRENT FILE:   ➜ ${filename}"
     date_start=$(date +%s)
     was_splitted=0
     split_error=0
@@ -1877,25 +1956,25 @@ while read input ; do
 # OCRmyPDF:
 # ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "processing PDF @ OCRmyPDF:" "${dashline1}"
-    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
 
     dockerlog=$(OCRmyPDF 2>&1)
 
     echo "${log_indent}➜ OCRmyPDF-LOG:"
-    echo "$dockerlog" | sed -e "s/^/${log_indent}  /g"
+    echo "${dockerlog}" | sed -e "s/^/${log_indent}  /g"
     echo "${log_indent}← OCRmyPDF-LOG-END"
     echo -e
 
-    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start} )))]\n\n"
+    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
 
 
 # check if target file is valid (not empty), otherwise continue / 
 # defective source files are moved to ERROR including LOG:
 # ---------------------------------------------------------------------
-    if [ $(stat -c %s "${outputtmp}") -eq 0 ] || [ ! -f "${outputtmp}" ];then
+    if [ "$(stat -c %s "${outputtmp}")" -eq 0 ] || [ ! -f "${outputtmp}" ];then
         echo "${log_indent}  ┖➜ failed! (target file is empty or not available)"
         rm "${outputtmp}"
-        if echo "$dockerlog" | grep -q ERROR ;then
+        if echo "${dockerlog}" | grep -q ERROR ;then
             if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
                 echo "${log_indent}                  ERROR-Directory [${INPUTDIR}ERRORFILES] will be created!"
                 mkdir "${INPUTDIR}ERRORFILES"
@@ -1903,37 +1982,121 @@ while read input ; do
 
             prepare_target_path "${INPUTDIR}ERRORFILES" "${filename}"
 
-            mv "$input" "$output"
-            [ "$loglevel" != 0 ] && cp "$current_logfile" "${output}.log"
+            mv "${input}" "${output}"
+            [ "${loglevel}" != 0 ] && cp "${current_logfile}" "${output}.log"
             echo "${log_indent}              ┖➜ move to ERRORFILES"
         fi
-        rm -rf "$work_tmp_step1"
+        rm -rf "${work_tmp_step1}"
         continue
     else
-        printf "${log_indent}target file (OK): ${outputtmp}\n\n"
+        printf "%s\n\n" "${log_indent}target file (OK): ${outputtmp}"
+    fi
+
+
+# detect & remove blank pages:
+# ---------------------------------------------------------------------
+    if [ "${blank_page_detection_switch}" = true ] && [ "${python_check}" = "ok" ]; then
+        printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "detect & remove blank pages:" "${dashline1}"
+
+#        echo "delete blank pages:       ${blank_page_detection_switch}"
+#        echo "threshold black/white:    ${blank_page_detection_threshold_bw}"
+#        echo "threshold black pixels:   ${blank_page_detection_threshold_black_pxl}"
+
+    # identify pages without text / write to an array:
+    # ---------------------------------------------------------------------
+        pageCount=$( py_page_count "${outputtmp}" )
+
+        unset blankPages
+        if grep -qwP "^[0-9]+$" <<<"${pageCount}" ; then
+            p=1
+            blankPages=( )
+            while [ "${p}" -le "${pageCount}" ]; do
+                charcount=$( pdftotext "${outputtmp}" -f $p -l $p -layout - | wc -m )
+#                echo "Seite $p enthält $charcount Zeichen"
+                if [ "${charcount}" -le 1 ]; then
+#                if [ $( pdftotext "${outputtmp}" -f $p -l $p -layout - | wc -m ) -eq 0 ]; then
+                    blankPages+=( "${p}" )
+#                    echo "füge Seite $p hinzu"
+                fi
+                p=$((p+1))
+            done
+            numberBlankPages="${#blankPages[@]}"
+        else
+            echo "${log_indent}! ! ! error at counting PDF pages"
+        fi
+        echo "${log_indent}pages without text: ${numberBlankPages} [${blankPages[*]}]"
+
+    # send pages to python for picture analysis and deletion:
+    # …
+
+        # get previous metadata - maybe for feature use:
+        py_delete_blank_pages(){
+            {   #echo "import pprint"
+                #echo "from pypdf import PdfFileReader, PdfFileMerger"
+                #echo "if __name__ == '__main__':"
+                #echo "    file_in = open('${outputtmp}', 'rb')"
+                #echo "    pdf_reader = PdfFileReader(file_in)"
+                #echo "    metadata = pdf_reader.getDocumentInfo()"
+                #echo "    pprint.pprint(metadata)"
+                #echo "    file_in.close()"
+                
+#                echo "from PIL import Image"
+
+                # Laden der gescannten PDF-Seite als Bild
+#                echo "with Image.open('${outputtmp}') as img:"
+                echo "import pikepdf"
+                echo "from PIL import Image"
+
+                # Laden der PDF-Seite als Bild
+                echo "with pikepdf.open('${outputtmp}') as pdf:"
+                echo "    page = pdf.pages[0]"
+                echo "    page_image = page.render()"
+                echo "    with open('${outputtmp}.png', 'wb') as f:"
+                echo "        f.write(page_image)"
+
+                # Anwenden des Schwellenwerts
+                echo "img = Image.open('${outputtmp}.png').convert('L')"
+                echo "threshold_value = 150"
+                echo "img = img.point(lambda x: 255 * (x > threshold_value), mode='1')"
+#                echo "    threshold_img = img.point(lambda x: 255 * (x > threshold_value), mode='1')"
+
+#                # Ermitteln der Anzahl der nicht-weißen Pixel
+#                echo "    pixel_count = threshold_img.size[0] * threshold_img.size[1]"
+#                echo "    white_pixel_count = threshold_img.histogram()[255]"
+#                echo "    black_pixel_count = pixel_count - white_pixel_count"
+                
+                # Überprüfen, ob die Seite leer ist
+                echo "if img.getbbox() is None:"
+                echo "    print('Die Seite ist leer.')"
+                echo "else:"
+                echo "    print('Die Seite ist nicht leer.')"
+                
+            } | python3
+        }
+        delete_blank_pages_result=$(py_delete_blank_pages)
+        echo "${delete_blank_pages_result}"
     fi
 
 
 # document split handling
 # ---------------------------------------------------------------------
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "document split handling:" "${dashline1}"
-
-    if [ -n "${documentSplitPattern}" ] && [ "$python_check" = "ok" ]; then
+    if [ -n "${documentSplitPattern}" ] && [ "${python_check}" = "ok" ]; then
+        printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "document split handling:" "${dashline1}"
 
     # identify split pages / write to an array:
     # ---------------------------------------------------------------------
         pageCount=$( py_page_count "${outputtmp}" )
 
-        if grep -qwP "^[0-9]+$" <<<"$pageCount" ; then
+##      if grep -qwP "^[0-9]+$" <<<"${pageCount}" ; then
+        if [[ "${pageCount}" =~ ^[0-9]+$ ]]; then
             p=1
             splitPages=( )
-            while [ $p -le $pageCount ]; do
-                if pdftotext "${outputtmp}" -f $p -l $p -layout - | grep -q "$documentSplitPattern" ; then
-                    splitPages+=($p)
+            while [ "${p}" -le "${pageCount}" ]; do
+                if pdftotext "${outputtmp}" -f $p -l $p -layout - | grep -q "${documentSplitPattern}" ; then
+                    splitPages+=( "${p}" )
                 fi
                 p=$((p+1))
             done
-            numberSplitPages=${#splitPages[@]}
         else
             echo "${log_indent}! ! ! error at counting PDF pages"
         fi
@@ -1944,13 +2107,13 @@ while read input ; do
 
         split_pages(){
 
-            echo "${log_indent}part:            $1"
-            echo "${log_indent}first page:      $2"
-            echo "${log_indent}last page:       $3"
+            echo "${log_indent}part:            ${1}"
+            echo "${log_indent}first page:      ${2}"
+            echo "${log_indent}last page:       ${3}"
 #           echo "${log_indent}splitted file:   $4"
 
-            pageRange=$(seq -s ", " $2 1 $3 )
-            echo "${log_indent}used pages:      $pageRange"
+            pageRange=$(seq -s ", " "${2}" 1 "${3}" )
+            echo "${log_indent}used pages:      ${pageRange}"
 
             #######################################################################
             #  Split pdf files to separate pages
@@ -1963,23 +2126,23 @@ while read input ; do
             #  -dbg_file:     filename to write debug info
             #  -dbg_lvl:      debug level (1=info, 2=debug, 0=0ff)
 
-            [ "$loglevel" = "2" ] && printf "\n${log_indent}call handlePdf.py: -dbg_lvl \"$loglevel\" -dbg_file \"$current_logfile\" -task split -inputFile \"$outputtmp\" -startPage \"$2\" -endPage \"$3\" -outputFile \"$4\"\n\n"
+            [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}call handlePdf.py: -dbg_lvl \"${loglevel}\" -dbg_file \"${current_logfile}\" -task split -inputFile \"${outputtmp}\" -startPage \"${2}\" -endPage \"${3}\" -outputFile \"${4}\""
 
-            python3 ./includes/handlePdf.py -dbg_lvl "$loglevel" \
-                                            -dbg_file "$current_logfile" \
+            python3 ./includes/handlePdf.py -dbg_lvl "${loglevel}" \
+                                            -dbg_file "${current_logfile}" \
                                             -task split \
-                                            -inputFile "$outputtmp" \
-                                            -startPage "$2"  \
-                                            -endPage "$3"  \
-                                            -outputFile "$4"
+                                            -inputFile "${outputtmp}" \
+                                            -startPage "${2}"  \
+                                            -endPage "${3}"  \
+                                            -outputFile "${4}"
         }
 
     # calculate site ranges for splitting
     # ---------------------------------------------------------------------
         SplitPageCount=${#splitPages[@]}
-        printf "${log_indent}splitpage count: $SplitPageCount\n\n"
+        printf "%s\n\n" "${log_indent}splitpage count: ${SplitPageCount}"
 
-        if (( "$SplitPageCount" > 0 )) && (( "$pageCount" > 1 )); then
+        if (( "${SplitPageCount}" > 0 )) && (( "${pageCount}" > 1 )); then
             currentPart=0
             startPage=1
             page=1
@@ -1987,103 +2150,122 @@ while read input ; do
 
             getIndex() {
                 # to calculate the end point of current range we need the current index in array:
-                local page=$1
+                local page="${1}"
 
                 for i in "${!splitPages[@]}"; do
                     if [[ "${splitPages[$i]}" = "${page}" ]]; then
-                        echo ${i}
+                        echo "${i}"
                         break
                    fi
                 done
             }
 
-            if [ "$splitpagehandling" = isFirstPage ]; then
+            if [ "${splitpagehandling}" = isFirstPage ]; then
                 # method for 'FirstPage':
                 while (( page <= pageCount )); do
-                    arrayIndex=$( getIndex $page )
+                    arrayIndex=$( getIndex ${page} )
     
                     # page is 1 OR (ArrayIndex is not empty AND page corresponds to splitpage with corresponding index)
-                    if [ "$page" -eq 1 ] || ([ -n "$arrayIndex" ] && [ "$page" -eq "${splitPages[$arrayIndex]}"  ]); then
-                        let currentPart=$currentPart+1
+                    if { [ -n "${arrayIndex}" ] && [ "${page}" -eq "${splitPages[$arrayIndex]}"  ]; } || [ "${page}" -eq 1 ]; then
+##                      let currentPart=${currentPart}+1
+                        currentPart=$((currentPart+1))
 
                         # set startPage:
-                        startPage=$page
+                        startPage=${page}
     
                         # set endpage:
-                        if [ "$arrayIndex" = $(($SplitPageCount-1)) ]; then
+                        if [ "${arrayIndex}" = $(( SplitPageCount - 1)) ]; then
                             # if last splitpage:
-                            endPage=$pageCount
-                        elif [ -z "$arrayIndex" ]; then
+                            endPage=${pageCount}
+                        elif [ -z "${arrayIndex}" ]; then
                             # e.g. the first page is not a split page
-                            let endPage=${splitPages[0]}-1
+##                          let endPage=${splitPages[0]}-1
+                            endPage=$((splitPages[0]-1))
                         else
-                            let endPage=${splitPages[(($arrayIndex+1))]}-1
+##                          let endPage=${splitPages[(($arrayIndex+1))]}-1
+                            endPage=$((splitPages[arrayIndex+1]-1))
                         fi
-                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
+##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
+                        splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     fi
     
-                    let page=$page+1
+##                  let page=${page}+1
+                    page=$((page+1))
                 done
             else
                 # method for 'lastPage' & 'discard':
-                for splitPage in ${splitPages[@]}; do
-                    if [ "$splitpagehandling" = discard ]; then
-                        [ "$splitPage" -eq 1 ] && let startPage=$splitPage+1 && continue  # continue, if first page a splitPage
-                        let currentPart=$currentPart+1
-                        let endPage=$splitPage-1
-                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
-                    elif [ "$splitpagehandling" = isLastPage ]; then
-                        let currentPart=$currentPart+1
-                        endPage=$splitPage
-                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
+                for splitPage in "${splitPages[@]}"; do
+                    if [ "${splitpagehandling}" = discard ]; then
+##                      [ "${splitPage}" -eq 1 ] && let startPage=${splitPage}+1 && continue  # continue, if first page a splitPage
+                        [ "${splitPage}" -eq 1 ] && startPage=$((splitPage+1)) && continue  # continue, if first page a splitPage
+##                      let currentPart=${currentPart}+1
+                        currentPart=$((currentPart+1))
+##                      let endPage=${splitPage}-1
+                        endPage=$((splitPage-1))
+##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
+                        splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
+                    elif [ "${splitpagehandling}" = isLastPage ]; then
+##                      let currentPart=${currentPart}+1
+                        currentPart=$((currentPart+1))
+                        endPage=${splitPage}
+##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
+                        splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     fi
     
                     # startPage for next range:
-                    if [ "$splitpagehandling" = discard ]; then
-                        let startPage=$splitPage+1
-                    elif [ "$splitpagehandling" = isLastPage ]; then
-                        let startPage=$endPage+1
+                    if [ "${splitpagehandling}" = discard ]; then
+##                      let startPage=${splitPage}+1
+                        startPage=$((splitPage+1))
+                    elif [ "${splitpagehandling}" = isLastPage ]; then
+##                      let startPage=${endPage}+1
+                        startPage=$((endPage+1))
                     fi
                 done
         
                 # last range behind last splitPage:
-                if (( "$pageCount" > ${splitPages[@]:(-1)} )); then
+                if (( "${pageCount}" > ${splitPages[@]:(-1)} )); then
 
-                    if [ "$splitpagehandling" = discard ]; then
-                        let currentPart=$currentPart+1
-                        let startPage=${splitPages[@]:(-1)}+1
-                        endPage=$pageCount
+                    if [ "${splitpagehandling}" = discard ]; then
+##                      let currentPart=${currentPart}+1
+                        currentPart=$((currentPart+1))
+##                      let startPage=${splitPages[@]:(-1)}+1
+                        startPage=$((splitPages[${#splitPages[@]}-1]+1))
+                        endPage=${pageCount}
 
-                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
-                    elif [ "$splitpagehandling" = isLastPage ]; then
-                        let currentPart=$currentPart+1
-                        let startPage=$endPage+1
-                        endPage=$pageCount
+##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
+                        splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
+                    elif [ "${splitpagehandling}" = isLastPage ]; then
+##                      let currentPart=${currentPart}+1
+                        currentPart=$((currentPart+1))
+##                      let startPage=${endPage}+1
+                        startPage=$((endPage+1))
+                        endPage=${pageCount}
 
-                        splitJob=$(printf "$currentPart $startPage $endPage\n$splitJob")
+##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
+                        splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     fi
                 fi
             fi
 
             # run splitting:
-            while read line; do
-                currentPart=$(echo "$line" | awk -F' ' '{print $1}')
-                startPage=$(echo "$line" | awk -F' ' '{print $2}')
-                endPage=$(echo "$line" | awk -F' ' '{print $3}')
+            while read -r line; do
+                currentPart=$(echo "${line}" | awk -F' ' '{print $1}')
+                startPage=$(echo "${line}" | awk -F' ' '{print $2}')
+                endPage=$(echo "${line}" | awk -F' ' '{print $3}')
 
                 # if two separation pages follow each other, this will result in an empty PDF file. This case will be skipped:
-                [ "$startPage" -gt "$endPage" ] && [ "$splitpagehandling" = discard ] && continue
+                [ "${startPage}" -gt "${endPage}" ] && [ "${splitpagehandling}" = discard ] && continue
 
                 # split pages:
                 splitted_file_name="${title}_${currentPart}${SearchSuffix}.pdf"
-                splitted_file="$work_tmp_step1/${splitted_file_name}"
-                split_pages "$currentPart" "$startPage" "$endPage" "$splitted_file"
+                splitted_file="${work_tmp_step1}/${splitted_file_name}"
+                split_pages "${currentPart}" "${startPage}" "${endPage}" "${splitted_file}"
 
 
                 # move splitted file to work_tmp_main with override protection
-                if [ -f "$splitted_file" ]; then
+                if [ -f "${splitted_file}" ]; then
                     prepare_target_path "${work_tmp_main}" "${splitted_file_name}"
-                    mv "$splitted_file" "${output}"
+                    mv "${splitted_file}" "${output}"
                     copy_attributes "${input}" "${output}"
                     echo "${log_indent}➜ move the split file to: ${output}"
                     was_splitted=1
@@ -2091,7 +2273,7 @@ while read input ; do
                     echo "${log_indent}! ! ! ERROR with splitting file"
                     split_error=1
                 fi
-            done <<<"$(sort <<<"$splitJob")"
+            done <<<"$(sort <<<"${splitJob}")"
         else
             echo "${log_indent}no separator sheet found, or number of pages too small"
         fi
@@ -2104,35 +2286,35 @@ while read input ; do
 # ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "handle source file:" "${dashline1}"
 
-    if [ "$was_splitted" = 0 ] || [ "$split_error" = 1 ]; then
+    if [ "${was_splitted}" = 0 ] || [ "${split_error}" = 1 ]; then
         copy_attributes "${input}" "${outputtmp}"
     fi
 
-    if [ "$backup" = true ]; then
-        prepare_target_path "${BACKUPDIR}" "$filename"
-        mv "$input" "$output"
-        echo "${log_indent}➜ backup source file to: $output"
+    if [ "${backup}" = true ]; then
+        prepare_target_path "${BACKUPDIR}" "${filename}"
+        mv "${input}" "${output}"
+        echo "${log_indent}➜ backup source file to: ${output}"
     else
-        rm -f "$input"
-        echo "${log_indent}➜ delete source file ($filename)"
+        rm -f "${input}"
+        echo "${log_indent}➜ delete source file (${filename})"
     fi
 
-    if [ "$was_splitted" = 0 ] || [ "$split_error" = 1 ]; then
+    if [ "${was_splitted}" = 0 ] || [ "${split_error}" = 1 ]; then
         mv "${outputtmp}" "${work_tmp_main}"
     fi
 
-    rm -rfv "$work_tmp_step1" | sed -e "s/^/${log_indent}/g"
+    rm -rfv "${work_tmp_step1}" | sed -e "s/^/${log_indent}/g"
 
 
 # Stats:
 # ---------------------------------------------------------------------
     echo -e
     echo "Stats:"
-    echo "  runtime last file:              ➜ $(sec_to_time $(( $(date +%s) - ${date_start} )))"
+    echo "  runtime last file:              ➜ $(sec_to_time $(( $(date +%s) - date_start )))"
 
 done <<<"${files}"
 
-printf "  runtime 1st step (all files):   ➜ $(sec_to_time $(( $(date +%s) - ${date_start_all} )))\n\n"
+printf "%s\n\n" "  runtime 1st step (all files):   ➜ $(sec_to_time $(( $(date +%s) - date_start_all )))"
 
 }
 
@@ -2148,42 +2330,45 @@ collect_input_files "${work_tmp_main}" "pdf"
 
 # make special characters visible if necessary
 # ---------------------------------------------------------------------
-    [ "$loglevel" = "2" ] && printf "\n${log_indent}list files in INPUT with transcoded special characters:\n" && ls "${work_tmp_main}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
+##  [ "${loglevel}" = 2 ] && printf "\n${log_indent}list files in INPUT with transcoded special characters:\n" && ls "${work_tmp_main}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
+
+    # shellcheck disable=SC2012  # Don't warn about "Use find instead of ls to better handle non-alphanumeric filenames" in this function
+    [ "${loglevel}" = 2 ] && printf "\n%s\n" "${log_indent}list files in INPUT with transcoded special characters:" && ls "${work_tmp_main}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
 
 # save different global settings to be able to adjust them individually with yaml rules in each loop:
-    apprise_call_saved="$apprise_call"
-    apprise_attachment_saved="$apprise_attachment"
-    notify_lang_saved="$notify_lang"
+    apprise_call_saved="${apprise_call}"
+    apprise_attachment_saved="${apprise_attachment}"
+    notify_lang_saved="${notify_lang}"
 
 # ---------------------------------------------------------------------
-while read input ; do
-    [ ! -f "$input" ] && continue
+while read -r input ; do
+    [ ! -f "${input}" ] && continue
 
     # reset global settings for new file:
-    apprise_call="$apprise_call_saved"
-    apprise_attachment="$apprise_attachment_saved"
-    notify_lang="$notify_lang_safed"
+    apprise_call="${apprise_call_saved}"
+    apprise_attachment="${apprise_attachment_saved}"
+    notify_lang="${notify_lang_saved}"
 
-    if [ "$python_check" = ok ]; then
+    if [ "${python_check}" = ok ]; then
         pagecount_latest=$( py_page_count "${input}" ) 
-        [ "$loglevel" = "2" ] && echo "${log_indent}(pages counted with python module pypdf)"
-    elif [ $(which pdfinfo) ]; then
+        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with python module pypdf)"
+    elif [ "$(which pdfinfo)" ]; then
         pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
-        [ "$loglevel" = "2" ] && echo "${log_indent}(pages counted with pdfinfo)"
-    elif [ $(which exiftool) ]; then
+        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with pdfinfo)"
+    elif [ "$(which exiftool)" ]; then
         pagecount_latest=$(exiftool -"*Count*" "${input}" 2>/dev/null | awk -F' ' '{print $NF}')
-        [ "$loglevel" = "2" ] && echo "${log_indent}(pages counted with exiftool)"
+        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with exiftool)"
     fi
 
-    [ -z "$pagecount_latest" ] && pagecount_latest=0 && echo "${log_indent}! ! ! ERROR - with pdfinfo / exiftool / pypdf - \$pagecount was set to 0"
+    [ -z "${pagecount_latest}" ] && pagecount_latest=0 && echo "${log_indent}! ! ! ERROR - with pdfinfo / exiftool / pypdf - \$pagecount was set to 0"
 
 
 # adapt counter:
 # ---------------------------------------------------------------------
-    global_pagecount_new=$(( $global_pagecount_new + $pagecount_latest))
-    global_ocrcount_new=$(( $global_ocrcount_new + 1))
-    pagecount_profile_new=$(( $pagecount_profile_new + $pagecount_latest))
-    ocrcount_profile_new=$(( $ocrcount_profile_new + 1))
+    global_pagecount_new="$(("${global_pagecount_new}"+"${pagecount_latest}"))"
+    global_ocrcount_new="$(("${global_ocrcount_new}"+1))"
+    pagecount_profile_new="$(("${pagecount_profile_new}"+"${pagecount_latest}"))"
+    ocrcount_profile_new="$(("${ocrcount_profile_new}"+1))"
 
 
 # create temporary working directory
@@ -2192,15 +2377,17 @@ while read input ; do
     mkdir -p "${work_tmp_step2}"
 
     echo -e
-    filename=$(basename "$input")
-    title=${filename%.*}
+##  filename=$(basename "${input}")
+    filename="${input##*/}"
+    title="${filename%.*}"
     echo "${dashline2}"
-    echo "CURRENT FILE:   ➜ $filename"
+    echo "CURRENT FILE:   ➜ ${filename}"
     date_start=$(date +%s)
-    tmp_date_search_method="$date_search_method"    # able to use a temporary fallback to regex for each file
+    tmp_date_search_method="${date_search_method}"    # able to use a temporary fallback to regex for each file
 
-    if [ "$delSearchPraefix" = "yes" ] && [ ! -z "${SearchPraefix}" ]; then
-        title=$( echo "${title}" | sed s/${SearchPraefix_tmp}//g )
+    if [ "${delSearchPraefix}" = "yes" ] && [ -n "${SearchPraefix}" ]; then
+#       title=$( echo "${title}" | sed s/${SearchPraefix_tmp}//g )
+        title="${title//${SearchPraefix_tmp}/}"
     fi
 
 
@@ -2229,10 +2416,10 @@ while read input ; do
 
 # source file permissions-Log:
 # ---------------------------------------------------------------------
-    if [ "$loglevel" = "2" ] ; then
+    if [ "${loglevel}" = 2 ] ; then
         echo "${log_indent}➜ File permissions source file:"
         echo -n "${log_indent}  "
-        ls -l "$input"
+        ls -l "${input}"
     fi
 
 
@@ -2245,20 +2432,21 @@ while read input ; do
 
 # Search in the whole documents, or only on the first page?:
 # ---------------------------------------------------------------------
-    if [ "$searchAll" = no ]; then
+    if [ "${searchAll}" = no ]; then
         pdftotextOpt="-l 1"
     else
         pdftotextOpt=""
     fi
 
-    /bin/pdftotext -layout $pdftotextOpt "$output" "$searchfile"
-    sed -i 's/^ *//' "$searchfile"        # delete beginning spaces
-    if [ "$clean_up_spaces" = "true" ]; then
-        sed -i 's/ \+/ /g' "$searchfile"
+    # shellcheck disable=SC2086  # Don't warn about "Double quote to prevent globbing and word splitting" in this function (${pdftotextOpt} must be unqoutet)
+    /bin/pdftotext -layout ${pdftotextOpt} "${output}" "${searchfile}"
+    sed -i 's/^ *//' "${searchfile}"        # delete beginning spaces
+    if [ "${clean_up_spaces}" = "true" ]; then
+        sed -i 's/ \+/ /g' "${searchfile}"
     fi
 
-    content=$(cat "$searchfile" )   # the standard rules search in the variable / the extended rules directly in the source file
-    [ "$loglevel" = "2" ] && cp "$searchfile" "${LOGDIR}synOCR_searchfile_${title}.txt"
+    content=$(cat "${searchfile}" )   # the standard rules search in the variable / the extended rules directly in the source file
+    [ "${loglevel}" = 2 ] && cp "${searchfile}" "${LOGDIR}synOCR_searchfile_${title}.txt"
 
 
 # search by tags:
@@ -2273,14 +2461,14 @@ while read input ; do
     dateIsFound=no
     find_date 1
 
-    date_dd_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $3}')
-    date_mm_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $2}')
-    date_yy_source=$(stat -c %y "$input" | awk '{print $1}' | awk -F- '{print $1}')
-    date_houre_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $1}')
-    date_min_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $2}')
-    date_sek_source=$(stat -c %y "$input" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $3}')
+    date_dd_source=$(stat -c %y "${input}" | awk '{print $1}' | awk -F- '{print $3}')
+    date_mm_source=$(stat -c %y "${input}" | awk '{print $1}' | awk -F- '{print $2}')
+    date_yy_source=$(stat -c %y "${input}" | awk '{print $1}' | awk -F- '{print $1}')
+    date_houre_source=$(stat -c %y "${input}" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $1}')
+    date_min_source=$(stat -c %y "${input}" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $2}')
+    date_sek_source=$(stat -c %y "${input}" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $3}')
 
-    if [ "$dateIsFound" = no ]; then
+    if [ "${dateIsFound}" = no ]; then
         echo "${log_indent}  Date not found in OCR text - use file date:"
         date_dd=$date_dd_source
         date_mm=$date_mm_source
@@ -2301,42 +2489,40 @@ while read input ; do
 
 # Notification:
 # ---------------------------------------------------------------------
-    # ToDo: the automatic language setting should be included here:
-
     # notify message in user/rule defined language:
     lang_notify_file_job_successful=$(synogetkeyvalue "./lang/lang_${notify_lang}.txt" lang_notify_file_job_successful)
 
     file_notify=$(basename "${output}")
     # DSM Message:
-    if [ "$dsmtextnotify" = "on" ] ; then
-        if [ "$dsm_version" = "7" ] ; then
-            synodsmnotify -c "SYNO.SDS.synOCR.Application" "$MessageTo" "synOCR:app:app_name" "synOCR:app:job_successful" "${lang_notify_file_job_successful} [${file_notify}]"
+    if [ "${dsmtextnotify}" = "on" ] ; then
+        if [ "${dsm_version}" = "7" ] ; then
+            synodsmnotify -c "SYNO.SDS.synOCR.Application" "${MessageTo}" "synOCR:app:app_name" "synOCR:app:job_successful" "${lang_notify_file_job_successful} [${file_notify}]"
         else
-           synodsmnotify "$MessageTo" "synOCR" "${lang_notify_file_job_successful} [${file_notify}]"
+           synodsmnotify "${MessageTo}" "synOCR" "${lang_notify_file_job_successful} [${file_notify}]"
         fi
     fi
 
     # Beep:
-    if [ "$dsmbeepnotify" = "on" ] && [ "$synOCR_user" = root ] ; then
+    if [ "${dsmbeepnotify}" = "on" ] && [ "${synOCR_user}" = root ] ; then
         echo 2 > /dev/ttyS1 #short beep
     fi
 
     # individual apprise notification:
-    if [ -n "$apprise_call" ] && [ "$python_check" = "ok" ]; then
+    if [ -n "${apprise_call}" ] && [ "${python_check}" = "ok" ]; then
         if [ "${apprise_attachment}" = true ]; then
             # with target file as attachment (The user must ensure that the requested service accepts attachments):
-            apprise_LOG=$(apprise --interpret-escapes -vv -t 'synOCR' -b "${lang_notify_file_job_successful}\n\r${file_notify}\n\n" --attach "${output}" "$apprise_call")
+            apprise_LOG=$(apprise --interpret-escapes -vv -t 'synOCR' -b "${lang_notify_file_job_successful}\n\r${file_notify}\n\n" --attach "${output}" "${apprise_call}")
         else
             # without attachment:
-            apprise_LOG=$(apprise --interpret-escapes -vv -t 'synOCR' -b "${lang_notify_file_job_successful}\n\r${file_notify}" "$apprise_call")
+            apprise_LOG=$(apprise --interpret-escapes -vv -t 'synOCR' -b "${lang_notify_file_job_successful}\n\r${file_notify}" "${apprise_call}")
         fi
 
         if [ "$?" -eq 0 ] ; then
             echo "${log_indent}  APPRISE-LOG:"
-            echo "$apprise_LOG" | sed -e "s/^/${log_indent}  /g"
-        elif [ "$?" -ne 0 ] || [ "$loglevel" = "2" ]; then # for log level 1 only error output
+            echo "${apprise_LOG}" | sed -e "s/^/${log_indent}  /g"
+        elif [ "$?" -ne 0 ] || [ "${loglevel}" = 2 ]; then # for log level 1 only error output
             echo -n "${log_indent}  APPRISE-Error: "
-            echo "$apprise_LOG" | sed -e "s/^/${log_indent}  /g"
+            echo "${apprise_LOG}" | sed -e "s/^/${log_indent}  /g"
         fi
     else
         echo "${log_indent}  INFO: Notify for apprise not defined ..."
@@ -2344,11 +2530,10 @@ while read input ; do
 
     # run user defined (YAML) post scripts:
     printf "\nrun user defined post scripts:\n"
-    for cmd in ${postscriptarray[@]}; do
-    #    [ "$loglevel" = "2" ] && 
-        echo " ➜ $cmd"
-        eval "$cmd"
-        unalias $cmd
+    for cmd in "${postscriptarray[@]}"; do
+        echo " ➜ ${cmd}"
+        eval "${cmd}"
+        unalias "${cmd}"
     done
     unset postscriptarray
 
@@ -2356,18 +2541,18 @@ while read input ; do
 # ---------------------------------------------------------------------
     printf "\nStats:\n"
 
-    sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$global_pagecount_new' WHERE key='global_pagecount'"
-    sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$global_ocrcount_new' WHERE key='global_ocrcount'"
+    sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${global_pagecount_new}' WHERE key='global_pagecount'"
+    sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${global_ocrcount_new}' WHERE key='global_ocrcount'"
 
-    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET pagecount='$pagecount_profile_new' WHERE profile_ID='$profile_ID'"
-    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET ocrcount='$ocrcount_profile_new' WHERE profile_ID='$profile_ID'"
+    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET pagecount='${pagecount_profile_new}' WHERE profile_ID='${profile_ID}'"
+    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET ocrcount='${ocrcount_profile_new}' WHERE profile_ID='${profile_ID}'"
 
-    echo "  runtime last file:    ➜ $(sec_to_time $(( $(date +%s) - ${date_start} )))"
-    echo "  pagecount last file:  ➜ $pagecount_latest"
+    echo "  runtime last file:    ➜ $(sec_to_time $(( $(date +%s) - date_start )))"
+    echo "  pagecount last file:  ➜ ${pagecount_latest}"
     echo "  file count profile :  ➜ (profile $profile) - ${ocrcount_profile_new} PDF's / ${pagecount_profile_new} Pages processed up to now"
-    echo "  file count total:     ➜ ${global_ocrcount_new} PDF's / ${global_pagecount_new} Pages processed up to now"
-    echo -e
-    echo "cleanup:"
+    echo "  file count total:     ➜ ${global_ocrcount_new} PDF's / ${global_pagecount_new} Pages processed up to now since ${count_start_date}"
+
+    printf "\ncleanup:\n"
 
 # delete temporary working directory:
 # ---------------------------------------------------------------------
@@ -2376,8 +2561,8 @@ while read input ; do
 
 done <<<"${files}"
 
-    [ -d "${work_tmp_step2}" ] && rm -rfv "$work_tmp_step2" | sed -e "s/^/${log_indent}/g"
-    [ -d "${work_tmp_main}" ] && rm -rfv "$work_tmp_main" | sed -e "s/^/${log_indent}/g"
+    [ -d "${work_tmp_step2}" ] && rm -rfv "${work_tmp_step2}" | sed -e "s/^/${log_indent}/g"
+    [ -d "${work_tmp_main}" ] && rm -rfv "${work_tmp_main}" | sed -e "s/^/${log_indent}/g"
 }
 
     printf "\n\n\n"
@@ -2393,29 +2578,29 @@ done <<<"${files}"
     update_dockerimage
     
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
-    [ "$loglevel" = "2" ] && printf "\n[runtime up to now:    $(sec_to_time $(( $(date +%s) - ${date_start_all} )))]\n\n"
+    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_all )))]"
 
     prepare_python_log=$(prepare_python)
     if [ "$?" -eq 0 ]; then
-        [ -n "$prepare_python_log" ] && echo "$prepare_python_log"
-        printf "${log_indent}prepare_python: OK\n"
+        [ -n "${prepare_python_log}" ] && echo "${prepare_python_log}"
+        printf "%s\n" "${log_indent}prepare_python: OK"
         source "${python3_env}/bin/activate"
     else
-        [ -n "$prepare_python_log" ] && echo "$prepare_python_log"
-        printf "${log_indent}prepare_python: ! ! ! ERROR ! ! ! \n"
+        [ -n "${prepare_python_log}" ] && echo "${prepare_python_log}"
+        printf "%s\n" "${log_indent}prepare_python: ! ! ! ERROR ! ! ! "
     fi
 
 
 # main steps:
 # ---------------------------------------------------------------------
-    if [ "$img2pdf" = true ]; then
+    if [ "${img2pdf}" = true ]; then
         py_img2pdf
     fi
 
 # create temporary working directory
 # ---------------------------------------------------------------------
     work_tmp_main=$(mktemp -d -t tmp.XXXXXXXXXX)
-    trap '[ -d "$work_tmp_main" ] && rm -rf "$work_tmp_main"; exit' EXIT
+    trap '[ -d "${work_tmp_main}" ] && rm -rf "${work_tmp_main}"; exit' EXIT
     echo "Target temp directory:    ${work_tmp_main}"
 
     main_1st_step
@@ -2425,7 +2610,6 @@ done <<<"${files}"
 
     [ -d "${work_tmp_main}" ] && rmdir -v "${work_tmp_main}" | sed -e "s/^/  /g"
 
-    printf "\n  runtime all files:              ➜ $(sec_to_time $(( $(date +%s) - ${date_start_all} )))"
-    printf "\n\n\n"
+    printf "\n%s\n\n\n" "  runtime all files:              ➜ $(sec_to_time $(( $(date +%s) - date_start_all )))"
 
 exit 0
