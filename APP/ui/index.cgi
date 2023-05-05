@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1090,SC1091,SC2034,SC2154
 
 #############################################################################################
 #   description:    initiate SPK GUI                                                        #
@@ -10,10 +11,10 @@
 # Initiate system
 # ---------------------------------------------------------------------
     machinetyp=$(uname --machine)
-    if [ $machinetyp = "x86_64" ]; then
+    if [ "${machinetyp}" = "x86_64" ]; then
         PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
         include_synowebapi=synowebapi_x86_64
-    elif [ $machinetyp = "aarch64" ]; then
+    elif [ "${machinetyp}" = "aarch64" ]; then
         PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
         include_synowebapi=synowebapi_aarch64
     fi
@@ -37,25 +38,25 @@
         syno_login=$(/usr/syno/synoman/webman/login.cgi)
 
         # SynoToken ( only when protection against cross-site request forgery attacks is enabled )
-        if echo ${syno_login} | grep -q SynoToken ; then
+        if echo "${syno_login}" | grep -q SynoToken ; then
             syno_token=$(echo "${syno_login}" | grep SynoToken | cut -d ":" -f2 | cut -d '"' -f2)
         fi
 
         if [ -n "${syno_token}" ]; then
-            [ -z ${QUERY_STRING} ] && QUERY_STRING="SynoToken=${syno_token}" || QUERY_STRING="${QUERY_STRING}&SynoToken=${syno_token}"
+            [ -z "${QUERY_STRING}" ] && QUERY_STRING="SynoToken=${syno_token}" || QUERY_STRING="${QUERY_STRING}&SynoToken=${syno_token}"
         fi
 
         # Login authorization ( result=success )
-        if echo ${syno_login} | grep -q result ; then
+        if echo "${syno_login}" | grep -q result ; then
             login_result=$(echo "${syno_login}" | grep result | cut -d ":" -f2 | cut -d '"' -f2)
         fi
-        [[ ${login_result} != "success" ]] && { echo 'Access denied'; exit; }
+        [[ "${login_result}" != "success" ]] && { echo 'Access denied'; exit; }
 
         # Login successful ( success=true )
-        if echo ${syno_login} | grep -q success ; then
+        if echo "${syno_login}" | grep -q success ; then
             login_success=$(echo "${syno_login}" | grep success | cut -d "," -f3 | grep success | cut -d ":" -f2 | cut -d " " -f2 )
         fi
-        [[ ${login_success} != "true" ]] && { echo 'Access denied'; exit; }
+        [[ "${login_success}" != "true" ]] && { echo 'Access denied'; exit; }
 
 
     # REQUEST_METHOD set back to POST
@@ -84,7 +85,7 @@
         # ownership must be adjusted to ${app_name}:${app_name}.
 
         if [ -f "${app_home}/includes/$include_synowebapi" ]; then
-            rar_data=$($app_home/includes/$include_synowebapi --exec api=SYNO.Core.Desktop.Initdata method=get version=1 runner="$syno_user" | jq '.data.AppPrivilege')
+            rar_data=$("${app_home}/includes/${include_synowebapi}" --exec api=SYNO.Core.Desktop.Initdata method=get version=1 runner="${syno_user}" | jq '.data.AppPrivilege')
             syno_privilege=$(echo "${rar_data}" | grep "SYNO.SDS.${app_name}.Application" | cut -d ":" -f2 | cut -d '"' -f2)
             if echo "${syno_privilege}" | grep -q "true"; then
                 is_authenticated="yes"
@@ -103,9 +104,7 @@
         readonly syno_token syno_user user_exist is_admin is_authenticated
         
         # read MAC-adress (only to hide DEV pages)
-        read MAC </sys/class/net/eth0/address
-        sysID=$(echo $MAC | cksum | awk '{print $1}'); sysID="$(printf '%010d' $sysID)" #echo "Prüfsumme der MAC-Adresse als Hardware-ID: $sysID" 10-stellig
-
+        sysID=$(printf '%010d' "$(cksum </sys/class/net/eth0/address | awk '{print $1}')")
 
     # Load functions from ./includes/functions.sh
     # ----------------------------------------------------------
@@ -117,8 +116,8 @@
     # Initiate user folder
     # ----------------------------------------------------------
         usersettings="${app_home}/etc"
-        if [ ! -d "$usersettings" ]; then
-            mkdir "$usersettings"
+        if [ ! -d "${usersettings}" ]; then
+            mkdir "${usersettings}"
         fi
 
 
@@ -134,6 +133,7 @@
     if [ -z "${backupIFS}" ]; then
         backupIFS="${IFS}"
         IFS='&'
+        # shellcheck disable=SC2086
         set -- $QUERY_STRING
         readonly backupIFS
         IFS="${backupIFS}"
@@ -141,26 +141,26 @@
 
     # Analyze incoming GET requests and process them into key="$value" variable
     for i in "$@"; do
-        IFS="$backupIFS"
+        IFS="${backupIFS}"
         variable=${i%%=*}
         encode_value=${i##*=}
-        decode_value=$(urldecode "$encode_value")
-        "$set_var" "$var" "$variable" "$decode_value"
-        "$set_var" "$var" "encode_$variable" "$encode_value"
+        decode_value=$(urldecode "${encode_value}")
+        "${set_var}" "${var}" "${variable}" "${decode_value}"
+        "${set_var}" "${var}" "encode_${variable}" "${encode_value}"
     done
     
-    if [ -f "$var" ]; then
-        source "$var"
+    if [ -f "${var}" ]; then
+        source "${var}"
     fi
 
     mainpage=${page%%-*}
 
-    if [ -z "$page" ]; then
+    if [ -z "${page}" ]; then
         #[ -f "${var}" ] && rm "${var}"
         mainpage="main"
     fi
     
-    "$set_var" "$var" "page" ""
+    "${set_var}" "${var}" "page" ""
 
 
 # Layout - Open basic framework incl. navigation -
@@ -200,35 +200,35 @@ echo '
 
 
                         # Startpage
-                        if [[ "$mainpage" == "main" ]]; then
+                        if [[ "${mainpage}" == "main" ]]; then
                             echo '
                             <li class="nav-item">
                                 <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=main">
-                                    <img class="svg me-3" src="images/home_white@geimist.svg" height="25" width="25"/>'$lang_page1'
+                                    <img class="svg me-3" src="images/home_white@geimist.svg" height="25" width="25"/>'"${lang_page1}"'
                                 </a>
                             </li>'
                         else
                             echo '
                             <li class="nav-item">
                                 <a class="nav-link text-secondary" href="index.cgi?page=main">
-                                    <img class="svg me-3" src="images/home_grey3@geimist.svg" height="25" width="25"/>'$lang_page1'
+                                    <img class="svg me-3" src="images/home_grey3@geimist.svg" height="25" width="25"/>'"${lang_page1}"'
                                 </a>
                             </li>'
                         fi
 
                         # Settings
-                        if [[ "$mainpage" == "edit" ]]; then
+                        if [[ "${mainpage}" == "edit" ]]; then
                             echo '
                             <li class="nav-item">
                                 <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=edit">
-                                    <img class="svg me-3" src="images/settings_white@geimist.svg" height="25" width="25"/>'$lang_page2'
+                                    <img class="svg me-3" src="images/settings_white@geimist.svg" height="25" width="25"/>'"${lang_page2}"'
                                 </a>
                             </li>'
                         else
                             echo '
                             <li class="nav-item">
                                 <a class="nav-link text-secondary" href="index.cgi?page=edit">
-                                    <img class="svg me-3" src="images/settings_grey3@geimist.svg" height="25" width="25"/>'$lang_page2'
+                                    <img class="svg me-3" src="images/settings_grey3@geimist.svg" height="25" width="25"/>'"${lang_page2}"'
                                 </a>
                             </li>'
                         fi
@@ -251,18 +251,18 @@ echo '
 #                        fi
 
                         # Help
-                        if [[ "$mainpage" == "help" ]]; then
+                        if [[ "${mainpage}" == "help" ]]; then
                             echo '
                             <li class="nav-item">
                                 <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=help">
-                                    <img class="svg me-3" src="images/help_white@geimist.svg" height="25" width="25"/>'$lang_page4'
+                                    <img class="svg me-3" src="images/help_white@geimist.svg" height="25" width="25"/>'"${lang_page4}"'
                                 </a>
                             </li>'
                         else
                             echo '
                             <li class="nav-item">
                                 <a class="nav-link text-secondary" href="index.cgi?page=help">
-                                    <img class="svg me-3" src="images/help_grey3@geimist.svg" height="25" width="25"/>'$lang_page4'
+                                    <img class="svg me-3" src="images/help_grey3@geimist.svg" height="25" width="25"/>'"${lang_page4}"'
                                 </a>
                             </li>'
                         fi
@@ -278,19 +278,19 @@ echo '
                     <form action="index.cgi" method="get" autocomplete="on">'
 
                         # Dynamic page reloading
-                        if [ -z "$mainpage" ]; then
+                        if [ -z "${mainpage}" ]; then
                             echo 'The page could not be found!'
                         else
                             script="GUI_${mainpage}.sh"
-                            if [ -f "$script" ]; then
-                                . ./"$script"
+                            if [ -f "${script}" ]; then
+                                . ./"${script}"
                             else
                                 . ./GUI_main.sh
                             fi
                         fi
 
                         # Footer
-                        if [ -f "GUI_footer.sh" ] && [ ! -f "$stop" ]; then
+                        if [ -f "GUI_footer.sh" ] && [ ! -f "${stop}" ]; then
                             . ./GUI_footer.sh
                         fi
                         echo '
