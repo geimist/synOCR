@@ -2,12 +2,15 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.0.7 © 2023 by geimist                                                                        #
+    #     v1.0.8 © 2023 by geimist                                                                        #
     #                                                                                                     #
     #######################################################################################################
 
 DeepLapiKey="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:xx"
 # /volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n_autotranslate_by_DeepL_API.sh
+
+# ToDo:
+#   - SPK Versionen mit abbilden 
 
 # Mastersprache:
 #---------------------------------------------------------------------------------------------------
@@ -255,7 +258,7 @@ create_master() {
         else
             let insertCount=$insertCount+1
         fi
-    done <<<"$(cat "$masterFile" | grep -v "^$" | grep -v ^[[:space:]]*# )" #| grep lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR )"
+    done <<< "$(grep -v "^$" "${masterFile}" | grep -v '^[[:space:]]*#' )"  #| grep lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR )
     
     printf "\n\nEs wurden $insertCount Datensätze in die Mastertabelle eingefügt, bzw. aktualisiert.\n"
 
@@ -346,9 +349,9 @@ manual_import() {
             else
                 let insertCount=$insertCount+1
             fi
-        done <<<"$(cat "$masterFile" | grep -v "^$" | grep -v ^[[:space:]]*# )"
+        done <<< "$(grep -v "^$" "$masterFile" | grep -v '^[[:space:]]*#' )"
         
-        if [ -n "$skipped" ]; then
+        if [ -n "${skipped}" ]; then
             printf "\n! ! ! F E H L E R ! ! !\n"
             printf "${skipped}\n"
         fi
@@ -537,13 +540,13 @@ export_langfiles() {
         langFile="${exportPath}lang_${synoShortName}.txt"
         printf "\nverarbeite Sprach-ID: $langID [$targetLongName]\n"
 
-        if [ "$overwrite" = 0 ] && [ -f "$langFile" ]; then
+        if [ "${overwrite}" = 0 ] && [ -f "${langFile}" ]; then
             echo "    ➜ Sprachdatei ist bereits vorhanden und das Überschreiben ist deaktiviert ..."
             continue
         fi
 
         {   echo "    #######################################################################################################"
-            printf "    # %-100s#\n"  "$targetLongName language file for synOCR-GUI"
+            printf "    # %-100s#\n"  "${targetLongName} language file for synOCR-GUI"
             printf "    # %-100s#\n"  ""
             printf "    # %-100s#\n"  "Path:"
             printf "    # %-100s#\n"  "    /usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_${synoShortName}.txt"
@@ -558,35 +561,35 @@ export_langfiles() {
         
         chmod 755 "${langFile}"
         
-        content=$(sqlite3 -separator $'="' "$i18n_DB" "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='$langID' ORDER BY varname ASC" )
-        
+        content=$(sqlite3 -separator $'="' "${i18n_DB}" "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='$langID' AND  variables.inuse='1' ORDER BY varname ASC" )
+
         while read line; do
-            echo "$line\"" >> "${langFile}"
-        done <<<"$content"
-    done <<<"$(sqlite3 "$i18n_DB" "SELECT DISTINCT langID FROM strings ORDER by langID ASC")"
+            echo "${line}\"" >> "${langFile}"
+        done <<<"${content}"
+    done <<<"$(sqlite3 "${i18n_DB}" "SELECT DISTINCT langID FROM strings ORDER by langID ASC")"
 }
 
 # lese den aktuellen Status des Übersetzungskontigents von DeepL (verbrauchte Zeichen im aktuellen Zeitraum):
-limitStateStart=$(curl -sH "Authorization: DeepL-Auth-Key $DeepLapiKey" https://api-free.deepl.com/v2/usage)
+limitStateStart=$(curl -sH "Authorization: DeepL-Auth-Key ${DeepLapiKey}" https://api-free.deepl.com/v2/usage)
 
 # Informationen der definierten Mastersprache zusammentragen:
-languages=$(sqlite3 -separator $'\t' "$i18n_DB" "SELECT langID, deeplshortname, longname FROM languages WHERE SynoShortName='$masterSynoShortName'")
-masterLangID="$(echo "$languages" | awk -F'\t' '{print $1}')"
-masterDeeplShortName="$(echo "$languages" | awk -F'\t' '{print $2}')"
-masterLongName="$(echo "$languages" | awk -F'\t' '{print $3}')"
+languages=$(sqlite3 -separator $'\t' "${i18n_DB}" "SELECT langID, deeplshortname, longname FROM languages WHERE SynoShortName='${masterSynoShortName}'")
+masterLangID="$(echo "${languages}" | awk -F'\t' '{print $1}')"
+masterDeeplShortName="$(echo "${languages}" | awk -F'\t' '{print $2}')"
+masterLongName="$(echo "${languages}" | awk -F'\t' '{print $3}')"
 
 
 #######################
 # Funktionsaufrufe:
     create_db
     create_master
-    [ "$manualImport" = 1 ] && manual_import
+    [ "${manualImport}" = 1 ] && manual_import
     translate
-    [ "$exportLangFiles" = 1 ] && export_langfiles
+    [ "${exportLangFiles}" = 1 ] && export_langfiles
 #######################
 
 printf "\n\nStatistik:\n"
-[ "$error" -ne 0 ] && echo "    Es gab bei der Ausführung Fehler - bitte erneut aufrufen."
-limitState=$(curl -sH "Authorization: DeepL-Auth-Key $DeepLapiKey" https://api-free.deepl.com/v2/usage)
-printf "    Für die Übersetzung wurden $(( $(jq -r .character_count <<<"$limitState" )-$(jq -r .character_count <<<"$limitStateStart" ))) Zeichen berechnet.\n"
-printf "    Im aktuellen Zeitraum wurden $(jq -r .character_count <<<"$limitState" ) Zeichen von $(jq -r .character_limit <<<"$limitState" ) verbraucht.\n    "
+[ "${error}" -ne 0 ] && echo "    Es gab bei der Ausführung Fehler - bitte erneut aufrufen."
+limitState=$(curl -sH "Authorization: DeepL-Auth-Key ${DeepLapiKey}" https://api-free.deepl.com/v2/usage)
+printf "    Für die Übersetzung wurden $(( $(jq -r .character_count <<< "${limitState}" )-$(jq -r .character_count <<< "${limitStateStart}" ))) Zeichen berechnet.\n"
+printf "    Im aktuellen Zeitraum wurden $(jq -r .character_count <<< "${limitState}" ) Zeichen von $(jq -r .character_limit <<< "${limitState}" ) verbraucht.\n    "
