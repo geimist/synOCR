@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC2181,SC1091,SC2001
+# shellcheck disable=SC1091,SC2001,SC2009,SC2181
 
 #################################################################################
 #   description:    main script for running synOCR                              #
@@ -13,7 +13,7 @@
     echo -e
 
     set -E -o functrace     # for function failure()
-    IFSsaved=IFS
+    IFSsaved=$IFS
 
     # shellcheck disable=SC2317  # Don't warn about "unreachable commands" in this function
     failure()
@@ -41,7 +41,7 @@
     enablePyMetaData=1            
     
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML )
+    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML apprise )
                                 # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
     dashline1="-----------------------------------------------------------------------------------"
     dashline2="●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
@@ -73,7 +73,7 @@
 # ---------------------------------------------------------------------
     APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
     cd "${APPDIR}" || exit 1
-    
+
     source ./includes/functions.sh
 
 
@@ -171,7 +171,7 @@
     echo "Device:                   ${device} (${devID})"
     echo "current Profil:           ${profile}"
     echo -n "monitor is running?:      "
-    if pgrep -f "inotifywait.*--fromfile.*inotify.list" > /dev/null; then
+    if ps aux | grep -v "grep" | grep -qE "inotifywait.*--fromfile.*inotify.list" ; then
         echo "yes"
     else
         echo "no"
@@ -433,8 +433,9 @@ elif [ -f "${taglist}" ]; then
         echo "${log_indent}source for tags is yaml based tag rule file [${taglist}]"
 
         # copy YAML file into the TMP folder, because the file can only be read incorrectly in ACL folders
-        cp "${taglist}" "${work_tmp_step2}/tmprulefile.txt"
         taglisttmp="${work_tmp_step2}/tmprulefile.txt"
+        [ -f "${taglisttmp}" ] && rm -f "${taglisttmp}"
+        cp "${taglist}" "${taglisttmp}"
 
         # convert DOS to Unix:
         sed -i $'s/\r$//' "${taglisttmp}"
@@ -474,8 +475,7 @@ fi
 
 if [ "${type_of_rule}" = advanced ]; then
 # process complex tag rules:
-    # list tagrules:
-    for tagrule in $(echo "${tag_rule_content}" | jq -r ". | to_entries | .[] | .key" | sort -r) ; do
+    for tagrule in $(echo "${tag_rule_content}" | jq -r ". | to_entries | .[] | .key" | sort -r); do
         found=0
 
         [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
@@ -729,7 +729,10 @@ if [ "${type_of_rule}" = advanced ]; then
                     fi
                     ;;
             esac
-        done
+    done
+        
+#done <<< "${allrulenames}"
+##        done <<< "$(echo "${tag_rule_content}" | jq -r ". | to_entries | .[] | .key" | sort -r)"
 
         if [ "${found}" -eq 1 ] ; then
             echo "${log_indent}          >>> Rule is satisfied"
@@ -776,15 +779,15 @@ if [ "${type_of_rule}" = advanced ]; then
 
                 tagname_RegEx_result=$( grep -oP${grep_opt} "${tagname_RegEx}" "${VARsearchfile}" | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
                 if [ -n "${tagname_RegEx_result}" ] ; then
-                    if echo "${searchtag}" | grep -q "§{tagname_RegEx}" ; then
+                    if echo "${searchtag}" | grep -q "§tagname_RegEx" ; then
 ##                      searchtag=$(echo "${searchtag}" | sed -e "s/§tagname_RegEx/${tagname_RegEx_result}/g" )
                         searchtag="${searchtag//§tagname_RegEx/${tagname_RegEx_result}}"
                     else
                         searchtag="${tagname_RegEx_result}"
                     fi
-                    printf "\n%s\n\n" "${searchtag}"
+                    printf "%s\n\n" "${searchtag}"
                 else
-                    printf "\n%s\n\n" "RegEx not found (fallback to ${searchtag})"
+                    printf "%s\n\n" "RegEx not found (fallback to ${searchtag})"
                 fi
             fi
 
@@ -919,7 +922,8 @@ yaml_validate()
 # ---------------------------------------------------------------------
 ##  rulenames=$(cat "${taglisttmp}" | grep -Ev '^[[:space:]]|^#|^$' | grep -E ':[[:space:]]?$')
     rulenames=$(grep -Ev '^[[:space:]]|^#|^$' "${taglisttmp}" | grep -E ':[[:space:]]?$')
-    for i in ${rulenames} ; do
+##  for i in ${rulenames} ; do
+    while read -r i; do
         i2="${i//[^a-zA-Z0-9_:]/_}"    # replace all nonconfom chars / only latin letters!
         if echo "${i2}" | grep -Eq '^[^a-zA-Z]' ; then
             i2="_${i2}"   # currently it is not checked if there are duplicates of the rule name due to the adjustment
@@ -929,7 +933,8 @@ yaml_validate()
             echo "${log_indent}rule name ${i2} was adjusted"
             sed -i "s/${i}/${i2}/" "${taglisttmp}"
         fi
-    done
+##  done
+    done <<< "${rulenames}"
 
 
 # check uniqueness of parent nodes:
@@ -1129,6 +1134,7 @@ prepare_python()
 }
 
 
+# shellcheck disable=SC2046,SC2219
 find_date()
 {
 #########################################################################################
@@ -1198,20 +1204,26 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
         for currentFoundDate in "${founddates[@]}" ; do
             if [ "${format}" -eq 1 ]; then
                 echo "${log_indent}  check date (dd mm [yy]yy): ${currentFoundDate}"
-                date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
-                date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}') )))
+##              date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
+                date_dd=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')"; echo $((n)) ) )
+##              date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}') )))
+                date_mm=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}')"; echo $((n)) ) )
                 date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             elif [ "${format}" -eq 2 ]; then
                 echo "${log_indent}  check date ([yy]yy mm dd): ${currentFoundDate}"
-                date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
-##              date_dd="${currentFoundDate:0-2}"
-                date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}') )))
-##              date_mm=${currentFoundDate:3:2}
+##              date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
+                date_dd=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')"; echo $((n)) ) )
+            ##  date_dd="${currentFoundDate:0-2}"
+##              date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}') )))
+                date_mm=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}')"; echo $((n)) ) )
+            ##  date_mm=${currentFoundDate:3:2}
                 date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
             elif  [ "${format}" -eq 3 ]; then
                 echo "${log_indent}  check date (mm dd [yy]yy): ${currentFoundDate}"
-                date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
-                date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}') )))
+##              date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
+                date_dd=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*')"; echo $((n)) ) )
+##              date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}') )))
+                date_mm=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}')"; echo $((n)) ) )
                 date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             fi
     
@@ -1512,7 +1524,7 @@ rename()
 
         # define target folder as array
 ##      tagarray=( ${renameCat} )
-        IFS=" " read -r -a tagarray <<< "${renameCat}" && IFS="${IFSsaved}"
+        IFS=" " read -r -a tagarray <<< "${renameCat}" ; IFS="${IFSsaved}"
         
         # temp. list of used destination folders to avoid file duplicates (different tags, but one category):
         DestFolderList=""
@@ -1964,8 +1976,7 @@ while read -r input ; do
 
     echo "${log_indent}➜ OCRmyPDF-LOG:"
     echo "${dockerlog}" | sed -e "s/^/${log_indent}  /g"
-    echo "${log_indent}← OCRmyPDF-LOG-END"
-    echo -e
+    printf "%s\n\n" "${log_indent}← OCRmyPDF-LOG-END"
 
     [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
 
@@ -1976,7 +1987,7 @@ while read -r input ; do
     if [ "$(stat -c %s "${outputtmp}")" -eq 0 ] || [ ! -f "${outputtmp}" ];then
         echo "${log_indent}  ┖➜ failed! (target file is empty or not available)"
         rm "${outputtmp}"
-        if echo "${dockerlog}" | grep -q ERROR ;then
+        if echo "${dockerlog}" | grep -iq ERROR ;then
             if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
                 echo "${log_indent}                  ERROR-Directory [${INPUTDIR}ERRORFILES] will be created!"
                 mkdir "${INPUTDIR}ERRORFILES"
@@ -2511,6 +2522,7 @@ while read -r input ; do
 
     # individual apprise notification:
     if [ -n "${apprise_call}" ] && [ "${python_check}" = "ok" ]; then
+        # ToDo: make ${apprise_call} unique
         if [ "${apprise_attachment}" = true ]; then
             # with target file as attachment (The user must ensure that the requested service accepts attachments):
             apprise_LOG=$(apprise --interpret-escapes -vv -t 'synOCR' -b "${lang_notify_file_job_successful}\n\r${file_notify}\n\n" --attach "${output}" "${apprise_call}")

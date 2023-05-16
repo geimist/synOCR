@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC1091,SC2094,SC2154
+# shellcheck disable=SC1091,SC2009,SC2094,SC2154
 
 #################################################################################
 #   description:    - changes to synOCR directory and starts synOCR             #
@@ -30,8 +30,7 @@ done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "S
 
 inotify_process_id () {
     # print process id of inotify
-##  ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}'
-    pgrep -f "inotifywait.*--fromfile.*inotify.list"
+    ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}'
 }
 
 # reading parameters:

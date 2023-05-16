@@ -9,7 +9,7 @@
 #############################################################################################
 
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
-inotify_process_id=$(pgrep -f "inotifywait.*--fromfile.*inotify.list")
+inotify_process_id=$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}')
 
 # create list (array need for tee) with all active log folders:
 # --------------------------------------------------------------
