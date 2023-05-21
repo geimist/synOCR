@@ -186,6 +186,8 @@ fi
         if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") = $(date +%m) ]]; then
             server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}&device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")" )
             online_version=$(echo "$server_info" | jq -r .dsm.dsm${dsm_version}.${release_channel}.version)
+            downloadUrl=$(echo "$server_info" | jq -r .dsm.dsm${dsmMajorVersion}.${release_channel}.downloadUrl )
+            changeLogUrl=$(echo "$server_info" | jq -r .dsm.dsm${dsmMajorVersion}.${release_channel}.changeLogUrl )
  
             sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${online_version}' WHERE key='online_version'"
             # reset checkmon if failed get version:
@@ -195,7 +197,14 @@ fi
             highest_version=$(printf "${online_version}\n${local_version}" | sort -V | tail -n1)
             if [[ "${local_version}" != "$highest_version" ]] ; then
                 if [ "$dsm_version" = "7" ] ; then
-                    synodsmnotify -c SYNO.SDS.synOCR.Application @administrators synOCR:app:app_name synOCR:app:update_available
+                
+                # synodsmnotify dosn't rendering html / how works the switch -p html/plain?
+                #    msg_download='<br><a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">DOWNLOAD VERSION '${online_version}' </a>'
+                #    msg_changelog='<br><a href="'${changeLogUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">CHANGELOG]</a>'
+                #    msg_download='<a href="'${downloadUrl}'">DOWNLOAD VERSION '${online_version}'</a>'
+                #    msg_changelog='<a href="'${changeLogUrl}'"> CHANGELOG </a>'
+
+                    synodsmnotify -c "SYNO.SDS.synOCR.Application" @administrators "synOCR:app:app_name" "synOCR:app:update_available" "${local_version}" "${online_version}" #"${msg_download}" "${msg_changelog}"
                 else
                     synodsmnotify @administrators "synOCR" "Update available [version ${online_version}]"
                 fi

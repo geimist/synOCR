@@ -81,7 +81,7 @@ OLDIFS=$IFS
                         \"pagecount\" VARCHAR DEFAULT ('0') ,
                         \"ocrcount\" VARCHAR  DEFAULT ('0') ,
                         \"search_nearest_date\" VARCHAR  DEFAULT ('false') ,
-                        \"date_search_method\" VARCHAR  DEFAULT ('regex') ,
+                        \"date_search_method\" VARCHAR  DEFAULT ('python') ,
                         \"clean_up_spaces\" VARCHAR  DEFAULT ('false') ,
                         \"img2pdf\" VARCHAR  DEFAULT ('false') ,
                         \"DateSearchMinYear\" varchar DEFAULT ('0') ,
@@ -410,7 +410,7 @@ fi
         # date_search_method:
         # ---------------------------------------------------------------------
         sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
-                                       ADD COLUMN \"date_search_method\" VARCHAR DEFAULT ('regex')"
+                                       ADD COLUMN \"date_search_method\" VARCHAR DEFAULT ('python')"
         # check:
         if ! $(sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q date_search_method ) ; then
             log="$log 
