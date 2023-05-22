@@ -152,9 +152,9 @@ exit 1
     printf " - INFO: Create the temporary build folder and copy sources into it ..."
     printf "\n-----------------------------------------------------------------------------------\n\n"
 
-	if [ "$buildversion" = local ]; then
-	    cp -r ./ "$build_tmp"
-	else
+    if [ "$buildversion" = local ]; then
+        cp -r ./ "$build_tmp"
+    else
         git pull
         git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
     fi
@@ -170,7 +170,7 @@ exit 1
         git checkout "$buildversion"
         set_spk_version="$buildversion"
     elif [ "$buildversion" = local ]; then
-    	set_spk_version="$buildversion"
+        set_spk_version="$buildversion"
     else
         echo "ATTENTION: The requested version was not found in the repository!"
         echo "The $(git rev-parse --abbrev-ref HEAD)-branch will be used!"
