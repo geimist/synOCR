@@ -13,7 +13,6 @@
     echo -e
 
     set -E -o functrace     # for function failure()
-    IFSsaved=$IFS
 
     # shellcheck disable=SC2317  # Don't warn about "unreachable commands" in this function
     failure()
@@ -26,6 +25,8 @@
         echo "ERROR at line ${lineno}: ${msg}"
     }
     trap 'failure ${LINENO} "${BASH_COMMAND}"' ERR
+
+    IFSsaved=$IFS
 
 
 # ---------------------------------------------------------------------------------
