@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC1091,SC2001,SC2009,SC2181
+# shellcheck disable=SC1090,SC1091,SC2001,SC2009,SC2181
 
 #################################################################################
 #   description:    main script for running synOCR                              #
@@ -152,7 +152,6 @@
 
 # System Information and log settings:
 # ---------------------------------------------------------------------
-    # shellcheck source=./lang/lang_enu.txt
     source "./lang/lang_${notify_lang}.txt"
 
     local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
@@ -171,7 +170,7 @@
     echo "Device:                   ${device} (${devID})"
     echo "current Profil:           ${profile}"
     echo -n "monitor is running?:      "
-    if ps aux | grep -v "grep" | grep -qE "inotifywait.*--fromfile.*inotify.list" ; then
+    if ps aux | grep -qE "[i]notifywait.*--fromfile.*inotify.list"; then
         echo "yes"
     else
         echo "no"
@@ -203,7 +202,7 @@
             [ "${loglevel}" = 2 ] && echo "OCR-arg ${c}:                ${value}"
             ocropt_arr+=( "${value}" )
         fi
-    done <<<"$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}")"
+    done <<< "$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}")"
     unset c
 
     echo "ocropt_array:             ${ocropt_arr[*]}"
@@ -1398,11 +1397,18 @@ rename()
     # decode special characters:
     NewName=$(urldecode "${NewName}")
     renameTag=$(urldecode "${renameTag}")
-    echo "${NewName}"
     
+    # Fallback, if no variables were found for renaming:
+    if [ -n "${NewName}" ]; then
+        NewName="${NewName:-$(date +%Y-%m-%d_%H-%M)_$(urldecode "${title}")}"
+        echo "! WARNING ! – No variables were found for renaming. A fallback is used to prevent an empty file name: ${NewName}"
+    else
+        echo "${NewName}"
+    fi
+
     [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
 
-    
+
 # set metadata:
 # ---------------------------------------------------------------------
     echo -n "${log_indent}➜ insert metadata "
