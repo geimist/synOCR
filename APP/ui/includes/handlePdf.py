@@ -17,6 +17,8 @@
 #  Author: gthorsten
 #  Version:
 #
+#     0.2, 21.05.2023
+#           remove or change some debugging info
 #     0.1, 26.03.2023
 #           initial version
 #
@@ -69,7 +71,7 @@ class HandlePdf:
         self.task = None
         self.dbg_lvl = dbg_lvl_int
         self.dbg_file = dbg_file_str
-        self.version = '0.1'
+        self.version = '0.2'
         self.creator_str = None
         self.meta_data = None
         self.meta_data_dict = None
@@ -175,18 +177,18 @@ class HandlePdf:
         return 0
 
     def open_pdf(self):
-        self.logger_obj.info('>>>>>> open_pdf started')
+        self.logger_obj.debug('>>>>>> open_pdf started')
         # try to read pdf
         try:
             self.input_pdf = Pdf.open(self.input_file)
         except Exception as ex:
             return HandlePdfErrorCode.ERROR_INPUTFILE_NOT_READABLE
 
-        self.logger_obj.info('<<<<<< open_pdf ended')
+        self.logger_obj.debug('<<<<<< open_pdf ended')
         return 0
 
     def write_metadata(self):
-        self.logger_obj.info('>>>>> write meta_data ended')
+        self.logger_obj.info('>>>>> write meta_data started')
         # self.logger_obj.info(meta['xmp:CreatorTool'])
         #meta_data_str = {'/Author': 'John Doe',
         #                 '/Keywords': 'Versicherung Allianz, KFZ, KFZ - Versicherung',
@@ -220,7 +222,7 @@ class HandlePdf:
 
             if '/Author' in self.meta_data_dict:
                 if len(self.meta_data_dict['/Author']):
-                    meta['dc:contributor'] = self.meta_data_dict['/Author']
+                    meta['dc:creator'] = [self.meta_data_dict['/Author']]
                     meta['pdf:Author'] = self.meta_data_dict['/Author']
 
            # meta['pdf:Producer'] = 'pikepdf'
@@ -237,11 +239,11 @@ class HandlePdf:
             self.logger_obj.error(f'execption caused by pdf save!!!')
             return HandlePdfErrorCode.ERROR_WRITE_OUTFILE
 
-        self.logger_obj.info('<<<<<< write meta_data ended')
+        self.logger_obj.debug('<<<<<< write meta_data ended')
         return 0
 
     def set_task_split_parameter(self, input_file: str, output_file: str, start_page: int, end_page: int):
-        self.logger_obj.info(f'set_task_split_parameter(input_file={input_file}, output_file={output_file},\
+        self.logger_obj.debug(f'set_task_split_parameter(input_file={input_file}, output_file={output_file},\
                     start_page={start_page}, end_page={end_page})')
 
         if output_file is None:
@@ -278,11 +280,11 @@ class HandlePdf:
         self.output_file = output_file
         self.input_file = input_file
 
-        self.logger_obj.info('<<<<<< set_task_split_parameter ended')
+        self.logger_obj.debug('<<<<<< set_task_split_parameter ended')
         return 0
 
     def set_task_metadata_parameter(self, input_file: str, output_file: str, meta_data_str: str):
-        self.logger_obj.info(f'set_task_metadata_parameter(input_file={input_file}, output_file={output_file},\
+        self.logger_obj.debug(f'set_task_metadata_parameter(input_file={input_file}, output_file={output_file},\
                     meta_data_str={meta_data_str})')
 
         if output_file is None:
@@ -321,7 +323,7 @@ class HandlePdf:
         self.output_file = output_file
         self.input_file = input_file
 
-        self.logger_obj.info('<<<<<< set_task_meta_data_parameter ended')
+        self.logger_obj.debug('<<<<<< set_task_meta_data_parameter ended')
         return 0
 
     def _print_metadata(self):
@@ -330,7 +332,7 @@ class HandlePdf:
         self.meta_data = self.input_pdf.open_metadata()
 
         self.logger_obj.debug(f'{self.meta_data}')
-        print(f"{self.meta_data}")
+        # print(f"{self.meta_data}")
 
         self.logger_obj.debug(f'<<<<< log metadata <<<<<)')
 
