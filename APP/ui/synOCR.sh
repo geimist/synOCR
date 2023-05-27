@@ -810,10 +810,12 @@ if [ "${type_of_rule}" = advanced ]; then
 else
 # process simple tag rules:
     taglist2=$( echo "${taglist}" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # encode spaces in tags and convert semicolons to spaces (for array)
-    tagarray=( "${taglist2}" )   # define tags as array
+##  tagarray=( ${taglist2} )   # define tags as array
+    IFS=" " read -r -a tagarray <<< "${taglist2}" ; IFS="${IFSsaved}"
+
     i=0
     maxID=${#tagarray[*]}
-    echo "${log_indent}          tag count:       ${maxID}"
+    echo "${log_indent}tag count:       ${maxID}"
 
     # ToDo: possibly change loop …
     #    for i in ${tagarray[@]}; do
@@ -1612,7 +1614,8 @@ rename()
         fi
     
         # define tags as array
-        tagarray=( "${renameTag}" )
+##      tagarray=( ${renameTag} )
+        IFS=" " read -r -a tagarray <<< "${renameTag}" ; IFS="${IFSsaved}"
         maxID=${#tagarray[*]}
     
         while (( i < maxID )); do
