@@ -251,6 +251,17 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
                     <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr-monitoring">'"${lang_main_button_start_monitoring}"'</button>
                 </p><br />'
             fi
+        elif [ "${monitoring_user}" = root ] && [ -n "${PID}" ]; then 
+            # if running under root, controlling over GUI is not possible:
+            echo '
+            <br /><p style="'"${synocrred}"';"><b>'"${lang_main_desc3}"':</b></p>
+            <p>'"${lang_main_desc4}"'</p>'
+            # start single run:
+        #    echo '
+        #    <br><p class="text-center">
+        #        <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'"${lang_main_buttonrun}"'</button>
+        #        <p class="text-center">'"${lang_help_QS_1b}"' (<a href="https://synocommunity.com/package/inotify-tools" onclick="window.open(this.href); return false;" style="'"${synocrred}"';"><b>'"${lang_foot_buttondownDB}"' Inotify-Tools</b></a>)</p>                
+        #    </p><br />'
         fi
     fi
 
