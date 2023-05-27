@@ -14,6 +14,7 @@ DeepLapiKey="${DeepLapiKey:-$(head -n1 "$(realpath "${0%/*}/../../DeepL_api-Key.
 
 # ToDo:
 #   - SPK Versionen mit abbilden 
+#   - machinetranslateID muss noch mal überprüft werden
 
 # Mastersprache:
 #---------------------------------------------------------------------------------------------------
@@ -395,7 +396,7 @@ translate() {
 
         # set progressbar:
         # shellcheck disable=SC2126
-        progress_end="$(printf %s "${diffNew}" | grep -v "^$" | wc -l)"
+        progress_end="$(printf "%s" "${diffNew}" | grep -v "^$" | wc -l | sed -e 's/ //g')"
 
         cCount=0
         [ "${progress_end}" -eq 0 ] && continue
