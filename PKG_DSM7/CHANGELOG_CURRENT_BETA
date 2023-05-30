@@ -7,6 +7,8 @@ BUGFIXES:
  - [SHELL] avoid empty renaming syntax
  - [SHELL] Error when parsing GUI-defined rules
  - [SHELL] correct logging of the python script (thx @Gthorsten)
+ - [BETAFIX] Python environment permissions were not adjusted if the Python environment was created by a start via root
+ - [GUI] If the log level was set to 0, the log was incorrectly displayed in the GUI during a manual run
 IMPROVEMENT:
  - [GUI] If the monitoring is started via the task scheduler from root, the GUI now informs about it
  - improved logging when monitoring cannot be started because a source folder is invalid
