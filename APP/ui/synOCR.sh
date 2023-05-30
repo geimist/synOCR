@@ -1122,8 +1122,8 @@ prepare_python()
                 echo "0" > "${python3_env}/synOCR_python_env_version"
             fi
 
-            [ "${synOCR_user}" = root ] && chown -R synOCR:administrators /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
-            [ "${synOCR_user}" = root ] && chmod -R 755 /usr/syno/synoman/webman/3rdparty/synOCR/python3_env
+            [ "${synOCR_user}" = root ] && chown -R synOCR:administrators "${python3_env}"
+            [ "${synOCR_user}" = root ] && chmod -R 755 "${python3_env}"
 
             printf "\n"
         fi
