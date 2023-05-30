@@ -362,7 +362,7 @@ fi
             ./synOCR.sh "${profile_ID}" "${LOGFILE}" >> "${LOGFILE}" 2>&1
         else
             loglevel=0
-            ./synOCR.sh "${profile_ID}"
+            ./synOCR.sh "${profile_ID}" >/dev/null
         fi
 
         # shellcheck disable=SC2181
