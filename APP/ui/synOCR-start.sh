@@ -366,7 +366,7 @@ fi
         fi
 
         # shellcheck disable=SC2181
-        if (( $? == 0 )); then
+        if [ $? = 0 ] && [ "${loglevel}" != 0 ]; then
             {
             echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
             echo "  ● ---------------------------------- ●"
@@ -374,7 +374,7 @@ fi
             echo "  ● ---------------------------------- ●"
             echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
             } >> "${LOGFILE}"
-        else
+        elif [ $? != 0 ] && [ "${loglevel}" != 0 ]; then
             {
             echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
             echo "  ● ---------------------------------- ●"
@@ -386,8 +386,11 @@ fi
             echo "${lang_synOCR_start_errorexit}"
             echo "${lang_synOCR_start_loginfo}: ${LOGFILE}"
             exit_status=ERROR
+        elif [ $? != 0 ] && [ "${loglevel}" = 0 ]; then
+            echo "${lang_synOCR_start_errorexit}"
+            exit_status=ERROR
         fi
-    done <<<"$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")"
+    done <<< "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")"
 
 if  [ "${exit_status}" = ERROR ] ; then
     exit 1
