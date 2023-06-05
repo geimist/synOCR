@@ -117,14 +117,6 @@ echo '
         </a><br /><br /><br />
     </p>
     <p>
-        <a href="https://de.igraal.com/einladung?werber=AG_633f0f4d6b7be" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">'"${lang_help_igraal_1}"' </a>
-        '"${lang_help_igraal_2}"'<br />
-    
-        <a href="https://de.igraal.com/einladung?werber=AG_633f0f4d6b7be" onclick="window.open(this.href); return false;">
-            <img src="images/iGraal.png" alt="iGraal" style="float:left;padding:10px" height="60" width="200"/>
-        </a><br /><br /><br />
-    </p>
-    <p>
         <hr>
         <p><b>
             '"${lang_help_about_4}"':</b>
