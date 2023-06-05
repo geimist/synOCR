@@ -541,10 +541,14 @@ if [ "${type_of_rule}" = advanced ]; then
                 VARisRegEx=false
             fi
 
-            VARsearchtyp=$(sub_jq '.searchtyp' | tr '[:upper:]' '[:lower:]')
-            if [ "${VARsearchtyp}" = null ] ; then
-                [ "${loglevel}" = 2 ] && echo "${log_indent}          [value for searchtyp is empty - \"contains\" is used]"
-                VARsearchtyp=contains
+            VARsearchtype=$(sub_jq '.searchtyp' | tr '[:upper:]' '[:lower:]')
+            if [ "${VARsearchtype}" = null ] ; then
+                # correct spelling of searchtype with ending e (workarround because of wrong doc):
+                VARsearchtype=$(sub_jq '.searchtype' | tr '[:upper:]' '[:lower:]')
+                if [ "${VARsearchtype}" = null ] ; then
+                    [ "${loglevel}" = 2 ] && echo "${log_indent}          [value for searchtype is empty - \"contains\" is used]"
+                    VARsearchtype=contains
+                fi
             fi
 
             VARsource=$(sub_jq '.source' | tr '[:upper:]' '[:lower:]')
@@ -587,7 +591,7 @@ if [ "${type_of_rule}" = advanced ]; then
             if [ "${loglevel}" = 2 ] ; then
                 echo "${log_indent}      >>> search for:      ${VARsearchstring}"
                 echo "${log_indent}          isRegEx:         ${VARisRegEx}"
-                echo "${log_indent}          searchtyp:       ${VARsearchtyp}"
+                echo "${log_indent}          searchtype:      ${VARsearchtype}"
                 echo "${log_indent}          source:          ${VARsource}"
                 echo "${log_indent}          casesensitive:   ${VARcasesensitive}"
                 echo "${log_indent}          multilineregex:  ${VARmultilineregex}"
@@ -596,13 +600,13 @@ if [ "${type_of_rule}" = advanced ]; then
 
         # search … :
 #                if [ "${VARisRegEx}" = true ] ;then
-            # no additional restriction via 'searchtyp' for regex search
-#                    echo "                          searchtyp:       [ignored - RegEx based]"
+            # no additional restriction via 'searchtype' for regex search
+#                    echo "                          searchtype:       [ignored - RegEx based]"
 #                    if grep -qP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
 #                        grepresult=1
 #                    fi
 #                else
-            case "${VARsearchtyp}" in
+            case "${VARsearchtype}" in
                 is)
                     if [ "${VARisRegEx}" = true ] ;then
                         if grep -qwP${grep_opt} "${VARsearchstring}" "${VARsearchfile}" ;then
@@ -975,13 +979,14 @@ yaml_validate()
 ##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^source:")"
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^source:")"
 
-    # check of corect value of searchtyp:
+    # check of corect value of searchtype:
     while read -r line ; do
         if ! echo "${line}" | awk -F: '{print $3}' | sed 's/^ *//;s/ *$//' | tr -cd '[:alnum:][:blank:]' | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of searchtyp must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
+           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of searchtype must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
         fi
 ##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^searchtyp:")"
-    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^searchtyp:")"
+##  done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^searchtyp:")"
+    done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wnE "^searchtyp:|^searchtype:")"
 
     # check, if value of casesensitive is "true" OR "false":
     while read -r line ; do
