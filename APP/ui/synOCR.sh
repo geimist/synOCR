@@ -242,7 +242,6 @@
             # value is zero or not set
             printf 0
             return
-##      elif [[ $(echo "${year}" | grep -E "^[[:digit:]]+$" ) ]]; then
         elif grep -Eq "^[[:digit:]]+$" <<< "${year}"; then
             # value is a digit
             if [ "${length}" -eq 4 ]; then
@@ -360,7 +359,6 @@ update_dockerimage()
         updatelog=$(docker pull "${dockercontainer}" 2>/dev/null)
 
     # purge only untaged ocrmypdf images:
-##      if [[ $(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "ocrmypdf") ]]; then 
         if docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" 2>/dev/null | grep -q "ocrmypdf"; then 
             log_purge=$(docker rmi -f "$(docker images -f "dangling=true" --format "{{.ID}}:{{.Repository}}:{{.Tag}}" 2>/dev/null | grep "ocrmypdf" | awk -F: '{print $1}')" 2>/dev/null)
         else
@@ -466,7 +464,6 @@ elif [ -f "${taglist}" ]; then
     else
         echo "${log_indent}source for tags is file [${taglist}]"
         sed -i $'s/\r$//' "${taglist}"                    # convert DOS to Unix
-##      taglist=$(cat "${taglist}")
         taglist=$(< "${taglist}")
     fi
 else
@@ -734,9 +731,7 @@ if [ "${type_of_rule}" = advanced ]; then
                     ;;
             esac
     done
-        
-#done <<< "${allrulenames}"
-##        done <<< "$(echo "${tag_rule_content}" | jq -r ". | to_entries | .[] | .key" | sort -r)"
+
 
         if [ "${found}" -eq 1 ] ; then
             echo "${log_indent}          >>> Rule is satisfied"
@@ -784,7 +779,6 @@ if [ "${type_of_rule}" = advanced ]; then
                 tagname_RegEx_result=$( grep -oP${grep_opt} "${tagname_RegEx}" "${VARsearchfile}" | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
                 if [ -n "${tagname_RegEx_result}" ] ; then
                     if echo "${searchtag}" | grep -q "§tagname_RegEx" ; then
-##                      searchtag=$(echo "${searchtag}" | sed -e "s/§tagname_RegEx/${tagname_RegEx_result}/g" )
                         searchtag="${searchtag//§tagname_RegEx/${tagname_RegEx_result}}"
                     else
                         searchtag="${tagname_RegEx_result}"
@@ -795,8 +789,6 @@ if [ "${type_of_rule}" = advanced ]; then
                 fi
             fi
 
-##          [ -n "${searchtag}" ] && renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g") ${renameTag}" # with temporary space separator to finally check tags for uniqueness
-##          [ -n "${targetfolder}" ] && renameCat="$(echo "${targetfolder}" | sed -e "s/ /%20/g") ${renameCat}"
             [ -n "${searchtag}" ] && renameTag="${tagsymbol}${searchtag// /%20} ${renameTag}" # with temporary space separator to finally check tags for uniqueness
             [ -n "${targetfolder}" ] && renameCat="${targetfolder// /%20} ${renameCat}"
         else
@@ -814,7 +806,6 @@ if [ "${type_of_rule}" = advanced ]; then
 else
 # process simple tag rules:
     taglist2=$( echo "${taglist}" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )   # encode spaces in tags and convert semicolons to spaces (for array)
-##  tagarray=( ${taglist2} )   # define tags as array
     IFS=" " read -r -a tagarray <<< "${taglist2}" ; IFS="${IFSsaved}"
 
     i=0
@@ -830,38 +821,31 @@ else
 
         if echo "${tagarray[$i]}" | grep -q "=" ;then
             # for combination of tag and category
-##          if echo "$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}')" | grep -q  "^§" ;then
             if echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | grep -q  "^§" ;then
                grep_opt="-qiw" # find single tag
             else
                 grep_opt="-qi"
             fi
-##          tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
 
             # shellcheck disable=SC2004  # Don't warn about "$/${} is unnecessary on arithmetic variables" in this function
             tagarray[$i]="${tagarray[$i]#§}"
 
-##          searchtag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
             searchtag=$(awk -F'=' '{gsub(/%20/, " "); print $1}' <<< "${tagarray[$i]}")
             categorietag=$(echo "${tagarray[$i]}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
             echo -n "${log_indent}  Search by tag:   \"${searchtag}\" ➜  "
             if grep $grep_opt "${searchtag}" "${searchfile}" ;then
                 echo "OK (Cat: \"${categorietag}\")"
-##              renameTag="${tagsymbol}$(echo "${searchtag}" | sed -e "s/ /%20/g")${renameTag}"
-##              renameCat="$(echo "${categorietag}" | sed -e "s/ /%20/g") ${renameCat}"
                 renameTag="${tagsymbol}${searchtag// /%20}${renameTag}"
                 renameCat="${categorietag// /%20} ${renameCat}"
             else
                 echo "-"
             fi
         else
-##          if echo "$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")" | grep -q  "^§" ;then
             if [[ "${tagarray[$i]//%20/ }" == §* ]]; then
                 grep_opt="-qiw" # find single tag
             else
                 grep_opt="-qi"
             fi
-##          tagarray[$i]=$(echo ${tagarray[$i]} | sed -e "s/^§//g")
             # shellcheck disable=SC2004  # Don't warn about "$/${} is unnecessary on arithmetic variables" in this function
             tagarray[$i]="${tagarray[$i]#§}"
 ##          echo -n "${log_indent}  Search by tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
@@ -926,9 +910,7 @@ yaml_validate()
 
 # check & adjust the rule names (only numbers and letters / no number at the beginning):
 # ---------------------------------------------------------------------
-##  rulenames=$(cat "${taglisttmp}" | grep -Ev '^[[:space:]]|^#|^$' | grep -E ':[[:space:]]?$')
     rulenames=$(grep -Ev '^[[:space:]]|^#|^$' "${taglisttmp}" | grep -E ':[[:space:]]?$')
-##  for i in ${rulenames} ; do
     while read -r i; do
         i2="${i//[^a-zA-Z0-9_:]/_}"    # replace all nonconfom chars / only latin letters!
         if echo "${i2}" | grep -Eq '^[^a-zA-Z]' ; then
@@ -939,16 +921,13 @@ yaml_validate()
             echo "${log_indent}rule name ${i2} was adjusted"
             sed -i "s/${i}/${i2}/" "${taglisttmp}"
         fi
-##  done
     done <<< "${rulenames}"
 
 
 # check uniqueness of parent nodes:
 # ---------------------------------------------------------------------
-##  if [ "$(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d | wc -l )" -ge 1 ] ; then # check for the number of duplicate lines
     if [ "$(grep "^[a-zA-Z0-9_].*[: *]$" "${taglisttmp}" | sed 's/ *$//' | sort | uniq -d | wc -l )" -ge 1 ] ; then # check for the number of duplicate lines
         echo "${log_indent}main keywords are not unique!"
-##      echo "${log_indent}dublicats are: $(cat "${taglisttmp}" | grep "^[a-zA-Z0-9_].*[: *]$" | sed 's/ *$//' | sort | uniq -d)"
         echo "${log_indent}dublicats are: $(grep "^[a-zA-Z0-9_].*[: *]$" "${taglisttmp}" | sed 's/ *$//' | sort | uniq -d)"
     fi
 
@@ -960,7 +939,6 @@ yaml_validate()
         if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
            echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of condition must be only \"all\" OR \"any\" OR \"none\"]"
         fi
-##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^condition:")"
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^condition:")"
 
     # check, if value of isRegEx is "true" OR "false":
@@ -968,7 +946,6 @@ yaml_validate()
         if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
            echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of isRegEx must be only \"true\" OR \"false\"]"
         fi
-##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^isRegEx:")"
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^isRegEx:")"
 
     # check, if value of source is "content" OR "filename":
@@ -976,7 +953,6 @@ yaml_validate()
         if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(content|filename)$' > /dev/null  2>&1 ; then
            echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of source must be only \"content\" OR \"filename\"]"
         fi
-##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^source:")"
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^source:")"
 
     # check of corect value of searchtype:
@@ -984,8 +960,6 @@ yaml_validate()
         if ! echo "${line}" | awk -F: '{print $3}' | sed 's/^ *//;s/ *$//' | tr -cd '[:alnum:][:blank:]' | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' > /dev/null  2>&1 ; then
            echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of searchtype must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
         fi
-##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^searchtyp:")"
-##  done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^searchtyp:")"
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wnE "^searchtyp:|^searchtype:")"
 
     # check, if value of casesensitive is "true" OR "false":
@@ -993,7 +967,6 @@ yaml_validate()
         if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
            echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of casesensitive must be only \"true\" OR \"false\"]"
         fi
-##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^casesensitive:")"
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^casesensitive:")"
 
     # check, if value of multilineregex is "true" OR "false":
@@ -1001,7 +974,6 @@ yaml_validate()
         if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
            echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of multilineregex must be only \"true\" OR \"false\"]"
         fi
-##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^multilineregex:")"
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^multilineregex:")"
 
     # check apprise_call:
@@ -1018,7 +990,6 @@ yaml_validate()
         if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
            echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of apprise_attachment must be only \"true\" OR \"false\"]"
         fi
-##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^apprise_attachment:")"
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^apprise_attachment:")"
 
     # check, if value of notify_lang is a valid language:
@@ -1026,7 +997,6 @@ yaml_validate()
         if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(chs|cht|csy|dan|enu|fre|ger|hun|ita|jpn|krn|nld|nor|plk|ptb|ptg|rus|spn|sve|tha|trk)$' > /dev/null  2>&1 ; then
            echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [notify_lang must be only one of this values \"chs\" \"cht\" \"csy\" \"dan\" \"enu\" \"fre\" \"ger\" \"hun\" \"ita\" \"jpn\" \"krn\" \"nld\" \"nor\" \"plk\" \"ptb\" \"ptg\" \"rus\" \"spn\" \"sve\" \"tha\" \"trk\"]"
         fi
-##  done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^notify_lang:")"
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^notify_lang:")"
 
     echo -e
@@ -1054,7 +1024,6 @@ prepare_python()
         [ ! -d "${python3_env}" ] && python3 -m venv "${python3_env}"
         source "${python3_env}/bin/activate"
 
-##      if [ "$(cat "${python3_env}/synOCR_python_env_version" 2>/dev/null | head -n1)" != "${local_version}" ]; then
         if [ "$(head -n1 "${python3_env}/synOCR_python_env_version" 2>/dev/null)" != "${local_version}" ]; then
             [ "${loglevel}" = 2 ] && printf "%s\n" "${log_indent}  python3 already installed ($(which python3))"
 
@@ -1211,25 +1180,17 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
         for currentFoundDate in "${founddates[@]}" ; do
             if [ "${format}" -eq 1 ]; then
                 echo "${log_indent}  check date (dd mm [yy]yy): ${currentFoundDate}"
-##              date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*') ))) # https://ubuntuforums.org/showthread.php?t=1402291&s=ea6c4468658e97610c038c97b4796b78&p=8805742#post8805742
                 date_dd=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')"; echo $((n)) ) )
-##              date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}') )))
                 date_mm=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}')"; echo $((n)) ) )
                 date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             elif [ "${format}" -eq 2 ]; then
                 echo "${log_indent}  check date ([yy]yy mm dd): ${currentFoundDate}"
-##              date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*') )))
                 date_dd=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')"; echo $((n)) ) )
-            ##  date_dd="${currentFoundDate:0-2}"
-##              date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}') )))
                 date_mm=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}')"; echo $((n)) ) )
-            ##  date_mm=${currentFoundDate:3:2}
                 date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
             elif  [ "${format}" -eq 3 ]; then
                 echo "${log_indent}  check date (mm dd [yy]yy): ${currentFoundDate}"
-##              date_dd=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*') )))
                 date_dd=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*')"; echo $((n)) ) )
-##              date_mm=$(printf '%02d' $(( 10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}') )))
                 date_mm=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}')"; echo $((n)) ) )
                 date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             fi
@@ -1306,7 +1267,6 @@ adjust_attributes()
         else
             echo "OCR)"
             TZ=UTC touch -t "${date_yy}""${date_mm}""${date_dd}"0000 "${target_file}"
-        #   TZ=$(date +%Z) touch -t ${date_yy}${date_mm}${date_dd}0000 "$output"
         fi
     elif [ "${filedate}" = now ]; then
         echo "NOW)"
@@ -1436,10 +1396,6 @@ rename()
         # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
         py_meta="$(printf "${py_meta}\n'/CreatorTool': \'synOCR ${local_version}\'")"
 
-##      py_meta="$(printf "%s\n%s" "$py_meta" "'/Keywords': \'$( echo "${meta_keyword_list}" | sed -e "s/^${tagsymbol}//g" )\',")"
-##      py_meta="$(printf "%s\n%s" "$py_meta" "'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
-##      py_meta="$(printf "%s\n%s" "$py_meta" "'/CreatorTool': \'synOCR ${local_version}\'")"
-
         echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
 
         # get previous metadata - maybe for feature use:
@@ -1537,7 +1493,6 @@ rename()
         renameCat=$(replace_variables "${renameCat}")
 
         # define target folder as array
-##      tagarray=( ${renameCat} )
         IFS=" " read -r -a tagarray <<< "${renameCat}" ; IFS="${IFSsaved}"
         
         # temp. list of used destination folders to avoid file duplicates (different tags, but one category):
@@ -1545,7 +1500,6 @@ rename()
         maxID=${#tagarray[*]}
     
         while (( i < maxID )); do
-##          tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
             tagdir="${tagarray[$i]//%20/ }"
     
             echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
@@ -1619,12 +1573,10 @@ rename()
         fi
     
         # define tags as array
-##      tagarray=( ${renameTag} )
         IFS=" " read -r -a tagarray <<< "${renameTag}" ; IFS="${IFSsaved}"
         maxID=${#tagarray[*]}
     
         while (( i < maxID )); do
-##          tagdir=$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")
             tagdir="${tagarray[$i]//%20/ }"
 
             echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
@@ -1709,7 +1661,6 @@ purge_log()
 #   count2del=$(( count - LOGmax ))
 #   unset count
 
-##  echo "  delete $(ls -tr "${LOGDIR}" | grep -Eo '^synOCR.*.log$' | head -n${count2del} | wc -l ) log files ( > ${LOGmax} files)"
     echo "  delete ${count2del} log files ( > ${LOGmax} files)"
 
 
@@ -1717,9 +1668,6 @@ purge_log()
         while read -r line ; do
             [ -z "${line}" ] && continue
             [ -f "${line}" ] && rm "${line}"
-##          [ -f "${LOGDIR}$line" ] && rm "${LOGDIR}$line"
-##      done <<< "$(ls -tr "${LOGDIR}" | grep -Eo '^synOCR.*.log$' | head -n${count2del} )"
-##      done <<< "$(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR*.log' | sort | head -n${count2del} )"
         done <<< "$(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR*.log' -printf '%T@ %p\n' | sort -n | cut -d ' ' -f 2- | head -n${count2del} )"
 
     fi
@@ -1727,17 +1675,13 @@ purge_log()
 
 # delete surplus search text files:
 # ---------------------------------------------------------------------
-##  count2del=$(( $(ls -t "${LOGDIR}" | grep -Eo '^synOCR_searchfile.*.txt$' | wc -l) - "${LOGmax}" ))
     count2del=$(( $(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR_searchfile*.txt' -printf '.' | wc -c) - LOGmax ))
-##  echo "  delete $(ls -tr "${LOGDIR}" | grep -Eo '^synOCR_searchfile.*.txt$' | head -n${count2del} | wc -l ) search files ( > $LOGmax files)"
     echo "  delete ${count2del} search files ( > ${LOGmax} files)"
 
     if [ "${count2del}" -gt 0 ]; then
         while read -r line ; do
             [ -z "${line}" ] && continue
-##          [ -f "${LOGDIR}$line" ] && rm "${LOGDIR}$line"
             [ -f "${line}" ] && rm "${line}"
-##      done <<< "$(ls -tr "${LOGDIR}" | grep -Eo '^synOCR_searchfile.*.txt$' | head -n${count2del} )"
         done <<< "$(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR_searchfile*.txt' -printf '%T@ %p\n' | sort -n | cut -d ' ' -f 2- | head -n${count2del} )"
     fi
 
@@ -1758,10 +1702,8 @@ purge_backup()
     printf "\n%s\n" "  purge backup files ..."
 
     if [ "${img2pdf}" = true ]; then
-##      source_file_type4ls=".jpg$|.png$|.tiff$|.jpeg$|.pdf$"
         source_file_type4find="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\|PDF\|pdf\)"
     else
-##      source_file_type4ls=".pdf$"
         source_file_type4find="\(PDF\|pdf\)"
     fi
 
@@ -1772,19 +1714,14 @@ purge_backup()
         echo "  delete $(find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" | wc -l) backup files ( > ${backup_max} days)"
         find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" -exec rm -f"${rm_log_level}" {} \; | sed -e "s/^/${log_indent}/g"
     else
-##      count2del=$(( $(ls -tp "${BACKUPDIR}" | grep -Ev '/$' | grep -Ei "^.*${source_file_type4ls}" | wc -l) - "${backup_max}" ))
-##      count2del=$(( $(ls -tp "${BACKUPDIR}" | grep -Ev '/$' | grep -Eic "^.*${source_file_type4ls}") - "${backup_max}" ))
         count2del=$(( $(find "${BACKUPDIR}" -maxdepth 1 -type f -regex ".*\.${source_file_type4find}$" -printf '.' | wc -c) - backup_max ))
-##      echo "  delete $(ls -tp "${BACKUPDIR}" | grep -Ev '/$' | grep -Ei "^.*${source_file_type4ls}" | tail -n+$((backup_max+1)) | wc -l ) backup files ( > ${backup_max} files)"
         echo "  delete ${count2del} backup files ( > ${backup_max} files)"
 
 
         if [ "${count2del}" -gt 0 ]; then
             while read -r line ; do
                 [ -z "${line}" ] && continue
-##              [ -f "${BACKUPDIR}/${line}" ] && rm -fv "${BACKUPDIR}/${line}" | sed -e "s/^/${log_indent}/g"
                 [ -f "${line}" ] && rm -fv "${line}" | sed -e "s/^/${log_indent}/g"
-##          done <<< "$(ls -trp "${BACKUPDIR}" | grep -Ev '/$' | grep -Ei "^.*${source_file_type4ls}" | head -n${count2del} )"
             done <<< "$(find "${BACKUPDIR}" -maxdepth 1 -type f -regex ".*\.${source_file_type4find}$" -printf '%T@ %p\n' | sort -n | cut -d ' ' -f 2- | head -n${count2del} )"
         fi
     fi
@@ -1824,17 +1761,13 @@ collect_input_files()
     unset SearchSuffix     # defined in next step to correct rename splitted files
     unset files
 
-##  if echo "${SearchPraefix_tmp}" | grep -qE '^!' ; then
     if [[ "${SearchPraefix_tmp}" =~ ^! ]]; then
         # is the prefix / suffix an exclusion criteria?
         exclusion=true
-##      SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e 's/^!//')
         SearchPraefix_tmp="${SearchPraefix_tmp#!}"
     fi
 
-##  if echo "${SearchPraefix_tmp}" | grep -q "\$"$ ; then
     if [[ "${SearchPraefix_tmp}" =~ \$+$ ]]; then
-##      SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
         SearchPraefix_tmp="${SearchPraefix_tmp%?}"
         if [ "${exclusion}" = false ] ; then
             # is suffix
@@ -1845,7 +1778,6 @@ collect_input_files()
             files=$(find "${source_dir}" -maxdepth 1 -regex "${source_dir}.*\.${source_file_type}$" -not -iname "*${SearchPraefix_tmp}.*" -type f )
         fi
     else
-##      SearchPraefix_tmp=$(echo "${SearchPraefix_tmp}" | sed -e $'s/\$//' )
         SearchPraefix_tmp="${SearchPraefix_tmp%%\$}"
         if [ "${exclusion}" = false ] ; then
             # is prefix
@@ -1876,9 +1808,7 @@ prepare_target_path()
     local target_filename="$2"
     local target_fileext="${2##*.}"
 
-##  destfilecount=$(ls -t "${target_dir_path}" | grep -o "^${target_filename%.*}.*${target_fileext}" | wc -l)
     destfilecount=$(find "${target_dir_path}" -maxdepth 1 -type f -name "${target_filename%.*}*${target_fileext}" -printf '.' | wc -c)    
-##  destfilecount=$(find "${target_dir_path}" -maxdepth 1 -type f -name "${target_filename%.*}${target_fileext}" -printf '.' | wc -c)
 
     if [ "${destfilecount}" -eq 0 ]; then
         output="${target_dir_path}${target_filename%.*}.${target_fileext}"
@@ -1910,7 +1840,6 @@ collect_input_files "${INPUTDIR}" "image"
 while read -r input ; do
     [ ! -f "${input}" ] && continue
     printf "\n"
-##  filename=$(basename "$input")
     filename="${input##*/}"
     title="${filename%.*}"
     echo "CURRENT FILE:   ➜ source: ${filename}"
@@ -1969,7 +1898,6 @@ while read -r input ; do
     mkdir -p "${work_tmp_step1}"
 
     printf "\n"
-##  filename=$(basename "${input}")
     filename="${input##*/}"
     title="${filename%.*}"
     echo "${dashline2}"
@@ -2115,7 +2043,6 @@ while read -r input ; do
     # ---------------------------------------------------------------------
         pageCount=$( py_page_count "${outputtmp}" )
 
-##      if grep -qwP "^[0-9]+$" <<<"${pageCount}" ; then
         if [[ "${pageCount}" =~ ^[0-9]+$ ]]; then
             p=1
             splitPages=( )
@@ -2195,7 +2122,6 @@ while read -r input ; do
     
                     # page is 1 OR (ArrayIndex is not empty AND page corresponds to splitpage with corresponding index)
                     if { [ -n "${arrayIndex}" ] && [ "${page}" -eq "${splitPages[$arrayIndex]}"  ]; } || [ "${page}" -eq 1 ]; then
-##                      let currentPart=${currentPart}+1
                         currentPart=$((currentPart+1))
 
                         # set startPage:
@@ -2207,45 +2133,33 @@ while read -r input ; do
                             endPage=${pageCount}
                         elif [ -z "${arrayIndex}" ]; then
                             # e.g. the first page is not a split page
-##                          let endPage=${splitPages[0]}-1
                             endPage=$((splitPages[0]-1))
                         else
-##                          let endPage=${splitPages[(($arrayIndex+1))]}-1
                             endPage=$((splitPages[arrayIndex+1]-1))
                         fi
-##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
                         splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     fi
     
-##                  let page=${page}+1
                     page=$((page+1))
                 done
             else
                 # method for 'lastPage' & 'discard':
                 for splitPage in "${splitPages[@]}"; do
                     if [ "${splitpagehandling}" = discard ]; then
-##                      [ "${splitPage}" -eq 1 ] && let startPage=${splitPage}+1 && continue  # continue, if first page a splitPage
                         [ "${splitPage}" -eq 1 ] && startPage=$((splitPage+1)) && continue  # continue, if first page a splitPage
-##                      let currentPart=${currentPart}+1
                         currentPart=$((currentPart+1))
-##                      let endPage=${splitPage}-1
                         endPage=$((splitPage-1))
-##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
                         splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     elif [ "${splitpagehandling}" = isLastPage ]; then
-##                      let currentPart=${currentPart}+1
                         currentPart=$((currentPart+1))
                         endPage=${splitPage}
-##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
                         splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     fi
     
                     # startPage for next range:
                     if [ "${splitpagehandling}" = discard ]; then
-##                      let startPage=${splitPage}+1
                         startPage=$((splitPage+1))
                     elif [ "${splitpagehandling}" = isLastPage ]; then
-##                      let startPage=${endPage}+1
                         startPage=$((endPage+1))
                     fi
                 done
@@ -2254,22 +2168,16 @@ while read -r input ; do
                 if (( "${pageCount}" > ${splitPages[@]:(-1)} )); then
 
                     if [ "${splitpagehandling}" = discard ]; then
-##                      let currentPart=${currentPart}+1
                         currentPart=$((currentPart+1))
-##                      let startPage=${splitPages[@]:(-1)}+1
                         startPage=$((splitPages[${#splitPages[@]}-1]+1))
                         endPage=${pageCount}
 
-##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
                         splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     elif [ "${splitpagehandling}" = isLastPage ]; then
-##                      let currentPart=${currentPart}+1
                         currentPart=$((currentPart+1))
-##                      let startPage=${endPage}+1
                         startPage=$((endPage+1))
                         endPage=${pageCount}
 
-##                      splitJob=$(printf "${currentPart} ${startPage} ${endPage}\n${splitJob}")
                         splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     fi
                 fi
@@ -2358,8 +2266,6 @@ collect_input_files "${work_tmp_main}" "pdf"
 
 # make special characters visible if necessary
 # ---------------------------------------------------------------------
-##  [ "${loglevel}" = 2 ] && printf "\n${log_indent}list files in INPUT with transcoded special characters:\n" && ls "${work_tmp_main}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
-
     # shellcheck disable=SC2012  # Don't warn about "Use find instead of ls to better handle non-alphanumeric filenames" in this function
     [ "${loglevel}" = 2 ] && printf "\n%s\n" "${log_indent}list files in INPUT with transcoded special characters:" && ls "${work_tmp_main}" | sed -ne 'l' | sed -e "s/^/${log_indent}➜ /g" && echo -e
 
@@ -2405,7 +2311,6 @@ while read -r input ; do
     mkdir -p "${work_tmp_step2}"
 
     echo -e
-##  filename=$(basename "${input}")
     filename="${input##*/}"
     title="${filename%.*}"
     echo "${dashline2}"
@@ -2414,7 +2319,6 @@ while read -r input ; do
     tmp_date_search_method="${date_search_method}"    # able to use a temporary fallback to regex for each file
 
     if [ "${delSearchPraefix}" = "yes" ] && [ -n "${SearchPraefix}" ]; then
-#       title=$( echo "${title}" | sed s/${SearchPraefix_tmp}//g )
         title="${title//${SearchPraefix_tmp}/}"
     fi
 

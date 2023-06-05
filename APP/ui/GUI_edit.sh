@@ -14,14 +14,12 @@ dev_mode=false #true # false # show field in development ...
 APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
 cd "${APPDIR}" || exit 1
 IFSsaved=IFS
-#PATH=$PATH:/usr/local/bin:/opt/usr/bin
 
 new_profile ()
 {
 # In this function a new profile record is written to the DB
 # Call: new_profile "profile name"
 # --------------------------------------------------------------
-##  sqliteinfo=$(sqlite3 ./etc/synOCR.sqlite "INSERT INTO config ( profile ) VALUES ( '$1' )")
     sqlite3 ./etc/synOCR.sqlite "INSERT INTO config ( profile ) VALUES ( '$1' )" >/dev/null
 }
 
@@ -49,8 +47,6 @@ else
     chmod 755 "${BackUp_taglist}"
 fi
 
-##  taglist_tmp=$( echo "${taglist}" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )    # encode spaces in tags and convert semicolons to spaces (for array)
-##  tagarray=( ${taglist_tmp} )   # Transfer tags to array
 IFS=" " read -r -a tagarray <<< "$( echo "${taglist}" | sed -e "s/ /%20/g" | sed -e "s/;/ /g" )"; IFS="${IFSsaved}"
 
 count=1
@@ -218,13 +214,12 @@ echo "➜ convert / write the userconfig"
 for i in "${tagarray[@]}"; do
 
     if echo "${i}" | grep -q "=" ;then
-    # for combination of tag and category
+        # for combination of tag and category
         if echo "${i}" | awk -F'=' '{print $1}' | grep -q "^§" ;then
             searchtyp=is
         else
             searchtyp=contains
         fi
-##      i=$(echo "${i}" | sed -e "s/^§//g")
         i="${i#§}"
         tagname=$(echo "${i}" | awk -F'=' '{print $1}' | sed -e "s/%20/ /g")
         targetfolder=$(echo "${i}" | awk -F'=' '{print $2}' | sed -e "s/%20/ /g")
@@ -234,9 +229,7 @@ for i in "${tagarray[@]}"; do
         else
             searchtyp=contains
         fi
-##      i=$(echo "${i}" | sed -e "s/^§//g")
         i="${i#§}"
-##      tagname=$(echo "${i}" | sed -e "s/%20/ /g")
         tagname="${i// /%20}"
     fi
 
@@ -687,7 +680,6 @@ if [[ "${page}" == "edit" ]]; then
 
     # Separate record fields:
         profile_ID=$(echo "${sqlerg}" | awk -F'\t' '{print $1}')
-##      timestamp=$(echo "${sqlerg}" | awk -F'\t' '{print $2}')
         profile=$(echo "${sqlerg}" | awk -F'\t' '{print $3}')
         INPUTDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $4}')
         OUTPUTDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $5}')
@@ -1126,7 +1118,6 @@ if [[ "${page}" == "edit" ]]; then
                             <select name="dockercontainer" id="dockercontainer" class="form-select form-select-sm">'
 
                                 # local ocrmypdf images:
-##                              imagelist=($(docker images | sort | awk '/ocrmypdf/ && !/<none>/ {print $1 ":" $2}'))
                                 IFS=$'\n' read -r -d '' -a imagelist < <(docker images | sort | awk '/ocrmypdf/ && !/<none>/ {print $1 ":" $2}' && printf '\0'); IFS=$IFSsaved
 
                                 # check for default images and add if necessary:
@@ -1463,7 +1454,6 @@ if [ "${dev_mode}" = "true" ]; then
                         <div class="col-sm-5">
                             <select name="blank_page_detection_threshold_bw" id="blank_page_detection_threshold_bw" class="form-select form-select-sm">'
 
-##                              threshold_bw_array=($(seq -s " " 0 1 255))
                                 IFS=" " read -r -a tagarray <<< "$(seq -s " " 0 1 255)"; IFS="${IFSsaved}"
 
                                 for entry in "${threshold_bw_array[@]}"; do
@@ -1544,7 +1534,6 @@ fi
                         <div class="col-sm-5">
                             <label for="taglist">'"${lang_edit_set2_taglist_title}"''
                                 # ("taglist" does not refer to an external file OR refers to an external file and has max. one line) AND input directory is a valid path
-##                              if ( [[ ! -f "${taglist}" ]] || $([[ -f "${taglist}" ]] && [[ $( wc -l "${taglist}" ) -le 1 ]]) ) && [ -d "${INPUTDIR}" ] ; then
                                 if { [[ ! -f "${taglist}" ]] || { [[ -f "${taglist}" ]] && [[ $( wc -l "${taglist}" | awk '{print $1}' ) -le 1 ]]; } } && [ -d "${INPUTDIR}" ]; then
                                     echo '
                                         <br /><br />
@@ -1559,10 +1548,8 @@ fi
                         <div class="col-sm-5">'
 
                             if [ -n "${taglist}" ]; then
-                            #    echo '<input type="text" name="taglist" value="'$taglist'" />'
                                 echo '<textarea name="taglist" id="taglist" class="form-control" cols="35" rows="4">'"${taglist}"'</textarea>'
                             else
-                            #    echo '<input type="text" name="taglist" value="" />'
                                 echo '<textarea name="taglist" id="taglist" class="form-control" cols="35" rows="4"></textarea>'
                             fi
                             echo '
@@ -2478,7 +2465,6 @@ fi
                     languages=()
                     while read -r line; do
                         languages+=("${line}")
-##                  done <<< "$(ls -tp "./lang/" | egrep -v '/$' | cut -f 1 -d '.' | cut -f 2 -d '_' | sort )"
                     done <<< "$(find "./lang/" -maxdepth 1 -type f -printf "%f\n" | grep -vE '/$' | cut -f 1 -d '.' | cut -f 2 -d '_' | grep -vE '^$' | sort)"
 
                     chs="${lang_langname_chs}"

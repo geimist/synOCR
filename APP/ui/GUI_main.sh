@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC2154
+# shellcheck disable=SC2009,SC2154
 
 #################################################################################
 #   description:    - generates the main page for the GUI                       #
@@ -21,10 +21,8 @@ dsmMajorVersion=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
         img2pdf=$(echo "$entry" | awk -F'\t' '{print $3}')
 
         if [ "$img2pdf" = true ]; then
-##          source_file_type=".jpg$|.png$|.tiff$|.jpeg$|.pdf$"
             source_file_type="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\|PDF\|pdf\)"
         else
-##          source_file_type=".pdf$"
             source_file_type="\(PDF\|pdf\)"
         fi
 
@@ -33,30 +31,23 @@ dsmMajorVersion=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
         if echo "${SearchPraefix}" | grep -qE '^!' ; then
             # is the prefix / suffix an exclusion criterion?
             exclusion=true
-##          SearchPraefix=$(echo "${SearchPraefix}" | sed -e 's/^!//')
             SearchPraefix="${SearchPraefix#!}"
         fi
 
         if echo "${SearchPraefix}" | grep -q "\$"$ ; then
             # is suffix
-##          SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             SearchPraefix="${SearchPraefix%?}"
             if [[ "$exclusion" = false ]] ; then
-##              count_input_file=$(( $(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iEc "^.*${SearchPraefix}(${source_file_type})") + count_input_file ))
                 count_input_file=$(( $(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*${SearchPraefix}\.${source_file_type}$" -type f -printf '.' | wc -c ) + count_input_file ))
             elif [[ "$exclusion" = true ]] ; then
-##              count_input_file=$(( $(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iE "^.*(${source_file_type})" | cut -f 1 -d '.' | grep -ivEc "${SearchPraefix}$") + count_input_file ))
                 count_input_file=$(( $(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*\.${source_file_type}$" -not -iname "*${SearchPraefix}.*" -type f -printf '.' | wc -c ) + count_input_file ))
             fi
         else
             # is prefix
-##          SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             SearchPraefix="${SearchPraefix%%\$}"
             if [[ "$exclusion" = false ]] ; then
-##              count_input_file=$(( $(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iEc "^${SearchPraefix}.*(${source_file_type})") + count_input_file ))
                 count_input_file=$(( $(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}${SearchPraefix}.*\.${source_file_type}$" -type f -printf '.' | wc -c ) + count_input_file ))
             elif [[ "$exclusion" = true ]] ; then
-##              count_input_file=$(( $(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iE "^.*(${source_file_type})" | grep -ivEc "^${SearchPraefix}.*(${source_file_type})") + count_input_file ))
                 count_input_file=$(( $(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*\.${source_file_type}$" -not -iname "${SearchPraefix}*" -type f -printf '.' | wc -c ) + count_input_file ))
             fi
         fi
@@ -117,14 +108,11 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
 #   echo '<p>&nbsp;</p>'
 
     # monitoring active?:
-##  if [ $(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}') ]; then
     PID=$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}')
     if [ -n "${PID}" ]; then
         # pulsate icon, if monitoring are running
         css_pulsate='class="pulsate"'
         monitoring_title='title="monitoring is running"'
-##      monitoring_state=1
-##      monitoring_user=$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $1}')
         monitoring_user=$(ps -p "${PID}" -o user=)
 
         # check if the list of watched folders is still up to date:
@@ -149,7 +137,6 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         # pulsate icon, if monitoring are running
         css_pulsate=""
         monitoring_title='title="monitoring is not running"'
-##      monitoring_state=0
     fi
 
 #   notify about update, if necessary:
@@ -160,7 +147,6 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         release_channel=release
     fi
     server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION" )
-#   online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
     online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsmMajorVersion}"."${release_channel}".version )
     downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsmMajorVersion}"."${release_channel}".downloadUrl )
     changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsmMajorVersion}"."${release_channel}".changeLogUrl )
@@ -183,14 +169,12 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
 
 # check Docker:
     if [ ! "$(which docker)" ]; then
-##      permissions_ready=0
         echo '
         <p class="text-center synocr-text-red mb-5">'"${lang_attention}"':<br>'"${lang_main_dockerfailed1}"'<br>'"${lang_main_dockerfailed2}"'</p>
         <div class="float-end">
             <img src="images/status_error@geimist.svg" height="120" width="120" style="padding: 10px">
         </div>'
     elif [ "${dsmMajorVersion}" -ge 7 ] && (! grep "^administrators" /etc/group | grep -q synOCR || ! grep "^docker:" /etc/group | grep -q synOCR ); then
-##      permissions_ready=0
         echo '
         <p class="text-center synocr-text-red">'"${lang_attention}"':<br>'"${lang_main_permissions_failed1}"'<br>'"${lang_main_permissions_failed2}"'<br>('"${lang_main_permissions_failed3}"')
             <code class="mb-5">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</code>
@@ -199,7 +183,6 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
             <img src="images/status_error@geimist.svg" height="120" width="120" style=";padding: 10px">
         </div>'
     elif [[ "$count_input_file" == 0 ]]; then
-##      permissions_ready=1
         # remove dockercontainer & image synocr_helper
         docker container rm synocr_helper >/dev/null 2>&1
         docker image rm synocr_helper_image >/dev/null 2>&1
@@ -208,7 +191,6 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
             <img src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px" '"${css_pulsate}"' '"${monitoring_title}"'>
         </div>'
     else
-##      permissions_ready=1
         # remove dockercontainer & image synocr_helper
         docker container rm synocr_helper >/dev/null 2>&1
         docker image rm synocr_helper_image >/dev/null 2>&1
@@ -224,10 +206,8 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
     <p>&nbsp;</p>
     <p>'"${lang_main_desc1}"'</p>
     <p>'"${lang_main_desc2}"'</p>'
-#   echo '<p>&nbsp;</p>'
 
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
-##  if [ "${dsmMajorVersion}" -eq 6 ] || (grep "^administrators" /etc/group | grep -q synOCR && grep "^docker" /etc/group | grep -q synOCR) ; then
     if [ "${dsmMajorVersion}" -eq 6 ] || { grep "^administrators" /etc/group | grep -q synOCR && grep "^docker" /etc/group | grep -q synOCR ; } ; then
         if [ "${inotify_tools_ready}" -eq 0 ]; then 
             # start single run:

@@ -1,5 +1,5 @@
 #!/bin/bash
-# shell-check disable=
+# shell-check disable=SC2009
 
 #############################################################################################
 #   description:    start / stop monitoring with inotify                                    #

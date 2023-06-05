@@ -296,42 +296,31 @@ fi
         count_input_file=0
 
         if [ "${img2pdf}" = true ]; then
-#            source_file_type=".jpg$|.png$|.tiff$|.jpeg$|.pdf$"
             source_file_type="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\|PDF\|pdf\)"
         else
-#            source_file_type=".pdf$"
             source_file_type="\(PDF\|pdf\)"
         fi
 
-##      if echo "${SearchPraefix}" | grep -qE '^!' ; then
         if [[ "${SearchPraefix}" =~ ^! ]]; then
             # is the prefix / suffix an exclusion criterion?
             exclusion=true
-##          SearchPraefix=$(echo "${SearchPraefix}" | sed -e 's/^!//')
             SearchPraefix="${SearchPraefix#!}"
         fi
 
-##      if echo "${SearchPraefix}" | grep -q "\$"$ ; then
         if [[ "${SearchPraefix}" =~ \$+$ ]]; then
             # is suffix
-##          SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             SearchPraefix="${SearchPraefix%?}"
             if [[ "${exclusion}" = false ]] ; then
-##              count_input_file=$(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iEc "^.*${SearchPraefix}(${source_file_type})")
                 count_input_file=$(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*${SearchPraefix}\.${source_file_type}$" -type f -printf '.' | wc -c )
             elif [[ "${exclusion}" = true ]] ; then
-##              count_input_file=$(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iE "^.*(${source_file_type})" | cut -f 1 -d '.' | grep -ivEc "${SearchPraefix}$")
                 count_input_file=$(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*\.${source_file_type}$" -not -iname "*${SearchPraefix}.*" -type f -printf '.' | wc -c )
             fi
         else
             # is prefix
-##          SearchPraefix=$(echo "${SearchPraefix}" | sed -e $'s/\$//' )
             SearchPraefix="${SearchPraefix%%\$}"
             if [[ "${exclusion}" = false ]] ; then
-##              count_input_file=$(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iEc "^${SearchPraefix}.*(${source_file_type})")
                 count_input_file=$(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}${SearchPraefix}.*\.${source_file_type}$" -type f -printf '.' | wc -c )
             elif [[ "${exclusion}" = true ]] ; then
-##              count_input_file=$(ls -tp "${INPUTDIR}" | grep -vE '/$' | grep -iE "^.*(${source_file_type})" | grep -ivEc "^${SearchPraefix}.*(${source_file_type})")
                 count_input_file=$(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*\.${source_file_type}$" -not -iname "${SearchPraefix}*" -type f -printf '.' | wc -c )
             fi
         fi
