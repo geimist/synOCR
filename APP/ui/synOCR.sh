@@ -63,7 +63,11 @@
 # -------------------------------------
     if [ "$(synogetkeyvalue /etc.defaults/VERSION majorversion)" -ge 7 ]; then
         dsm_version=7
-        python3_env="/var/packages/synOCR/etc/python3_env"                  # is preserved during a package update
+        python3_env="/var/packages/synOCR/var/python3_env"
+        # share -> /volume3/@appshare/synOCR    # removed at package update
+        # home -> /volume3/@apphome/synOCR      # removed at package update
+        # var -> /volume3/@appdata/synOCR       # is preserved during a package update
+        # etc -> /volume3/@appconf/synOCR       # removed at package update
     else
         dsm_version=6
         python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"  # must be rebuild after a package update
@@ -732,7 +736,6 @@ if [ "${type_of_rule}" = advanced ]; then
             esac
     done
 
-
         if [ "${found}" -eq 1 ] ; then
             echo "${log_indent}          >>> Rule is satisfied"
 
@@ -848,7 +851,6 @@ else
             fi
             # shellcheck disable=SC2004  # Don't warn about "$/${} is unnecessary on arithmetic variables" in this function
             tagarray[$i]="${tagarray[$i]#§}"
-##          echo -n "${log_indent}  Search by tag:   \"$(echo ${tagarray[$i]} | sed -e "s/%20/ /g")\" ➜  "
             printf "%s" "${log_indent}  Search by tag:   \"${tagarray[$i]//%20/ }\" ➜  "
             if grep "${grep_opt}" "$(echo "${tagarray[$i]}" | sed -e "s/%20/ /g;s/^§//g")" "${searchfile}" ; then
                 echo "OK"
@@ -2319,6 +2321,9 @@ while read -r input ; do
     tmp_date_search_method="${date_search_method}"    # able to use a temporary fallback to regex for each file
 
     if [ "${delSearchPraefix}" = "yes" ] && [ -n "${SearchPraefix}" ]; then
+        # ToDo:
+        # currently, SearchPraefix will be delete globally
+        # check, if SearchPraefix a prefix or a suffix and delete only this
         title="${title//${SearchPraefix_tmp}/}"
     fi
 

@@ -31,7 +31,7 @@ TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 
 # rm /tmp/${SYNOPKG_PKGNAME}.*
 
-# remove python environment at @appconf:
-#rm -rf /var/packages/${SYNOPKG_PKGNAME}/etc/*
+# remove python environment at @appdata:
+rm -rf /var/packages/${SYNOPKG_PKGNAME}/var/*
 
 exit 0
