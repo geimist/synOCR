@@ -133,14 +133,14 @@ echo '
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <!-- Include bootstrap framework 5.2.3 -->
+        <!-- Include bootstrap framework 5.3.0 -->
         <link rel="stylesheet" href="template/bootstrap/css/bootstrap.min.css" />
 
         <!-- Include custom CSS formatting -->
         <link rel="stylesheet" href="template/stylesheet.css" />
 
         <!-- Include jQuery -->
-        <script src="template/jquery/jquery-3.6.4.min.js"></script>
+        <script src="template/jquery/jquery-3.7.0.min.js"></script>
 </head>
 <body>
 <header></header>
@@ -256,7 +256,7 @@ echo '
         </div><!-- container -->
     </article>
 
-    <!-- Include bootstrap JavaScript 5.2.3 -->
+    <!-- Include bootstrap JavaScript 5.3.0 -->
     <script src="template/bootstrap/js/bootstrap.min.js"></script>
 
 </body>
