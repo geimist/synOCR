@@ -1,55 +1,38 @@
-1.3.3 [2023-04-23]
+1.4.0 [2023-07-04]
   BUGFIXES:
- - Renaming parameters used as tag name components in YAML rules were not written as metadata
- - fix wrong version in 1.3.2
- 
-1.3.1 [2023-02-23]
-  BUGFIXES:
- - Fixed syntax error that caused a navigation error in the GUI
- 
- 1.3.0 [2022-11-01]
-  BUGFIXES:
- -  counting of log and backup files to be deleted was not correct under certain situations
- -  catching an error message if there are no docker images to be cleaned up
+ - [SHELL] if the path to the log file contained a hash, the date search via Python failed
+ - [SHELL] Renaming parameters used as tag name components in YAML rules were not written as metadata
+ - [SHELL] avoid empty renaming syntax
+ - [SHELL] Error when parsing GUI-defined rules
+ - [GUI] If the log level was set to 0, the log was incorrectly displayed in the GUI during a manual run
+ - [GUI] fixed syntax error that caused a navigation error in the GUI
+ - [SHELL] if two separation pages follow each other, this was result in an empty PDF file (thx @DeeKay1)
   IMPROVEMENT:
- -  YAML rules: if the value for condition not set - fallback to any
- -  Notification in the log when rule-based destination folders are found, but a conflicting setting is set in the GUI
- -  Profiles are now processed in alphabetical order (by profile name)
+ - [SHELL] splitting: change from pypdf to pikepdf because pypdf breaks the PDF/A attribute (thx @Gthorsten)
+ - [SHELL] write metadata: change from pypdf to pikepdf because pypdf breaks the PDF/A attribute (thx @Gthorsten)
+ - [SHELL] write metadata additionally as XMP data (thx @Gthorsten)
+ - [SHELL] Python environment is preserved now during a package update
+ - [GUI] Bump Bootstrap framework to 5.3.0 (thx @Tommes)
+ - [GUI] Bump Bootstrap JavaScript to 5.3.0 (thx @Tommes)
+ - [GUI] Bump jQuery to 3.7.0 (thx @Tommes)
+ - [GUI] Made minor code optimizations in synOCR.js (thx @Tommes)
+ - [GUI] In addition to local DSM users, the app can now be used by Domain and LDAP users (thx @Tommes)
+ - [SHELL] improve DSM notification
+ - [SHELL] most shell code was checked and adjusted to pass shellcheck
+ - [GUI] If the monitoring is started via the task scheduler from root, the GUI now informs about it
+ - [SHELL] incorrect separator page behavior for consecutive documents with separator pages
+ - [GUI] profile changes automatically when another name is selected in the listbox (thx @HolerZ)
+ - [GUI] the warning for an invalid source directory now also contains the name of the affected profile
+ - [SHELL] update find_dates.py to version 1.0.4 (thx @GThorsten)
+ - [SHELL] no temporary data is stored in the destination folder now
+ - improved logging when monitoring cannot be started because a source folder is invalid
   IMPLEMENTATIONS:
- -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
-    - a pulsing status icon in the gui indicates an active monitoring
-    - in combination with the Inotify-tools, configuration in the task scheduler is no longer necessary as of this version
- -  🔥 new Python based date search implemented, which also finds written out months (gthorsten)
-    - a start year for date search can defined in GUI
-    - a year in future can be defined in GUI as latest year for search
- -  🔥 support separator sheet - dokument split pattern can be configured in GUI (Python3 must be installed)
-    - in GUI user can define: splitpage is first page, is last page or discard
- -  🔥 Pictures in the source folder can be converted automatically (Python3 must be installed)
- -  option to reduce multiple spaces to one (helpful with RegEx)
- -  the number of pages is now determined with Python - Exiftool and pdfinfo become obsolete (Python3 must be installed)
- -  [YAML] all renaming parameter can be used as tagname components in YAML-rules (experimental)
- -  [YAML] tagname & tagname_RegEx can be combined:
-    - use §tagname_RegEx in tagname and it will be replaced by tagname_RegEx
- -  Metadata will be add with Python - Exiftool become obsolete (Python3 must be installed)
-    - set author (get author information from ocr options if set [--author john doe])
-    - set creation date (depending on which one was defined: OCR, file date, now)
-    - set keywords
- -  the conversion from YAML to JSON is no longer done with the binary yq but by Python (Python3 must be installed)
- -  logging deleted backup files in loglevel 2 
- -  [GUI] notify about updates in main page (because cphub.net is not working)
- -  [GUI] support for follow machine translated languages (by DeepL)
-    - Chinese simplified
-    - Czech
-    - Japanese
-    - Danish
-    - French
-    - Italian
-    - Dutch
-    - Polish
-    - Russian
-    - Spanish
-    - Swedish
-    - Hungarian
-    - Turkish
-    - Portuguese European
-    - Portuguese Brazilian
+ - 🔥 inclusion of APPRISE library to support many notification services (native PushBullet support has been removed)
+   apprise_call (apprise service) apprise_attachment (true/false) notify_lang (DSM lang code) can be additionally defined and overwrite in every YAML rule
+ - with value "postscript:" in YAML can be defined post script commands (command or path to script)
+ - [YAML] >multilineregex: true< can be set at subrule and for tagname_RegEx
+   this will set the parameter -z for grep to find results over multi lines
+ - [GUI] support for follow machine translated languages (by DeepL)
+    - Korean
+    - Norwegian
+    

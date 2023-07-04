@@ -27,28 +27,31 @@ fi
 PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
 
 # Timestamp - Formatting the Timestamp to terminate log entries
-TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 # -------------------------------------------------------------------------------------
-
+TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 
 # Action...
 # -------------------------------------------------------------------------------------
 if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}" ]; then
-    cp -rf ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc/* ${WEBGUI_FOLDER}/etc
+    # restore config:
+#   cp -rf ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc/* ${WEBGUI_FOLDER}/etc
+    mv ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc ${WEBGUI_FOLDER}/
     chmod -R 755 ${WEBGUI_FOLDER}/etc
     echo "${TIMESTAMP} - Restore the SQLite database from ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc to ${WEBGUI_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
 
-    echo "restored source files:"  >>/tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc  >>/tmp/${SYNOPKG_PKGNAME}.history
+    echo "restored source files:"  >> /tmp/${SYNOPKG_PKGNAME}.history
+    ls -la ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc  >> /tmp/${SYNOPKG_PKGNAME}.history
 
-    echo "restored target files:"  >>/tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${WEBGUI_FOLDER}/etc  >>/tmp/${SYNOPKG_PKGNAME}.history
+    echo "restored target files:"  >> /tmp/${SYNOPKG_PKGNAME}.history
+    ls -la ${WEBGUI_FOLDER}/etc  >> /tmp/${SYNOPKG_PKGNAME}.history
 
-    [ -f {WEBGUI_FOLDER}/etc/placeholder ] && rm -f {WEBGUI_FOLDER}/etc/placeholder && echo "delete {WEBGUI_FOLDER}/etc/placeholder"  >>/tmp/${SYNOPKG_PKGNAME}.history
+    # restore python3_env:
+    mv ${SYNOPKG_TEMP_UPGRADE_FOLDER}/python3_env ${WEBGUI_FOLDER}/
+    chmod -R 755 ${WEBGUI_FOLDER}/python3_env
 
-    # Konfiguration um neue Variablen ergänzen
-    echo "${TIMESTAMP} - Add new variables to configuration file (upgradeconfig.sh)" >>/tmp/${SYNOPKG_PKGNAME}.history
-    ${WEBGUI_FOLDER}/upgradeconfig.sh >>/tmp/${SYNOPKG_PKGNAME}.history
+    # DB upgrade:
+    echo "${TIMESTAMP} - Add new variables to configuration file (upgradeconfig.sh)" >> /tmp/${SYNOPKG_PKGNAME}.history
+    /bin/bash ${WEBGUI_FOLDER}/upgradeconfig.sh >> /tmp/${SYNOPKG_PKGNAME}.history
 else
     echo "${TIMESTAMP} - Restore of SQLite database failed!" >>/tmp/synOCR.upgrade
 fi

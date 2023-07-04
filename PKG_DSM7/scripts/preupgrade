@@ -33,28 +33,29 @@ TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 
 # Action...
 # -------------------------------------------------------------------------------------
-
-if [ ! -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" ]; then
-    mkdir -p -m 755 ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc
-fi
-
 echo '${TIMESTAMP} - Start package update --> ${SYNOPKG_PKGNAME} ${SYNOPKG_PKGVER}' >>/tmp/${SYNOPKG_PKGNAME}.history
 echo '------------------------------------------------------------------------------------------------------------------------------------------' >>/tmp/${SYNOPKG_PKGNAME}.history
 
 echo "WEBGUI_FOLDER: ${WEBGUI_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
 
 if [ -d "${WEBGUI_FOLDER}/etc" ]; then
+    [ ! -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" ] && mkdir -p -m 755 ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc
     cp -rf ${WEBGUI_FOLDER}/etc/* ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc
-    echo ''${TIMESTAMP}' - Backup the SQLite database from '${WEBGUI_FOLDER}'/etc to '${SYNOPKG_TEMP_UPGRADE_FOLDER}'/etc' >>/tmp/${SYNOPKG_PKGNAME}.history
+    echo ''${TIMESTAMP}' - Backup the SQLite database from '${WEBGUI_FOLDER}'/etc to '${SYNOPKG_TEMP_UPGRADE_FOLDER}'/etc' >> /tmp/${SYNOPKG_PKGNAME}.history
 
-    echo "stored source files:" >>/tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${WEBGUI_FOLDER}/etc >>/tmp/${SYNOPKG_PKGNAME}.history
+    echo "stored source files:" >> /tmp/${SYNOPKG_PKGNAME}.history
+    ls -la ${WEBGUI_FOLDER}/etc >> /tmp/${SYNOPKG_PKGNAME}.history
 
-    echo "stored target files:" >>/tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc >>/tmp/${SYNOPKG_PKGNAME}.history
+    echo "stored target files:" >> /tmp/${SYNOPKG_PKGNAME}.history
+    ls -la ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc >> /tmp/${SYNOPKG_PKGNAME}.history
 else
-    echo '${TIMESTAMP} - Backup of SQLite database failed' >>/tmp/${SYNOPKG_PKGNAME}.history
+    echo '${TIMESTAMP} - Backup of SQLite database failed' >> /tmp/${SYNOPKG_PKGNAME}.history
     exit 1
+fi
+
+if [ -d "${WEBGUI_FOLDER}/python3_env" ]; then
+    mv ${WEBGUI_FOLDER}/python3_env ${SYNOPKG_TEMP_UPGRADE_FOLDER}/
+    echo ''${TIMESTAMP}' - Backup python3_env from '${WEBGUI_FOLDER}'/python3_env to '${SYNOPKG_TEMP_UPGRADE_FOLDER}'/python3_env' >> /tmp/${SYNOPKG_PKGNAME}.history
 fi
 
 # -------------------------------------------------------------------------------------

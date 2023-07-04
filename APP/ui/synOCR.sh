@@ -40,7 +40,8 @@
     # hard coded setting to enable / disable metadata integration
     # /usr/syno/bin/synosetkeyvalue "/usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh" enablePyMetaData 0
     enablePyMetaData=1            
-    
+
+    python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     python_check=ok             # will be set to failed if the test fails
     synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML apprise )
                                 # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
@@ -63,14 +64,8 @@
 # -------------------------------------
     if [ "$(synogetkeyvalue /etc.defaults/VERSION majorversion)" -ge 7 ]; then
         dsm_version=7
-        python3_env="/var/packages/synOCR/var/python3_env"
-        # share -> /volume3/@appshare/synOCR    # removed at package update
-        # home -> /volume3/@apphome/synOCR      # removed at package update
-        # var -> /volume3/@appdata/synOCR       # is preserved during a package update
-        # etc -> /volume3/@appconf/synOCR       # removed at package update
     else
         dsm_version=6
-        python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"  # must be rebuild after a package update
     fi
 
 
@@ -139,7 +134,7 @@
     blank_page_detection_switch=$(echo "${sqlerg}" | awk -F'\t' '{print $39}')
     blank_page_detection_threshold_bw=$(echo "${sqlerg}" | awk -F'\t' '{print $40}')
     blank_page_detection_threshold_black_pxl=$(echo "${sqlerg}" | awk -F'\t' '{print $41}')
-    
+
 
 # read global values:
     dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -1182,18 +1177,18 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
         for currentFoundDate in "${founddates[@]}" ; do
             if [ "${format}" -eq 1 ]; then
                 echo "${log_indent}  check date (dd mm [yy]yy): ${currentFoundDate}"
-                date_dd=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')"; echo $((n)) ) )
-                date_mm=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}')"; echo $((n)) ) )
+                date_dd=$(printf '%02d' $(let "n=10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')"; echo $((n)) ) )
+                date_mm=$(printf '%02d' $(let "n=10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}')"; echo $((n)) ) )
                 date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             elif [ "${format}" -eq 2 ]; then
                 echo "${log_indent}  check date ([yy]yy mm dd): ${currentFoundDate}"
-                date_dd=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')"; echo $((n)) ) )
-                date_mm=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}')"; echo $((n)) ) )
+                date_dd=$(printf '%02d' $(let "n=10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')"; echo $((n)) ) )
+                date_mm=$(printf '%02d' $(let "n=10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}')"; echo $((n)) ) )
                 date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}' | grep -o '[0-9]*')
             elif  [ "${format}" -eq 3 ]; then
                 echo "${log_indent}  check date (mm dd [yy]yy): ${currentFoundDate}"
-                date_dd=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*')"; echo $((n)) ) )
-                date_mm=$(printf '%02d' $(let "n=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}')"; echo $((n)) ) )
+                date_dd=$(printf '%02d' $(let "n=10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $2}' | grep -o '[0-9]*')"; echo $((n)) ) )
+                date_mm=$(printf '%02d' $(let "n=10#$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $1}')"; echo $((n)) ) )
                 date_yy=$(echo "${currentFoundDate}" | awk -F'[./-]' '{print $3}' | grep -o '[0-9]*')
             fi
     
