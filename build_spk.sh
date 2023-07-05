@@ -96,7 +96,7 @@ exit 1
     # $1 = file
     # $2 = key
     # $3 = value
-    sed_i 's~^'$2'=.*~key='$3'~' "$1"
+    sed_i 's~^'$2'=.*~'$2'='$3'~' "$1"
     }
 
     get_key_value() {
@@ -163,7 +163,7 @@ exit 1
     taggedversions=$(git tag)
     set_spk_version=""
 
-    pushd "$build_tmp"	>>/dev/null
+    pushd "$build_tmp" >>/dev/null
 
     if echo "$taggedversions" | egrep -q "$buildversion"; then
         echo "git checkout to $buildversion"
@@ -253,7 +253,9 @@ exit 1
     defaultSourceLang="$build_tmp/APP/ui/lang/lang_enu.txt"
     # PKG_DSMx/INFO
 
-    synosetkeyvalue "$build_tmp/$PKG/INFO" description $(get_key_value "$defaultSourceLang" lang_INFO_description)
+    if ! grep -q '^description=' "$build_tmp/$PKG/INFO" ; then
+        echo "description=\"$(get_key_value "$build_tmp/APP/ui/lang/lang_enu.txt" lang_INFO_description)\"" >> "$build_tmp/$PKG/INFO"
+    fi
 
     # install_uifile
     install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile"
@@ -279,8 +281,12 @@ exit 1
 
     for lang in ${languages[@]}; do
         # PKG_DSMx/INFO
-        synosetkeyvalue "$build_tmp/$PKG/INFO" description_${lang} $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)
-        
+        if ! grep -q "^description_${lang}" "$build_tmp/$PKG/INFO" ; then
+            echo "description_${lang}=\"$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)\"" >> "$build_tmp/$PKG/INFO"
+#        else
+#            synosetkeyvalue "$build_tmp/$PKG/INFO" description_${lang} $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_INFO_description)
+        fi
+
         # i18n notification files
         langDir="$build_tmp/APP/ui/texts/${lang}"
         notifyFileLang="$build_tmp/APP/ui/texts/${lang}/strings"
