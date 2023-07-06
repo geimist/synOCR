@@ -1646,33 +1646,22 @@ purge_log()
 
 # delete surplus logs:
 # ---------------------------------------------------------------------
-##  count2del=$(( $(ls -t "${LOGDIR}" | grep -Eo '^synOCR.*.log$' | wc -l) - "${LOGmax}" ))
     count2del=$(( $(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR*.log' -printf '.' | wc -c) - LOGmax ))
-
-#    count=0
-#    for file in "${LOGDIR}"synOCR*.log; do
-#        if [[ -f "$file" ]]; then
-#            ((count++))
-#        fi
-#    done
-#   count2del=$(( count - LOGmax ))
-#   unset count
-
+    [ "${count2del}" -lt 0 ] && count2del=0
     echo "  delete ${count2del} log files ( > ${LOGmax} files)"
-
 
     if [ "${count2del}" -gt 0 ]; then
         while read -r line ; do
             [ -z "${line}" ] && continue
             [ -f "${line}" ] && rm "${line}"
         done <<< "$(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR*.log' -printf '%T@ %p\n' | sort -n | cut -d ' ' -f 2- | head -n${count2del} )"
-
     fi
 
 
 # delete surplus search text files:
 # ---------------------------------------------------------------------
     count2del=$(( $(find "${LOGDIR}" -maxdepth 1 -type f -name 'synOCR_searchfile*.txt' -printf '.' | wc -c) - LOGmax ))
+    [ "${count2del}" -lt 0 ] && count2del=0
     echo "  delete ${count2del} search files ( > ${LOGmax} files)"
 
     if [ "${count2del}" -gt 0 ]; then
@@ -1712,8 +1701,8 @@ purge_backup()
         find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" -exec rm -f"${rm_log_level}" {} \; | sed -e "s/^/${log_indent}/g"
     else
         count2del=$(( $(find "${BACKUPDIR}" -maxdepth 1 -type f -regex ".*\.${source_file_type4find}$" -printf '.' | wc -c) - backup_max ))
+        [ "${count2del}" -lt 0 ] && count2del=0
         echo "  delete ${count2del} backup files ( > ${backup_max} files)"
-
 
         if [ "${count2del}" -gt 0 ]; then
             while read -r line ; do
@@ -2296,10 +2285,10 @@ while read -r input ; do
 
 # adapt counter:
 # ---------------------------------------------------------------------
-    global_pagecount_new="$(("${global_pagecount_new}"+"${pagecount_latest}"))"
-    global_ocrcount_new="$(("${global_ocrcount_new}"+1))"
-    pagecount_profile_new="$(("${pagecount_profile_new}"+"${pagecount_latest}"))"
-    ocrcount_profile_new="$(("${ocrcount_profile_new}"+1))"
+    global_pagecount_new="$((global_pagecount_new+pagecount_latest))"
+    global_ocrcount_new="$((global_ocrcount_new+1))"
+    pagecount_profile_new="$((pagecount_profile_new+pagecount_latest))"
+    ocrcount_profile_new="$((ocrcount_profile_new+1))"
 
 
 # create temporary working directory
