@@ -38,6 +38,7 @@ echo '--------------------------------------------------------------------------
 
 echo "WEBGUI_FOLDER: ${WEBGUI_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
 
+# backup config:
 if [ -d "${WEBGUI_FOLDER}/etc" ]; then
     [ ! -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" ] && mkdir -p -m 755 ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc
     cp -rf ${WEBGUI_FOLDER}/etc/* ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc
@@ -53,10 +54,12 @@ else
     exit 1
 fi
 
-if [ -d "${WEBGUI_FOLDER}/python3_env" ]; then
-    mv ${WEBGUI_FOLDER}/python3_env ${SYNOPKG_TEMP_UPGRADE_FOLDER}/
-    echo ''${TIMESTAMP}' - Backup python3_env from '${WEBGUI_FOLDER}'/python3_env to '${SYNOPKG_TEMP_UPGRADE_FOLDER}'/python3_env' >> /tmp/${SYNOPKG_PKGNAME}.history
-fi
+# backup python environment:
+# disabled in v1.4.1 due to an update error
+#if [ -d "${WEBGUI_FOLDER}/python3_env" ]; then
+#    mv ${WEBGUI_FOLDER}/python3_env ${SYNOPKG_TEMP_UPGRADE_FOLDER}/
+#    echo ''${TIMESTAMP}' - Backup python3_env from '${WEBGUI_FOLDER}'/python3_env to '${SYNOPKG_TEMP_UPGRADE_FOLDER}'/python3_env' >> /tmp/${SYNOPKG_PKGNAME}.history
+#fi
 
 # -------------------------------------------------------------------------------------
 # select language:

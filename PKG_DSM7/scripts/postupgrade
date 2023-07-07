@@ -32,6 +32,7 @@ TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 
 # Action...
 # -------------------------------------------------------------------------------------
+# restore config & python environment:
 if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}" ]; then
     # restore config:
 #   cp -rf ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc/* ${WEBGUI_FOLDER}/etc
@@ -46,8 +47,9 @@ if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}" ]; then
     ls -la ${WEBGUI_FOLDER}/etc  >> /tmp/${SYNOPKG_PKGNAME}.history
 
     # restore python3_env:
-    mv ${SYNOPKG_TEMP_UPGRADE_FOLDER}/python3_env ${WEBGUI_FOLDER}/
-    chmod -R 755 ${WEBGUI_FOLDER}/python3_env
+# disabled in v1.4.1 due to an update error:
+#    mv ${SYNOPKG_TEMP_UPGRADE_FOLDER}/python3_env ${WEBGUI_FOLDER}/
+#    chmod -R 755 ${WEBGUI_FOLDER}/python3_env
 
     # DB upgrade:
     echo "${TIMESTAMP} - Add new variables to configuration file (upgradeconfig.sh)" >> /tmp/${SYNOPKG_PKGNAME}.history
