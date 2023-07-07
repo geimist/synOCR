@@ -43,7 +43,7 @@
 
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML apprise==1.4.5 )
+    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.4.5" )
                                 # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
     dashline1="-----------------------------------------------------------------------------------"
     dashline2="●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
