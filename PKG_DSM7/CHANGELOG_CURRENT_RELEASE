@@ -2,6 +2,13 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.4.1 [2023-07-07]
+  BUGFIXES:
+ - [SHELL] disable python environment backup due to an update error
+ - [SHELL] minor bugfixes
+  IMPROVEMENT:
+ - [SHELL] Bump apprise library to 1.4.5
+ 
 1.4.0 [2023-07-04]
   BUGFIXES:
  - [SHELL] if the path to the log file contained a hash, the date search via Python failed

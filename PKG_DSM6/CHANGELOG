@@ -4,6 +4,13 @@ Release Notes
 This version only supports DSM6.x
 DSM7 version you can found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM7/CHANGELOG
 
+1.4.1 [2023-07-07]
+  BUGFIXES:
+ - [SHELL] disable python environment backup due to an update error
+ - [SHELL] minor bugfixes
+  IMPROVEMENT:
+ - [SHELL] Bump apprise library to 1.4.5
+ 
 1.4.0 [2023-07-04]
   BUGFIXES:
  - [SHELL] if the path to the log file contained a hash, the date search via Python failed
