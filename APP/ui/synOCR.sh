@@ -1168,8 +1168,8 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
 # Select and separate date:
 # (the loop to filter & check multiple results is obsolete 
 # in the current version)
-# ---------------------------------------------------------------------
-    if [ -n "${founddatestr}" ]; then
+# --------------------------------------------------------------------- 
+    if [ -n "${founddatestr}" ] && [ "${founddatestr}" != None  ]; then
         readarray -t founddates <<<"${founddatestr}"
         cntDatesFound=${#founddates[@]}
         echo "${log_indent}  Dates found: ${cntDatesFound}"
