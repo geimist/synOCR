@@ -1362,13 +1362,13 @@ rename()
     # decode special characters:
     NewName=$(urldecode "${NewName}")
     renameTag=$(urldecode "${renameTag}")
-    
+
     # Fallback, if no variables were found for renaming:
     if [ -z "${NewName}" ]; then
         NewName="${NewName:-$(date +%Y-%m-%d_%H-%M)_$(urldecode "${title}")}"
-        echo "! WARNING ! – No variables were found for renaming. A fallback is used to prevent an empty file name: ${NewName}"
+        echo "${log_indent}! WARNING ! – No variables were found for renaming. A fallback is used to prevent an empty file name: ${NewName}"
     else
-        echo "${NewName}"
+        echo "${log_indent}${NewName}"
     fi
 
     [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
