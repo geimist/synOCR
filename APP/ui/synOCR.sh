@@ -985,14 +985,14 @@ yaml_validate()
     # check, if value of apprise_attachment is "true" OR "false":
     while read -r line ; do
         if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of apprise_attachment must be only \"true\" OR \"false\"]"
+           echo "${log_indent}[value of apprise_attachment must be only \"true\" OR \"false\"]"
         fi
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^apprise_attachment:")"
 
     # check, if value of notify_lang is a valid language:
     while read -r line ; do
         if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(chs|cht|csy|dan|enu|fre|ger|hun|ita|jpn|krn|nld|nor|plk|ptb|ptg|rus|spn|sve|tha|trk)$' > /dev/null  2>&1 ; then
-           echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [notify_lang must be only one of this values \"chs\" \"cht\" \"csy\" \"dan\" \"enu\" \"fre\" \"ger\" \"hun\" \"ita\" \"jpn\" \"krn\" \"nld\" \"nor\" \"plk\" \"ptb\" \"ptg\" \"rus\" \"spn\" \"sve\" \"tha\" \"trk\"]"
+           echo "${log_indent}[notify_lang must be only one of this values \"chs\" \"cht\" \"csy\" \"dan\" \"enu\" \"fre\" \"ger\" \"hun\" \"ita\" \"jpn\" \"krn\" \"nld\" \"nor\" \"plk\" \"ptb\" \"ptg\" \"rus\" \"spn\" \"sve\" \"tha\" \"trk\"]"
         fi
     done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^notify_lang:")"
 
@@ -1366,9 +1366,9 @@ rename()
     # Fallback, if no variables were found for renaming:
     if [ -z "${NewName}" ]; then
         NewName="${NewName:-$(date +%Y-%m-%d_%H-%M)_$(urldecode "${title}")}"
-        echo "! WARNING ! – No variables were found for renaming. A fallback is used to prevent an empty file name: ${NewName}"
+        echo "${log_indent}! WARNING ! – No variables were found for renaming. A fallback is used to prevent an empty file name: ${NewName}"
     else
-        echo "${NewName}"
+        echo "${log_indent}${NewName}"
     fi
 
     [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
