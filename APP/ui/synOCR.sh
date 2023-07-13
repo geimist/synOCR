@@ -1364,7 +1364,7 @@ rename()
     renameTag=$(urldecode "${renameTag}")
     
     # Fallback, if no variables were found for renaming:
-    if [ -n "${NewName}" ]; then
+    if [ -z "${NewName}" ]; then
         NewName="${NewName:-$(date +%Y-%m-%d_%H-%M)_$(urldecode "${title}")}"
         echo "! WARNING ! – No variables were found for renaming. A fallback is used to prevent an empty file name: ${NewName}"
     else
