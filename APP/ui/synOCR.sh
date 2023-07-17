@@ -436,6 +436,9 @@ elif [ -f "${taglist}" ]; then
 
         # convert DOS to Unix:
         sed -i $'s/\r$//' "${taglisttmp}"
+        # remove trailing spaces and tabs:
+        sed -i 's/[ \t]*$//' "${taglisttmp}"
+        
         type_of_rule=advanced
 
         yaml_validate
