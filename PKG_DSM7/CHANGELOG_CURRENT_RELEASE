@@ -4,7 +4,7 @@ known issues / limitations:
 
 1.4.2 [2023-xx-xx]
   BUGFIXES:
- - 
+ - [SHELL] fix build python environment at aarch64 (additionally Python 3.9 required)
   IMPROVEMENT:
  - [SHELL] remove trailing spaces and tabs in YAML rules to improve compatibility
  - [SHELL] improve error handling of python date search
