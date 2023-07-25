@@ -13,8 +13,8 @@ auto translate:
   
 
 ### Hier findest du den Download der aktuellen stabilen Version:    
-- [DSM6](https://geimist.eu/synOCR/synOCR_DSM6_latest.html)
-- [DSM7](https://geimist.eu/synOCR/synOCR_DSM7_latest.html)
+- [DSM6](https://geimist.eu/synOCR/synOCR_DSM6_stable.html)
+- [DSM7](https://geimist.eu/synOCR/synOCR_DSM7_stable.html)
 
 ### Hier findest du den Download der aktuelle BETA Version:       
 - [DSM6](https://geimist.eu/synOCR/synOCR_DSM6_snapshot_build.html)
