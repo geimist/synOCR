@@ -2,6 +2,10 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.4.2 [2023-xx-xx]
+  BUGFIXES:
+ - [SHELL] fix build python environment at aarch64 (additionally Python 3.9 required)
+ 
 1.4.1 [2023-07-07]
   BUGFIXES:
  - [SHELL] disable python environment backup due to an update error

@@ -445,7 +445,7 @@ elif [ -f "${taglist}" ]; then
 
         if [ "${python_check}" = "ok" ]; then
             [ "${loglevel}" = 2 ] && echo "${log_indent}check and convert yaml 2 json with python"
-            tag_rule_content=$( ${python3_env}/bin/python3 -c 'import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin.read()), indent=2, sort_keys=False))' < "${taglisttmp}")
+            tag_rule_content=$( python3 -c 'import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin.read()), indent=2, sort_keys=False))' < "${taglisttmp}")
             if [ $? != 0 ]; then
                 printf "%s" "${log_indent}ERROR - YAML-check failed!"
                 return 1  # file not further processable
@@ -995,7 +995,7 @@ yaml_validate()
 #    if grep -q "apprise_call" "${taglisttmp}"; then
 #       while read -r line ; do
 #           if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-#              echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of apprise_call must be only \"true\" OR \"false\"]"
+#              echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of apprise_call must be only ... ]"
 #           fi
 #       done <<<"$(cat "${taglisttmp}" | sed 's/^ *//;s/ *$//' | grep -n "^apprise_call:")"
 #      done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^apprise_call:")"
@@ -1031,21 +1031,71 @@ prepare_python()
 #                                                                                       #
 #########################################################################################
 
+python_path=""
 
-# check python3:
+# check python for aarch64:
+# ---------------------------------------------------------------------
+# Reason for the check: dateparser cannot be installed due to an incompatibility of the backports.zoneinfo dependency. This dependency no longer exists as of Python3.9
+if [ "${machinetyp}" = aarch64 ]; then
+    echo -n "check if aarch64 has at least Python 3.9 installed ➜ "
+    # Search for available Python versions and store them in an array
+    python_versions=($(find /bin /usr/bin /usr/local/bin -maxdepth 1 -name 'python3.*'))
+    
+    # Loop over the found versions to determine the latest version
+    latest_py_version="3.8"
+    for py_interpreter in "${python_versions[@]}"; do
+        # Extract the version number from the interpreter:
+        py_version=$("${py_interpreter}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" )
+
+        # Compare the version with the highest version so far
+        if [[ "${py_version}" > "${latest_py_version}" ]]; then
+            # Check if this version is 3.9 or higher by reading it from the interpreter
+            latest_py_version="${py_version}"
+            python_path="${py_interpreter}"
+        fi
+    done
+
+    # Check if a suitable version was found
+    if [ "${latest_py_version}" != "3.8" ]; then
+        echo "Python 3.9 or higher found: ${latest_py_version}"
+    else
+        echo "No suitable Python version (>=3.9) found. Please install at least Python 3.9"
+        exit 1
+    fi
+else
+    python_path="$(which python3)"
+fi
+
+# Does the virtual Python environment match the chosen interpreter? Otherwise delete the environment:
+# ---------------------------------------------------------------------
+if [ -d "${python3_env}" ]; then
+    local python_env_path=${python3_env}/bin/python3
+    local env_version
+    local py_version
+    env_version=$("${python_env_path}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))")
+    py_version=$("${python_path}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))")
+    # Compare the version with the highest version so far
+    if [[ "${env_version}" != "${py_version}" ]]; then
+        echo "the virtual Python environment does not match the selected interpreter and is therefore deleted"
+        rm -r "${python3_env}"
+    fi
+fi
+
+# check python3 environment:
 # ---------------------------------------------------------------------
     [ "${loglevel}" = 2 ] && printf "\n%s\n" "${log_indent}  Check Python:"
-    if [ ! "$(which python3)" ]; then
+    if [ -z "${python_path}" ]; then
+##    if [ ! "$(which python3)" ]; then
         echo "${log_indent}  (Python3 is not installed / use fallback search with regex"
         echo "${log_indent}  for more precise search results Python3 is required)"
         python_check=failed
         return 1
     else
-        [ ! -d "${python3_env}" ] && python3 -m venv "${python3_env}"
+        [ ! -d "${python3_env}" ] && "${python_path}" -m venv "${python3_env}"
         source "${python3_env}/bin/activate"
 
         if [ "$(head -n1 "${python3_env}/synOCR_python_env_version" 2>/dev/null)" != "${local_version}" ]; then
-            [ "${loglevel}" = 2 ] && printf "%s\n" "${log_indent}  python3 already installed ($(which python3))"
+            [ "${loglevel}" = 2 ] && printf "%s\n" "${log_indent}  python3 already installed (${python_path})"
 
         # check / install pip:
         # ---------------------------------------------------------------------
@@ -1126,7 +1176,6 @@ prepare_python()
     [ "${loglevel}" = 2 ] && printf "\n%s\n" "${log_indent}  module list:" && python3 -m pip list | sed -e "s/^/${log_indent}  /g" && printf "\n"
 
     return 0
-
 }
 
 
@@ -1389,9 +1438,9 @@ rename()
     # Fallback, if no variables were found for renaming:
     if [ -z "${NewName}" ]; then
         NewName="${NewName:-$(date +%Y-%m-%d_%H-%M)_$(urldecode "${title}")}"
-        echo "${log_indent}! WARNING ! – No variables were found for renaming. A fallback is used to prevent an empty file name: ${NewName}"
+        echo "! WARNING ! – No variables were found for renaming. A fallback is used to prevent an empty file name: ${NewName}"
     else
-        echo "${log_indent}${NewName}"
+        echo "${NewName}"
     fi
 
     [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
