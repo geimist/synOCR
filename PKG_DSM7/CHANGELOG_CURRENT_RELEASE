@@ -2,9 +2,14 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.4.2 [2023-xx-xx]
+1.4.2 [2023-07-26]
   BUGFIXES:
  - [SHELL] fix build python environment at aarch64 (additionally Python 3.9 required)
+  IMPROVEMENT:
+ - [SHELL] remove trailing spaces and tabs in YAML rules to improve compatibility
+ - [SHELL] improve error handling of python date search
+ - [SHELL] improve logging 
+ - [SHELL] improve YAML validation
  
 1.4.1 [2023-07-07]
   BUGFIXES:
