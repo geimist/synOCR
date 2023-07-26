@@ -1045,8 +1045,8 @@ python_path=""
 if [ "${machinetyp}" = aarch64 ]; then
     echo -n "check if aarch64 has at least Python 3.9 installed ➜ "
     # Search for available Python versions and store them in an array
-    python_versions=($(find /bin /usr/bin /usr/local/bin -maxdepth 1 -name 'python3.*'))
-    
+    IFS=$'\n' read -d '' -ra python_versions <<< "$(find /bin /usr/bin /usr/local/bin -maxdepth 1 -name 'python3.*')" ; IFS="${IFSsaved}"
+
     # Loop over the found versions to determine the latest version
     latest_py_version="3.8"
     for py_interpreter in "${python_versions[@]}"; do
