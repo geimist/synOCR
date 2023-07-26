@@ -935,57 +935,61 @@ yaml_validate()
 # check parameter validity:
 # ---------------------------------------------------------------------
     # check, if value of condition is "all" OR "any" OR "none":
-    if grep -q "condition" "${taglisttmp}"; then
+    if grep -q '^[[:space:]]*condition' "${taglisttmp}"; then
         while read -r line ; do
-            if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
-               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of condition must be only \"all\" OR \"any\" OR \"none\"]"
+            value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
+               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of condition must be only \"all\" OR \"any\" OR \"none\"]"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^condition:")"
     fi
 
     # check, if value of isRegEx is "true" OR "false":
-    if grep -q "isRegEx" "${taglisttmp}"; then
+    if grep -q '^[[:space:]]*isRegEx' "${taglisttmp}"; then
         while read -r line ; do
-            if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of isRegEx must be only \"true\" OR \"false\"]"
+            value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of isRegEx must be only \"true\" OR \"false\"]"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^isRegEx:")"
     fi
 
     # check, if value of source is "content" OR "filename":
-    if grep -q "source" "${taglisttmp}"; then
+    if grep -q '^[[:space:]]*source' "${taglisttmp}"; then
         while read -r line ; do
-            if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(content|filename)$' > /dev/null  2>&1 ; then
-               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of source must be only \"content\" OR \"filename\"]"
+            value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(content|filename)$' > /dev/null  2>&1 ; then
+               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of source must be only \"content\" OR \"filename\"]"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^source:")"
     fi
 
     # check of corect value of searchtype:
-    if grep -q "searchtyp|searchtype" "${taglisttmp}"; then
+    if grep -q '^[[:space:]]*searchtyp|^[[:space:]]*searchtype' "${taglisttmp}"; then
         while read -r line ; do
-            if ! echo "${line}" | awk -F: '{print $3}' | sed 's/^ *//;s/ *$//' | tr -cd '[:alnum:][:blank:]' | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' > /dev/null  2>&1 ; then
-               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of searchtype must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
+            value="$(echo "${line}" | awk -F: '{print $3}' | sed 's/^ *//;s/ *$//' | tr -cd '[:alnum:][:blank:]')"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' > /dev/null  2>&1 ; then
+               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of searchtype must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wnE "^searchtyp:|^searchtype:")"
     fi
 
     # check, if value of casesensitive is "true" OR "false":
-    if grep -q "casesensitive" "${taglisttmp}"; then
+    if grep -q '^[[:space:]]*casesensitive' "${taglisttmp}"; then
         while read -r line ; do
-            if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of casesensitive must be only \"true\" OR \"false\"]"
+            value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of casesensitive must be only \"true\" OR \"false\"]"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^casesensitive:")"
     fi
 
     # check, if value of multilineregex is "true" OR "false":
-
-    # check, if value of multilineregex is "true" OR "false":
-    if grep -q "multilineregex" "${taglisttmp}"; then
+    if grep -q '^[[:space:]]*multilineregex' "${taglisttmp}"; then
         while read -r line ; do
-            if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of multilineregex must be only \"true\" OR \"false\"]"
+            value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of multilineregex must be only \"true\" OR \"false\"]"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^multilineregex:")"
     fi
@@ -1002,19 +1006,21 @@ yaml_validate()
 #   fi
 
     # check, if value of apprise_attachment is "true" OR "false":
-    if grep -q "apprise_attachment" "${taglisttmp}"; then
+    if grep -q '^[[:space:]]*apprise_attachment' "${taglisttmp}"; then
         while read -r line ; do
-            if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [value of apprise_attachment must be only \"true\" OR \"false\"]"
+            value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of apprise_attachment must be only \"true\" OR \"false\"]"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^apprise_attachment:")"
     fi
 
     # check, if value of notify_lang is a valid language:
-    if grep -q "notify_lang" "${taglisttmp}"; then
+    if grep -q '^[[:space:]]*notify_lang' "${taglisttmp}"; then
         while read -r line ; do
-            if ! echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]' | grep -Eiw '^(chs|cht|csy|dan|enu|fre|ger|hun|ita|jpn|krn|nld|nor|plk|ptb|ptg|rus|spn|sve|tha|trk)$' > /dev/null  2>&1 ; then
-               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') [notify_lang must be only one of this values \"chs\" \"cht\" \"csy\" \"dan\" \"enu\" \"fre\" \"ger\" \"hun\" \"ita\" \"jpn\" \"krn\" \"nld\" \"nor\" \"plk\" \"ptb\" \"ptg\" \"rus\" \"spn\" \"sve\" \"tha\" \"trk\"]"
+            value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(chs|cht|csy|dan|enu|fre|ger|hun|ita|jpn|krn|nld|nor|plk|ptb|ptg|rus|spn|sve|tha|trk)$' > /dev/null  2>&1 ; then
+               echo "${log_indent}syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [notify_lang must be only one of this values \"chs\" \"cht\" \"csy\" \"dan\" \"enu\" \"fre\" \"ger\" \"hun\" \"ita\" \"jpn\" \"krn\" \"nld\" \"nor\" \"plk\" \"ptb\" \"ptg\" \"rus\" \"spn\" \"sve\" \"tha\" \"trk\"]"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^notify_lang:")"
     fi
@@ -1039,8 +1045,8 @@ python_path=""
 if [ "${machinetyp}" = aarch64 ]; then
     echo -n "check if aarch64 has at least Python 3.9 installed ➜ "
     # Search for available Python versions and store them in an array
-    python_versions=($(find /bin /usr/bin /usr/local/bin -maxdepth 1 -name 'python3.*'))
-    
+    IFS=$'\n' read -d '' -ra python_versions <<< "$(find /bin /usr/bin /usr/local/bin -maxdepth 1 -name 'python3.*')" ; IFS="${IFSsaved}"
+
     # Loop over the found versions to determine the latest version
     latest_py_version="3.8"
     for py_interpreter in "${python_versions[@]}"; do
