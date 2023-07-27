@@ -167,7 +167,7 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         <strong class="synocr-text-red">'"${lang_main_title1}"'</strong>
     </h5>'
 
-# check Docker:
+# check Docker and show indicator icon:
     if [ ! "$(which docker)" ]; then
         echo '
         <p class="text-center synocr-text-red mb-5">'"${lang_attention}"':<br>'"${lang_main_dockerfailed1}"'<br>'"${lang_main_dockerfailed2}"'</p>
@@ -207,6 +207,14 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
     <p>'"${lang_main_desc1}"'</p>
     <p>'"${lang_main_desc2}"'</p>'
 
+# validate input directories:
+    invalid_input_dir=""
+    while read -r value ; do
+        dir="$(echo "${value}" | awk -F'\t' '{print $1}')"
+        profilename="$(echo "${value}" | awk -F'\t' '{print $2}')"
+        [ ! -d "${dir}" ] && invalid_input_dir="${invalid_input_dir}${profilename} ${dir}<br>"
+    done <<< "$(sqlite3 -separator $'\t' /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )" 
+
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
     if [ "${dsmMajorVersion}" -eq 6 ] || { grep "^administrators" /etc/group | grep -q synOCR && grep "^docker" /etc/group | grep -q synOCR ; } ; then
         if [ "${inotify_tools_ready}" -eq 0 ]; then 
@@ -217,19 +225,25 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
                 <p class="text-center">'"${lang_help_QS_1b}"' (<a href="https://synocommunity.com/package/inotify-tools" onclick="window.open(this.href); return false;" style="'"${synocrred}"';"><b>'"${lang_foot_buttondownDB}"' Inotify-Tools</b></a>)</p>                
             </p><br />'
         elif [ "${inotify_tools_ready}" -eq 1 ] && { [ "${dsmMajorVersion}" -eq 6 ] || [ "${monitoring_user}" != root ]; }; then 
-            if [ -n "${PID}" ]; then
-                # stop / (re-)start monitoring:
-                echo '
-                <p class="text-center">
-                    <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr-monitoring">'"${lang_main_button_restart_monitoring}"'</button>
-                    <button name="page" class="btn btn-white" style="color: #FFFFFF; background-color: #BD0010;" value="main-stop-synocr-monitoring">'"${lang_main_button_stop_monitoring}"'</button>
-                </p><br />'
+            if [ -n "${invalid_input_dir}" ]; then
+                # warn if invalid source directories are present:
+                echo '<hr></hr><p class="synocr-text-red">'"${lang_main_invalid_input_dir}"'<br>'
+                echo '<code class="mb-5">'"${invalid_input_dir}"'</code></p>'
             else
-                # start monitoring:
-                echo '
-                <p class="text-center">
-                    <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr-monitoring">'"${lang_main_button_start_monitoring}"'</button>
-                </p><br />'
+                if [ -n "${PID}" ]; then
+                    # stop / (re-)start monitoring:
+                    echo '
+                    <p class="text-center">
+                        <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr-monitoring">'"${lang_main_button_restart_monitoring}"'</button>
+                        <button name="page" class="btn btn-white" style="color: #FFFFFF; background-color: #BD0010;" value="main-stop-synocr-monitoring">'"${lang_main_button_stop_monitoring}"'</button>
+                    </p><br />'
+                else
+                    # start monitoring:
+                    echo '
+                    <p class="text-center">
+                        <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr-monitoring">'"${lang_main_button_start_monitoring}"'</button>
+                    </p><br />'
+                fi
             fi
         elif [ "${monitoring_user}" = root ] && [ -n "${PID}" ]; then 
             # if running under root, controlling over GUI is not possible:

@@ -2,4 +2,11 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.4.0 [2023-07-04] released
+1.4.99.1 [20xx-xx-xx]
+  BUGFIXES:
+ - [SHELL] 
+ - [GUI] 
+  IMPROVEMENT:
+ - [GUI] invalid source directories are displayed in the GUI
+  IMPLEMENTATIONS:
+ - 🔥 

@@ -35,7 +35,7 @@ inotify_start() {
     while read -r value ; do
         dir="$(echo "${value}" | awk -F'\t' '{print $1}')"
         profilename="$(echo "${value}" | awk -F'\t' '{print $2}')"
-        [ ! -d "${dir}" ] && echo "ERROR @ profile ${profilename}: inotify-tools cannot be started because \"${value}\" is not a valid folder! " | tee -a "${LOG_DIR_LIST[@]}" && return
+        [ ! -d "${dir}" ] && echo "ERROR @ profile ${profilename}: inotify-tools cannot be started because \"${dir}\" is not a valid folder! " | tee -a "${LOG_DIR_LIST[@]}" && return
     done <<< "$(sqlite3 -separator $'\t' /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )" 
 
 

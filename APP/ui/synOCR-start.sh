@@ -43,13 +43,14 @@ for i in "$@" ; do
             while [ "${monitor}" = off ] ; do
 
                 # terminate parallel instances:
-                if [ "$(inotify_process_id | awk '{ print NF; }')" -gt 1 ]; then 
+                process_id_output=$(inotify_process_id | awk '{ print NF; }')
+                if [ -n "${process_id_output}" ] && [ "${process_id_output}" -gt 1 ]; then
                     echo "parallel processes active - terminate ..." | tee -a "${log_dir_list[@]}"
                     kill "$(inotify_process_id)"
                 fi
 
                 # start, if not running:
-                if [ -z "$(inotify_process_id)" ] ;then
+                if [ -z "${process_id_output}" ] ;then
                     echo "does not run - start monitoring ..." | tee -a "${log_dir_list[@]}"
                     sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}" 
                     /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start
@@ -78,7 +79,7 @@ for i in "$@" ; do
                 loop_count=$((loop_count + 1))
                 echo "loop count: ${loop_count}" | tee -a "${log_dir_list[@]}"
 
-                if [ "${loop_count}" -gt 10 ]; then
+                if [ "${loop_count}" -ge 10 ]; then
                     echo "! ! ! ERROR: failed to start monitoring after ${loop_count} trys" | tee -a "${log_dir_list[@]}"
                     break 1
                 fi

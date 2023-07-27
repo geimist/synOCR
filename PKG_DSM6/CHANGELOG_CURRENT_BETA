@@ -1,1 +1,8 @@
-1.4.0 [2023-07-04] released
+1.4.99.1 [20xx-xx-xx]
+  BUGFIXES:
+ - [SHELL] 
+ - [GUI] 
+  IMPROVEMENT:
+ - [GUI] invalid source directories are displayed in the GUI
+  IMPLEMENTATIONS:
+ - 🔥 
