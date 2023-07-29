@@ -1,0 +1,117 @@
+﻿# synOCR_YAMLRULEFILE   # keep this line!
+
+
+#O#O#rule_1001:
+#O#O##X#X#: Auto
+#O#O#    tagname: Auto
+#O#O#    subrules:
+#O#O#    - searchstring: VW
+#O#O#      searchtyp: contains
+
+
+rule_1002:
+#X#X#: Auto
+    tagname: Auto
+    condition: all
+    subrules:
+    - searchstring: (Opel|VW|Mitsubishi|Mercedes|Skoda|Anhaenger|Anhänger|Chrysler|KFZ)
+      searchtyp: contains
+      isRegEx: true
+
+
+rule_1003:
+#X#X#: TÜV
+    tagname: TUEV
+    targetfolder: /volume1/save/dokumente/Eigene Dateien/Auto/VW/TUEV
+    condition: all
+    subrules:
+    - searchstring: TÜV
+      searchtyp: contains
+    - searchstring: Auto Mustermann
+      searchtyp: does not contain
+
+
+rule_1004:
+#X#X#: Variabel Bescheinigung ==> Teilausdruck davor UND dahinter incl. "Bescheinigung"
+    tagname: §tagname_RegEx
+    tagname_RegEx: (?i)\S*(?:Bescheinigung|bescheinigung)\S*
+    condition: all
+    subrules:
+    - searchstring: (?i)\S*(?:Bescheinigung|bescheinigung)\S*
+      searchtyp: contains
+      isRegEx: true
+
+
+rule_1005:
+#X#X#: Auto Mustermann
+    tagname: Mustermann
+    condition: all
+    subrules:
+    - searchstring: Auto Mustermann
+      searchtyp: contains
+#X#X#: Auto Mustermann
+    - searchstring: VW
+      searchtyp: contains
+#X#X#: Auto Mustermann
+    - searchstring: Corado
+      searchtyp: contains
+
+
+rule_1006:
+#X#X#: VW
+    tagname: VW
+    targetfolder: /volume1/save/dokumente/Eigene Dateien/Auto/VW
+    condition: all
+    subrules:
+    - searchstring: VW
+      searchtyp: contains
+#X#X#: VW
+    - searchstring: Corado
+      searchtyp: contains
+
+
+rule_1007:
+#X#X#: Corado
+    tagname: Corado_A_JJ555
+    condition: any
+    subrules:
+    - searchstring: A-JJ555
+      searchtyp: contains
+#X#X#: Corado
+    - searchstring: A-JJ 555
+      searchtyp: contains
+#X#X#: Corado
+    - searchstring: A JJ555
+      searchtyp: contains
+
+
+rule_1008:
+#X#X#: Auto Mustermann Rechnungsnummer
+    tagname: Rechnungsnummer_§tagname_RegEx
+    tagname_RegEx: (?i)((?<=(Rechnungs))\S+\s*)\K(?:\S+)
+    condition: all
+    subrules:
+    - searchstring: ((?<=(Rechnungs))\S+\s*)\K(?:\S+)
+      searchtyp: contains
+      isRegEx: true
+#X#X#: Auto Mustermann Rechnungsnummer
+    - searchstring: Auto Mustermann
+      searchtyp: contains
+
+
+rule_1009:
+#X#X#: Auto Mustermann Kundennummer
+    tagname: Kundennummer_§tagname_RegEx
+    tagname_RegEx: (?i)((?<=(Kundenn))\S*\n*)(\S*\s*){3}\K(?:\S+)
+    multilineregex: true
+    condition: all
+    subrules:
+    - searchstring: ((?<=(Kundenn))\S*\n*)(\S*\s*){3}\K(?:\S+)
+      searchtyp: contains
+      isRegEx: true
+      multilineregex: true
+#X#X#: Auto Mustermann Kundennummer
+    - searchstring: Auto Mustermann
+      searchtyp: contains
+
+
