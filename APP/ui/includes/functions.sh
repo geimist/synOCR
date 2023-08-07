@@ -1,12 +1,14 @@
 #!/bin/bash
 # /usr/syno/synoman/webman/3rdparty/synOCR/includes/functions.sh
+# shellcheck disable=SC1090,SC1091
+#,SC2001,SC2009,SC2181
 
 # -------------------------------------------------------------------------- #
 # native URL encode & decode:
 # https://gist.github.com/cdown/1163649
 urlencode() {
     # urlencode <string>
-    old_lc_collate=$LC_COLLATE
+    old_lc_collate="${LC_COLLATE}"
     LC_COLLATE=C
 
     local length="${#1}"
@@ -44,7 +46,8 @@ function language() {
     #  Copyright:   2016-2018 by QTip                                    #
     #  License:     GNU GPLv3                                            #
     #  ----------------------------------------------------------------  #
-    #  Version:     0.15 - 11/06/2018                                    #
+    #  Version:     0.15 - 2018-06-11                                    #
+    #  Version:     0.16 - 2018-08-07                                    #
     #********************************************************************#
 
     # Sprachdateien konfigurieren
@@ -62,19 +65,16 @@ function language() {
 # Übersetzungstabelle deklarieren
     declare -A ISO2SYNO
     ISO2SYNO=( ["de"]="ger" ["en"]="enu" ["zh"]="chs" ["cs"]="csy" ["jp"]="jpn" ["ko"]="krn" ["da"]="dan" ["fr"]="fre" ["it"]="ita" ["nl"]="nld" ["no"]="nor" ["pl"]="plk" ["ru"]="rus" ["sp"]="spn" ["sv"]="sve" ["hu"]="hun" ["tr"]="trk" ["pt"]="ptg" )
+    # fehlende Sprachen: Tai, 'Portuguese Brazilian' ('ptb','PT-BR')
 
 # DSM Sprache ermitteln
-    deflang="ger"
-    lang=$(cat /etc/synoinfo.conf | grep language | sed 's/language=//;s/\"//g' | egrep -o "^.{3}")
-    #lang_mail=$(cat /etc/synoinfo.conf | grep maillang | sed 's/maillang=//;s/\"//g' | egrep -o "^.{3}")
-    #if [ "$lang" == "def" ]; then
-    #    lang="$lang_mail"
-    #fi
+    deflang="enu"
+    lang=$(grep language /etc/synoinfo.conf | sed 's/language=//;s/\"//g' | grep -Eo "^.{3}")
 
 # Browsersprache ermitteln
     if [[ "${lang}" == "def" ]] ; then
         if [ -n "${HTTP_ACCEPT_LANGUAGE}" ] ; then
-            bl=$(echo ${HTTP_ACCEPT_LANGUAGE} | cut -d "," -f1)
+            bl=$(echo "${HTTP_ACCEPT_LANGUAGE}" | cut -d "," -f1)
             bl=${bl:0:2}
             lang=${ISO2SYNO[${bl}]}
         else
@@ -83,16 +83,17 @@ function language() {
     fi
 
 # Persönliche DSM Sprache ermitteln
-    usersettingsfile=/usr/syno/etc/preference/${login_user}/usersettings
-    if [ -f ${usersettingsfile} ] ; then
-        userlanguage=$(jq -r ".Personal.lang" ${usersettingsfile})
-        if [ -n "${userlanguage}" -a "${userlanguage}" != "def" -a "${userlanguage}" != "null" ] ; then
-            lang=${userlanguage}
+    # shellcheck disable=SC2154
+    usersettingsfile="/usr/syno/etc/preference/${login_user}/usersettings"
+    if [ -f "${usersettingsfile}" ] ; then
+        userlanguage=$(jq -r ".Personal.lang" "${usersettingsfile}")
+        if [ -n "${userlanguage}" ] && [ "${userlanguage}" != "def" ] && [ "${userlanguage}" != "null" ]; then
+            lang="${userlanguage}"
         fi
     fi
 
 # Sprachdatei laden
-    if [ -f "lang/lang_${lang}.txt" ] && [[ "$lang" != "enu" ]]; then
+    if [ -f "lang/lang_${lang}.txt" ] && [[ "${lang}" != "enu" ]]; then
         source "lang/lang_${lang}.txt"
     fi
 }

@@ -17,6 +17,7 @@ dsmMajorVersion=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
 
     while read -r entry ; do
         INPUTDIR=$(echo "$entry" | awk -F'\t' '{print $1}')
+        INPUTDIR="${INPUTDIR%/}/"
         SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $2}')
         img2pdf=$(echo "$entry" | awk -F'\t' '{print $3}')
 
@@ -156,7 +157,7 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
     if [[ "${local_version}" != "${highest_version}" ]] ; then
         echo ' 
         <h5 class="text-center">
-            <a href="'"${downloadUrl}"'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">'"${lang_main_update_available}"' [DOWNLOAD VERSION '"${online_version}"' </a>
+            <a href="'"${downloadUrl}"'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">'"${lang_main_update_available}"' [DOWNLOAD '"${local_version}"' ➜ '"${online_version}"' </a>
                 <span class="pulsate" style="font-size: 0.7rem;">/</span>
             <a href="'"${changeLogUrl}"'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;"> CHANGELOG]</a>
         </h5>'

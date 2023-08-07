@@ -234,6 +234,7 @@ fi
     while read -r entry; do
         profile_ID=$(echo "${entry}" | awk -F'\t' '{print $1}')
         INPUTDIR=$(echo "${entry}" | awk -F'\t' '{print $2}')
+        INPUTDIR="${INPUTDIR%/}/"
         OUTPUTDIR=$(echo "${entry}" | awk -F'\t' '{print $3}')
         LOGDIR=$(echo "${entry}" | awk -F'\t' '{print $4}')
         SearchPraefix=$(echo "${entry}" | awk -F'\t' '{print $5}')
