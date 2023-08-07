@@ -2,3 +2,4 @@
 build_spk.sh
 *.DS_Store
 @eaDir/*
+*.zip
