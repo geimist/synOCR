@@ -1,13 +1,16 @@
 Release Notes
 
-! ! ! ATTENTION ! ! ! 
-This version only supports DSM7
-DSM6.x version you can found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/CHANGELOG
-
 known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.4.3 [2023-08-08]
+  BUGFIXES:
+ - [SHELL] a missing slash in the source path partly blocked a correct program run
+  IMPROVEMENT:
+ - [GUI] In the update note not only the newest but also the installed version is displayed
+ - [SHELL] apply shellcheck for functions.sh
+ 
 1.4.2 [2023-07-26]
   BUGFIXES:
  - [SHELL] fix build python environment at aarch64 (additionally Python 3.9 required)
