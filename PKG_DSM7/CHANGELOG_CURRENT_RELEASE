@@ -1,5 +1,5 @@
 known issues / limitations:
- -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
+ -  The check whether a selected folder (OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
 1.4.4 [2023-08-31]
