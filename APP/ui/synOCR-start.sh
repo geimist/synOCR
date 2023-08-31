@@ -257,9 +257,9 @@ fi
         fi
 
     # must the target directory be created and is the path allowed?
-        if [ ! -d "${OUTPUTDIR}" ] && echo "${OUTPUTDIR}" | grep -q "/volume" ; then
+        if [ ! -d "${OUTPUTDIR}" ] && echo "${OUTPUTDIR}" | grep -q "/volume" &&  [ "${dsm_version}" = 6 ] ; then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${OUTPUTDIR}" | awk -F/ '{print $3}')" ; then
-                # is it an encrypted folder and is it mounted?
+                # is it an encrypted folder and is it mounted? (check only @DSM6, because synoshare need root privileges)
                 if [ "${callFrom}" = GUI ] ; then
                     echo '
                     <p class="text-center"><
