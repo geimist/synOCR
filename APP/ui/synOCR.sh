@@ -248,7 +248,7 @@
                 printf "%s" "${year}"
                 return
             elif [ "${length}" -lt 4 ]; then
-                printf "%s" $(("${year}""${functionType}""$(date +%Y)"))
+                printf "%s" $(($(date +%Y)${functionType}$year))
                 return
             else
                 # more than 4 digits not supported
