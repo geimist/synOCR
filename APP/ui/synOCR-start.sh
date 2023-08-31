@@ -256,42 +256,6 @@ fi
             continue
         fi
 
-    # must the target directory be created and is the path allowed?
-        if [ ! -d "${OUTPUTDIR}" ] && echo "${OUTPUTDIR}" | grep -q "/volume" &&  [ "${dsm_version}" = 6 ] ; then
-            if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${OUTPUTDIR}" | awk -F/ '{print $3}')" ; then
-                # is it an encrypted folder and is it mounted? (check only @DSM6, because synoshare need root privileges)
-                if [ "${callFrom}" = GUI ] ; then
-                    echo '
-                    <p class="text-center"><
-                        span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_umount_target}"' ! ! !</b><br>EXIT SCRIPT!<br></span>
-                    </p>'
-                else
-                    echo "${lang_synOCR_start_umount_target}    ➜    EXIT SCRIPT!"
-                fi
-                continue
-            fi
-            mkdir -p "${OUTPUTDIR}"
-            if [ "${callFrom}" = GUI ] ; then
-                echo '
-                <p class="text-center">
-                    <span style="color: #BD0010;"><b>'"${lang_synOCR_start_target_created}"'</b></span>
-                </p>'
-            else
-                echo "${lang_synOCR_start_target_created}"
-            fi
-        elif [ ! -d "${OUTPUTDIR}" ] || ! echo "${OUTPUTDIR}" | grep -q "/volume" ; then
-            if [ "${callFrom}" = GUI ] ; then
-                echo '
-                <p class="text-center">
-                    <span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_check_target}"' ! ! !</b><br>'"${lang_synOCR_start_abort}"'<br></span>
-                </p>'
-            else
-                echo "! ! ! ${lang_synOCR_start_check_target} ! ! !"
-                echo "${lang_synOCR_start_abort}"
-            fi
-            continue
-        fi
-
     # only start (create LOG) if there is something to do:
         exclusion=false
         count_input_file=0
@@ -334,9 +298,7 @@ fi
         LOGDIR="${LOGDIR%/}/"
         LOGFILE="${LOGDIR}synOCR_$(date +%Y-%m-%d_%H-%M-%S).log"
 
-        if echo "${LOGDIR}" | grep -q "/volume" && [ -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] ;then
-            ./synOCR.sh "${profile_ID}" "${LOGFILE}" >> "${LOGFILE}" 2>&1     # $LOGFILE is passed as a parameter to synOCR, since the file may be needed there for ERRORFILES
-        elif echo "${LOGDIR}" | grep -q "/volume" && [ ! -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] ;then
+        if echo "${LOGDIR}" | grep -q "/volume" && [ ! -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] && [ "${dsm_version}" = 6 ];then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${LOGDIR}" | awk -F/ '{print $3}')" ; then
                 if [ "${callFrom}" = GUI ] ; then
                     echo '
@@ -349,7 +311,46 @@ fi
                 continue
             fi
             mkdir -p "${LOGDIR}"
-            ./synOCR.sh "${profile_ID}" "${LOGFILE}" >> "${LOGFILE}" 2>&1
+        fi
+
+    # must the target directory be created and is the path allowed?
+        if [ ! -d "${OUTPUTDIR}" ] && echo "${OUTPUTDIR}" | grep -q "/volume" && [ "${dsm_version}" = 6 ]; then
+            if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${OUTPUTDIR}" | awk -F/ '{print $3}')" ; then
+                # is it an encrypted folder and is it mounted? (check only @DSM6, because synoshare need root privileges)
+                if [ "${callFrom}" = GUI ] ; then
+                    echo '
+                    <p class="text-center"><
+                        span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_umount_target}"' ! ! !</b><br>EXIT SCRIPT!<br></span>
+                    </p>'
+                else
+                    echo "${lang_synOCR_start_umount_target}    ➜    EXIT SCRIPT!" >> "${LOGFILE}" 2>&1
+                fi
+                continue
+            fi
+            mkdir -p "${OUTPUTDIR}"
+            if [ "${callFrom}" = GUI ] ; then
+                echo '
+                <p class="text-center">
+                    <span style="color: #BD0010;"><b>'"${lang_synOCR_start_target_created}"'</b></span>
+                </p>'
+            else
+                echo "${lang_synOCR_start_target_created}" >> "${LOGFILE}" 2>&1
+            fi
+        elif [ ! -d "${OUTPUTDIR}" ] || ! echo "${OUTPUTDIR}" | grep -q "/volume" ; then
+            if [ "${callFrom}" = GUI ] ; then
+                echo '
+                <p class="text-center">
+                    <span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_check_target}"' ! ! !</b><br>'"${lang_synOCR_start_abort} (${profile} [ID: ${profile_ID}])"'<br></span>
+                </p>'
+            else
+                echo "! ! ! ${lang_synOCR_start_check_target} ! ! !" >> "${LOGFILE}" 2>&1
+                echo "${lang_synOCR_start_abort} (${profile} [ID: ${profile_ID}])" >> "${LOGFILE}" 2>&1
+            fi
+            continue
+        fi
+
+        if echo "${LOGDIR}" | grep -q "/volume" && [ -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] ;then
+            ./synOCR.sh "${profile_ID}" "${LOGFILE}" >> "${LOGFILE}" 2>&1     # $LOGFILE is passed as a parameter to synOCR, since the file may be needed there for ERRORFILES
         else
             loglevel=0
             ./synOCR.sh "${profile_ID}" >/dev/null
