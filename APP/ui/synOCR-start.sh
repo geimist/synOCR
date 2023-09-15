@@ -43,7 +43,8 @@ for i in "$@" ; do
             while [ "${monitor}" = off ] ; do
 
                 # terminate parallel instances:
-                if [ "$(inotify_process_id | awk '{ print NF; }')" -gt 1 ]; then 
+                inotify_pid_count=$(inotify_process_id | awk '{ print NF; }')
+                if [ -n "${inotify_pid_count}" ] && [ "${inotify_pid_count}" -gt 1 ]; then 
                     echo "parallel processes active - terminate ..." | tee -a "${log_dir_list[@]}"
                     kill "$(inotify_process_id)"
                 fi
