@@ -1,3 +1,7 @@
+1.4.5 [2023-xx-xx]
+  BUGFIXES:
+ - [SHELL] Fixed a bug that could block the start of monitoring
+ 
 1.4.4 [2023-08-31]
   BUGFIXES:
  - [SHELL] Search range for the date in the past was not calculated correctly
