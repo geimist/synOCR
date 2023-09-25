@@ -177,24 +177,27 @@ fi
     fi
 
 # monthly check for updates:
-    if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") != $(date +%m) ]]; then
+    if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon';") != $(date +%m) ]]; then
         local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
         if [ "$(grep "^beta" /var/packages/synOCR/INFO | cut -d '"' -f2)" = yes ]; then
             release_channel=beta
         else
             release_channel=release
         fi
-        sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon'"
+        sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon';COMMIT;"
+        wait $!
         if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") = $(date +%m) ]]; then
             server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}&device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")" )
             online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_version}"."${release_channel}".version)
 #            downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_version}"."${release_channel}".downloadUrl )
 #            changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_version}"."${release_channel}".changeLogUrl )
  
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${online_version}' WHERE key='online_version'"
+            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${online_version}' WHERE key='online_version';COMMIT;"
+            wait $!
             # reset checkmon if failed get version:
             if grep -qvE '^[0-9.]+$' <<< "${online_version}"; then
-                sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date -d "-1 month" +%m)' WHERE key='checkmon'"
+                sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date -d "-1 month" +%m)' WHERE key='checkmon';COMMIT;"
+                wait $!
             fi
             highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
             if [[ "${local_version}" != "${highest_version}" ]] ; then

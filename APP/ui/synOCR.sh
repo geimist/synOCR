@@ -1172,8 +1172,10 @@ fi
                 echo "0" > "${python3_env}/synOCR_python_env_version"
             fi
 
-            [ "${synOCR_user}" = root ] && chown -R synOCR:administrators "${python3_env}"
-            [ "${synOCR_user}" = root ] && chmod -R 755 "${python3_env}"
+            if [ "${dsm_version}" = "7" ] && [ "${synOCR_user}" = root ]; then
+                chown -R synOCR:administrators "${python3_env}"
+                chmod -R 755 "${python3_env}"
+            fi
 
             printf "\n"
         fi

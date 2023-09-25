@@ -2,9 +2,10 @@ known issues / limitations:
  -  The check whether a selected folder (OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.4.5 [2023-xx-xx]
+1.4.5 [2023-09-25]
   BUGFIXES:
  - [SHELL] Fixed a bug that could block the start of monitoring
+ - [SHELL] Fixed a bug that could not update the DB @DSM6
  
 1.4.4 [2023-08-31]
   BUGFIXES:
