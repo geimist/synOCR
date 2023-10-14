@@ -57,7 +57,7 @@ inotify_stop()
 # --------------------------------------------------------------
     printf "\n%s\n" "---------- STOP  MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
     [ -f "${monitored_folders}" ] && rm -f "${monitored_folders}"
-    if kill "${inotify_process_id}"; then
+    if kill ${inotify_process_id}; then
         echo "Monitoring ended" | tee -a "${LOG_DIR_LIST[@]}" #> /dev/null
     else
         echo "ERROR when stopping the monitoring!" | tee -a "${LOG_DIR_LIST[@]}" #> /dev/null
