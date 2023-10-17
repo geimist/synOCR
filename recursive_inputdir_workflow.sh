@@ -53,7 +53,7 @@ preprocess() {
         ID="$(date +%s%N)_"
     
     # erstelle Indexeintrag:
-        echo "${ID}§_§${FILEPATH}§_§${FILENAME}" #>> "${INDEXFILE}"
+        echo "${ID}§_§${FILEPATH}§_§${FILENAME}" >> "${INDEXFILE}"
     
     # verschiebe Quelldatei:
         mv "${i}" "${SYNOCR_INPUT}${ID}${FILENAME}"
