@@ -7,6 +7,15 @@
 #
 #  Author: gthorsten
 #  Version:
+#
+#     1.06, 26.10.2023
+#           search_alpha_numeric_dates()
+#           -change regex after user hint
+#     1.05, 26.03.2023
+#           search_alpha_numeric_dates()
+#           - optimize search for short dates (jun., Apr......)
+#           - bugfix regex with whitespace after Month
+#           - add some logging
 #     1.04, 08.03.2023
 #           remove bugfix with Mai
 #           add () as sourrounding for numerical dates
@@ -114,7 +123,7 @@ class FindDates:
         self.dbg_file = None
         self.numeric_dates_cnt = 0
         self.alphanumeric_dates_cnt = 0
-        self.version = '1.04'
+        self.version = '1.06'
         self.found_date_cnt = 0
                        
 
@@ -139,7 +148,7 @@ class FindDates:
         finally:
             f.close()
 
-    def splitt_dates(self, date_string):
+    def split_dates(self, date_string):
         """
         search in date_string for numerical date-values used as blacklist dates
         :param date_string:
@@ -151,6 +160,7 @@ class FindDates:
             r"\d{4}(-|\.)(0[1-9]|1[0-2])(-|\.)(0[1-9]|[12][0-9]|3[01])"  # YYYYMMDD
         ]
 
+        logging.info('start split_dates')
         for singleregex in regexlist:
             startpos = 0
             while startpos < len(date_string):
@@ -167,6 +177,7 @@ class FindDates:
                     startpos += result.end()
                 else:
                     break
+        logging.info('end split_dates')
         return founddatelist
 
     def add_black_list(self, dateblacklist):
@@ -176,7 +187,7 @@ class FindDates:
         :return:
         """
         logging.info('start checking blacklist')
-        blackListDates = self.splitt_dates(dateblacklist)
+        blackListDates = self.split_dates(dateblacklist)
         if blackListDates:
             for blackListDate in blackListDates:
                 founddate = f"{blackListDate.year:04d}.{blackListDate.month:02d}.{blackListDate.day:02d}"
@@ -257,6 +268,7 @@ class FindDates:
             (r"((\s)|(\())(0[1-9]|[12][0-9]|3[01])(\s?)(\.)(\s?)(0[1-9]|1[0-2])(\s?)(\.)(\s?)(\d{4})((\.|\,|\s|\))|\s*$)", "DMY", True),
             # D/M/Y
             (r"((\s)|(\())(0[1-9]|[12][0-9]|3[01])(\s?)(\/)(\s?)(0[1-9]|1[0-2])(\s?)(\/)(\s?)(\d{4})((\.|\,|\s|\))|\s*$)", "DMY", True),
+            # whitespace = false
             # Y-M-D
             (r"((\s*)|(\())(((\d{4})(\s?)(-)(\s?)))(0[1-9]|1[0-2])(\s?)(-)(\s?)(0[1-9]|[12][0-9]|3[01])((\.|\,|\s|\))|\s*$)", "YMD", False),
             # Y.M.D
@@ -359,8 +371,11 @@ class FindDates:
         # \s(((0[1-9]|[12][0-9]|3[01])\.?)?)\s(([a-zA-Z]{3}\.?)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})
 
 
-        regex_long_date = r"\s?((([1-9{1}]|0[1-9]|[12][0-9]|3[01])\.?)\s?)(([a-zA-Z]{3}\.)|([a-zA-ZäÄ]{3,12}))\s(\d{4}|\d{2})"
-        regex_short_date = r"\s?(([a-zA-Z]{3}\.)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
+        # regex_long_date = r"\s?((([1-9{1}]|0[1-9]|[12][0-9]|3[01])\.?)\s?)(([a-zA-Z]{3}\.)|([a-zA-ZäÄ]{3,12}))\s+(\d{4}|\d{2})"
+        regex_long_date = r"\b((([1-9{1}]|0[1-9]|[12][0-9]|3[01])\.?)\s?)(([a-zA-Z]{3}\.)|([a-zA-ZäÄ]{3,12}))\s+(\d{4}|\d{2})"
+        #regex_short_date = r"\s?(([a-zA-Z]{3}\.)|([a-zA-ZäÄ]{4,12}))\s(\d{4}|\d{2})"
+        #regex_short_date = r"\s?(((((Jan)|(Feb)|(Mrz)|(Apr)|(Mai)|(Jun)|(Jul)|(Aug)|(Sep)|(Okt)|(Oct)|(Nov)|(Dez)|(Dec)))\.)|([a-zA-ZäÄ]{4,12}))\s+(\d{4}|\d{2})"
+        regex_short_date = r"\b(((((Jan)|(Feb)|(Mrz)|(Apr)|(Mai)|(Jun)|(Jul)|(Aug)|(Sep)|(Okt)|(Oct)|(Nov)|(Dez)|(Dec)))\.)|([a-zA-ZäÄ]{4,12}))\s+(\d{4}|\d{2})"
 
         regex_list = [ regex_long_date, regex_short_date ]
 
@@ -373,7 +388,7 @@ class FindDates:
             result = None
             for single_regex in regex_list:
                 # search for long alphanumeric dates 11. Oktober 2022
-                result = re.search(single_regex, act_line[start_pos:])
+                result = re.search(single_regex, act_line[start_pos:], re.IGNORECASE)
                 if result:
                     settings_str = {'TIMEZONE': 'CEST',
                                 'REQUIRE_PARTS': ['month', 'year'],
@@ -504,6 +519,6 @@ def main_fn():
         logging.info(f'found date {foundDate}')
         logging.info('Date scanning ended')
 
-
+#testdateien/log.txt
 if __name__ == '__main__':
     main_fn()
