@@ -340,15 +340,15 @@ exit 1
     build_version=$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
     if [[ $(grep beta "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}') == yes ]]; then
         beta_status="_BETA"
-        # write changelog to INFO:
-        echo "changelog=\"$(cat "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "$build_tmp/$PKG/INFO"
+        mv -f "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA" "$build_tmp/$PKG/CHANGELOG"
+        rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE"
     else
-        # write changelog to INFO:
-        echo "changelog=\"$(cat "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "$build_tmp/$PKG/INFO"
+        mv -f "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE" "$build_tmp/$PKG/CHANGELOG"
+        rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA"
     fi
 
-    rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA"
-    rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE"
+    # write changelog to INFO:
+    echo "changelog=\"$(cat "$build_tmp/$PKG/CHANGELOG" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "$build_tmp/$PKG/INFO"
 
     printf "\n-----------------------------------------------------------------------------------\n"
     printf "   SPK will be created ..."

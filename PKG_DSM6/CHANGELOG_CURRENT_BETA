@@ -1,8 +1,16 @@
-1.4.99.1 [20xx-xx-xx]
+1.4.99.1 [2023-10-27]
   BUGFIXES:
  - [SHELL] 
  - [GUI] 
   IMPROVEMENT:
  - [GUI] invalid source directories are displayed in the GUI
+ - [SHELL] Bump apprise library to 1.6.0
+ - [shell] update find_dates.py from v0.4 ➜ v0.6 (thx @GThorsten)
+        search_alpha_numeric_dates()
+        -change regex after user hint
+        search_alpha_numeric_dates()
+        - optimize search for short dates (jun., Apr......)
+        - bugfix regex with whitespace after Month
+        - add some logging
   IMPLEMENTATIONS:
  - 🔥 
