@@ -139,8 +139,8 @@ echo '
         <!-- Include custom CSS formatting -->
         <link rel="stylesheet" href="template/stylesheet.css" />
 
-        <!-- Include jQuery -->
-        <script src="template/jquery/jquery-3.7.0.min.js"></script>
+        <!-- Include jQuery 3.7.1 -->
+        <script src="template/jquery/jquery-3.7.1.min.js"></script>
 </head>
 <body>
 <header></header>
