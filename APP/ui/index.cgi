@@ -133,7 +133,7 @@ echo '
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <!-- Include bootstrap framework 5.3.0 -->
+        <!-- Include bootstrap framework 5.3.2 -->
         <link rel="stylesheet" href="template/bootstrap/css/bootstrap.min.css" />
 
         <!-- Include custom CSS formatting -->
@@ -256,7 +256,7 @@ echo '
         </div><!-- container -->
     </article>
 
-    <!-- Include bootstrap JavaScript 5.3.0 -->
+    <!-- Include bootstrap JavaScript 5.3.2 -->
     <script src="template/bootstrap/js/bootstrap.min.js"></script>
 
 </body>
