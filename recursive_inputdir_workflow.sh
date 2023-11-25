@@ -19,7 +19,7 @@
 #   ! ! ! es empfiehlt sich ein Test mit einer Beispielverzeichnisstruktur ! ! !
 
 #   1.)
-#   Dieses Skript (die 3 Ordnervariablen müssen angepasst werden)
+#   Dieses Skript (die 3 Ordnervariablen [Zeile 8, 10, 12] müssen angepasst werden)
 #   ➜ durchsucht alle Verzeichnisse des angegebenen Ordners nach PDF-Dateien
 #   ➜ verschiebt diese in den angegebenen synOCR-INPUT-Ordner
 #   ➜ versieht diese mit einer ID
