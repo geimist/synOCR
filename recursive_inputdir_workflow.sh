@@ -11,6 +11,7 @@
 # Ausgabeverzeichnis für synOCR:
     SYNOCR_OUTPUT=""
 
+# – ab hier nichts mehr ändern –
 #----------------------------------------------------------------------
 
 #                               HOW TO
@@ -23,7 +24,7 @@
 #   ➜ durchsucht alle Verzeichnisse des angegebenen Ordners nach PDF-Dateien
 #   ➜ verschiebt diese in den angegebenen synOCR-INPUT-Ordner
 #   ➜ versieht diese mit einer ID
-#   ➜ und erstellt eine Indexdatei
+#   ➜ und erstellt eine Indexdatei in den gleichen Ordner, wo dieses Skript gespeichert ist
 
 #   2.)
 #   Nach dem ersten Aufruf lässt man synOCR seine Arbeit machen, d. h. automatisch 
