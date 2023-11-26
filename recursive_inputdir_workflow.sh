@@ -79,8 +79,14 @@ postprocess() {
 ##  APPDIR=$(cd $(dirname "$0");pwd)
 
 if [ ! -d "${SOURCEPARENTDIR}" ] || [ ! -d "${SYNOCR_INPUT}" ] || [ ! -d "${SYNOCR_OUTPUT}" ] ; then
-    echo "Pfad ungültig!"
-    exit
+    echo "FEHLER! Pfad ungültig!"
+    exit 1
+fi
+
+if [ ! -d "${0%/*}" ]; then
+    echo "FEHLER! Der eigene Pfad des Skripts konnte nicht ausgelesen werden!"
+    echo "Bitte rufe es mit vollständigen Pfad oder wenn du dich bereits im Ordner des Skripts befindest mit \"./recursive_inputdir_workflow.sh\" auf."
+    exit 1
 fi
 
 SOURCEPARENTDIR="${SOURCEPARENTDIR%/}/"
