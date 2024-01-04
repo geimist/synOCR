@@ -35,7 +35,7 @@
 #   3.)
 #   Das Skript muss jetzt erneut aufgerufen werden
 #   ➜ es erkennt die vorhandene Indexdatei
-#   ➜ verschiebt die fertigen PDFs an ihren Urspungsort
+#   ➜ verschiebt die fertigen PDFs mit ihren Originalnamen an ihren Urspungsort
 #   ➜ entfernt die ID aus dem Dateinamen
 #   ➜ und benennt die Indexdatei um
 
