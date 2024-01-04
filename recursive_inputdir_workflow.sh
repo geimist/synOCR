@@ -27,7 +27,7 @@
 #   ➜ und erstellt eine Indexdatei in den gleichen Ordner, wo dieses Skript gespeichert ist
 
 #   2.)
-#   Nach dem ersten Aufruf lässt man synOCR seine Arbeit machen, d. h. automatisch 
+#   Nach dem ersten Aufruf dieses Skripts lässt man einmal synOCR seine Arbeit machen, d. h. automatisch 
 #   über die Ordnerüberwachung / Zeitplan oder durch einen manuellen Aufruf.
 #   WICHTIG: synOCR-Profil ohne Umbenennungssyntax und Einsortierung in regeldefinierte 
 #   Ordner, d.h. alle fertigen PDFs liegen im synOCR OUTPUT-Ordner
