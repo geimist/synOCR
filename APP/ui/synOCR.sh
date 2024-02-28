@@ -1569,9 +1569,10 @@ rename()
         # replace date parameters:
         renameCat=$(replace_variables "${renameCat}")
 
-        # define target folder as array
-        IFS=" " read -r -a tagarray <<< "${renameCat}" ; IFS="${IFSsaved}"
-        
+        # define target folder as array and purge duplicates:
+##      IFS=" " read -r -a tagarray <<< "${renameCat}" ; IFS="${IFSsaved}"
+        IFS=" " read -r -a tagarray <<< "$(echo "${renameCat}" | tr ' ' '\n' | awk '!seen[$0]++' | tr '\n' ' ')" ; IFS="${IFSsaved}"
+       
         # temp. list of used destination folders to avoid file duplicates (different tags, but one category):
         DestFolderList=""
         maxID=${#tagarray[*]}
