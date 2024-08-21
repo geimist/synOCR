@@ -202,6 +202,9 @@ class FindDates:
     def check_year_range(self, regex_result, settings_str):
         # def check_year_range(self, date_str, settings_str):
         date_obj = dateparser.parse(regex_result.group(0), settings=settings_str)
+        now = datetime.datetime.now()
+        if not date_obj or abs((now - date_obj).total_seconds()) < 5:
+            date_obj = None
         if date_obj:
             act_value = f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year:04d}"
             logging.debug(f'Found date {act_value}')
