@@ -4,7 +4,7 @@ known issues / limitations:
 
 1.4.99.2 [2023-xx-xx]
   BUGFIXES:
- - [SHELL] 
+ - [SHELL] fix error message "warning: ./synOCR.sh: line 780: command substitution: ignored null byte in input"
  - [GUI] 
   IMPROVEMENT:
  - [GUI] Bump Bootstrap framework to 5.3.2 (thx @Tommes)
