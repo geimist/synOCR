@@ -384,7 +384,7 @@ exit 1
 # Packing and dropping the current installation into the appropriate /Pack folder
     printf "\n - INFO: The archive package.tgz will be created ...\n"
 
-    $FAKEROOT tar -C "${build_tmp}/APP" -czf "${build_tmp}/$PKG"/package.tgz .
+    $FAKEROOT tar -C "${build_tmp}/APP" --exclude='.DS_Store' --exclude='._*' -czf "${build_tmp}/$PKG"/package.tgz .
 
 # Change to the storage location of package.tgz regarding the structure of the SPKs
     cd "${build_tmp}/${PKG}"
@@ -393,7 +393,7 @@ exit 1
     printf "\n - INFO: the SPK will be created ...\n"
     TargetName="${project}_DSM${TargetDSM}_${set_spk_version}${beta_status}.spk"
     # $build_version
-    $FAKEROOT tar -cf "$TargetName" *
+    $FAKEROOT tar --exclude='.DS_Store' --exclude='._*' -cf "$TargetName" *
     cp -f "$TargetName" "${APPDIR}"
 
     printf "\n-----------------------------------------------------------------------------------\n"
