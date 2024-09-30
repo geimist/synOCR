@@ -19,7 +19,7 @@ Without arguments, the script creates the SPK from the current master-branch fro
 Usage:      ./${0##*/} -v=<synOCR-Version> --dsm=<target DSM-Version>
 Example:    ./${0##*/} -v=1.2.0 --dsm=7
 
-    -v= --version=          specifies which synOCR version is to be built
+    -v= --version=          specifies which synOCR version is to be built / the git labels are to be used (branch / tag)
                             "local" will be used the local files without git interaction
         --DSM=              specifies for which DSM version is to be built
 
