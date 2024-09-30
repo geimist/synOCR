@@ -8,6 +8,8 @@
 #  Author: gthorsten
 #  Version:
 #
+#     1.07, 30.09.2024
+#           Fix for dateparser parsing current datetime from invalid string (thx @dklinger)
 #     1.06, 26.10.2023
 #           search_alpha_numeric_dates()
 #           -change regex after user hint
@@ -123,7 +125,7 @@ class FindDates:
         self.dbg_file = None
         self.numeric_dates_cnt = 0
         self.alphanumeric_dates_cnt = 0
-        self.version = '1.06'
+        self.version = '1.07'
         self.found_date_cnt = 0
                        
 
@@ -202,6 +204,9 @@ class FindDates:
     def check_year_range(self, regex_result, settings_str):
         # def check_year_range(self, date_str, settings_str):
         date_obj = dateparser.parse(regex_result.group(0), settings=settings_str)
+        now = datetime.datetime.now()
+        if not date_obj or abs((now - date_obj).total_seconds()) < 5:
+            date_obj = None
         if date_obj:
             act_value = f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year:04d}"
             logging.debug(f'Found date {act_value}')

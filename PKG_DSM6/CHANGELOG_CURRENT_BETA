@@ -1,21 +1,20 @@
-1.4.99.2 [2023-xx-xx]
+1.4.99.2 [2024-09-30]
   BUGFIXES:
- - [SHELL] fix error message "warning: ./synOCR.sh: line 780: command substitution: ignored null byte in input"
- - [GUI] 
+ - [shell]  update find_dates.py from v0.6 ➜ v0.7 (thx @dklinger)
+            Fix for dateparser parsing current datetime from invalid string
+ - [SHELL]  fix error message "warning: ./synOCR.sh: line 780: command substitution: ignored null byte in input"
   IMPROVEMENT:
- - [GUI] Bump Bootstrap framework to 5.3.2 (thx @Tommes)
- - [GUI] Bump jQuery to 3.7.1 (thx @Tommes)
-  IMPLEMENTATIONS:
- - 🔥 
+ - [GUI]    Bump Bootstrap framework to 5.3.2 (thx @Tommes)
+ - [GUI]    Bump jQuery to 3.7.1 (thx @Tommes)
 
 1.4.99.1 [2023-10-27]
   IMPROVEMENT:
- - [GUI] invalid source directories are displayed in the GUI
- - [SHELL] Bump apprise library to 1.6.0
- - [shell] update find_dates.py from v0.4 ➜ v0.6 (thx @GThorsten)
-        search_alpha_numeric_dates()
-        -change regex after user hint
-        search_alpha_numeric_dates()
-        - optimize search for short dates (jun., Apr......)
-        - bugfix regex with whitespace after Month
-        - add some logging
+ - [GUI]    invalid source directories are displayed in the GUI
+ - [SHELL]  Bump apprise library to 1.6.0
+ - [shell]  update find_dates.py from v0.4 ➜ v0.6 (thx @GThorsten)
+            search_alpha_numeric_dates()
+            -change regex after user hint
+            search_alpha_numeric_dates()
+            - optimize search for short dates (jun., Apr......)
+            - bugfix regex with whitespace after Month
+            - add some logging
