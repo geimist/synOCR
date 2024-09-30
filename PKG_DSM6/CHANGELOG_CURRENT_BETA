@@ -2,6 +2,7 @@
   BUGFIXES:
  - [shell]  update find_dates.py from v0.6 ➜ v0.7 (thx @dklinger)
             Fix for dateparser parsing current datetime from invalid string
+ - [SHELL]  fix error message "warning: ./synOCR.sh: line 780: command substitution: ignored null byte in input"
   IMPROVEMENT:
  - [GUI]    Bump Bootstrap framework to 5.3.2 (thx @Tommes)
  - [GUI]    Bump jQuery to 3.7.1 (thx @Tommes)

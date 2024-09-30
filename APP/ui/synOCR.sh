@@ -777,7 +777,7 @@ if [ "${type_of_rule}" = advanced ]; then
                     grep_opt=""
                 fi
 
-                tagname_RegEx_result=$( grep -oP${grep_opt} "${tagname_RegEx}" "${VARsearchfile}" | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
+                tagname_RegEx_result=$( grep -oP${grep_opt} "${tagname_RegEx}" "${VARsearchfile}" | tr -d '\0' | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
                 if [ -n "${tagname_RegEx_result}" ] ; then
                     if echo "${searchtag}" | grep -q "§tagname_RegEx" ; then
                         searchtag="${searchtag//§tagname_RegEx/${tagname_RegEx_result}}"
