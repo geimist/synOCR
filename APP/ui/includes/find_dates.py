@@ -8,6 +8,8 @@
 #  Author: gthorsten
 #  Version:
 #
+#     1.07, 30.09.2024
+#           Fix for dateparser parsing current datetime from invalid string (thx @dklinger)
 #     1.06, 26.10.2023
 #           search_alpha_numeric_dates()
 #           -change regex after user hint
@@ -123,7 +125,7 @@ class FindDates:
         self.dbg_file = None
         self.numeric_dates_cnt = 0
         self.alphanumeric_dates_cnt = 0
-        self.version = '1.06'
+        self.version = '1.07'
         self.found_date_cnt = 0
                        
 
