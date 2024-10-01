@@ -10,6 +10,8 @@
 #
 #     1.07, 30.09.2024
 #           Fix for dateparser parsing current datetime from invalid string (thx @dklinger)
+#           Bugfix for dates like 15.6.2023
+#           add language = de to dateparser (thx @dklinger)
 #     1.06, 26.10.2023
 #           search_alpha_numeric_dates()
 #           -change regex after user hint
@@ -203,10 +205,11 @@ class FindDates:
 
     def check_year_range(self, regex_result, settings_str):
         # def check_year_range(self, date_str, settings_str):
-        date_obj = dateparser.parse(regex_result.group(0), settings=settings_str)
+        date_obj = dateparser.parse(regex_result.group(0), settings=settings_str, languages=['de'])
         now = datetime.datetime.now()
         if not date_obj or abs((now - date_obj).total_seconds()) < 5:
             date_obj = None
+
         if date_obj:
             act_value = f"{date_obj.day:02d}.{date_obj.month:02d}.{date_obj.year:04d}"
             logging.debug(f'Found date {act_value}')
@@ -270,7 +273,7 @@ class FindDates:
             # D-M-Y
             (r"((\s)|(\())(0[1-9]|[12][0-9]|3[01])(\s?)(-)(\s?)(0[1-9]|1[0-2])(\s?)(-)(\s?)(\d{4})((\.|\,|\s|\))|\s*$)", "DMY", True),
             # D.M.Y
-            (r"((\s)|(\())(0[1-9]|[12][0-9]|3[01])(\s?)(\.)(\s?)(0[1-9]|1[0-2])(\s?)(\.)(\s?)(\d{4})((\.|\,|\s|\))|\s*$)", "DMY", True),
+            (r"((\s)|(\())(0[1-9]|[12][0-9]|3[01])(\s?)(\.)(\s?)(0[1-9]|[1-9]|1[0-2])(\s?)(\.)(\s?)(\d{4})((\.|\,|\s|\))|\s*$)", "DMY", True),
             # D/M/Y
             (r"((\s)|(\())(0[1-9]|[12][0-9]|3[01])(\s?)(\/)(\s?)(0[1-9]|1[0-2])(\s?)(\/)(\s?)(\d{4})((\.|\,|\s|\))|\s*$)", "DMY", True),
             # whitespace = false

@@ -2,6 +2,12 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.4.99.3 [2024-10-02]
+  BUGFIXES:
+ - [shell]  update find_dates.py
+            Bugfix for dates like 15.6.2023
+            add language = de to dateparser (thx @dklinger)
+
 1.4.99.2 [2024-09-30]
   BUGFIXES:
  - [shell]  update find_dates.py from v0.6 ➜ v0.7 (thx @dklinger)
