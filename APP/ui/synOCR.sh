@@ -4,7 +4,7 @@
 #################################################################################
 #   description:    main script for running synOCR                              #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh          #
-#   © 2023 by geimist                                                           #
+#   © 2025 by geimist                                                           #
 #################################################################################
 
     echo "    -----------------------------------"
@@ -43,8 +43,9 @@
 
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.6.0" )
-                                # PyPDF2 manual: https://pypdf2.readthedocs.io/en/latest/
+    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.9.2" "pymupdf==1.18.6" "numpy==1.19.5" ) 
+                                # "pymupdf==1.18.6" & "numpy==1.19.5" for blank page detection
+                                # apprise for notification
     dashline1="-----------------------------------------------------------------------------------"
     dashline2="●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
 
@@ -85,7 +86,9 @@
             dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate, 
             backup_max, backup_max_type, pagecount, ocrcount, search_nearest_date, date_search_method, clean_up_spaces, 
             img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, notify_lang, 
-            blank_page_detection_switch, blank_page_detection_threshold_bw, blank_page_detection_threshold_black_pxl
+            blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, 
+            blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, 
+            blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio
         FROM 
             config 
         WHERE 
@@ -132,9 +135,12 @@
     apprise_attachment=$(echo "${sqlerg}" | awk -F'\t' '{print $37}')
     notify_lang=$(echo "${sqlerg}" | awk -F'\t' '{print $38}')
     blank_page_detection_switch=$(echo "${sqlerg}" | awk -F'\t' '{print $39}')
-    blank_page_detection_threshold_bw=$(echo "${sqlerg}" | awk -F'\t' '{print $40}')
-    blank_page_detection_threshold_black_pxl=$(echo "${sqlerg}" | awk -F'\t' '{print $41}')
-
+    blank_page_detection_mainThreshold=$(echo "${sqlerg}" | awk -F'\t' '{print $40}')
+    blank_page_detection_widthCropping=$(echo "${sqlerg}" | awk -F'\t' '{print $41}')
+    blank_page_detection_hightCropping=$(echo "${sqlerg}" | awk -F'\t' '{print $42}')
+    blank_page_detection_interferenceMaxFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $43}')
+    blank_page_detection_interferenceMinFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $44}')
+    blank_page_detection_black_pixel_ratio=$(echo "${sqlerg}" | awk -F'\t' '{print $45}')
 
 # read global values:
     dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -215,8 +221,14 @@
     echo "Document split pattern:   ${documentSplitPattern}"
     echo "split page handling:      ${splitpagehandling}"
     echo "delete blank pages:       ${blank_page_detection_switch}"
-    echo "threshold black/white:    ${blank_page_detection_threshold_bw}"
-    echo "threshold black pixels:   ${blank_page_detection_threshold_black_pxl}"
+    if [ "${blank_page_detection_switch}" = true ]; then
+        echo "                          main threshold:           ${blank_page_detection_mainThreshold}"
+        echo "                          width cropping:           ${blank_page_detection_widthCropping}"
+        echo "                          hight cropping:           ${blank_page_detection_hightCropping}"
+        echo "                          interference max filter:  ${blank_page_detection_interferenceMaxFilter}"
+        echo "                          interference min filter:  ${blank_page_detection_interferenceMinFilter}"
+        echo "                          threshold black pxl:      ${blank_page_detection_black_pixel_ratio}"
+    fi
     echo "clean up spaces:          ${clean_up_spaces}"
     echo -n "Date search method:       "
     if [ "${date_search_method}" = python ] ; then
@@ -2016,88 +2028,40 @@ while read -r input ; do
     fi
 
 
-# detect & remove blank pages:
+# detect & remove blank pagesj with scanrep (https://pypi.org/project/scanprep/):
 # ---------------------------------------------------------------------
     if [ "${blank_page_detection_switch}" = true ] && [ "${python_check}" = "ok" ]; then
         printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "detect & remove blank pages:" "${dashline1}"
 
+        pagePreCount=$( py_page_count "${outputtmp}" )
+        mkdir "${work_tmp_step1%/}/scanrep"
+
+        python3 ./includes/blank_page_detection.py "${outputtmp}" "${work_tmp_step1%/}/scanrep" \
+            --threshold "${blank_page_detection_mainThreshold}" \
+            --width-crop "${blank_page_detection_widthCropping}" \
+            --height-crop "${blank_page_detection_hightCropping}" \
+            --max-filter "${blank_page_detection_interferenceMaxFilter}" \
+            --min-filter "${blank_page_detection_interferenceMinFilter}" \
+            --black-pixel-ratio "${blank_page_detection_black_pixel_ratio}"
+        wait
+
+        scanrep_out=("${work_tmp_step1%/}/scanrep/"*.pdf)
+        if [ -f "${scanrep_out[0]}" ]; then
+            mv -f "${scanrep_out[0]}" "${outputtmp}"
+
+            # Set to zero in case of error to avoid calculation errors
+            pagePreCount=${pagePreCount:-0}
+            pagePostCount=${pagePostCount:-0}
+
+            pagePostCount=$( py_page_count "${outputtmp}" )
+            printf "%s\n\n" "${log_indent}$((pagePreCount - pagePostCount)) (blank pages) out of ${pagePreCount} pages removed."
+        else
+            printf "%s\n\n" "${log_indent}ERROR – No valid target PDF file found or file does not exist."
+        fi
+
 #        echo "delete blank pages:       ${blank_page_detection_switch}"
 #        echo "threshold black/white:    ${blank_page_detection_threshold_bw}"
 #        echo "threshold black pixels:   ${blank_page_detection_threshold_black_pxl}"
-
-    # identify pages without text / write to an array:
-    # ---------------------------------------------------------------------
-        pageCount=$( py_page_count "${outputtmp}" )
-
-        unset blankPages
-        if grep -qwP "^[0-9]+$" <<<"${pageCount}" ; then
-            p=1
-            blankPages=( )
-            while [ "${p}" -le "${pageCount}" ]; do
-                charcount=$( pdftotext "${outputtmp}" -f $p -l $p -layout - | wc -m )
-#                echo "Seite $p enthält $charcount Zeichen"
-                if [ "${charcount}" -le 1 ]; then
-#                if [ $( pdftotext "${outputtmp}" -f $p -l $p -layout - | wc -m ) -eq 0 ]; then
-                    blankPages+=( "${p}" )
-#                    echo "füge Seite $p hinzu"
-                fi
-                p=$((p+1))
-            done
-            numberBlankPages="${#blankPages[@]}"
-        else
-            echo "${log_indent}! ! ! error at counting PDF pages"
-        fi
-        echo "${log_indent}pages without text: ${numberBlankPages} [${blankPages[*]}]"
-
-    # send pages to python for picture analysis and deletion:
-    # …
-
-        # get previous metadata - maybe for feature use:
-        py_delete_blank_pages(){
-            {   #echo "import pprint"
-                #echo "from pypdf import PdfFileReader, PdfFileMerger"
-                #echo "if __name__ == '__main__':"
-                #echo "    file_in = open('${outputtmp}', 'rb')"
-                #echo "    pdf_reader = PdfFileReader(file_in)"
-                #echo "    metadata = pdf_reader.getDocumentInfo()"
-                #echo "    pprint.pprint(metadata)"
-                #echo "    file_in.close()"
-                
-#                echo "from PIL import Image"
-
-                # Laden der gescannten PDF-Seite als Bild
-#                echo "with Image.open('${outputtmp}') as img:"
-                echo "import pikepdf"
-                echo "from PIL import Image"
-
-                # Laden der PDF-Seite als Bild
-                echo "with pikepdf.open('${outputtmp}') as pdf:"
-                echo "    page = pdf.pages[0]"
-                echo "    page_image = page.render()"
-                echo "    with open('${outputtmp}.png', 'wb') as f:"
-                echo "        f.write(page_image)"
-
-                # Anwenden des Schwellenwerts
-                echo "img = Image.open('${outputtmp}.png').convert('L')"
-                echo "threshold_value = 150"
-                echo "img = img.point(lambda x: 255 * (x > threshold_value), mode='1')"
-#                echo "    threshold_img = img.point(lambda x: 255 * (x > threshold_value), mode='1')"
-
-#                # Ermitteln der Anzahl der nicht-weißen Pixel
-#                echo "    pixel_count = threshold_img.size[0] * threshold_img.size[1]"
-#                echo "    white_pixel_count = threshold_img.histogram()[255]"
-#                echo "    black_pixel_count = pixel_count - white_pixel_count"
-                
-                # Überprüfen, ob die Seite leer ist
-                echo "if img.getbbox() is None:"
-                echo "    print('Die Seite ist leer.')"
-                echo "else:"
-                echo "    print('Die Seite ist nicht leer.')"
-                
-            } | python3
-        }
-        delete_blank_pages_result=$(py_delete_blank_pages)
-        echo "${delete_blank_pages_result}"
     fi
 
 

@@ -4,8 +4,9 @@
 #################################################################################
 #   description:    - generates the configuration page for the GUI              #
 #   path:            /usr/syno/synoman/webman/3rdparty/synOCR/edit.sh           #
-#   © 2023 by geimist                                                           #
+#   © 2025 by geimist                                                           #
 #################################################################################
+
 
 dev_mode=false #true # false # show field in development ...
 # if [ "$dev_mode" = "true" ]; then
@@ -429,11 +430,11 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
                             if [ "$(sqlite3 ./etc/synOCR.sqlite "${sSQL}")" = 0 ] ; then
                                 sqlite3 ./etc/synOCR.sqlite "INSERT INTO config 
                                     ( 
-                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_threshold_bw, blank_page_detection_threshold_black_pxl
+                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio
                                     ) 
                                         VALUES 
                                     ( 
-                                        '${new_profile_value}', '${active}', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${documentSplitPattern}', '${taglist}', '${searchAll}', '${moveTaggedFiles}', '${NameSyntax}', '${ocropt//\'/\'\'}', '${dockercontainer}', '${apprise_call}', '${apprise_attachment}', '${notify_lang}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}', '${filedate}', '${tagsymbol}', '${ignoredDate}', '${backup_max}', '${backup_max_type}', '${search_nearest_date}', '${date_search_method}', '${clean_up_spaces}', '${img2pdf}', '${DateSearchMinYear}', '${DateSearchMaxYear}', '${splitpagehandling}', '${blank_page_detection_switch}',  '${blank_page_detection_threshold_bw}',  '${blank_page_detection_threshold_black_pxl}' 
+                                        '${new_profile_value}', '${active}', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${documentSplitPattern}', '${taglist}', '${searchAll}', '${moveTaggedFiles}', '${NameSyntax}', '${ocropt//\'/\'\'}', '${dockercontainer}', '${apprise_call}', '${apprise_attachment}', '${notify_lang}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}', '${filedate}', '${tagsymbol}', '${ignoredDate}', '${backup_max}', '${backup_max_type}', '${search_nearest_date}', '${date_search_method}', '${clean_up_spaces}', '${img2pdf}', '${DateSearchMinYear}', '${DateSearchMaxYear}', '${splitpagehandling}', '${blank_page_detection_switch}', '${blank_page_detection_mainThreshold}', '${blank_page_detection_widthCropping}', '${blank_page_detection_hightCropping}', '${blank_page_detection_interferenceMaxFilter}', '${blank_page_detection_interferenceMinFilter}', '${blank_page_detection_black_pixel_ratio}'
                                     )"
 
                                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
@@ -621,8 +622,12 @@ if [[ "${page}" == "edit-save" ]]; then
                                 splitpagehandling='${splitpagehandling}',
                                 apprise_attachment='${apprise_attachment}',
                                 blank_page_detection_switch='${blank_page_detection_switch}',
-                                blank_page_detection_threshold_bw='${blank_page_detection_threshold_bw}',
-                                blank_page_detection_threshold_black_pxl='${blank_page_detection_threshold_black_pxl}'
+                                blank_page_detection_mainThreshold='${blank_page_detection_mainThreshold}',
+                                blank_page_detection_widthCropping='${blank_page_detection_widthCropping}',
+                                blank_page_detection_hightCropping='${blank_page_detection_hightCropping}',
+                                blank_page_detection_interferenceMaxFilter='${blank_page_detection_interferenceMaxFilter}',
+                                blank_page_detection_interferenceMinFilter='${blank_page_detection_interferenceMinFilter}',
+                                blank_page_detection_black_pixel_ratio='${blank_page_detection_black_pixel_ratio}'
                             WHERE 
                                 profile_ID='${profile_ID}' "
 
@@ -661,7 +666,7 @@ if [[ "${page}" == "edit" ]]; then
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
                 NameSyntax, ocropt, dockercontainer, apprise_call, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, blank_page_detection_switch, blank_page_detection_threshold_bw, blank_page_detection_threshold_black_pxl
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio
             FROM 
                 config 
             WHERE 
@@ -670,7 +675,7 @@ if [[ "${page}" == "edit" ]]; then
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
                 NameSyntax, ocropt, dockercontainer, apprise_call, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, blank_page_detection_switch, blank_page_detection_threshold_bw, blank_page_detection_threshold_black_pxl
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio
             FROM 
                 config 
             WHERE 
@@ -716,8 +721,12 @@ if [[ "${page}" == "edit" ]]; then
         splitpagehandling=$(echo "${sqlerg}" | awk -F'\t' '{print $36}')
         apprise_attachment=$(echo "${sqlerg}" | awk -F'\t' '{print $37}')
         blank_page_detection_switch=$(echo "${sqlerg}" | awk -F'\t' '{print $38}')
-        blank_page_detection_threshold_bw=$(echo "${sqlerg}" | awk -F'\t' '{print $39}')
-        blank_page_detection_threshold_black_pxl=$(echo "${sqlerg}" | awk -F'\t' '{print $40}')
+        blank_page_detection_mainThreshold=$(echo "${sqlerg}" | awk -F'\t' '{print $39}')
+        blank_page_detection_widthCropping=$(echo "${sqlerg}" | awk -F'\t' '{print $40}')
+        blank_page_detection_hightCropping=$(echo "${sqlerg}" | awk -F'\t' '{print $41}')
+        blank_page_detection_interferenceMaxFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $42}')
+        blank_page_detection_interferenceMinFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $43}')
+        blank_page_detection_black_pixel_ratio=$(echo "${sqlerg}" | awk -F'\t' '{print $44}')
 
     # read global values:
         dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -1403,8 +1412,6 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
-
-if [ "${dev_mode}" = "true" ]; then
                     echo '<hr><br>'
 
                     # blank_page_detection
@@ -1445,86 +1452,252 @@ if [ "${dev_mode}" = "true" ]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
-                    # blank_page_detection_threshold_bw
+                    # blank_page_detection_mainThreshold
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="blank_page_detection_threshold_bw">'"${lang_edit_set2_blank_page_detection_threshold_bw_title}"'</label>
-                        </div>
-                        <div class="col-sm-5">
-                            <select name="blank_page_detection_threshold_bw" id="blank_page_detection_threshold_bw" class="form-select form-select-sm">'
-
-                                IFS=" " read -r -a tagarray <<< "$(seq -s " " 0 1 255)"; IFS="${IFSsaved}"
-
-                                for entry in "${threshold_bw_array[@]}"; do
-                                    if [[ "${blank_page_detection_threshold_bw}" == "${entry}" ]]; then
-                                        echo "<option value=${entry} selected>${entry}</option>"
-                                    else
-                                        echo "<option value=${entry}>${entry}</option>"
-                                    fi
-                                done
-
-                            echo '
-                            </select>
-                        </div>
-                        <div class="col-sm-2">
-                            <div class="float-end">
-                                <a data-bs-toggle="collapse" href="#blank_page_detection_threshold_bw-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_threshold_bw-info">
-                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-10">
-                            <div class="collapse" id="blank_page_detection_threshold_bw-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
-                                    <span>
-                                         '"${lang_edit_set2_blank_page_detection_threshold_bw_help1}"'<br><br>
-                                         '"${lang_edit_set2_blank_page_detection_threshold_bw_help2}" '
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-2"></div>
-                    </div>'
-
-                    # blank_page_detection_threshold_black_pxl
-                    echo '
-                    <div class="row mb-3">
-                        <div class="col-sm-5">
-                            <label for="blank_page_detection_threshold_black_pxl">'"${lang_edit_set2_blank_page_detection_threshold_black_pxl_title}"'</label>
+                            <label for="blank_page_detection_mainThreshold">'"${lang_edit_set2_blank_page_detection_mainThreshold_title}"'</label>
                         </div>
                         <div class="col-sm-5">'
 
-                            if [ -n "${blank_page_detection_threshold_black_pxl}" ]; then
-                                echo '<input type="text" name="blank_page_detection_threshold_black_pxl" id="blank_page_detection_threshold_black_pxl" class="form-control form-control-sm" value="'"${blank_page_detection_threshold_black_pxl}"'" />'
+                            if [ -n "${blank_page_detection_mainThreshold}" ]; then
+                                echo '<input type="text" name="blank_page_detection_mainThreshold" id="blank_page_detection_mainThreshold" class="form-control form-control-sm" value="'"${blank_page_detection_mainThreshold}"'" />'
                             else
-                                echo '<input type="text" name="blank_page_detection_threshold_black_pxl" id="blank_page_detection_threshold_black_pxl" class="form-control form-control-sm" value="" />'
+                                echo '<input type="text" name="blank_page_detection_mainThreshold" id="blank_page_detection_mainThreshold" class="form-control form-control-sm" value="" />'
                             fi
 
                             echo '
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
-                                <a data-bs-toggle="collapse" href="#blank_page_detection_threshold_black_pxl-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_threshold_black_pxl-info">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_mainThreshold-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_mainThreshold-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-sm-10">
-                            <div class="collapse" id="blank_page_detection_threshold_black_pxl-info">
+                            <div class="collapse" id="blank_page_detection_mainThreshold-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
-                                         '"${lang_edit_set2_blank_page_detection_threshold_black_pxl_help1}"'<br><br>
-                                         '"${lang_edit_set2_blank_page_detection_threshold_black_pxl_help2}" '
+                                         '"${lang_edit_set2_blank_page_detection_mainThreshold_help1}"'<br><br>
+                                         '"${lang_edit_set2_blank_page_detection_mainThreshold_help2}"'<br><br>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">'50'</span></code>
                                     </span>
                                 </div>
                             </div>
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
-fi
+
+    echo '
+    <div class="accordion" id="Accordion-01-2">
+        <div class="accordion-item border-start-0 border-end-0" style="border-style: dashed none dashed none; size: 1px;">
+            <h2 class="accordion-header" id="Heading-01">
+                <button class="accordion-button collapsed bg-white synocr-accordion-glow-off" type="button" data-bs-toggle="collapse" data-bs-target="#Collapse-01" aria-expanded="false" aria-controls="collapseTwo">
+                    <span class="synocr-text-blue" style="color: #BD0010;">'"${lang_edit_set1_blank_page_detection_expert_title}"'</span>
+                </button>
+            </h2>
+            <div id="Collapse-01" class="accordion-collapse collapse border-white" aria-labelledby="Heading-01" data-bs-parent="#Accordion-01-2">
+                <div class="accordion-body">'
+
+                    # blank_page_detection_widthCropping
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="blank_page_detection_widthCropping">'"${lang_edit_set2_blank_page_detection_widthCropping_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">'
+
+                            if [ -n "${blank_page_detection_widthCropping}" ]; then
+                                echo '<input type="text" name="blank_page_detection_widthCropping" id="blank_page_detection_widthCropping" class="form-control form-control-sm" value="'"${blank_page_detection_widthCropping}"'" />'
+                            else
+                                echo '<input type="text" name="blank_page_detection_widthCropping" id="blank_page_detection_widthCropping" class="form-control form-control-sm" value="" />'
+                            fi
+
+                            echo '
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_widthCropping-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_widthCropping-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="blank_page_detection_widthCropping-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                         '"${lang_edit_set2_blank_page_detection_widthCropping_help1}"'<br><br>
+                                         '"${lang_edit_set2_blank_page_detection_widthCropping_help2}"'<br><br>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">'0.1'</span></code>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # blank_page_detection_hightCropping
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="blank_page_detection_hightCropping">'"${lang_edit_set2_blank_page_detection_hightCropping_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">'
+
+                            if [ -n "${blank_page_detection_hightCropping}" ]; then
+                                echo '<input type="text" name="blank_page_detection_hightCropping" id="blank_page_detection_hightCropping" class="form-control form-control-sm" value="'"${blank_page_detection_hightCropping}"'" />'
+                            else
+                                echo '<input type="text" name="blank_page_detection_hightCropping" id="blank_page_detection_hightCropping" class="form-control form-control-sm" value="" />'
+                            fi
+
+                            echo '
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_hightCropping-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_hightCropping-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="blank_page_detection_hightCropping-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                         '"${lang_edit_set2_blank_page_detection_hightCropping_help1}"'<br><br>
+                                         '"${lang_edit_set2_blank_page_detection_hightCropping_help2}"'<br><br>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">'0.05'</span></code>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # blank_page_detection_interferenceMaxFilter
+                    lang_edit_set2_blank_page_detection_interferenceMaxFilter_title="MaxFilter"
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="blank_page_detection_interferenceMaxFilter">'"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">'
+
+                            if [ -n "${blank_page_detection_interferenceMaxFilter}" ]; then
+                                echo '<input type="text" name="blank_page_detection_interferenceMaxFilter" id="blank_page_detection_interferenceMaxFilter" class="form-control form-control-sm" value="'"${blank_page_detection_interferenceMaxFilter}"'" />'
+                            else
+                                echo '<input type="text" name="blank_page_detection_interferenceMaxFilter" id="blank_page_detection_interferenceMaxFilter" class="form-control form-control-sm" value="" />'
+                            fi
+
+                            echo '
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_interferenceMaxFilter-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_interferenceMaxFilter-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="blank_page_detection_interferenceMaxFilter-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                         '"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_help1}"'<br><br>
+                                         '"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_help2}"'<br><br>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">'1'</span></code>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # blank_page_detection_interferenceMinFilter
+                    lang_edit_set2_blank_page_detection_interferenceMinFilter_title="MinFilter"
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="blank_page_detection_interferenceMinFilter">'"${lang_edit_set2_blank_page_detection_interferenceMinFilter_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">'
+
+                            if [ -n "${blank_page_detection_interferenceMinFilter}" ]; then
+                                echo '<input type="text" name="blank_page_detection_interferenceMinFilter" id="blank_page_detection_interferenceMinFilter" class="form-control form-control-sm" value="'"${blank_page_detection_interferenceMinFilter}"'" />'
+                            else
+                                echo '<input type="text" name="blank_page_detection_interferenceMinFilter" id="blank_page_detection_interferenceMinFilter" class="form-control form-control-sm" value="" />'
+                            fi
+
+                            echo '
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_interferenceMinFilter-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_interferenceMinFilter-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="blank_page_detection_interferenceMinFilter-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                         '"${lang_edit_set2_blank_page_detection_interferenceMinFilter_help1}"'<br><br>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">'3'</span></code>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # blank_page_detection_black_pixel_ratio
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="blank_page_detection_black_pixel_ratio">'"${lang_edit_set2_blank_page_detection_black_pixel_ratio_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">'
+
+                            if [ -n "${blank_page_detection_black_pixel_ratio}" ]; then
+                                echo '<input type="text" name="blank_page_detection_black_pixel_ratio" id="blank_page_detection_black_pixel_ratio" class="form-control form-control-sm" value="'"${blank_page_detection_black_pixel_ratio}"'" />'
+                            else
+                                echo '<input type="text" name="blank_page_detection_black_pixel_ratio" id="blank_page_detection_black_pixel_ratio" class="form-control form-control-sm" value="" />'
+                            fi
+
+                            echo '
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_black_pixel_ratio-info" role="button" aria-expanded="false" aria-controls="blank_page_detection_black_pixel_ratio-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="blank_page_detection_black_pixel_ratio-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                         '"${lang_edit_set2_blank_page_detection_black_pixel_ratio_help1}"'<br><br>
+                                         '"${lang_edit_set2_blank_page_detection_black_pixel_ratio_help2}"'<br><br>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">'0.005'</span></code>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    echo '
+                </div>
+            </div>
+        </div>
+    </div>'
+
 
                     echo '<hr><br>'
 

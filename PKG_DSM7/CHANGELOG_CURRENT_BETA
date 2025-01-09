@@ -2,6 +2,12 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.4.99.5 [2025-01-10]
+  IMPLEMENTATIONS:
+ - 🔥 Blank page detection and removal has been implemented.
+  IMPROVEMENT:
+ - [SHELL]  Bump apprise library to 1.9.2
+
 1.4.99.4 [2024-12-07]
   BUGFIXES:
  - [shell]  Bugfix for file names with a tilde

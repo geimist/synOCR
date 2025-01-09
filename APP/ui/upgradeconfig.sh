@@ -5,7 +5,7 @@
 #   description:    checks / create the configuration DB for new variables      #
 #                   and adds them if necessary                                  #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/upgradeconfig.sh   #
-#   © 2023 by geimist                                                           #
+#   © 2025 by geimist                                                           #
 #################################################################################
 
 log=""
@@ -727,6 +727,108 @@ fi
         error=0
     fi
 
+
+# DB-update from v9 to v10:
+# ---------------------------------------------------------------------
+    if [ "$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 9 ] ; then
+
+        # blank_page_detection_mainThreshold:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_mainThreshold\" VARCHAR DEFAULT ('50'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_mainThreshold ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_mainThreshold)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # blank_page_detection_widthCropping:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_widthCropping\" VARCHAR DEFAULT ('0.10'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_widthCropping ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_widthCropping)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # blank_page_detection_hightCropping:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_hightCropping\" VARCHAR DEFAULT ('0.05'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_hightCropping ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_hightCropping)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # blank_page_detection_interferenceMaxFilter:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_interferenceMaxFilter\" VARCHAR DEFAULT ('1'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMaxFilter ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_interferenceMaxFilter)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # blank_page_detection_interferenceMinFilter:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_interferenceMinFilter\" VARCHAR DEFAULT ('3'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMinFilter ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_interferenceMinFilter)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # blank_page_detection_black_pixel_ratio:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_black_pixel_ratio\" VARCHAR DEFAULT ('0.005'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_black_pixel_ratio ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_black_pixel_ratio)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        if [[ "${error}" == 0 ]]; then
+            # lift DB version:
+            lift_db 9 10
+        fi
+        error=0
+    fi
+
 # adjust permissions:
 # ---------------------------------------------------------------------
     [ "$(whoami)" = root ] && chmod 766 ./etc/synOCR.sqlite
@@ -742,3 +844,4 @@ exit 0
 # ➜ edit.sh:            "$page" == "edit" Profil einlesen anpassen
 # ➜ edit.sh:            GUI Element ggf. einfügen / anpassen
 # ➜ synOCR.sh:          DB-Einlesen anpassen
+
