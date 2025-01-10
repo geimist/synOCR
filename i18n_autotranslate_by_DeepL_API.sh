@@ -9,7 +9,7 @@
 
 DeepLapiKey=""
 # Fallback key from external file:
-DeepLapiKey="${DeepLapiKey:-$(head -n1 "$(realpath "${0%/*}/../../DeepL_api-Key.txt")")}"
+[ -z "${DeepLapiKey}" ] && DeepLapiKey="${DeepLapiKey:-$(head -n1 "$(realpath "${0%/*}/../../DeepL_api-Key.txt")")}"
 
 
 # ToDo:
@@ -46,7 +46,8 @@ DeepLapiKey="${DeepLapiKey:-$(head -n1 "$(realpath "${0%/*}/../../DeepL_api-Key.
     # sollen abschließend die Sprachdateien exportiert werden?:
     exportLangFiles=1
 #   exportPath="/usr/syno/synoman/webman/3rdparty/synOCR/lang/"
-    exportPath="/Users/stephangeisler/Documents/Computer/Code Projekte/GitHub/synOCR/synOCR/APP/ui/lang/"
+#   exportPath="/Users/stephangeisler/Documents/Computer/Code Projekte/GitHub/synOCR/synOCR/APP/ui/lang/"
+    exportPath="${0%/*}/APP/ui/lang/"
     
     # sollen bereits vorhandene Sprachdateien überschrieben werden?:
     overwrite=1
