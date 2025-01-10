@@ -46,7 +46,6 @@ DeepLapiKey=""
     # sollen abschließend die Sprachdateien exportiert werden?:
     exportLangFiles=1
 #   exportPath="/usr/syno/synoman/webman/3rdparty/synOCR/lang/"
-#   exportPath="/Users/stephangeisler/Documents/Computer/Code Projekte/GitHub/synOCR/synOCR/APP/ui/lang/"
     exportPath="${0%/*}/APP/ui/lang/"
     
     # sollen bereits vorhandene Sprachdateien überschrieben werden?:
@@ -69,15 +68,6 @@ error=0
 date_start=$(date +%s)
 exportPath="${exportPath%/}/"
 manFilePath="${manFilePath%/}/"
-
-#if ! uname -a | grep -q synology ; then
-#    echo "! ! ! F E H L E R ! ! !"
-#    echo "Dieses Skript greift auf Programme zurück, welche nur im Synology DSM vorhanden sind."
-#    echo "(synosetkeyvalue und get_key_value)"
-#    echo "Ersetze ggf. diese Programme durch sed, awk und grep und deaktiviere diese Prüfung."
-
-#    exit 1
-#fi
 
 get_key_value() {
     # this function is a workaround replacement of synology DSM binary get_key_value
