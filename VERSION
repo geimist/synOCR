@@ -1,6 +1,7 @@
 {
   "app": "synOCR",
   "description": "current synOCR versions",
+  "serverURL": "https://geimist.eu/synOCR/updateserver.php",
   "dsm": {
     "dsm6": {
       "beta": {
