@@ -1333,15 +1333,64 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="documentSplitPattern">'"${lang_edit_set2_documentSplitPattern_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
-
-                             if [ -n "${documentSplitPattern}" ]; then
-                                echo '<input type="text" name="documentSplitPattern" id="documentSplitPattern" class="form-control form-control-sm" value="'"${documentSplitPattern}"'" />'
+                        <div class="col-sm-5">
+                            <select id="splitPatternSelect" class="form-select form-select-sm" onchange="handleSplitPatternChange(this)">'
+                    
+                                if [[ "${documentSplitPattern}" == "<split each page>" ]]; then
+                                    echo '<option value="default" selected>'"${lang_edit_set2_documentSplitPattern_eachPage}"'</option>'
+                                else
+                                    echo '<option value="default">'"${lang_edit_set2_documentSplitPattern_eachPage}"'</option>'
+                                fi
+                    
+                                if [[ "${documentSplitPattern}" != "<split each page>" ]]; then
+                                    echo '<option value="custom" selected>'"${lang_edit_set2_documentSplitPattern_userDefined}"'</option>'
+                                else
+                                    echo '<option value="custom">'"${lang_edit_set2_documentSplitPattern_userDefined}"'</option>'
+                                fi
+                    
+                                echo '
+                            </select>'
+                    
+                            if [[ "${documentSplitPattern}" != "<split each page>" ]]; then
+                                echo '<input type="text" name="documentSplitPattern" id="customSplitPattern" 
+                                      class="form-control form-control-sm mt-2" 
+                                      value="'"${documentSplitPattern}"'" />'
                             else
-                                echo '<input type="text" name="documentSplitPattern" id="documentSplitPattern" class="form-control form-control-sm" value="" />'
+                                echo '<input type="hidden" name="documentSplitPattern" value="<split each page>" id="defaultSplitPattern" />
+                                <input type="text" id="customSplitPattern" 
+                                      class="form-control form-control-sm mt-2" 
+                                      style="display:none;" />'
                             fi
-
+                    
                             echo '
+                            <script>
+                            function handleSplitPatternChange(selectElement) {
+                                var customInput = document.getElementById("customSplitPattern");
+                                var hiddenInput = document.getElementById("defaultSplitPattern") || document.createElement("input");
+                                var splitPageHandlingBlock = document.getElementById("splitPageHandlingBlock");
+                                
+                                if (!hiddenInput.id) {
+                                    hiddenInput.type = "hidden";
+                                    hiddenInput.id = "defaultSplitPattern";
+                                    hiddenInput.value = "<split each page>";
+                                    selectElement.parentNode.appendChild(hiddenInput);
+                                }
+                                
+                                if (selectElement.value === "custom") {
+                                    customInput.style.display = "block";
+                                    if (splitPageHandlingBlock) splitPageHandlingBlock.style.display = "block";
+                                    customInput.focus();
+                                    customInput.name = "documentSplitPattern";
+                                    hiddenInput.name = "";
+                                } else {
+                                    customInput.style.display = "none";
+                                    if (splitPageHandlingBlock) splitPageHandlingBlock.style.display = "none";
+                                    customInput.value = "";
+                                    customInput.name = "";
+                                    hiddenInput.name = "documentSplitPattern";
+                                }
+                            }
+                            </script>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -1355,7 +1404,10 @@ if [[ "${page}" == "edit" ]]; then
                             <div class="collapse" id="documentSplitPattern-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
-                                         '"${lang_edit_set2_documentSplitPattern_help1}"'<br><br>
+                                        <b>'"${lang_edit_set2_documentSplitPattern_userDefined}"':</b><br>
+                                        '"${lang_edit_set2_documentSplitPattern_help1}"'<br><br>
+                                        <b>'"${lang_edit_set2_documentSplitPattern_eachPage}"':</b><br>
+                                        '"${lang_edit_set2_documentSplitPattern_help2}"'<br><br>
                                          '"${lang_edit_set2_documentSplitPattern_help3}" '<a href="https://geimist.eu/synOCR/SYNOCR_SEPARATOR_SHEET.pdf.html" onclick="window.open(this.href); return false;" style="color: #BD0010;"><b>(DOWNLOAD)</b></a>
                                     </span>
                                 </div>
@@ -1363,16 +1415,25 @@ if [[ "${page}" == "edit" ]]; then
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
-
+                    
                     # splitpagehandling
                     echo '
+                    <div id="splitPageHandlingBlock" style="display: '
+                    
+                    if [[ "${documentSplitPattern}" != "<split each page>" ]]; then
+                        echo 'block'
+                    else
+                        echo 'none'
+                    fi
+                    
+                    echo '">
                     <div class="row mb-3">
                         <div class="col-sm-5">
                             <label for="splitpagehandling">'"${lang_edit_set2_splitpagehandling_title}"'</label>
                         </div>
                         <div class="col-sm-5">
                             <select name="splitpagehandling" id="splitpagehandling" class="form-select form-select-sm">'
-
+                    
                                 if [[ "${splitpagehandling}" == "discard" ]]; then
                                     echo '<option value="discard" selected>'"${lang_edit_set2_splitpagehandling_discard}"'</option>'
                                 else
@@ -1388,7 +1449,7 @@ if [[ "${page}" == "edit" ]]; then
                                 else
                                     echo '<option value="isFirstPage">'"${lang_edit_set2_splitpagehandling_isFirstPage}"'</option>'
                                 fi
-
+                    
                                 echo '
                             </select>
                         </div>
@@ -1410,6 +1471,7 @@ if [[ "${page}" == "edit" ]]; then
                             </div>
                         </div>
                         <div class="col-sm-2"></div>
+                    </div>
                     </div>'
 
                     echo '<hr><br>'
@@ -1482,7 +1544,7 @@ if [[ "${page}" == "edit" ]]; then
                                     <span>
                                          '"${lang_edit_set2_blank_page_detection_mainThreshold_help1}"'<br><br>
                                          '"${lang_edit_set2_blank_page_detection_mainThreshold_help2}"'<br><br>
-                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">'50'</span></code>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">50</span></code>
                                     </span>
                                 </div>
                             </div>
@@ -1608,7 +1670,7 @@ if [[ "${page}" == "edit" ]]; then
                                     <span>
                                          '"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_help1}"'<br><br>
                                          '"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_help2}"'<br><br>
-                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">'1'</span></code>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">1</span></code>
                                     </span>
                                 </div>
                             </div>
@@ -1646,7 +1708,7 @@ if [[ "${page}" == "edit" ]]; then
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
                                          '"${lang_edit_set2_blank_page_detection_interferenceMinFilter_help1}"'<br><br>
-                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">'3'</span></code>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">3</span></code>
                                     </span>
                                 </div>
                             </div>

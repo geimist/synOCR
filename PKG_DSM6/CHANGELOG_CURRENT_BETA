@@ -1,3 +1,9 @@
+1.4.99.6 [2025-01-16]
+  BUGFIXES:
+ - [shell]  fixing some minor bugs
+  IMPROVEMENT:
+ - Splitting pages can be set to each page
+
 1.4.99.5 [2025-01-10]
   IMPLEMENTATIONS:
  - 🔥 Blank page detection and removal has been implemented.

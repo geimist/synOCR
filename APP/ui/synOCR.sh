@@ -182,6 +182,7 @@
         echo "no"
     fi
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
+    echo "system-ID:                $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='UUID'")"
     echo "used image (created):     ${dockercontainer} ($(docker inspect -f '{{ .Created }}' "${dockercontainer}" 2>/dev/null | awk -F. '{print $1}'))"
 
     documentAuthor=$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}" | grep "\-\-author" | sed -e 's/--author //')
@@ -219,15 +220,21 @@
     tagsymbol="${tagsymbol// /%20}"   # mask spaces
     echo "target file handling:     ${moveTaggedFiles}"
     echo "Document split pattern:   ${documentSplitPattern}"
-    echo "split page handling:      ${splitpagehandling}"
+    
+    if [[ "${documentSplitPattern}" = "<split each page>" ]]; then
+        splitpagehandling="isFirstPage"
+        echo "split page handling:      ${splitpagehandling} (because, <split each page> is set)"
+    else
+        echo "split page handling:      ${splitpagehandling}"
+    fi
     echo "delete blank pages:       ${blank_page_detection_switch}"
     if [ "${blank_page_detection_switch}" = true ]; then
-        echo "                          main threshold:           ${blank_page_detection_mainThreshold}"
-        echo "                          width cropping:           ${blank_page_detection_widthCropping}"
-        echo "                          hight cropping:           ${blank_page_detection_hightCropping}"
-        echo "                          interference max filter:  ${blank_page_detection_interferenceMaxFilter}"
-        echo "                          interference min filter:  ${blank_page_detection_interferenceMinFilter}"
-        echo "                          threshold black pxl:      ${blank_page_detection_black_pixel_ratio}"
+        echo "  main threshold:         ${blank_page_detection_mainThreshold}"
+        echo "  width cropping:         ${blank_page_detection_widthCropping}"
+        echo "  hight cropping:         ${blank_page_detection_hightCropping}"
+        echo "  interf. max filter:     ${blank_page_detection_interferenceMaxFilter}"
+        echo "  interf. min filter:     ${blank_page_detection_interferenceMinFilter}"
+        echo "  thresh. black pxl:      ${blank_page_detection_black_pixel_ratio}"
     fi
     echo "clean up spaces:          ${clean_up_spaces}"
     echo -n "Date search method:       "
@@ -2058,10 +2065,6 @@ while read -r input ; do
         else
             printf "%s\n\n" "${log_indent}ERROR – No valid target PDF file found or file does not exist."
         fi
-
-#        echo "delete blank pages:       ${blank_page_detection_switch}"
-#        echo "threshold black/white:    ${blank_page_detection_threshold_bw}"
-#        echo "threshold black pixels:   ${blank_page_detection_threshold_black_pxl}"
     fi
 
 
@@ -2077,16 +2080,23 @@ while read -r input ; do
         if [[ "${pageCount}" =~ ^[0-9]+$ ]]; then
             p=1
             splitPages=( )
-            while [ "${p}" -le "${pageCount}" ]; do
-                if pdftotext "${outputtmp}" -f $p -l $p -layout - | grep -q "${documentSplitPattern}" ; then
+            if [[ "${documentSplitPattern}" = "<split each page>" ]]; then
+                while [ "${p}" -le "${pageCount}" ]; do
                     splitPages+=( "${p}" )
-                fi
-                p=$((p+1))
-            done
+                    p=$((p+1))
+                done
+            else
+                while [ "${p}" -le "${pageCount}" ]; do
+                    if pdftotext "${outputtmp}" -f $p -l $p -layout - | grep -q "${documentSplitPattern}" ; then
+                        splitPages+=( "${p}" )
+                    fi
+                    p=$((p+1))
+                done
+            fi
         else
             echo "${log_indent}! ! ! error at counting PDF pages"
         fi
-    
+
     # split document:
     # ---------------------------------------------------------------------
         unset splitJob

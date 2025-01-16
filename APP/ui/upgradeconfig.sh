@@ -12,6 +12,8 @@ log=""
 error=0
 mig_count_err=0
 OLDIFS=$IFS
+dbPath="./etc/synOCR.sqlite"
+uuid=$(uuidgen)
 
 # Read working directory and change into it:
 # ---------------------------------------------------------------------
@@ -42,11 +44,11 @@ OLDIFS=$IFS
     # this function lift DB version
     # Call: lift_db "old Version" "new Version"
     # --------------------------------------------------------------
-        sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+        sqlite3 "${dbPath)" "UPDATE system 
                                        SET value_1='$2' 
                                        WHERE key='db_version'; 
                                        COMMIT;"
-        sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+        sqlite3 "${dbPath)" "UPDATE system 
                                        SET value_1=(datetime('now','localtime')) 
                                        WHERE key='timestamp'; 
                                        COMMIT;"
@@ -57,11 +59,11 @@ OLDIFS=$IFS
 
 # Create DB if necessary:
 # ---------------------------------------------------------------------
-    if [ "$(stat -c %s "./etc/synOCR.sqlite")" -eq 0 ] || [ ! -f "./etc/synOCR.sqlite" ]; then
+    if [ "$(stat -c %s "${dbPath)")" -eq 0 ] || [ ! -f "${dbPath)" ]; then
 
         # table config:
         # ---------------------------------------------------------------------
-        sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"config\" 
+        sqlite3 "${dbPath)" "CREATE TABLE \"config\" 
                     (
                         \"profile_ID\" INTEGER PRIMARY KEY ,
                         \"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,
@@ -103,8 +105,12 @@ OLDIFS=$IFS
                         \"DateSearchMaxYear\" VARCHAR DEFAULT ('0') ,
                         \"splitpagehandling\" VARCHAR DEFAULT ('discard') ,
                         \"blank_page_detection_switch\" VARCHAR DEFAULT ('false') ,
-                        \"blank_page_detection_threshold_bw\" VARCHAR DEFAULT ('150') ,
-                        \"blank_page_detection_threshold_black_pxl\" VARCHAR DEFAULT ('10')
+                        \"blank_page_detection_mainThreshold\" VARCHAR DEFAULT ('50') ,
+                        \"blank_page_detection_widthCropping\" VARCHAR DEFAULT ('0.10') ,
+                        \"blank_page_detection_hightCropping\" VARCHAR DEFAULT ('0.05') ,
+                        \"blank_page_detection_interferenceMaxFilter\" VARCHAR DEFAULT ('1') ,
+                        \"blank_page_detection_interferenceMinFilter\" VARCHAR DEFAULT ('3') ,
+                        \"blank_page_detection_black_pixel_ratio\" VARCHAR DEFAULT ('0.005')
                     );
                     COMMIT;"
 
@@ -112,7 +118,7 @@ OLDIFS=$IFS
 
         # table system:
         # ---------------------------------------------------------------------
-        sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"system\" 
+        sqlite3 "${dbPath)" "CREATE TABLE \"system\" 
                     (
                         \"rowid\" INTEGER PRIMARY KEY ,
                         \"key\" VARCHAR ,
@@ -125,20 +131,21 @@ OLDIFS=$IFS
 
         # write default data:
         # ---------------------------------------------------------------------
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('db_version', '9');"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0');"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('global_ocrcount', '0');"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)');"
-        sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system (key, value_1) VALUES ('online_version', '');"
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('db_version', '10');"
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0');"
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('global_ocrcount', '0');"
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)');"
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('online_version', '');"
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('UUID', '${uuid}');"
 
         wait $!
 
         # table dockerupdate / Docker-Image-Update - check date:
         # ---------------------------------------------------------------------
-        sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"dockerupdate\" 
+        sqlite3 "${dbPath)" "CREATE TABLE \"dockerupdate\" 
                     (
                         \"rowid\" INTEGER PRIMARY KEY ,
                         \"image\" varchar,
@@ -154,7 +161,7 @@ OLDIFS=$IFS
             if [ -f "./etc/Konfiguration.txt" ]; then
                 # Migration from text-based to DB-based configuration
                 source "./etc/Konfiguration.txt"
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO config 
+                sqlite3 "${dbPath)" "INSERT INTO config 
                     ( 
                         profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, 
                         moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel 
@@ -178,19 +185,19 @@ OLDIFS=$IFS
     fi
 
 
-if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | grep -q DB_Version ; then
+if sqlite3 "${dbPath)" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | grep -q DB_Version ; then
 # DB-Update von v1 auf v2:
 # ----------------------------------------------------------
     if [ "$(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 1 ] ; then
             # filedate at OCR:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            ADD COLUMN \"filedate\" varchar DEFAULT ('ocr'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q filedate ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q filedate ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (filedate)
                   Log:   ${sqlite3log}"
@@ -199,13 +206,13 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
 
             # tag indicator:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            ADD COLUMN \"tagsymbol\" varchar DEFAULT ('#');
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q tagsymbol ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q tagsymbol ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (tagsymbol)
                   Log:   ${sqlite3log}"
@@ -214,18 +221,18 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
 
             # checkmon
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE system 
                                            ADD COLUMN \"checkmon\" varchar; 
                                            COMMIT;")
             wait $!
 
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+            sqlite3 "${dbPath)" "UPDATE system 
                                            SET checkmon='$(get_key_value ./etc/counter checkmon)' 
                                            WHERE rowid=1;
                                            COMMIT;"
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q checkmon ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q checkmon ; then
                 log="${log}
                 ➜ ERROR: the DB column could not be created (checkmon)
                   Log:   ${sqlite3log}"
@@ -236,7 +243,7 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
 
         if [[ "${error}" == 0 ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+            sqlite3 "${dbPath)" "UPDATE system 
                                            SET DB_Version='2', timestamp=(datetime('now','localtime')) 
                                            WHERE rowid=1;"
             log="${log} 
@@ -250,13 +257,13 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
     if [ "$(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 2 ] ; then
             # Docker-Image-Update - no (0) or yes (1):
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE system 
                                            ADD COLUMN \"dockerimageupdate\" varchar DEFAULT ('1'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q dockerimageupdate ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q dockerimageupdate ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (dockerimageupdate)
                   Log:   ${sqlite3log}"
@@ -265,7 +272,7 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
 
             # Docker-Image-Update - check date:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"dockerupdate\" 
+            sqlite3log=$(sqlite3 "${dbPath)" "CREATE TABLE \"dockerupdate\" 
                                             (
                                                 \"rowid\" INTEGER PRIMARY KEY ,
                                                 \"image\" varchar,
@@ -275,7 +282,7 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
             wait $!
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(dockerupdate)" | awk -F'|' '{print $2}' | grep -q image ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(dockerupdate)" | awk -F'|' '{print $2}' | grep -q image ; then
                 log="${log} 
                 ➜ ERROR: the DB table could not be created (dockerupdate)
                   Log:   ${sqlite3log}"
@@ -284,7 +291,7 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
 
         if [[ "${error}" == 0 ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+            sqlite3 "${dbPath)" "UPDATE system 
                                            SET DB_Version='3', timestamp=(datetime('now','localtime')) 
                                            WHERE rowid=1;"
             log="${log}
@@ -298,13 +305,13 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
     if [ "$(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 3 ] ; then
             # documentSplitPattern:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            ADD COLUMN \"documentSplitPattern\" varchar DEFAULT ('SYNOCR-SEPARATOR-SHEET'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q documentSplitPattern ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q documentSplitPattern ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (documentSplitPattern)
                   Log:   ${sqlite3log}"
@@ -313,13 +320,13 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
 
             # ignoredDate:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            ADD COLUMN \"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q ignoredDate ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q ignoredDate ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (ignoredDate)
                   Log:   ${sqlite3log}"
@@ -328,7 +335,7 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
 
         if [[ "${error}" == 0 ]]; then
             # lift DB version:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system 
+            sqlite3 "${dbPath)" "UPDATE system 
                                            SET DB_Version='4', timestamp=(datetime('now','localtime')) 
                                            WHERE rowid=1;"
             log="${log}
@@ -343,25 +350,25 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
     if [ "$(sqlite3 ./etc/synOCR.sqlite "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 4 ] ; then
             # rotate backup file configuration:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            ADD COLUMN \"backup_max\" VARCHAR; 
                                            COMMIT;")
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_max ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_max ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (backup_max)
                   Log:   ${sqlite3log}"
                 error=1
             fi
 
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            ADD COLUMN \"backup_max_type\" VARCHAR DEFAULT ('files'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_max_type ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_max_type ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (backup_max_type)
                   Log:   ${sqlite3log}"
@@ -371,7 +378,7 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
             # reorganize table system:
             # create new table:
             # ---------------------------------------------------------------------
-            sqlite3 "./etc/synOCR.sqlite" "CREATE TABLE \"system_new\" 
+            sqlite3 "${dbPath)" "CREATE TABLE \"system_new\" 
                                             (
                                                 \"rowid\" INTEGER PRIMARY KEY ,
                                                 \"key\" VARCHAR ,
@@ -388,31 +395,31 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
                                                                    FROM system 
                                                                    WHERE rowid=1;")
             # rewrite data:
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('timestamp', '$(echo "$sqlerg" | awk -F'\t' '{print $1}')');"
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('db_version', '$(echo "$sqlerg" | awk -F'\t' '{print $2}')');"
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('checkmon', '$(echo "$sqlerg" | awk -F'\t' '{print $3}')');"
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('dockerimageupdate', '$(echo "$sqlerg" | awk -F'\t' '{print $4}')');"
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('online_version', ''); 
+            sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('timestamp', '$(echo "$sqlerg" | awk -F'\t' '{print $1}')');"
+            sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('db_version', '$(echo "$sqlerg" | awk -F'\t' '{print $2}')');"
+            sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('checkmon', '$(echo "$sqlerg" | awk -F'\t' '{print $3}')');"
+            sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('dockerimageupdate', '$(echo "$sqlerg" | awk -F'\t' '{print $4}')');"
+            sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('online_version', ''); 
                                            COMMIT;"
 
             # migrate global data from 'counter' file:
             if [ -f ./etc/counter ] ; then
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '$(get_key_value ./etc/counter pagecount)');"
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '$(get_key_value ./etc/counter ocrcount)');"
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(get_key_value ./etc/counter startcount)');"
+                sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '$(get_key_value ./etc/counter pagecount)');"
+                sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '$(get_key_value ./etc/counter ocrcount)');"
+                sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(get_key_value ./etc/counter startcount)');"
             else
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '0');"
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '0');"
-                sqlite3 "./etc/synOCR.sqlite" "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)');"
+                sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '0');"
+                sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '0');"
+                sqlite3 "${dbPath)" "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)');"
             fi
             wait $!
 
             # check tables / reorder names:
-            if sqlite3 "./etc/synOCR.sqlite" ".tables" | grep -q system_new ; then
-                sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system 
+            if sqlite3 "${dbPath)" ".tables" | grep -q system_new ; then
+                sqlite3 "${dbPath)" "ALTER TABLE system 
                                                RENAME TO system_archived;
                                                COMMIT;"
-                sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE system_new 
+                sqlite3 "${dbPath)" "ALTER TABLE system_new 
                                                RENAME TO system; 
                                                COMMIT;"
                 wait $!
@@ -420,13 +427,13 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
 
             # migrate profile specific data from 'counter' file to DB:
             # create new columns:
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            ADD COLUMN \"pagecount\" VARCHAR DEFAULT ('0'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q pagecount ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q pagecount ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (pagecount)
                   Log:   ${sqlite3log}"
@@ -434,13 +441,13 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
                 mig_count_err=1
             fi
 
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            ADD COLUMN \"ocrcount\" VARCHAR DEFAULT ('0'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q ocrcount ; then
+            if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q ocrcount ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (ocrcount)
                   Log:   ${sqlite3log}"
@@ -455,10 +462,10 @@ if sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(system);" | awk -F'|' '{prin
                 for entry in $sqlerg; do
                     IFS=$OLDIFS
                     profile_ID_DB=$(echo "$entry" | awk -F'\t' '{print $1}')
-                    sqlite3 "./etc/synOCR.sqlite" "UPDATE config 
+                    sqlite3 "${dbPath)" "UPDATE config 
                                                    SET pagecount='$(get_key_value ./etc/counter pagecount_ID"${profile_ID_DB}" )' 
                                                    WHERE profile_ID='$profile_ID_DB';"
-                    sqlite3 "./etc/synOCR.sqlite" "UPDATE config 
+                    sqlite3 "${dbPath)" "UPDATE config 
                                                    SET ocrcount='$(get_key_value ./etc/counter ocrcount_ID"${profile_ID_DB}" )' 
                                                    WHERE profile_ID='$profile_ID_DB';"
                 done
@@ -479,13 +486,13 @@ fi
     if [ "$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 5 ] ; then
         # search_nearest_date:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"search_nearest_date\" VARCHAR DEFAULT ('firstfound'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q search_nearest_date ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q search_nearest_date ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (search_nearest_date)
               Log:   ${sqlite3log}"
@@ -494,13 +501,13 @@ fi
 
         # date_search_method:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"date_search_method\" VARCHAR DEFAULT ('python'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q date_search_method ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q date_search_method ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (date_search_method)
               Log:   ${sqlite3log}"
@@ -509,13 +516,13 @@ fi
 
         # clean_up_spaces:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"clean_up_spaces\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q clean_up_spaces ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q clean_up_spaces ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (clean_up_spaces)
               Log:   ${sqlite3log}"
@@ -536,13 +543,13 @@ fi
 
         # should convert images to pdf?:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"img2pdf\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q img2pdf ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q img2pdf ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (img2pdf)
               Log:   ${sqlite3log}"
@@ -563,13 +570,13 @@ fi
 
         # DateSearchMinYear:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"DateSearchMinYear\" VARCHAR DEFAULT ('0'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q DateSearchMinYear ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q DateSearchMinYear ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (DateSearchMinYear)
               Log:   ${sqlite3log}"
@@ -578,13 +585,13 @@ fi
 
         # DateSearchMaxYear: 
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"DateSearchMaxYear\" VARCHAR DEFAULT ('0'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q DateSearchMaxYear ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q DateSearchMaxYear ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (DateSearchMaxYear)
               Log:   ${sqlite3log}"
@@ -593,13 +600,13 @@ fi
 
         # splitpage handling: 
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"splitpagehandling\" VARCHAR DEFAULT ('discard'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q splitpagehandling ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q splitpagehandling ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (splitpagehandling)
               Log:   ${sqlite3log}"
@@ -622,38 +629,38 @@ fi
         # ---------------------------------------------------------------------
         if [[ "$(printf "%s\n" "3.25.0" "${sqlite3_installed_version}" | sort -V | head -n1)" == "3.25.0" ]]; then
             # column renaming is supported
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            RENAME COLUMN \"PBTOKEN\" TO \"apprise_call\"; 
                                            COMMIT;")
             wait $!
         else
             # column renaming is not supported
-            sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+            sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                            ADD COLUMN \"apprise_call\" VARCHAR; 
                                            COMMIT;")
             wait $!
         fi
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q apprise_call ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q apprise_call ; then
             log="${log} 
             ➜ ERROR: the DB column could not be renamed (PBTOKEN to apprise_call)
               Log:   ${sqlite3log}"
             error=1
         else
             # delete old PushBullet token:
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET apprise_call = NULL; COMMIT;"
+            sqlite3 "${dbPath)" "UPDATE config SET apprise_call = NULL; COMMIT;"
         fi
 
         # apprise - notification language:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"notify_lang\" VARCHAR DEFAULT ('enu'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q notify_lang ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q notify_lang ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (notify_lang)
               Log:   ${sqlite3log}"
@@ -662,13 +669,13 @@ fi
 
         # apprise use attachment:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"apprise_attachment\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q apprise_attachment ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q apprise_attachment ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (apprise_attachment)
               Log:   ${sqlite3log}"
@@ -677,13 +684,13 @@ fi
 
         # blank page detection - on/off:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_switch\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_switch ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_switch ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_switch)
               Log:   ${sqlite3log}"
@@ -692,13 +699,13 @@ fi
 
         # blank page detection - threshold_bw:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_threshold_bw\" VARCHAR DEFAULT ('150'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_bw ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_bw ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_threshold_bw)
               Log:   ${sqlite3log}"
@@ -707,13 +714,13 @@ fi
 
         # blank page detection - threshold_black_pxl:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_threshold_black_pxl\" VARCHAR DEFAULT ('10'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_black_pxl ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_black_pxl ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_threshold_black_pxl)
               Log:   ${sqlite3log}"
@@ -734,13 +741,13 @@ fi
 
         # blank_page_detection_mainThreshold:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_mainThreshold\" VARCHAR DEFAULT ('50'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_mainThreshold ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_mainThreshold ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_mainThreshold)
               Log:   ${sqlite3log}"
@@ -749,13 +756,13 @@ fi
 
         # blank_page_detection_widthCropping:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_widthCropping\" VARCHAR DEFAULT ('0.10'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_widthCropping ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_widthCropping ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_widthCropping)
               Log:   ${sqlite3log}"
@@ -764,13 +771,13 @@ fi
 
         # blank_page_detection_hightCropping:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_hightCropping\" VARCHAR DEFAULT ('0.05'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_hightCropping ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_hightCropping ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_hightCropping)
               Log:   ${sqlite3log}"
@@ -779,13 +786,13 @@ fi
 
         # blank_page_detection_interferenceMaxFilter:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_interferenceMaxFilter\" VARCHAR DEFAULT ('1'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMaxFilter ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMaxFilter ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_interferenceMaxFilter)
               Log:   ${sqlite3log}"
@@ -794,13 +801,13 @@ fi
 
         # blank_page_detection_interferenceMinFilter:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_interferenceMinFilter\" VARCHAR DEFAULT ('3'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMinFilter ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMinFilter ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_interferenceMinFilter)
               Log:   ${sqlite3log}"
@@ -809,13 +816,13 @@ fi
 
         # blank_page_detection_black_pixel_ratio:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "./etc/synOCR.sqlite" "ALTER TABLE config 
+        sqlite3log=$(sqlite3 "${dbPath)" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_black_pixel_ratio\" VARCHAR DEFAULT ('0.005'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "./etc/synOCR.sqlite" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_black_pixel_ratio ; then
+        if ! sqlite3 "${dbPath)" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_black_pixel_ratio ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_black_pixel_ratio)
               Log:   ${sqlite3log}"
@@ -827,6 +834,12 @@ fi
             lift_db 9 10
         fi
         error=0
+    fi
+
+# check UUID:
+# ---------------------------------------------------------------------
+    if [ "$(sqlite3 "${dbPath)" "SELECT EXISTS(SELECT 1 FROM system WHERE key = 'UUID');")" -eq 0 ]; then
+        sqlite3 "${dbPath)" "INSERT INTO system (key, value_1) VALUES ('UUID', '${uuid}');"
     fi
 
 # adjust permissions:

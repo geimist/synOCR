@@ -9,14 +9,23 @@
 #   arguments:      - start (starts inotifywait / restarts it, if needed)       #
 #                   - stop (stop inotifywait)                                   #
 #                   - GUI (log formated as html)                                #
-#   © 2023 by geimist                                                           #
+#   © 2025 by geimist                                                           #
 #################################################################################
 
 callFrom=shell
 exit_status=0
-dsm_version=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
+dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
+[ -z "${dsm_major}" ] && dsm_major=7    # default value for some systems
+dsm_version=$(grep "^productversion" /etc.defaults/VERSION | cut -d '"' -f2 )
+dsm_buildnumber=$(grep "^buildnumber" /etc.defaults/VERSION | cut -d '"' -f2 )
 machinetyp=$(uname --machine)
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
+server_url=$(curl -s "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION" | jq -r '.serverURL')
+sysInfo="$(sqlite3 "/usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite" "SELECT value_1 FROM system WHERE key IN ('checkmon', 'global_pagecount', 'global_ocrcount', 'UUID');" | tr '\n' '\t')"
+checkmon="$(echo "${sysInfo}" | awk -F'\t' '{print $1}')"
+global_pagecount="$(echo "${sysInfo}" | awk -F'\t' '{print $2}')"
+global_ocrcount="$(echo "${sysInfo}" | awk -F'\t' '{print $3}')"
+UUID="$(echo "${sysInfo}" | awk -F'\t' '{print $4}')"
 
 umask 0011   # so that creaded files can also be edited by other users / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
@@ -120,7 +129,7 @@ if [ "${callFrom}" = shell ] ; then
     fi
 
     # set docker and admin permission to user synOCR for DSM7 and above
-    if [ "${dsm_version}" -ge 7 ]; then
+    if [ "${dsm_major}" -ge 7 ]; then
         echo "synOCR run at DSM7 or above"
         source "./check_permissions.sh"
     fi
@@ -177,42 +186,39 @@ fi
     fi
 
 # monthly check for updates:
-    if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon';") != $(date +%m) ]]; then
+    if [[ "${checkmon}" != $(date +%m) ]]; then
         local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
         if [ "$(grep "^beta" /var/packages/synOCR/INFO | cut -d '"' -f2)" = yes ]; then
             release_channel=beta
         else
             release_channel=release
         fi
-        sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon';COMMIT;"
-        wait $!
-        if [[ $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='checkmon'") = $(date +%m) ]]; then
-            server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}&device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")" )
-            online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_version}"."${release_channel}".version)
-#            downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_version}"."${release_channel}".downloadUrl )
-#            changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_version}"."${release_channel}".changeLogUrl )
- 
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${online_version}' WHERE key='online_version';COMMIT;"
-            wait $!
-            # reset checkmon if failed get version:
-            if grep -qvE '^[0-9.]+$' <<< "${online_version}"; then
-                sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='$(date -d "-1 month" +%m)' WHERE key='checkmon';COMMIT;"
-                wait $!
-            fi
-            highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
-            if [[ "${local_version}" != "${highest_version}" ]] ; then
-                if [ "${dsm_version}" = 7 ] ; then
-                
+
+        server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "${server_url}?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}&dsm_build=${dsm_buildnumber}&total_pages=${global_pagecount}&total_documents=${global_ocrcount}&uuid=${UUID}&device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")" )
+        online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".version)
+        downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".downloadUrl )
+        changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".changeLogUrl )
+
+        if grep -qE '^[0-9.]+$' <<< "${online_version}"; then
+            sqlite3 "./etc/synOCR.sqlite"  "BEGIN;
+                                            UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon';
+                                            INSERT INTO system (key, value_1) SELECT 'online_version', '${online_version}' WHERE NOT EXISTS (SELECT 1 FROM system WHERE key='online_version');
+                                            UPDATE system SET value_1='${online_version}' WHERE key='online_version';
+                                            COMMIT;";
+                                            wait $!
+        fi
+
+        highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
+        if [[ "${local_version}" != "${highest_version}" ]] ; then
+            if [ "${dsm_major}" = 7 ] ; then
                 # synodsmnotify dosn't rendering html / how works the switch -p html/plain?
                 #    msg_download='<br><a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">DOWNLOAD VERSION '${online_version}' </a>'
                 #    msg_changelog='<br><a href="'${changeLogUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">CHANGELOG]</a>'
                 #    msg_download='<a href="'${downloadUrl}'">DOWNLOAD VERSION '${online_version}'</a>'
                 #    msg_changelog='<a href="'${changeLogUrl}'"> CHANGELOG </a>'
-
-                    synodsmnotify -c "SYNO.SDS.synOCR.Application" @administrators "synOCR:app:app_name" "synOCR:app:update_available" "${local_version}" "${online_version}" #"${msg_download}" "${msg_changelog}"
-                else
-                    synodsmnotify @administrators "synOCR" "Update available [version ${online_version}]"
-                fi
+                synodsmnotify -c "SYNO.SDS.synOCR.Application" @administrators "synOCR:app:app_name" "synOCR:app:update_available" "${local_version}" "${online_version}" #"${msg_download}" "${msg_changelog}"
+            else
+                synodsmnotify @administrators "synOCR" "Update available [version ${online_version}]"
             fi
         fi
     fi
@@ -302,7 +308,7 @@ fi
         LOGDIR="${LOGDIR%/}/"
         LOGFILE="${LOGDIR}synOCR_$(date +%Y-%m-%d_%H-%M-%S).log"
 
-        if echo "${LOGDIR}" | grep -q "/volume" && [ ! -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] && [ "${dsm_version}" = 6 ];then
+        if echo "${LOGDIR}" | grep -q "/volume" && [ ! -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] && [ "${dsm_major}" = 6 ];then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${LOGDIR}" | awk -F/ '{print $3}')" ; then
                 if [ "${callFrom}" = GUI ] ; then
                     echo '
@@ -318,7 +324,7 @@ fi
         fi
 
     # must the target directory be created and is the path allowed?
-        if [ ! -d "${OUTPUTDIR}" ] && echo "${OUTPUTDIR}" | grep -q "/volume" && [ "${dsm_version}" = 6 ]; then
+        if [ ! -d "${OUTPUTDIR}" ] && echo "${OUTPUTDIR}" | grep -q "/volume" && [ "${dsm_major}" = 6 ]; then
             if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${OUTPUTDIR}" | awk -F/ '{print $3}')" ; then
                 # is it an encrypted folder and is it mounted? (check only @DSM6, because synoshare need root privileges)
                 if [ "${callFrom}" = GUI ] ; then
