@@ -19,7 +19,7 @@ Without arguments, the script creates the SPK from the current master-branch fro
 Usage:      ./${0##*/} -v=<synOCR-Version> --dsm=<target DSM-Version>
 Example:    ./${0##*/} -v=1.2.0 --dsm=7
 
-    -v= --version=          specifies which synOCR version is to be built
+    -v= --version=          specifies which synOCR version is to be built / the git labels are to be used (branch / tag)
                             "local" will be used the local files without git interaction
         --DSM=              specifies for which DSM version is to be built
 
@@ -340,27 +340,27 @@ exit 1
     build_version=$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
     if [[ $(grep beta "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}') == yes ]]; then
         beta_status="_BETA"
-        # write changelog to INFO:
-        echo "changelog=\"$(cat "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "$build_tmp/$PKG/INFO"
+        mv -f "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA" "$build_tmp/$PKG/CHANGELOG"
+        rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE"
     else
-        # write changelog to INFO:
-        echo "changelog=\"$(cat "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "$build_tmp/$PKG/INFO"
+        mv -f "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE" "$build_tmp/$PKG/CHANGELOG"
+        rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA"
     fi
 
-    rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA"
-    rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE"
+    # write changelog to INFO:
+    echo "changelog=\"$(cat "${build_tmp}/${PKG}/CHANGELOG" | awk -v RS="" '{gsub (/\n/,"<br/>")}1')\"" >> "${build_tmp}/${PKG}/INFO"
 
     printf "\n-----------------------------------------------------------------------------------\n"
     printf "   SPK will be created ..."
     printf "\n-----------------------------------------------------------------------------------\n\n"
     printf "\n - INFO: The following version is loaded and built:\n"
 
-    if [ -z "$set_spk_version" ]; then
+    if [ -z "${set_spk_version}" ]; then
         #set_spk_version="latest-$(date +%s)-$(git log -1 --format="%h")"
-        set_spk_version="$(git branch --show-current)_latest_[$build_version]_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
+        set_spk_version="$(git branch --show-current)_latest_[${build_version}]_($(date +%Y)-$(date +%m)-$(date +%d)_$(date +%H)-$(date +%M))_$(git log -1 --format="%h")"
     fi
 
-    echo "    $set_spk_version - BUILD-Version (INFO-File): $build_version"
+    echo "    ${set_spk_version} - BUILD-Version (INFO-File): ${build_version}"
 
 # Falls versteckter Ordners /.helptoc vorhanden, diesen nach /helptoc umbenennen
     printf "\n - INFO: handle .helptoc files ...\n"
@@ -384,7 +384,7 @@ exit 1
 # Packing and dropping the current installation into the appropriate /Pack folder
     printf "\n - INFO: The archive package.tgz will be created ...\n"
 
-    $FAKEROOT tar -C "${build_tmp}/APP" -czf "${build_tmp}/$PKG"/package.tgz .
+    $FAKEROOT tar -C "${build_tmp}/APP" --exclude='.DS_Store' --exclude='._*' -czf "${build_tmp}/$PKG"/package.tgz .
 
 # Change to the storage location of package.tgz regarding the structure of the SPKs
     cd "${build_tmp}/${PKG}"
@@ -393,12 +393,41 @@ exit 1
     printf "\n - INFO: the SPK will be created ...\n"
     TargetName="${project}_DSM${TargetDSM}_${set_spk_version}${beta_status}.spk"
     # $build_version
-    $FAKEROOT tar -cf "$TargetName" *
-    cp -f "$TargetName" "${APPDIR}"
+    $FAKEROOT tar --exclude='.DS_Store' --exclude='._*' -cf "${TargetName}" *
+    cp -f "${TargetName}" "${APPDIR}"
 
     printf "\n-----------------------------------------------------------------------------------\n"
     printf "   The SPK was created and can be found at:\n"
     printf "   ${APPDIR}/$TargetName\n"
     printf "\n-----------------------------------------------------------------------------------\n\n"
+
+# update VERSION file:
+    FILE="${APPDIR}/VERSION" 
+    BaseDownloadUrl="https://geimist.eu/synOCR/updateserver.php?version=download&file="
+
+    if [ "${buildversion}" = "local" ]; then
+        exit 0
+    elif [ "${beta_status}" = "_BETA" ]; then
+        channel="beta"
+    else
+        channel="release"
+    fi
+
+    printf "\n-----------------------------------------------------------------------------------\n"
+    printf "   adjust version file ..."
+    printf "\n-----------------------------------------------------------------------------------\n\n"
+
+# Änderungen vornehmen
+    jq --arg dsm "dsm${TargetDSM}" \
+       --arg channel "${channel}" \
+       --arg rd "$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")" \
+       --arg v "${build_version}" \
+       --arg url "${BaseDownloadUrl}${TargetName}" \
+       '.dsm[$dsm][$channel].releaseDate = $rd |
+        .dsm[$dsm][$channel].version = $v |
+        .dsm[$dsm][$channel].downloadUrl = $url' \
+       "${FILE}" > "${APPDIR}/temp.json" && mv "${APPDIR}/temp.json" "${FILE}"
+
+    echo "VERSION wurde aktualisiert."
 
 exit 0
