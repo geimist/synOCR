@@ -2,7 +2,7 @@
   IMPLEMENTATIONS:
  - [shell]  If logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files
  - [GUI]    A slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
- - [GUI]    The source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed.
+ - [GUI]    The source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed (issue #59)
  - [GUI]    🔥 Color adjustments can now be used to configure the contrast, the sharpness and a black and white mode (1-bit).
   IMPROVEMENT:
  - [shell]  all non-alphanumeric characters at target file name will be compressed (issue #58)

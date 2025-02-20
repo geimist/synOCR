@@ -477,7 +477,7 @@ translate() {
                         transValue=$(jq -r '.translations[].text' <<<"${response}")
                         break  # Erfolg → Schleife verlassen
                     else
-                        echo "Fehler (Attempt $i). Warte $backoff Sekunden..."
+#                       echo "Fehler (Attempt $i). Warte $backoff Sekunden..."
                         sleep $backoff
                         backoff=$((backoff * 2))  # Exponentialer Backoff
                     fi
