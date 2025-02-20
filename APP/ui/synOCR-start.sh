@@ -19,8 +19,8 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 dsm_version=$(grep "^productversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 dsm_buildnumber=$(grep "^buildnumber" /etc.defaults/VERSION | cut -d '"' -f2 )
 machinetyp=$(uname --machine)
+device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
-server_url=$(curl -s "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION" | jq -r '.serverURL')
 sysInfo="$(sqlite3 "/usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite" "SELECT value_1 FROM system WHERE key IN ('checkmon', 'global_pagecount', 'global_ocrcount', 'UUID');" | tr '\n' '\t')"
 checkmon="$(echo "${sysInfo}" | awk -F'\t' '{print $1}')"
 global_pagecount="$(echo "${sysInfo}" | awk -F'\t' '{print $2}')"
@@ -39,58 +39,64 @@ done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "S
 
 inotify_process_id () {
     # print process id of inotify
-    ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}'
+    ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk '{print $2}'
 }
 
 # reading parameters:
 for i in "$@" ; do
     case $i in
         start)
-            # (re)start-monitoring:
             monitor=off
             loop_count=0
-            while [ "${monitor}" = off ] ; do
+            while [ "${monitor}" = off ]; do
 
-                # terminate parallel instances:
-                process_id_output=$(inotify_process_id | awk '{ print NF; }')
-                if [ -n "${process_id_output}" ] && [ "${process_id_output}" -gt 1 ]; then
-                    echo "parallel processes active - terminate ..." | tee -a "${log_dir_list[@]}"
-                    kill "$(inotify_process_id)"
-                fi
+                # Identify current processes
+                current_pids=$(inotify_process_id)
+                process_count=$(echo "${current_pids}" | wc -w)  # Count the number of PIDs
 
-                # start, if not running:
-                if [ -z "${process_id_output}" ] ;then
-                    echo "does not run - start monitoring ..." | tee -a "${log_dir_list[@]}"
-                    sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}" 
-                    /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start
-                else
-                    # check if restart is necessary:
-                    sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
+                # Kill parallel processes
+                if [ "${process_count}" -ge 1 ]; then
+                    /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop | tee -a "${log_dir_list[@]}"
+                    sleep 1
 
-                    if [ "$(cat "${monitored_folders}" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
-                        echo "still running, but change noticed in the watched folders - restart monitoring ..." | tee -a "${log_dir_list[@]}"
-                        rm -f "${monitored_folders}_tmp"
-
-                        echo "stop monitoring ..." | tee -a "${log_dir_list[@]}"
-                        /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop
-                    else
-                        rm -f "${monitored_folders}_tmp"
-                        break
+                    # Check again whether processes are still running
+                    current_pids=$(inotify_process_id)
+                    if [ -n "${current_pids}" ]; then
+                        echo "Processes still alive - force kill ..." | tee -a "${log_dir_list[@]}"
+                        kill -9 ${current_pids}  # force SIGKILL
+                        sleep 1
                     fi
                 fi
 
-                if [ "$(inotify_process_id)" ]; then
-                    monitor=on
-                    echo "Monitoring successfully started" | tee -a "${log_dir_list[@]}"
-                    break
+                # After killing, check again whether processes are really gone
+                current_pids=$(inotify_process_id)
+                process_count=$(echo "${current_pids}" | wc -w)
+
+                if [ "${process_count}" -eq 0 ]; then
+                    echo "Does not run - start monitoring ..." | tee -a "${log_dir_list[@]}"
+                    # Update monitored folders
+                    sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite \
+                      "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}"
+
+                    /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start
+                    sleep 2  # Wait until the process has started up
+
+                    # Check success
+                    if [ -n "$(inotify_process_id)" ]; then
+                        monitor=on
+                        echo "Monitoring successfully started" | tee -a "${log_dir_list[@]}"
+                        break
+                    else
+                        echo "Failed to start monitoring. Retrying..." | tee -a "${log_dir_list[@]}"
+                    fi
+                else
+                    echo "Unexpected active processes. Retrying..." | tee -a "${log_dir_list[@]}"
                 fi
 
                 loop_count=$((loop_count + 1))
-                echo "loop count: ${loop_count}" | tee -a "${log_dir_list[@]}"
-
                 if [ "${loop_count}" -ge 10 ]; then
-                    echo "! ! ! ERROR: failed to start monitoring after ${loop_count} trys" | tee -a "${log_dir_list[@]}"
-                    break 1
+                    echo "! ! ! ERROR: Failed to start monitoring after ${loop_count} tries" | tee -a "${log_dir_list[@]}"
+                    break
                 fi
             done
 
@@ -185,43 +191,47 @@ fi
         fi
     fi
 
-# monthly check for updates:
-    if [[ "${checkmon}" != $(date +%m) ]]; then
-        local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
-        if [ "$(grep "^beta" /var/packages/synOCR/INFO | cut -d '"' -f2)" = yes ]; then
-            release_channel=beta
-        else
-            release_channel=release
-        fi
-
-        server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "${server_url}?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}&dsm_build=${dsm_buildnumber}&total_pages=${global_pagecount}&total_documents=${global_ocrcount}&uuid=${UUID}&device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")" )
-        online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".version)
-        downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".downloadUrl )
-        changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".changeLogUrl )
-
-        if grep -qE '^[0-9.]+$' <<< "${online_version}"; then
-            sqlite3 "./etc/synOCR.sqlite"  "BEGIN;
-                                            UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon';
-                                            INSERT INTO system (key, value_1) SELECT 'online_version', '${online_version}' WHERE NOT EXISTS (SELECT 1 FROM system WHERE key='online_version');
-                                            UPDATE system SET value_1='${online_version}' WHERE key='online_version';
-                                            COMMIT;";
-                                            wait $!
-        fi
-
-        highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
-        if [[ "${local_version}" != "${highest_version}" ]] ; then
-            if [ "${dsm_major}" = 7 ] ; then
-                # synodsmnotify dosn't rendering html / how works the switch -p html/plain?
-                #    msg_download='<br><a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">DOWNLOAD VERSION '${online_version}' </a>'
-                #    msg_changelog='<br><a href="'${changeLogUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">CHANGELOG]</a>'
-                #    msg_download='<a href="'${downloadUrl}'">DOWNLOAD VERSION '${online_version}'</a>'
-                #    msg_changelog='<a href="'${changeLogUrl}'"> CHANGELOG </a>'
-                synodsmnotify -c "SYNO.SDS.synOCR.Application" @administrators "synOCR:app:app_name" "synOCR:app:update_available" "${local_version}" "${online_version}" #"${msg_download}" "${msg_changelog}"
+# monthly check for update in background:
+    check_update() {
+        if [[ "${checkmon}" != $(date +%m) ]]; then
+            server_url=$(curl -s "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION" | jq -r '.serverURL')
+            local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
+            if [ "$(grep "^beta" /var/packages/synOCR/INFO | cut -d '"' -f2)" = yes ]; then
+                release_channel=beta
             else
-                synodsmnotify @administrators "synOCR" "Update available [version ${online_version}]"
+                release_channel=release
+            fi
+
+            server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "${server_url}?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}&dsm_build=${dsm_buildnumber}&total_pages=${global_pagecount}&total_documents=${global_ocrcount}&uuid=${UUID}&device=${device}" )
+            online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".version)
+            downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".downloadUrl )
+            changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".changeLogUrl )
+
+            if grep -qE '^[0-9.]+$' <<< "${online_version}"; then
+                sqlite3 "./etc/synOCR.sqlite"  "BEGIN;
+                                                UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon';
+                                                INSERT INTO system (key, value_1) SELECT 'online_version', '${online_version}' WHERE NOT EXISTS (SELECT 1 FROM system WHERE key='online_version');
+                                                UPDATE system SET value_1='${online_version}' WHERE key='online_version';
+                                                COMMIT;";
+                                                wait $!
+            fi
+
+            highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
+            if [[ "${local_version}" != "${highest_version}" ]] ; then
+                if [ "${dsm_major}" = 7 ] ; then
+                    # synodsmnotify dosn't rendering html / how works the switch -p html/plain?
+                    #    msg_download='<br><a href="'${downloadUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">DOWNLOAD VERSION '${online_version}' </a>'
+                    #    msg_changelog='<br><a href="'${changeLogUrl}'" onclick="window.open(this.href); return false;" class="pulsate" style="font-size: 0.7rem;">CHANGELOG]</a>'
+                    #    msg_download='<a href="'${downloadUrl}'">DOWNLOAD VERSION '${online_version}'</a>'
+                    #    msg_changelog='<a href="'${changeLogUrl}'"> CHANGELOG </a>'
+                    synodsmnotify -c "SYNO.SDS.synOCR.Application" @administrators "synOCR:app:app_name" "synOCR:app:update_available" "${local_version}" "${online_version}" #"${msg_download}" "${msg_changelog}"
+                else
+                    synodsmnotify @administrators "synOCR" "Update available [version ${online_version}]"
+                fi
             fi
         fi
-    fi
+    }
+    check_update &
 
 # load configuration:
     sSQL="SELECT 

@@ -105,12 +105,17 @@ uuid=$(uuidgen)
                         \"DateSearchMaxYear\" VARCHAR DEFAULT ('0') ,
                         \"splitpagehandling\" VARCHAR DEFAULT ('discard') ,
                         \"blank_page_detection_switch\" VARCHAR DEFAULT ('false') ,
-                        \"blank_page_detection_mainThreshold\" VARCHAR DEFAULT ('50') ,
+                        \"blank_page_detection_mainThreshold\" VARCHAR DEFAULT ('-50') ,
                         \"blank_page_detection_widthCropping\" VARCHAR DEFAULT ('0.10') ,
                         \"blank_page_detection_hightCropping\" VARCHAR DEFAULT ('0.05') ,
                         \"blank_page_detection_interferenceMaxFilter\" VARCHAR DEFAULT ('1') ,
                         \"blank_page_detection_interferenceMinFilter\" VARCHAR DEFAULT ('3') ,
-                        \"blank_page_detection_black_pixel_ratio\" VARCHAR DEFAULT ('0.005')
+                        \"blank_page_detection_black_pixel_ratio\" VARCHAR DEFAULT ('0.005') ,
+                        \"blank_page_detection_ignoreText\" VARCHAR DEFAULT ('false') ,
+                        \"adjustColorBWthreshold\" VARCHAR DEFAULT ('40') ,
+                        \"adjustColorDPI\" VARCHAR DEFAULT ('0') ,
+                        \"adjustColorContrast\" VARCHAR DEFAULT ('1.0') ,
+                        \"adjustColorSharpness\" VARCHAR DEFAULT ('1.0')
                     );
                     COMMIT;"
 
@@ -132,7 +137,7 @@ uuid=$(uuidgen)
         # write default data:
         # ---------------------------------------------------------------------
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('db_version', '10');"
+        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('db_version', '11');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0');"
@@ -140,6 +145,7 @@ uuid=$(uuidgen)
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('online_version', '');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('UUID', '${uuid}');"
+        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('inotify_delay', 0);"
 
         wait $!
 
@@ -742,7 +748,7 @@ fi
         # blank_page_detection_mainThreshold:
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
-                                       ADD COLUMN \"blank_page_detection_mainThreshold\" VARCHAR DEFAULT ('50'); 
+                                       ADD COLUMN \"blank_page_detection_mainThreshold\" VARCHAR DEFAULT ('-50'); 
                                        COMMIT;")
         wait $!
 
@@ -834,6 +840,104 @@ fi
             lift_db 9 10
         fi
         error=0
+    fi
+
+
+# DB-update from v9 to v10:
+# ---------------------------------------------------------------------
+    if [ "$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='db_version';")" -eq 10 ] ; then
+
+        # blank_page_detection_ignoreText:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+                                       ADD COLUMN \"blank_page_detection_ignoreText\" VARCHAR DEFAULT ('false'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_ignoreText ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (blank_page_detection_ignoreText)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # adjustColorBWthreshold:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+                                       ADD COLUMN \"adjustColorBWthreshold\" VARCHAR DEFAULT ('40'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorBWthreshold ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (adjustColorBWthreshold)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # adjustColorDPI:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+                                       ADD COLUMN \"adjustColorDPI\" VARCHAR DEFAULT ('0'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorDPI ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (adjustColorDPI)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # adjustColorContrast:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+                                       ADD COLUMN \"adjustColorContrast\" VARCHAR DEFAULT ('1.0'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorContrast ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (adjustColorContrast)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # adjustColorSharpness:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+                                       ADD COLUMN \"adjustColorSharpness\" VARCHAR DEFAULT ('1.0'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorSharpness ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (adjustColorSharpness)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        if [[ "${error}" == 0 ]]; then
+            # lift DB version:
+            lift_db 10 11
+        fi
+        error=0
+    fi
+
+
+# insert inotify_delay:
+# ---------------------------------------------------------------------
+    # Check whether the entry exists
+    count=$(sqlite3 "${dbPath}" "SELECT COUNT(*) FROM system WHERE key = 'inotify_delay';")
+
+    # If not available: Create entry
+    if [ "${count}" -eq 0 ]; then
+        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('inotify_delay', 0);"
     fi
 
 # check UUID:

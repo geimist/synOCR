@@ -2,15 +2,28 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.4.99.7 [2025-02-20]
+  IMPLEMENTATIONS:
+ - [shell]  If logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files
+ - [GUI]    A slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
+ - [GUI]    The source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed.
+ - [GUI]    🔥 Color adjustments can now be used to configure the contrast, the sharpness and a black and white mode (1-bit).
+  IMPROVEMENT:
+ - [shell]  all non-alphanumeric characters at target file name will be compressed (issue #58)
+ - [GUI]    Where possible, text fields and radio buttons have been replaced by sliders and switches.
+  BUGFIXES:
+ - [shell]  Search prefix and search suffix have been removed from the entire file name
+ - [shell]  File names containing double quotation marks resulted in an error
+
 1.4.99.6 [2025-01-16]
+  IMPROVEMENT:
+ - [GUI]    Splitting pages can be set to each page
   BUGFIXES:
  - [shell]  fixing some minor bugs
-  IMPROVEMENT:
- - Splitting pages can be set to each page
 
 1.4.99.5 [2025-01-10]
   IMPLEMENTATIONS:
- - 🔥 Blank page detection and removal has been implemented.
+ - [GUI]    🔥 Blank page detection and removal has been implemented.
   IMPROVEMENT:
  - [SHELL]  Bump apprise library to 1.9.2
 
@@ -36,7 +49,7 @@ known issues / limitations:
 1.4.99.1 [2023-10-27]
   IMPROVEMENT:
  - [GUI]    invalid source directories are displayed in the GUI
- - [SHELL]  Bump apprise library to 1.6.0
+ - [shell]  Bump apprise library to 1.6.0
  - [shell]  update find_dates.py from v0.4 ➜ v0.6 (thx @GThorsten)
             search_alpha_numeric_dates()
             -change regex after user hint

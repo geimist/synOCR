@@ -4,7 +4,7 @@
 #################################################################################
 #   description:    - generates the help page for the GUI                       #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/help.sh            #
-#   © 2023 by geimist                                                           #
+#   © 2025 by geimist                                                           #
 #################################################################################
 
 # -> Headline
@@ -124,6 +124,7 @@ echo '
                 <li><a href="https://github.com/ocrmypdf/OCRmyPDF" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">jbarlow83 [OCRmyPDF]</a></li>
                 <li><a href="https://www.synology-forum.de/members/tommes.8120/" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">Tommes</a> [GUI]</li>
                 <li><a href="https://www.synology-forum.de/members/gthorsten.118999/" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">Gthorsten</a> [Python scripts]</li>
+                <li><a href="https://www.synology-forum.de/members/struppix.5780/" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">Struppix</a> [Tutorials / YAML-Support]</li>
             </ul>
         </p>
     </p><br>'

@@ -4,11 +4,11 @@
 #################################################################################
 #   description:    - generates the main page for the GUI                       #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/main.sh            #
-#   © 2023 by geimist                                                           #
+#   © 2025 by geimist                                                           #
 #################################################################################
 
 PATH=$PATH:/usr/local/bin:/opt/usr/bin
-dsmMajorVersion=$(synogetkeyvalue /etc.defaults/VERSION majorversion)
+dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 
 # Read file status:
 # ---------------------------------------------------------------------
@@ -121,7 +121,7 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
 
         if [ "$(cat "${monitored_folders}" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
-            if [ "${dsmMajorVersion}" -ge 7 ] && [ "$monitoring_user" = root ]; then
+            if [ "${dsm_major}" -ge 7 ] && [ "$monitoring_user" = root ]; then
                 # if inotify was started by root, it cannot be restarted by the user synOCR via the GUI
                 echo ' 
                 <h5 class="text-center pulsate" style="font-size: 0.7rem;">
@@ -147,10 +147,12 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
     else
         release_channel=release
     fi
-    server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "https://geimist.eu/synOCR/updateserver.php?file=VERSION" )
-    online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsmMajorVersion}"."${release_channel}".version )
-    downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsmMajorVersion}"."${release_channel}".downloadUrl )
-    changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsmMajorVersion}"."${release_channel}".changeLogUrl )
+    
+    server_url=$(curl -s "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION" | jq -r '.serverURL')
+    server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "${server_url}?file=VERSION" )
+    online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".version )
+    downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".downloadUrl )
+    changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".changeLogUrl )
 
     local_version=$(grep "^version" /var/packages/synOCR/INFO  | cut -d '"' -f2)
     highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
@@ -175,7 +177,7 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         <div class="float-end">
             <img src="images/status_error@geimist.svg" height="120" width="120" style="padding: 10px">
         </div>'
-    elif [ "${dsmMajorVersion}" -ge 7 ] && (! grep "^administrators" /etc/group | grep -q synOCR || ! grep "^docker:" /etc/group | grep -q synOCR ); then
+    elif [ "${dsm_major}" -ge 7 ] && (! grep "^administrators" /etc/group | grep -q synOCR || ! grep "^docker:" /etc/group | grep -q synOCR ); then
         echo '
         <p class="text-center synocr-text-red">'"${lang_attention}"':<br>'"${lang_main_permissions_failed1}"'<br>'"${lang_main_permissions_failed2}"'<br>('"${lang_main_permissions_failed3}"')
             <code class="mb-5">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</code>
@@ -217,7 +219,7 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
     done <<< "$(sqlite3 -separator $'\t' /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )" 
 
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
-    if [ "${dsmMajorVersion}" -eq 6 ] || { grep "^administrators" /etc/group | grep -q synOCR && grep "^docker" /etc/group | grep -q synOCR ; } ; then
+    if [ "${dsm_major}" -eq 6 ] || { grep "^administrators" /etc/group | grep -q synOCR && grep "^docker" /etc/group | grep -q synOCR ; } ; then
         if [ "${inotify_tools_ready}" -eq 0 ]; then 
             # start single run:
             echo '
@@ -225,7 +227,7 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
                 <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'"${lang_main_buttonrun}"'</button>
                 <p class="text-center">'"${lang_help_QS_1b}"' (<a href="https://synocommunity.com/package/inotify-tools" onclick="window.open(this.href); return false;" style="'"${synocrred}"';"><b>'"${lang_foot_buttondownDB}"' Inotify-Tools</b></a>)</p>                
             </p><br />'
-        elif [ "${inotify_tools_ready}" -eq 1 ] && { [ "${dsmMajorVersion}" -eq 6 ] || [ "${monitoring_user}" != root ]; }; then 
+        elif [ "${inotify_tools_ready}" -eq 1 ] && { [ "${dsm_major}" -eq 6 ] || [ "${monitoring_user}" != root ]; }; then 
             if [ -n "${invalid_input_dir}" ]; then
                 # warn if invalid source directories are present:
                 echo '<hr></hr><p class="synocr-text-red">'"${lang_main_invalid_input_dir}"'<br>'

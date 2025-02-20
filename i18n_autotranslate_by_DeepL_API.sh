@@ -3,7 +3,7 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.1.0 © 2023 by geimist                                                                        #
+    #     v1.1.0 © 2025 by geimist                                                                        #
     #     /volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n_autotranslate_by_DeepL_API.sh                     #
     #######################################################################################################
 
@@ -460,24 +460,31 @@ translate() {
                 # call API / translate
                 # https://www.deepl.com/de/docs-api/translating-text/
                 request_start=$(date +%s)
-                transValue=$(curl -s  --connect-timeout 5 \
-                    --max-time 5 \
-                    --retry 5 \
-                    --retry-delay 0 \
-                    --retry-max-time 30 \
-                    https://api-free.deepl.com/v2/translate \
-                    -d auth_key="${DeepLapiKey}" \
-                    -d "text=${value}"  \
-                    -d "source_lang=${masterDeeplShortName}" \
-                    -d "tag_handling=xml" \
-                    -d "target_lang=${targetDeeplShortName}" | jq -r .translations[].text)
 
-                if [ "$?" -ne 0 ]; then
-                    printf "    ÜBERSETZUNGSFEHLER - überspringen ..."
-                    error=1
-                    continue
-                elif [ -z "${transValue}" ] && [ -n "${value}" ]; then
-                    printf "%s" "    ÜBERSETZUNGSFEHLER (leere Rückgabe | varID: ${varID} ) - überspringen ..."
+                max_retries=3
+                backoff=1  # Starte mit 1 Sekunde
+                
+                for ((i=0; i<=max_retries; i++)); do
+                    response=$(curl -fs \
+                        https://api-free.deepl.com/v2/translate \
+                        -d auth_key="${DeepLapiKey}" \
+                        -d "text=${value}" \
+                        -d "source_lang=${masterDeeplShortName}" \
+                        -d "tag_handling=xml" \
+                        -d "target_lang=${targetDeeplShortName}")
+
+                    if [[ $? -eq 0 && -n "${response}" ]]; then
+                        transValue=$(jq -r '.translations[].text' <<<"${response}")
+                        break  # Erfolg → Schleife verlassen
+                    else
+                        echo "Fehler (Attempt $i). Warte $backoff Sekunden..."
+                        sleep $backoff
+                        backoff=$((backoff * 2))  # Exponentialer Backoff
+                    fi
+                done
+
+                if [[ -z "$transValue" ]]; then
+                    printf "%s" "    ÜBERSETZUNGSFEHLER (varID: ${varID} | Antwort: ${response} ) - überspringen ..."
                     error=1
                     continue
                 fi

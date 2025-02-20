@@ -15,13 +15,14 @@ dev_mode=false #true # false # show field in development ...
 APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
 cd "${APPDIR}" || exit 1
 IFSsaved=IFS
+dbPath="./etc/synOCR.sqlite"
 
 new_profile ()
 {
 # In this function a new profile record is written to the DB
 # Call: new_profile "profile name"
 # --------------------------------------------------------------
-    sqlite3 ./etc/synOCR.sqlite "INSERT INTO config ( profile ) VALUES ( '$1' )" >/dev/null
+    sqlite3 "${dbPath}" "INSERT INTO config ( profile ) VALUES ( '$1' )" >/dev/null
 }
 
 
@@ -258,7 +259,7 @@ chmod 755 "${SAMPLECONFIGFILE}"
 # Write path to new configfile in DB:
     echo "➜ Write path to the new configfile in DB"
     sSQLupdate="UPDATE config SET taglist='${SAMPLECONFIGFILE}' WHERE profile_ID='${profile_ID}' "
-    sqlite3 ./etc/synOCR.sqlite "${sSQLupdate}"
+    sqlite3 "${dbPath}" "${sSQLupdate}"
 
     return 0
 }
@@ -343,7 +344,7 @@ if [[ "${page}" == "edit-del_profile-query" ]] || [[ "${page}" == "edit-del_prof
                     </div>'
 
                 elif [[ "${page}" == "edit-del_profile" ]]; then
-                    sqlite3 ./etc/synOCR.sqlite "DELETE FROM config WHERE profile_ID='${profile_ID}';"
+                    sqlite3 "${dbPath}" "DELETE FROM config WHERE profile_ID='${profile_ID}';"
 
                     # make the first profile of the DB active next (otherwise a profile name with empty data would be displayed)
                     getprofile=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
@@ -427,19 +428,19 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
                     <div class="modal-body text-center">'
                         if [ -n "${new_profile_value}" ] ; then
                             sSQL="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
-                            if [ "$(sqlite3 ./etc/synOCR.sqlite "${sSQL}")" = 0 ] ; then
-                                sqlite3 ./etc/synOCR.sqlite "INSERT INTO config 
+                            if [ "$(sqlite3 "${dbPath}" "${sSQL}")" = 0 ] ; then
+                                sqlite3 "${dbPath}" "INSERT INTO config 
                                     ( 
-                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio
+                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
                                     ) 
                                         VALUES 
                                     ( 
-                                        '${new_profile_value}', '${active}', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${documentSplitPattern}', '${taglist}', '${searchAll}', '${moveTaggedFiles}', '${NameSyntax}', '${ocropt//\'/\'\'}', '${dockercontainer}', '${apprise_call}', '${apprise_attachment}', '${notify_lang}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}', '${filedate}', '${tagsymbol}', '${ignoredDate}', '${backup_max}', '${backup_max_type}', '${search_nearest_date}', '${date_search_method}', '${clean_up_spaces}', '${img2pdf}', '${DateSearchMinYear}', '${DateSearchMaxYear}', '${splitpagehandling}', '${blank_page_detection_switch}', '${blank_page_detection_mainThreshold}', '${blank_page_detection_widthCropping}', '${blank_page_detection_hightCropping}', '${blank_page_detection_interferenceMaxFilter}', '${blank_page_detection_interferenceMinFilter}', '${blank_page_detection_black_pixel_ratio}'
+                                        '${new_profile_value}', '${active}', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${documentSplitPattern}', '${taglist}', '${searchAll}', '${moveTaggedFiles}', '${NameSyntax}', '${ocropt//\'/\'\'}', '${dockercontainer}', '${apprise_call}', '${apprise_attachment}', '${notify_lang}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}', '${filedate}', '${tagsymbol}', '${ignoredDate}', '${backup_max}', '${backup_max_type}', '${search_nearest_date}', '${date_search_method}', '${clean_up_spaces}', '${img2pdf}', '${DateSearchMinYear}', '${DateSearchMaxYear}', '${splitpagehandling}', '${blank_page_detection_switch}', '${blank_page_detection_mainThreshold}', '${blank_page_detection_widthCropping}', '${blank_page_detection_hightCropping}', '${blank_page_detection_interferenceMaxFilter}', '${blank_page_detection_interferenceMinFilter}', '${blank_page_detection_black_pixel_ratio}', '${blank_page_detection_ignoreText}', '${adjustColorBWthreshold}', '${adjustColorDPI}', '${adjustColorContrast}', '${adjustColorSharpness}'
                                     )"
 
                                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
 
-                                if [ "$(sqlite3 ./etc/synOCR.sqlite "${sSQL2}")" = "1" ] ; then
+                                if [ "$(sqlite3 "${dbPath}" "${sSQL2}")" = "1" ] ; then
                                     echo '
                                     <p>
                                         '"${lang_edit_profname}"' <strong>'"${profile}"'</strong> '"${lang_edit_dup2}"' <strong>'"${new_profile_value}"'</strong> '"${lang_edit_dup3}"'.
@@ -582,7 +583,7 @@ if [[ "${page}" == "edit-save" ]]; then
                 </div>
                 <div class="modal-body text-center">'
 
-                sqlite3 ./etc/synOCR.sqlite "
+                sqlite3 "${dbPath}" "
                             UPDATE 
                                 config 
                             SET 
@@ -627,18 +628,29 @@ if [[ "${page}" == "edit-save" ]]; then
                                 blank_page_detection_hightCropping='${blank_page_detection_hightCropping}',
                                 blank_page_detection_interferenceMaxFilter='${blank_page_detection_interferenceMaxFilter}',
                                 blank_page_detection_interferenceMinFilter='${blank_page_detection_interferenceMinFilter}',
-                                blank_page_detection_black_pixel_ratio='${blank_page_detection_black_pixel_ratio}'
+                                blank_page_detection_black_pixel_ratio='${blank_page_detection_black_pixel_ratio}',
+                                blank_page_detection_ignoreText='${blank_page_detection_ignoreText}',
+                                adjustColorBWthreshold='${adjustColorBWthreshold}',
+                                adjustColorDPI='${adjustColorDPI}',
+                                adjustColorContrast='${adjustColorContrast}',
+                                adjustColorSharpness='${adjustColorSharpness}'
                             WHERE 
-                                profile_ID='${profile_ID}' "
+                                profile_ID='${profile_ID}';"
 
                 # write global change to table system:
-                sqlite3 ./etc/synOCR.sqlite "
+                sqlite3 "${dbPath}" "
                             UPDATE 
                                 system 
                             SET 
                                 value_1='${dockerimageupdate}' 
                             WHERE 
-                                key='dockerimageupdate' "
+                                key='dockerimageupdate';
+                            UPDATE 
+                                system 
+                            SET 
+                                value_1='${inotify_delay}' 
+                            WHERE 
+                                key='inotify_delay'; "
 
                     echo '
                     <p>
@@ -666,7 +678,10 @@ if [[ "${page}" == "edit" ]]; then
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
                 NameSyntax, ocropt, dockercontainer, apprise_call, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, 
+                apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, 
+                blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, 
+                adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
             FROM 
                 config 
             WHERE 
@@ -675,12 +690,16 @@ if [[ "${page}" == "edit" ]]; then
         sSQL="SELECT 
                 profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
                 NameSyntax, ocropt, dockercontainer, apprise_call, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio
+                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, 
+                apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, 
+                blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, 
+                adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
             FROM 
                 config 
             WHERE 
                 profile_ID='${getprofile}' "
     fi
+
     sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")
 
     # Separate record fields:
@@ -727,9 +746,15 @@ if [[ "${page}" == "edit" ]]; then
         blank_page_detection_interferenceMaxFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $42}')
         blank_page_detection_interferenceMinFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $43}')
         blank_page_detection_black_pixel_ratio=$(echo "${sqlerg}" | awk -F'\t' '{print $44}')
+        blank_page_detection_ignoreText=$(echo "${sqlerg}" | awk -F'\t' '{print $45}')
+        adjustColorBWthreshold=$(echo "${sqlerg}" | awk -F'\t' '{print $46}')
+        adjustColorDPI=$(echo "${sqlerg}" | awk -F'\t' '{print $47}')
+        adjustColorContrast=$(echo "${sqlerg}" | awk -F'\t' '{print $48}')
+        adjustColorSharpness=$(echo "${sqlerg}" | awk -F'\t' '{print $49}')
 
     # read global values:
-        dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
+        inotify_delay=$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='inotify_delay' ")
+        dockerimageupdate=$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
 
     # -> Headline
     echo '
@@ -839,21 +864,17 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="active">'"${lang_edit_set1_profile_activ_title}"'</label>
                         </div>
+
                         <div class="col-sm-5">
-                            <select name="active" id="active" class="form-select form-select-sm">'
-                                if [[ "${active}" == 1 ]]; then
-                                    echo '<option value="1" selected>'"${lang_edit_set1_profile_activ}"'</option>'
-                                else
-                                    echo '<option value="1">'"${lang_edit_set1_profile_activ}"'</option>'
-                                fi
-                                if [[ "${active}" == 0 ]]; then
-                                    echo '<option value="0" selected>'"${lang_edit_set1_profile_inactiv}"'</option>'
-                                else
-                                    echo '<option value="0">'"${lang_edit_set1_profile_inactiv}"'</option>'
-                                fi
-                                echo '
-                            </select>
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="active" value="0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="active" 
+                                    name="active" value="1"'; \
+                                    [[ "${active}" == "1" ]] && echo -n ' checked'; \
+                                    echo '>
+                            </div>
                         </div>
+
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#active-info" role="button" aria-expanded="false" aria-controls="active-info">
@@ -1108,7 +1129,9 @@ if [[ "${page}" == "edit" ]]; then
                                         <code>-s</code>&nbsp;&nbsp;'"${lang_edit_set2_ocropt_help2}"'<br />
                                         <code>-f</code>&nbsp;&nbsp;'"${lang_edit_set2_ocropt_help3}"'<br />
                                         <code>-r</code>&nbsp;&nbsp;'"${lang_edit_set2_ocropt_help4}"'<br />
-                                        <code>-d</code>&nbsp;&nbsp;'"${lang_edit_set2_ocropt_help6}"'<br />
+                                        <code>-d</code>&nbsp;&nbsp;'"${lang_edit_set2_ocropt_help6}"'<br /><br />
+                                        <code>--keep_hash</code>&nbsp;&nbsp;'"${lang_edit_set2_ocropt_help8}"'<br />
+                                        '"${lang_edit_set2_ocropt_help9}"'<br />
                                         <br /><a href="https://ocrmypdf.readthedocs.io/en/latest/cookbook.html" onclick="window.open(this.href); return false;" style="color: #BD0010;">'"${lang_edit_set2_ocropt_help7}"'</a><br />
                                     </span>
                                 </div>
@@ -1180,15 +1203,17 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="dockerimageupdate">'"${lang_edit_set2_dockerimageupdate_title}"'</label>
                         </div>
+
                         <div class="col-sm-5">
-                            <input class="form-check-input" type="radio" id="dockerimageupdate-on" name="dockerimageupdate" value='; \
-                                [[ "${dockerimageupdate}" == 1 ]] && echo -n '"1" checked />' || echo -n '"1" />'
-                            echo '<label for="dockerimageupdate-1" class="form-check-label ps-2 pe-4">'"${lang_yes}"'</label>'
-                            echo -n '
-                            <input class="form-check-input" type="radio" id="dockerimageupdate-off" name="dockerimageupdate" value='; \
-                                [[ "${dockerimageupdate}" == 0 ]] && echo -n '"0" checked />' || echo -n '"0" />'
-                            echo '<label for="dockerimageupdate-0" class="form-check-label ps-2">'"${lang_no}"'</label>
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="dockerimageupdate" value="0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="dockerimageupdate" 
+                                    name="dockerimageupdate" value="1"'; \
+                                    [[ "${dockerimageupdate}" == "1" ]] && echo -n ' checked'; \
+                                    echo '>
+                            </div>
                         </div>
+
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#dockerimageupdate-info" role="button" aria-expanded="false" aria-controls="dockerimageupdate-info">
@@ -1209,6 +1234,285 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
+                    # inotify_delay
+                    inotify_delay_current_value="${inotify_delay:-0}" # Determine the current value or set default to 0
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="inotify_delay">'"${lang_edit_set2_inotify_delay_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" class="form-range" min="0" max="120" name="inotify_delay" id="inotify_delay" value="'"${inotify_delay_current_value}"'" oninput="document.getElementById('\''inotify_delay_value'\'').textContent = this.value" />
+                                <div class="mt-1">
+                                    <span id="inotify_delay_value" class="badge bg-primary">'"${inotify_delay_current_value}"'</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#inotify_delay-info" role="button" aria-expanded="false" aria-controls="inotify_delay-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="inotify_delay-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '"${lang_edit_set2_inotify_delay_help1}"'<br /><br />
+                                        '"${lang_edit_set2_inotify_delay_help2}"'<br />
+                                        '"${lang_edit_set2_inotify_delay_help3}"'<br /><br />
+                                        '"${lang_edit_set2_inotify_delay_help4}"'<br />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    echo '<hr><br>'
+
+                    echo '
+                    <div class="row mb-3">
+                        <span class="synocr-text-blue">'"${lang_edit_set2_adjustColor_title}"'</span>
+                            <p>'"${lang_edit_set2_adjustColor_desc}"'</p><br />
+                    </div>'
+
+                    # adjustColorBWthreshold
+                    adjustColorBWthreshold_current_value="${adjustColorBWthreshold:-0}" # Aktuellen Wert ermitteln oder Standard 127 setzen
+                    # Angezeigten Text bestimmen (off oder Zahl)
+                    if [ "$adjustColorBWthreshold_current_value" -eq 0 ]; then
+                        adjustColorBWthreshold_display="${lang_deactivated}"
+                    else
+                        adjustColorBWthreshold_display="$adjustColorBWthreshold_current_value"
+                    fi
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="adjustColorBWthreshold">'"${lang_edit_set2_adjustColorBWthreshold_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" class="form-range" min="0" max="255" name="adjustColorBWthreshold" id="adjustColorBWthreshold" value="'"${adjustColorBWthreshold_current_value}"'" oninput="document.getElementById('\''adjustColorBWthreshold_value'\'').textContent = this.value == 0 ? '\'"${lang_deactivated}"\'' : this.value" />
+                                <div class="mt-1">
+                                    <span id="adjustColorBWthreshold_value" class="badge bg-primary">'"${adjustColorBWthreshold_display}"'</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#adjustColorBWthreshold-info" role="button" aria-expanded="false" aria-controls="adjustColorBWthreshold-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="adjustColorBWthreshold-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '"${lang_edit_set2_adjustColorBWthreshold_help1}"'<br />
+                                        '"${lang_edit_set2_adjustColorBWthreshold_help2}"'<br />
+                                        '"${lang_edit_set2_adjustColorBWthreshold_help3}"'<br />
+                                        '"${lang_edit_set2_adjustColorBWthreshold_help4}"'&nbsp;<code>40</code><br /><br />
+                                        <code>'"${lang_deactivated}"'&nbsp;</code>'"➜ ${lang_edit_set2_adjustColorBWthreshold_help5}"'<br />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # adjustColorDPI
+                    predefined_values="0 72 75 100 150 200 300 400 450 600"
+                    adjustColorDPI_current_value="${adjustColorDPI:-0}"
+
+                    # Validierung: Falls Wert nicht in der Liste, auf 0 setzen
+                    if ! echo "$predefined_values" | grep -qw "$adjustColorDPI_current_value"; then
+                        adjustColorDPI_current_value=0
+                    fi
+
+                    # Anzeigetext vorbereiten
+                    if [ "$adjustColorDPI_current_value" -eq 0 ]; then
+                        adjustColorDPI_display="${lang_deactivated}"
+                    else
+                        adjustColorDPI_display="$adjustColorDPI_current_value"
+                    fi
+
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="adjustColorDPI">'"${lang_edit_set2_adjustColorDPI_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" 
+                                       class="form-range" 
+                                       min="0" 
+                                       max="600" 
+                                       name="adjustColorDPI" 
+                                       id="adjustColorDPI" 
+                                       value="'"${adjustColorDPI_current_value}"'" 
+                                       list="adjustColorDPI_marks"
+                                       oninput="updateDPIValue(this.value)" />
+                                <datalist id="adjustColorDPI_marks">
+                                    <option value="0"></option>
+                                    <option value="72"></option>
+                                    <option value="75"></option>
+                                    <option value="100"></option>
+                                    <option value="150"></option>
+                                    <option value="200"></option>
+                                    <option value="300"></option>
+                                    <option value="400"></option>
+                                    <option value="450"></option>
+                                    <option value="600"></option>
+                                </datalist>
+                                <div class="mt-1">
+                                    <span id="adjustColorDPI_value" class="badge bg-primary">'"${adjustColorDPI_display}"'</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#adjustColorDPI-info" role="button" aria-expanded="false" aria-controls="adjustColorDPI-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="adjustColorDPI-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '"${lang_edit_set2_adjustColorDPI_help1}"'<br />
+                                        '"${lang_edit_set2_adjustColorDPI_help2}"'<br />
+                                        '"${lang_edit_set2_adjustColorDPI_help3}"'<br /><br />
+                                        <code>'"${lang_deactivated}"'&nbsp;</code>'"➜ ${lang_edit_set2_adjustColorDPI_help4}"'<br />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>
+                    <script>
+                    function updateDPIValue(val) {
+                        const allowedValues = [0, 72, 75, 100, 150, 200, 300, 400, 450, 600];
+                        const closest = allowedValues.reduce((prev, curr) => 
+                            Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev
+                        );
+                        document.getElementById("adjustColorDPI").value = closest;
+                        document.getElementById("adjustColorDPI_value").textContent = 
+                            closest === 0 ? "'"${lang_deactivated}"'" : closest;
+                    }
+                    </script>'
+
+                    # adjustColorContrast
+                    adjustColorContrast_current_value="${adjustColorContrast:-1.0}"
+                    
+                    # Shell-Vergleich mit Float-Werten
+                    if awk -v val="$adjustColorContrast_current_value" 'BEGIN { exit (val != 1.0) }'; then
+                        adjustColorContrast_display="${lang_deactivated}"
+                    else
+                        adjustColorContrast_display="$adjustColorContrast_current_value"
+                    fi
+
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="adjustColorContrast">'"${lang_edit_set2_adjustColorContrast_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" 
+                                       class="form-range" 
+                                       min="1.0" 
+                                       max="10.0" 
+                                       step="0.1" 
+                                       name="adjustColorContrast" 
+                                       id="adjustColorContrast" 
+                                       value="'"${adjustColorContrast_current_value}"'" 
+                                       oninput="document.getElementById('\''adjustColorContrast_value'\'').textContent = parseFloat(this.value).toFixed(1) === '\''1.0'\'' ? '\'"${lang_deactivated}"\'' : parseFloat(this.value).toFixed(1)" />
+                                <div class="mt-1">
+                                    <span id="adjustColorContrast_value" class="badge bg-primary">'"${adjustColorContrast_display}"'</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#adjustColorContrast-info" role="button" aria-expanded="false" aria-controls="adjustColorContrast-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="adjustColorContrast-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '"${lang_edit_set2_adjustColorContrast_help1}"'<br />
+                                        <code>'"${lang_deactivated}"'&nbsp;</code>'"➜ ${lang_edit_set2_adjustColorContrast_help2}"'<br />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # adjustColorSharpness
+                    adjustColorSharpness_current_value="${adjustColorSharpness:-1.0}"
+                    
+                    # Shell-Vergleich mit Float-Werten
+                    if awk -v val="$adjustColorSharpness_current_value" 'BEGIN { exit (val != 1.0) }'; then
+                        adjustColorSharpness_display="${lang_deactivated}"
+                    else
+                        adjustColorSharpness_display="$adjustColorSharpness_current_value"
+                    fi
+
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="adjustColorSharpness">'"${lang_edit_set2_adjustColorSharpness_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" 
+                                       class="form-range" 
+                                       min="1.0" 
+                                       max="20.0" 
+                                       step="0.5" 
+                                       name="adjustColorSharpness" 
+                                       id="adjustColorSharpness" 
+                                       value="'"${adjustColorSharpness_current_value}"'" 
+                                       oninput="document.getElementById('\''adjustColorSharpness_value'\'').textContent = parseFloat(this.value).toFixed(1) === '\''1.0'\'' ? '\'"${lang_deactivated}"\'' : parseFloat(this.value).toFixed(1)" />
+                                <div class="mt-1">
+                                    <span id="adjustColorSharpness_value" class="badge bg-primary">'"${adjustColorSharpness_display}"'</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#adjustColorSharpness-info" role="button" aria-expanded="false" aria-controls="adjustColorSharpness-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="adjustColorSharpness-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '"${lang_edit_set2_adjustColorSharpness_help1}"'<br />
+                                        <code>'"${lang_deactivated}"'&nbsp;</code>'"➜ ${lang_edit_set2_adjustColorSharpness_help2}"'<br />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+
                     echo '<hr><br>'
 
                     # convert images to pdf?:
@@ -1217,17 +1521,17 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="img2pdf">'"${lang_edit_set2_img2pdf_title}"'</label>
                         </div>
-                        
+
                         <div class="col-sm-5">
-                            <input class="form-check-input" type="radio" id="img2pdf-true" name="img2pdf" value='; \
-                                [[ "${img2pdf}" == "true" ]] && echo -n '"true" checked />' || echo -n '"true" />'
-                            echo '<label for="img2pdf-true" class="form-check-label ps-2 pe-4">'"${lang_yes}"'</label>'
-                            echo -n '
-                            <input class="form-check-input" type="radio" id="img2pdf-false" name="img2pdf" value='; \
-                                [[ "${img2pdf}" == "false" ]] && echo -n '"false" checked />' || echo -n '"false" />'
-                            echo '<label for="img2pdf-false" class="form-check-label ps-2">'"${lang_no}"'</label>
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="img2pdf" value="false">
+                                <input class="form-check-input" type="checkbox" role="switch" id="img2pdf" 
+                                    name="img2pdf" value="true"'; \
+                                    [[ "${img2pdf}" == "true" ]] && echo -n ' checked'; \
+                                    echo '>
+                            </div>
                         </div>
-                        
+
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#img2pdf-info" role="button" aria-expanded="false" aria-controls="img2pdf-info">
@@ -1335,22 +1639,22 @@ if [[ "${page}" == "edit" ]]; then
                         </div>
                         <div class="col-sm-5">
                             <select id="splitPatternSelect" class="form-select form-select-sm" onchange="handleSplitPatternChange(this)">'
-                    
+
                                 if [[ "${documentSplitPattern}" == "<split each page>" ]]; then
                                     echo '<option value="default" selected>'"${lang_edit_set2_documentSplitPattern_eachPage}"'</option>'
                                 else
                                     echo '<option value="default">'"${lang_edit_set2_documentSplitPattern_eachPage}"'</option>'
                                 fi
-                    
+
                                 if [[ "${documentSplitPattern}" != "<split each page>" ]]; then
                                     echo '<option value="custom" selected>'"${lang_edit_set2_documentSplitPattern_userDefined}"'</option>'
                                 else
                                     echo '<option value="custom">'"${lang_edit_set2_documentSplitPattern_userDefined}"'</option>'
                                 fi
-                    
+
                                 echo '
                             </select>'
-                    
+
                             if [[ "${documentSplitPattern}" != "<split each page>" ]]; then
                                 echo '<input type="text" name="documentSplitPattern" id="customSplitPattern" 
                                       class="form-control form-control-sm mt-2" 
@@ -1361,7 +1665,7 @@ if [[ "${page}" == "edit" ]]; then
                                       class="form-control form-control-sm mt-2" 
                                       style="display:none;" />'
                             fi
-                    
+
                             echo '
                             <script>
                             function handleSplitPatternChange(selectElement) {
@@ -1415,17 +1719,17 @@ if [[ "${page}" == "edit" ]]; then
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
-                    
+
                     # splitpagehandling
                     echo '
                     <div id="splitPageHandlingBlock" style="display: '
-                    
+
                     if [[ "${documentSplitPattern}" != "<split each page>" ]]; then
                         echo 'block'
                     else
                         echo 'none'
                     fi
-                    
+
                     echo '">
                     <div class="row mb-3">
                         <div class="col-sm-5">
@@ -1482,15 +1786,15 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="blank_page_detection_switch">'"${lang_edit_set2_blank_page_detection_switch_title}"'</label>
                         </div>
-                        
+
                         <div class="col-sm-5">
-                            <input class="form-check-input" type="radio" id="blank_page_detection_switch-true" name="blank_page_detection_switch" value='; \
-                                [[ "${blank_page_detection_switch}" == "true" ]] && echo -n '"true" checked />' || echo -n '"true" />'
-                            echo '<label for="blank_page_detection_switch-true" class="form-check-label ps-2 pe-4">'"${lang_yes}"'</label>'
-                            echo -n '
-                            <input class="form-check-input" type="radio" id="blank_page_detection_switch-false" name="blank_page_detection_switch" value='; \
-                                [[ "${blank_page_detection_switch}" == "false" ]] && echo -n '"false" checked />' || echo -n '"false" />'
-                            echo '<label for="blank_page_detection_switch-false" class="form-check-label ps-2">'"${lang_no}"'</label>
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="blank_page_detection_switch" value="false">
+                                <input class="form-check-input" type="checkbox" role="switch" id="blank_page_detection_switch" 
+                                    name="blank_page_detection_switch" value="true"'; \
+                                    [[ "${blank_page_detection_switch}" == "true" ]] && echo -n ' checked'; \
+                                    echo '>
+                            </div>
                         </div>
 
                         <div class="col-sm-2">
@@ -1514,21 +1818,21 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
+
                     # blank_page_detection_mainThreshold
+                    blank_page_detection_mainThreshold_current_value="${blank_page_detection_mainThreshold:-50}"
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
                             <label for="blank_page_detection_mainThreshold">'"${lang_edit_set2_blank_page_detection_mainThreshold_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
-
-                            if [ -n "${blank_page_detection_mainThreshold}" ]; then
-                                echo '<input type="text" name="blank_page_detection_mainThreshold" id="blank_page_detection_mainThreshold" class="form-control form-control-sm" value="'"${blank_page_detection_mainThreshold}"'" />'
-                            else
-                                echo '<input type="text" name="blank_page_detection_mainThreshold" id="blank_page_detection_mainThreshold" class="form-control form-control-sm" value="" />'
-                            fi
-
-                            echo '
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" class="form-range" min="-100" max="0" name="blank_page_detection_mainThreshold" id="blank_page_detection_mainThreshold" value="'"${blank_page_detection_mainThreshold_current_value}"'" oninput="document.getElementById('\''blank_page_detection_mainThreshold_value'\'').textContent = this.value" />
+                                <div class="mt-1">
+                                    <span id="blank_page_detection_mainThreshold_value" class="badge bg-primary">'"${blank_page_detection_mainThreshold_current_value}"'</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -1542,15 +1846,15 @@ if [[ "${page}" == "edit" ]]; then
                             <div class="collapse" id="blank_page_detection_mainThreshold-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
                                     <span>
-                                         '"${lang_edit_set2_blank_page_detection_mainThreshold_help1}"'<br><br>
-                                         '"${lang_edit_set2_blank_page_detection_mainThreshold_help2}"'<br><br>
-                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">50</span></code>
+                                        '"${lang_edit_set2_blank_page_detection_mainThreshold_help1}"'<br /><br />
+                                        '"${lang_edit_set2_blank_page_detection_mainThreshold_help2}"'<br />
                                     </span>
                                 </div>
                             </div>
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'
+
 
     echo '
     <div class="accordion" id="Accordion-01-2">
@@ -1563,21 +1867,88 @@ if [[ "${page}" == "edit" ]]; then
             <div id="Collapse-01" class="accordion-collapse collapse border-white" aria-labelledby="Heading-01" data-bs-parent="#Accordion-01-2">
                 <div class="accordion-body">'
 
+
+
+
+
+
+
+                    # blank_page_detection_ignoreText
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="blank_page_detection_ignoreText">'"${lang_edit_set2_blank_page_detection_ignoreText_title}"'</label>
+                        </div>
+
+                        <div class="col-sm-5">
+
+
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="blank_page_detection_ignoreText" value="false">
+                                <input class="form-check-input" type="checkbox" role="switch" id="blank_page_detection_ignoreText" 
+                                    name="blank_page_detection_ignoreText" value="true"'; \
+                                    [[ "${blank_page_detection_ignoreText}" == "true" ]] && echo -n ' checked'; \
+                                    echo '>
+                            </div>
+
+
+                        </div>
+
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#blank_page_detection_ignoreText-info" role="button" aria-expanded="false" 
+                                    aria-controls="blank_page_detection_ignoreText-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="blank_page_detection_ignoreText-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '"${lang_edit_set2_blank_page_detection_ignoreText_help1}"'<br />
+                                        '"${lang_edit_set2_blank_page_detection_ignoreText_help2}"'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+
+
+
+
+
+
+
+
+
+
                     # blank_page_detection_widthCropping
+                    blank_page_detection_widthCropping_current_value="${blank_page_detection_widthCropping:-0.1}"
+                    blank_page_detection_widthCropping_display="$blank_page_detection_widthCropping_current_value"
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
                             <label for="blank_page_detection_widthCropping">'"${lang_edit_set2_blank_page_detection_widthCropping_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
-
-                            if [ -n "${blank_page_detection_widthCropping}" ]; then
-                                echo '<input type="text" name="blank_page_detection_widthCropping" id="blank_page_detection_widthCropping" class="form-control form-control-sm" value="'"${blank_page_detection_widthCropping}"'" />'
-                            else
-                                echo '<input type="text" name="blank_page_detection_widthCropping" id="blank_page_detection_widthCropping" class="form-control form-control-sm" value="" />'
-                            fi
-
-                            echo '
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" 
+                                       class="form-range" 
+                                       min="0.0" 
+                                       max="0.5" 
+                                       step="0.01" 
+                                       name="blank_page_detection_widthCropping" 
+                                       id="blank_page_detection_widthCropping" 
+                                       value="'"${blank_page_detection_widthCropping_current_value}"'" 
+                                       oninput="document.getElementById('\''blank_page_detection_widthCropping_value'\'').textContent = parseFloat(this.value).toFixed(2)" />
+                                <div class="mt-1">
+                                    <span id="blank_page_detection_widthCropping_value" class="badge bg-primary">'"${blank_page_detection_widthCropping_display}"'</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -1602,20 +1973,29 @@ if [[ "${page}" == "edit" ]]; then
                     </div>'
 
                     # blank_page_detection_hightCropping
+                    blank_page_detection_hightCropping_current_value="${blank_page_detection_hightCropping:-0.05}"
+                    blank_page_detection_hightCropping_display="$blank_page_detection_hightCropping_current_value"
+
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
                             <label for="blank_page_detection_hightCropping">'"${lang_edit_set2_blank_page_detection_hightCropping_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
-
-                            if [ -n "${blank_page_detection_hightCropping}" ]; then
-                                echo '<input type="text" name="blank_page_detection_hightCropping" id="blank_page_detection_hightCropping" class="form-control form-control-sm" value="'"${blank_page_detection_hightCropping}"'" />'
-                            else
-                                echo '<input type="text" name="blank_page_detection_hightCropping" id="blank_page_detection_hightCropping" class="form-control form-control-sm" value="" />'
-                            fi
-
-                            echo '
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" 
+                                       class="form-range" 
+                                       min="0.0" 
+                                       max="0.5" 
+                                       step="0.01" 
+                                       name="blank_page_detection_hightCropping" 
+                                       id="blank_page_detection_hightCropping" 
+                                       value="'"${blank_page_detection_hightCropping_current_value}"'" 
+                                       oninput="document.getElementById('\''blank_page_detection_hightCropping_value'\'').textContent = parseFloat(this.value).toFixed(2)" />
+                                <div class="mt-1">
+                                    <span id="blank_page_detection_hightCropping_value" class="badge bg-primary">'"${blank_page_detection_hightCropping_display}"'</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -1640,21 +2020,25 @@ if [[ "${page}" == "edit" ]]; then
                     </div>'
 
                     # blank_page_detection_interferenceMaxFilter
-                    lang_edit_set2_blank_page_detection_interferenceMaxFilter_title="MaxFilter"
+                    blank_page_detection_interferenceMaxFilter_current_value="${blank_page_detection_interferenceMaxFilter:-1}" # Aktuellen Wert ermitteln oder Standard 127 setzen
+                    # Angezeigten Text bestimmen (off oder Zahl)
+                    if [ "$blank_page_detection_interferenceMaxFilter_current_value" -eq 0 ]; then
+                        blank_page_detection_interferenceMaxFilter_display="${lang_deactivated}"
+                    else
+                        blank_page_detection_interferenceMaxFilter_display="$blank_page_detection_interferenceMaxFilter_current_value"
+                    fi
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
                             <label for="blank_page_detection_interferenceMaxFilter">'"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
-
-                            if [ -n "${blank_page_detection_interferenceMaxFilter}" ]; then
-                                echo '<input type="text" name="blank_page_detection_interferenceMaxFilter" id="blank_page_detection_interferenceMaxFilter" class="form-control form-control-sm" value="'"${blank_page_detection_interferenceMaxFilter}"'" />'
-                            else
-                                echo '<input type="text" name="blank_page_detection_interferenceMaxFilter" id="blank_page_detection_interferenceMaxFilter" class="form-control form-control-sm" value="" />'
-                            fi
-
-                            echo '
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" class="form-range" min="1" max="5" name="blank_page_detection_interferenceMaxFilter" id="blank_page_detection_interferenceMaxFilter" value="'"${blank_page_detection_interferenceMaxFilter_current_value}"'" oninput="document.getElementById('\''blank_page_detection_interferenceMaxFilter_value'\'').textContent = this.value == 0 ? '\'"${lang_deactivated}"\'' : this.value" />
+                                <div class="mt-1">
+                                    <span id="blank_page_detection_interferenceMaxFilter_value" class="badge bg-primary">'"${blank_page_detection_interferenceMaxFilter_display}"'</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -1670,7 +2054,7 @@ if [[ "${page}" == "edit" ]]; then
                                     <span>
                                          '"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_help1}"'<br><br>
                                          '"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_help2}"'<br><br>
-                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">1</span></code>
+                                         '"${lang_default}"': <code><span style="font-hight:1.1em;">1</span></code> (='"${lang_deactivated}"')
                                     </span>
                                 </div>
                             </div>
@@ -1679,21 +2063,25 @@ if [[ "${page}" == "edit" ]]; then
                     </div>'
 
                     # blank_page_detection_interferenceMinFilter
-                    lang_edit_set2_blank_page_detection_interferenceMinFilter_title="MinFilter"
+                    blank_page_detection_interferenceMinFilter_current_value="${blank_page_detection_interferenceMinFilter:-3}" # Aktuellen Wert ermitteln oder Standard 127 setzen
+                    # Angezeigten Text bestimmen (off oder Zahl)
+                    if [ "$blank_page_detection_interferenceMinFilter_current_value" -eq 0 ]; then
+                        blank_page_detection_interferenceMinFilter_display="${lang_deactivated}"
+                    else
+                        blank_page_detection_interferenceMinFilter_display="$blank_page_detection_interferenceMinFilter_current_value"
+                    fi
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
                             <label for="blank_page_detection_interferenceMinFilter">'"${lang_edit_set2_blank_page_detection_interferenceMinFilter_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
-
-                            if [ -n "${blank_page_detection_interferenceMinFilter}" ]; then
-                                echo '<input type="text" name="blank_page_detection_interferenceMinFilter" id="blank_page_detection_interferenceMinFilter" class="form-control form-control-sm" value="'"${blank_page_detection_interferenceMinFilter}"'" />'
-                            else
-                                echo '<input type="text" name="blank_page_detection_interferenceMinFilter" id="blank_page_detection_interferenceMinFilter" class="form-control form-control-sm" value="" />'
-                            fi
-
-                            echo '
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" class="form-range" min="1" max="7" name="blank_page_detection_interferenceMinFilter" id="blank_page_detection_interferenceMinFilter" value="'"${blank_page_detection_interferenceMinFilter_current_value}"'" oninput="document.getElementById('\''blank_page_detection_interferenceMinFilter_value'\'').textContent = this.value == 0 ? '\'"${lang_deactivated}"\'' : this.value" />
+                                <div class="mt-1">
+                                    <span id="blank_page_detection_interferenceMinFilter_value" class="badge bg-primary">'"${blank_page_detection_interferenceMinFilter_display}"'</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -1717,20 +2105,29 @@ if [[ "${page}" == "edit" ]]; then
                     </div>'
 
                     # blank_page_detection_black_pixel_ratio
+                    blank_page_detection_black_pixel_ratio_current_value="${blank_page_detection_black_pixel_ratio:-0.005}"
+                    blank_page_detection_black_pixel_ratio_display="$blank_page_detection_black_pixel_ratio_current_value"
+
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
                             <label for="blank_page_detection_black_pixel_ratio">'"${lang_edit_set2_blank_page_detection_black_pixel_ratio_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
-
-                            if [ -n "${blank_page_detection_black_pixel_ratio}" ]; then
-                                echo '<input type="text" name="blank_page_detection_black_pixel_ratio" id="blank_page_detection_black_pixel_ratio" class="form-control form-control-sm" value="'"${blank_page_detection_black_pixel_ratio}"'" />'
-                            else
-                                echo '<input type="text" name="blank_page_detection_black_pixel_ratio" id="blank_page_detection_black_pixel_ratio" class="form-control form-control-sm" value="" />'
-                            fi
-
-                            echo '
+                        <div class="col-sm-5">
+                            <div class="mt-2">
+                                <input type="range" 
+                                       class="form-range" 
+                                       min="0.001" 
+                                       max="0.02" 
+                                       step="0.001" 
+                                       name="blank_page_detection_black_pixel_ratio" 
+                                       id="blank_page_detection_black_pixel_ratio" 
+                                       value="'"${blank_page_detection_black_pixel_ratio_current_value}"'" 
+                                       oninput="document.getElementById('\''blank_page_detection_black_pixel_ratio_value'\'').textContent = parseFloat(this.value).toFixed(3)" />
+                                <div class="mt-1">
+                                    <span id="blank_page_detection_black_pixel_ratio_value" class="badge bg-primary">'"${blank_page_detection_black_pixel_ratio_display}"'</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">
@@ -1826,7 +2223,8 @@ if [[ "${page}" == "edit" ]]; then
                                         '"${lang_edit_set2_taglist_help9}"'<br />
                                         '"${lang_edit_set2_taglist_help10}"'<br />
                                         ('"${lang_example}"' /volume1/ocr/taglist.txt)<br /><br />
-                                        <strong>'"${lang_edit_yamlsample_button_help_headline}"'</strong>
+                                        <strong>'"${lang_edit_yamlsample_button_help_headline}"'</strong><br />
+                                        '"${lang_edit_set2_taglist_help11}"'<a href="https://github.com/geimist/synOCR/wiki/03_YAML-(de)" onclick="window.open(this.href); return false;" style="color: #BD0010;"><b>WIKI</b></a><br />
                                     </span>
                                 </div>
                             </div>
@@ -2497,17 +2895,15 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="dsmbeepnotify">'"${lang_edit_set3_dsmbeepnotify_title}"'</label>
                         </div>
-
                         <div class="col-sm-5">
-                            <input class="form-check-input" type="radio" id="dsmbeepnotify-on" name="dsmbeepnotify" value='; \
-                                [[ "${dsmbeepnotify}" == "on" ]] && echo -n '"on" checked />' || echo -n '"on" />'
-                            echo '<label for="dsmbeepnotify-on" class="form-check-label ps-2 pe-4">'"${lang_edit_set3_dsmbeepnotify_on}"'</label>'
-                            echo -n '
-                            <input class="form-check-input" type="radio" id="dsmbeepnotify-off" name="dsmbeepnotify" value='; \
-                                [[ "${dsmbeepnotify}" == "off" ]] && echo -n '"off" checked />' || echo -n '"off" />'
-                            echo '<label for="dsmbeepnotify-off" class="form-check-label ps-2">'"${lang_edit_set3_dsmbeepnotify_off}"'</label>
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="dsmbeepnotify" value="off">
+                                <input class="form-check-input" type="checkbox" role="switch" id="dsmbeepnotify" 
+                                    name="dsmbeepnotify" value="on"'; \
+                                    [[ "${dsmbeepnotify}" == "on" ]] && echo -n ' checked'; \
+                                    echo '>
+                            </div>
                         </div>
-
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#dsmbeepnotify-info" role="button" aria-expanded="false" aria-controls="dsmbeepnotify-info">
@@ -2536,15 +2932,14 @@ if [[ "${page}" == "edit" ]]; then
                         </div>
                     
                         <div class="col-sm-5">
-                            <input class="form-check-input" type="radio" id="dsmtextnotify-on" name="dsmtextnotify" value='; \
-                                [[ "${dsmtextnotify}" == "on" ]] && echo -n '"on" checked />' || echo -n '"on" />'
-                            echo '<label for="dsmtextnotify-on" class="form-check-label ps-2 pe-4">'"${lang_edit_set3_dsmtextnotify_on}"'</label>'
-                            echo -n '
-                            <input class="form-check-input" type="radio" id="dsmtextnotify-off" name="dsmtextnotify" value='; \
-                                [[ "${dsmtextnotify}" == "off" ]] && echo -n '"off" checked />' || echo -n '"off" />'
-                            echo '<label for="dsmtextnotify-off" class="form-check-label ps-2">'"${lang_edit_set3_dsmtextnotify_off}"'</label>
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="dsmtextnotify" value="off">
+                                <input class="form-check-input" type="checkbox" role="switch" id="dsmtextnotify" 
+                                    name="dsmtextnotify" value="on"'; \
+                                    [[ "${dsmtextnotify}" == "on" ]] && echo -n ' checked'; \
+                                    echo '>
+                            </div>
                         </div>
-                    
                         <div class="col-sm-2">
                             <div class="float-end">
                                 <a data-bs-toggle="collapse" href="#dsmtextnotify-info" role="button" aria-expanded="false" aria-controls="dsmtextnotify-info">
@@ -2667,13 +3062,13 @@ if [[ "${page}" == "edit" ]]; then
                             <label for="apprise_attachment">'"${lang_edit_set3_apprise_attachment_title}"'</label>
                         </div>
                         <div class="col-sm-5">
-                            <input class="form-check-input" type="radio" id="apprise_attachment-true" name="apprise_attachment" value='; \
-                                [[ "${apprise_attachment}" == "true" ]] && echo -n '"true" checked />' || echo -n '"true" />'
-                            echo '<label for="apprise_attachment-true" class="form-check-label ps-2 pe-4">'"${lang_edit_set3_apprise_attachment_true}"'</label>'
-                            echo -n '
-                            <input class="form-check-input" type="radio" id="apprise_attachment-false" name="apprise_attachment" value='; \
-                                [[ "${apprise_attachment}" == "false" ]] && echo -n '"false" checked />' || echo -n '"false" />'
-                            echo '<label for="apprise_attachment-false" class="form-check-label ps-2">'"${lang_edit_set3_apprise_attachment_false}"'</label>
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="apprise_attachment" value="false">
+                                <input class="form-check-input" type="checkbox" role="switch" id="apprise_attachment" 
+                                    name="apprise_attachment" value="true"'; \
+                                    [[ "${apprise_attachment}" == "true" ]] && echo -n ' checked'; \
+                                    echo '>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">

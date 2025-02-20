@@ -88,7 +88,8 @@
             img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, notify_lang, 
             blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, 
             blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, 
-            blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio
+            blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, 
+            adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
         FROM 
             config 
         WHERE 
@@ -141,6 +142,11 @@
     blank_page_detection_interferenceMaxFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $43}')
     blank_page_detection_interferenceMinFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $44}')
     blank_page_detection_black_pixel_ratio=$(echo "${sqlerg}" | awk -F'\t' '{print $45}')
+    blank_page_detection_ignoreText=$(echo "${sqlerg}" | awk -F'\t' '{print $46}')
+    adjustColorBWthreshold=$(echo "${sqlerg}" | awk -F'\t' '{print $47}')
+    adjustColorDPI=$(echo "${sqlerg}" | awk -F'\t' '{print $48}')
+    adjustColorContrast=$(echo "${sqlerg}" | awk -F'\t' '{print $49}')
+    adjustColorSharpness=$(echo "${sqlerg}" | awk -F'\t' '{print $50}')
 
 # read global values:
     dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -186,9 +192,20 @@
     echo "used image (created):     ${dockercontainer} ($(docker inspect -f '{{ .Created }}' "${dockercontainer}" 2>/dev/null | awk -F. '{print $1}'))"
 
     documentAuthor=$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}" | grep "\-\-author" | sed -e 's/--author //')
+#   documentAuthor=$(grep -oP -- '--author(=\S+)?\s*\K.*?(?=\s+--|\s*$)' <<<"${ocropt}")
     echo "document author:          ${documentAuthor}"
 
     echo "used ocr-parameter (raw): ${ocropt}"
+
+    # check of non-ocrmypdf parameter --keep_hash.
+    if [[ "${ocropt}" == *"--keep_hash"* ]]; then
+        keep_hash=true
+        ocropt="${ocropt//--keep_hash/}"  # remove --keep_hash to make the parameters OCRmyPDF compatible
+        echo "                          --keep_hash is set – the source file will not be modified"
+    else
+        keep_hash=false
+    fi
+
     # arguments with spaces must be submit as array (https://github.com/ocrmypdf/OCRmyPDF/issues/878)
     # for loop split all parameters, which start with > -<:
     c=0
@@ -209,7 +226,7 @@
             [ "${loglevel}" = 2 ] && echo "OCR-arg ${c}:                ${value}"
             ocropt_arr+=( "${value}" )
         fi
-    done <<< "$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}")"
+    done <<< "$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt#"${ocropt%%[^ ]*}"}")"
     unset c
 
     echo "ocropt_array:             ${ocropt_arr[*]}"
@@ -218,17 +235,28 @@
     echo "renaming syntax:          ${NameSyntax}"
     echo "Symbol for tag marking:   ${tagsymbol}"
     tagsymbol="${tagsymbol// /%20}"   # mask spaces
+    echo -n "convert images to PDF:    ${img2pdf}" && [[ "${img2pdf}" = "true" ]] && [[ "${keep_hash}" = "true" ]] && { img2pdf="false"; echo " (disabled, because --keep_hash is defined!)"; } || echo
+
+    echo "adjust color:"
+    echo "  BW threshold:           ${adjustColorBWthreshold}"
+    echo "  DPI:                    ${adjustColorDPI}"
+    echo "  contrast:               ${adjustColorContrast}"
+    echo "  sharpness:              ${adjustColorSharpness}"
+
     echo "target file handling:     ${moveTaggedFiles}"
-    echo "Document split pattern:   ${documentSplitPattern}"
-    
+    echo -n "Document split pattern:   ${documentSplitPattern}" && [[ -n "${documentSplitPattern}" ]] && [[ "${keep_hash}" = "true" ]] && { documentSplitPattern=""; echo " (disabled, because --keep_hash is defined!)"; } || echo
+
     if [[ "${documentSplitPattern}" = "<split each page>" ]]; then
         splitpagehandling="isFirstPage"
         echo "split page handling:      ${splitpagehandling} (because, <split each page> is set)"
     else
         echo "split page handling:      ${splitpagehandling}"
     fi
-    echo "delete blank pages:       ${blank_page_detection_switch}"
+#    echo "delete blank pages:       ${blank_page_detection_switch}" && [[ "${blank_page_detection_switch}" = "true" ]] && [[ "${keep_hash}" = "true" ]] && blank_page_detection_switch="false" && echo " (disabled, because --keep_hash is defined!)"
+    echo -n "delete blank pages:       ${blank_page_detection_switch}" && [[ "${blank_page_detection_switch}" = "true" && "${keep_hash}" = "true" ]] && { blank_page_detection_switch="false"; echo " (disabled, because --keep_hash is defined!)"; } || echo
+
     if [ "${blank_page_detection_switch}" = true ]; then
+        echo "  ignore text:            ${blank_page_detection_ignoreText}"
         echo "  main threshold:         ${blank_page_detection_mainThreshold}"
         echo "  width cropping:         ${blank_page_detection_widthCropping}"
         echo "  hight cropping:         ${blank_page_detection_hightCropping}"
@@ -424,11 +452,51 @@ sec_to_time()
 }
 
 
+file_processing_log() 
+{
+#########################################################################################
+# This function logs every source file where “unsuccessful” is initially set as the     #
+# destination. Each successfully moved destination file is also logged and the          #
+# placeholder “unsuccessful” is deleted.                                                #
+# call: mode (1,2) "file"                                                               #
+#########################################################################################
+
+    (( ${loglevel:-0} == 1 || ${loglevel:-0} == 2 )) || return
+
+    local mode="$1"
+    local file="$2"
+    local log_file="${LOGDIR}file_processing.log"
+    local temp_line="                      ➜ unsuccessful"
+    local last_line
+
+    case "${mode}" in
+        1)  # Source-Log with unsuccessful warning
+            echo "[$(date +%Y-%m-%d_%H-%M-%S)] SOURCE: ${file}" >> "${log_file}"
+            echo "${temp_line}" >> "${log_file}"
+            ;;
+        2)  # Target-Log replace unsuccessful warning with target file
+            if [[ -s "${log_file}" ]]; then
+                last_line=$(tail -n 1 "${log_file}")
+                [[ "${last_line}" == "${temp_line}" ]] && sed -i '$d' "${log_file}"
+            fi
+            echo "                      ➜ ${file}" >> "${log_file}"
+            ;;
+    esac
+}
+
+
 OCRmyPDF()
 {
     # shellcheck disable=SC2002  # Don't warn about "Useless cat" in this function
     # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
-    cat "${input}" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
+
+    if [[ "${adjustColorSuccess}" = true ]]; then
+        OCRinput="${color_adjustment_target}"
+    else
+        OCRinput="${input1}"
+    fi
+
+    cat "${OCRinput}" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
 }
 
 
@@ -1467,6 +1535,8 @@ rename()
         NewName="${NewName:-$(date +%Y-%m-%d_%H-%M)_$(urldecode "${title}")}"
         echo "! WARNING ! – No variables were found for renaming. A fallback is used to prevent an empty file name: ${NewName}"
     else
+        # all non-alphanumeric characters will be compressed
+        NewName=$(sed -E 's/([^[:alnum:]])\1+/\1/g' <<< "$NewName")
         echo "${NewName}"
     fi
 
@@ -1475,68 +1545,70 @@ rename()
 
 # set metadata:
 # ---------------------------------------------------------------------
-    echo -n "${log_indent}➜ insert metadata "
-    
-    if [ "${python_check}" = ok ] && [ "${enablePyMetaData}" -eq 1 ]; then
-        echo "(use python pikepdf)"
-        unset py_meta
+    if [[ "${keep_hash}" != "true" ]]; then
+        echo -n "${log_indent}➜ insert metadata "
 
-        # replace parameters with values (rulenames can contain placeholders, which are replaced here)
-        meta_keyword_list=$(replace_variables "${meta_keyword_list}")
+        if [ "${python_check}" = ok ] && [ "${enablePyMetaData}" -eq 1 ]; then
+            echo "(use python pikepdf)"
+            unset py_meta
 
-        py_meta="'/Author': '${documentAuthor}',"
-        # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
-        py_meta="$(printf "${py_meta}\n'/Keywords': \'$( echo "${meta_keyword_list}" | sed -e "s/^${tagsymbol}//g" )\',")"
-        # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
-        py_meta="$(printf "${py_meta}\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
-        # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
-        py_meta="$(printf "${py_meta}\n'/CreatorTool': \'synOCR ${local_version}\'")"
+            # replace parameters with values (rulenames can contain placeholders, which are replaced here)
+            meta_keyword_list=$(replace_variables "${meta_keyword_list}")
 
-        echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
+            py_meta="'/Author': '${documentAuthor}',"
+            # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
+            py_meta="$(printf "${py_meta}\n'/Keywords': \'$( echo "${meta_keyword_list}" | sed -e "s/^${tagsymbol}//g" )\',")"
+            # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
+            py_meta="$(printf "${py_meta}\n'/CreationDate': \'D:${date_yy}${date_mm}${date_dd}\',")"
+            # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
+            py_meta="$(printf "${py_meta}\n'/CreatorTool': \'synOCR ${local_version}\'")"
 
-        # get previous metadata - maybe for feature use:
-#        get_previous_meta(){
-#            {   echo "import pprint"
-#                echo "from pypdf import PdfFileReader, PdfFileMerger"
-#                echo "if __name__ == '__main__':"
-#                echo "    file_in = open('${outputtmp}', 'rb')"
-#                echo "    pdf_reader = PdfFileReader(file_in)"
-#                echo "    metadata = pdf_reader.getDocumentInfo()"
-#                echo "    pprint.pprint(metadata)"
-#                echo "    file_in.close()"
-#            } | python3
-#        }
-#       previous_meta=$(get_previous_meta)
+            echo "${log_indent}used metadata:" && echo "${py_meta}" | sed -e "s/^/${log_indent}➜ /g"
 
-        outputtmpMeta="${outputtmp}_meta.pdf"
+            # get previous metadata - maybe for feature use:
+    #        get_previous_meta(){
+    #            {   echo "import pprint"
+    #                echo "from pypdf import PdfFileReader, PdfFileMerger"
+    #                echo "if __name__ == '__main__':"
+    #                echo "    file_in = open('${outputtmp}', 'rb')"
+    #                echo "    pdf_reader = PdfFileReader(file_in)"
+    #                echo "    metadata = pdf_reader.getDocumentInfo()"
+    #                echo "    pprint.pprint(metadata)"
+    #                echo "    file_in.close()"
+    #            } | python3
+    #        }
+    #       previous_meta=$(get_previous_meta)
 
-        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}call handlePdf.py -dbg_lvl \"${loglevel}\" -dbg_file \"${current_logfile}\" -task metadata -inputFile \"${outputtmp}\" -metaData \"{$py_meta}\" -outputFile \"${outputtmpMeta}\""
+            outputtmpMeta="${outputtmp}_meta.pdf"
 
-        python3 ./includes/handlePdf.py -dbg_lvl "${loglevel}" \
-                                        -dbg_file "${current_logfile}" \
-                                        -task metadata \
-                                        -inputFile "${outputtmp}" \
-                                        -metaData "{$py_meta}"  \
-                                        -outputFile "${outputtmpMeta}"
+            [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}call handlePdf.py -dbg_lvl \"${loglevel}\" -dbg_file \"${current_logfile}\" -task metadata -inputFile \"${outputtmp}\" -metaData \"{$py_meta}\" -outputFile \"${outputtmpMeta}\""
 
-        if [ $? != 0 ] || [ "$(stat -c %s "${outputtmpMeta}")" -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
-            echo "${log_indent}  ⚠️ ERROR with writing metadata ... "
+            python3 ./includes/handlePdf.py -dbg_lvl "${loglevel}" \
+                                            -dbg_file "${current_logfile}" \
+                                            -task metadata \
+                                            -inputFile "${outputtmp}" \
+                                            -metaData "{$py_meta}"  \
+                                            -outputFile "${outputtmpMeta}"
+
+            if [ $? != 0 ] || [ "$(stat -c %s "${outputtmpMeta}")" -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
+                echo "${log_indent}  ⚠️ ERROR with writing metadata ... "
+            else
+                mv "${outputtmpMeta}" "${outputtmp}"
+            fi
+            unset outputtmpMeta
+
+        # Fallback for exiftool DSM6.2, if needed:
+        elif which exiftool > /dev/null  2>&1 ; then
+            echo -n "(exiftool ok) "
+            exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo "${renameTag}" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
         else
-            mv "${outputtmpMeta}" "${outputtmp}"
+            echo "FAILED! - exiftool not found / Python-check failed or enablePyMetaData was set to false manualy! Please install it when you need it and when you want to insert metadata"
         fi
-        unset outputtmpMeta
-    
-    # Fallback for exiftool DSM6.2, if needed:
-    elif which exiftool > /dev/null  2>&1 ; then
-        echo -n "(exiftool ok) "
-        exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo "${renameTag}" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
-    else
-        echo "FAILED! - exiftool not found / Python-check failed or enablePyMetaData was set to false manualy! Please install it when you need it and when you want to insert metadata"
+
+        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
     fi
-    
-    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
-    
-    
+
+
 # move target files:
 # ---------------------------------------------------------------------
     i=0
@@ -1552,14 +1624,19 @@ rename()
             mkdir -p "${subOUTPUTDIR}"
             echo "created"
         fi
-    
+
         prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
-    
+
         echo "${log_indent}  target file: ${output##*/}"
 
-        mv "${outputtmp}" "${output}"
+        if [[ "${keep_hash}" = "true" ]]; then
+            cp -a "${keep_hash_input}" "${output}"
+        else
+            mv "${outputtmp}" "${output}"
+            adjust_attributes "${keep_hash_input}" "${output}"
+        fi
+        file_processing_log 2 "${output}"
 
-        adjust_attributes "${input}" "${output}"
     elif [ "${moveTaggedFiles}" = useYearMonthDir ] ; then
     # move to folder each year & month:
     # ---------------------------------------------------------------------
@@ -1572,35 +1649,40 @@ rename()
             mkdir -p "${subOUTPUTDIR}"
             echo "created"
         fi
-    
+
         prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
-    
+
         echo "${log_indent}  target file: $(basename "${output}")"
-        mv "${outputtmp}" "${output}"
-    
-        adjust_attributes "${input}" "${output}"
-    
+
+        if [[ "${keep_hash}" = "true" ]]; then
+            cp -a "${keep_hash_input}" "${output}"
+        else
+            mv "${outputtmp}" "${output}"
+            adjust_attributes "${keep_hash_input}" "${output}"
+        fi
+        file_processing_log 2 "${output}"
+
     elif [ -n "${renameCat}" ] && [ "${moveTaggedFiles}" = useCatDir ] ; then
     # use sorting in category folder:
     # ---------------------------------------------------------------------
         echo "${log_indent}➜ move to category directory"
-    
+
         # replace date parameters:
         renameCat=$(replace_variables "${renameCat}")
 
         # define target folder as array and purge duplicates:
 ##      IFS=" " read -r -a tagarray <<< "${renameCat}" ; IFS="${IFSsaved}"
         IFS=" " read -r -a tagarray <<< "$(echo "${renameCat}" | tr ' ' '\n' | awk '!seen[$0]++' | tr '\n' ' ')" ; IFS="${IFSsaved}"
-       
+
         # temp. list of used destination folders to avoid file duplicates (different tags, but one category):
         DestFolderList=""
         maxID=${#tagarray[*]}
-    
+
         while (( i < maxID )); do
             tagdir="${tagarray[$i]//%20/ }"
-    
+
             echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
-    
+
             if echo "${tagdir}"| grep -q "^/volume*" ; then
                 subOUTPUTDIR="${tagdir%/}/"
                 if [ -d "${subOUTPUTDIR}" ] ;then
@@ -1612,7 +1694,7 @@ rename()
             else
                 # if path is not absolute, then remove special characters
                 # tagdir=$(echo ${tagdir} | sed 's%\/\|\\\|\:\|\?%_%g' ) # gefiltert wird: \ / : ?
-                subOUTPUTDIR="${OUTPUTDIR}${tagdir%/}/"
+                subOUTPUTDIR="${OUTPUTDIR%/}/${tagdir%/}/"
                 if [ -d "${subOUTPUTDIR}" ] ;then
                     echo "OK [subfolder target dir]"
                 else
@@ -1620,11 +1702,11 @@ rename()
                     echo "created [subfolder target dir]"
                 fi
             fi
-    
+
             prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
-    
-            echo "${log_indent}  target:   ${subOUTPUTDIR}${output##*/}"
-    
+
+            echo "${log_indent}  target:   ${subOUTPUTDIR%/}/${output##*/}"
+
             # check if the same file has already been sorted into this category (different tags, but same category)
             if echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$" ; then
                 echo "${log_indent}  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
@@ -1632,10 +1714,20 @@ rename()
                 if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
                     echo "${log_indent}  do not set a hard link when copying across volumes"
                     # do not set a hardlink when copying across volumes:
-                    cp "${outputtmp}" "${output}"
+                    if [[ "${keep_hash}" = "true" ]]; then
+                        cp -a "${keep_hash_input}" "${output}"
+                    else
+                        cp "${outputtmp}" "${output}"
+                    fi
+                   file_processing_log 2 "${output}"
                 else
                     echo "${log_indent}  set a hard link"
-                    commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
+                    if [[ "${keep_hash}" = "true" ]]; then
+                        commandlog=$(cp -al "${keep_hash_input}" "${output}" 2>&1 )
+                    else
+                        commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
+                    fi
+
                     # check: - creating hard link don't fails / - target file is valid (not empty)
                     if [ $? != 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
                         echo "${log_indent}  ${commandlog}"
@@ -1645,13 +1737,17 @@ rename()
                             df -h --output=source,target | sed -e "s/^/${log_indent}      /g"
                             echo -e
                         fi
-                        cp -f "${outputtmp}" "${output}"
+                        if [[ "${keep_hash}" = "true" ]]; then
+                            cp -fa "${keep_hash_input}" "${output}"
+                        else
+                            cp -f "${outputtmp}" "${output}"
+                        fi
                     fi
+                    file_processing_log 2 "${output}"
                 fi
-    
-                adjust_attributes "${input}" "${output}"
+                [[ "${keep_hash}" != "true" ]] && adjust_attributes "${keep_hash_input}" "${output}"
             fi
-    
+
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
             i=$((i + 1))
             echo -e
@@ -1668,7 +1764,7 @@ rename()
         else
             renameTag="${renameTag_raw}"
         fi
-    
+
         # define tags as array
         IFS=" " read -r -a tagarray <<< "${renameTag}" ; IFS="${IFSsaved}"
         maxID=${#tagarray[*]}
@@ -1677,25 +1773,34 @@ rename()
             tagdir="${tagarray[$i]//%20/ }"
 
             echo -n "${log_indent}  tag directory \"${tagdir}\" exists? ➜  "
-    
+
             if [ -d "${OUTPUTDIR}${tagdir}" ] ;then
                 echo "OK"
             else
                 mkdir "${OUTPUTDIR}${tagdir}"
                 echo "created"
             fi
-    
+
             prepare_target_path "${OUTPUTDIR}${tagdir}" "${NewName}.pdf"
-    
+
             echo "${log_indent}  target:   ./${tagdir}/${output##*/}"
-    
+
             if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
                 echo "${log_indent}  do not set a hard link when copying across volumes"
                 # do not set a hardlink when copying across volumes:
-                cp "${outputtmp}" "${output}"
+                if [[ "${keep_hash}" = "true" ]]; then
+                    cp -a "${keep_hash_input}" "${output}"
+                else
+                    cp "${outputtmp}" "${output}"
+                fi
+                file_processing_log 2 "${output}"
             else
                 echo "${log_indent}  set a hard link"
-                commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
+                if [[ "${keep_hash}" = "true" ]]; then
+                    commandlog=$(cp -al "${keep_hash_input}" "${output}" 2>&1 )
+                else
+                    commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
+                fi
                 # check: - creating hard link don't fails / - target file is valid (not empty)
                 if [ $? != 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
                     echo "${log_indent}  ${commandlog}"
@@ -1705,12 +1810,18 @@ rename()
                         df -h --output=source,target | sed -e "s/^/${log_indent}      /g"
                         echo -e
                     fi
-                    cp -f "${outputtmp}" "${output}"
+
+                    if [[ "${keep_hash}" = "true" ]]; then
+                        cp -af "${keep_hash_input}" "${output}"
+                    else
+                        cp -f "${outputtmp}" "${output}"
+                    fi
                 fi
+                file_processing_log 2 "${output}"
             fi
-    
-            adjust_attributes "${input}" "${output}"
-    
+
+            [[ "${keep_hash}" != "true" ]] && adjust_attributes "${keep_hash_input}" "${output}"
+
             i=$((i + 1))
         done
     
@@ -1720,11 +1831,16 @@ rename()
     # no rule fulfilled - use the target folder:
     # ---------------------------------------------------------------------
         prepare_target_path "${OUTPUTDIR}" "${NewName}.pdf"
-    
+
         echo "${log_indent}  target file: $(basename "${output}")"
-        mv "${outputtmp}" "${output}"
-    
-        adjust_attributes "${input}" "${output}"
+
+        if [[ "${keep_hash}" = "true" ]]; then
+            cp -af "${keep_hash_input}" "${output}"
+        else
+            mv "${outputtmp}" "${output}"
+            adjust_attributes "${keep_hash_input}" "${output}"
+        fi
+        file_processing_log 2 "${output}"
     fi
 
 }
@@ -1821,11 +1937,9 @@ py_page_count()
 # This function receives a PDF file path and give back number of pages                  #
 #########################################################################################
 
-    {   echo 'from pypdf import PdfReader'
-        echo 'reader = PdfReader("'"$1"'")'
-        echo 'number_of_pages = len(reader.pages)'
-        echo 'print(number_of_pages)'
-    } | python3
+    python3 -c "import sys, os, pypdf; \
+                path = os.path.abspath(sys.argv[1]); \
+                print(len(pypdf.PdfReader(path).pages))" "$1"
 }
 
 
@@ -1894,7 +2008,7 @@ prepare_target_path()
     local target_filename="$2"
     local target_fileext="${2##*.}"
 
-    destfilecount=$(find "${target_dir_path}" -maxdepth 1 -type f -name "${target_filename%.*}*${target_fileext}" -printf '.' | wc -c)    
+    destfilecount=$(find "${target_dir_path}" -maxdepth 1 -type f -name "${target_filename%.*}*${target_fileext}" -printf '.' | wc -c)
 
     if [ "${destfilecount}" -eq 0 ]; then
         output="${target_dir_path}${target_filename%.*}.${target_fileext}"
@@ -1974,26 +2088,89 @@ main_1st_step()
 printf "\n\n  %s\n  ● %-80s●\n  %s\n\n" "${dashline2}" "STEP 1 - RUN OCR / SPLIT FILES, IF NEEDED:" "${dashline2}"
 
 collect_input_files "${INPUTDIR}" "pdf"
+files_step1="${files}"
 
-while read -r input ; do
-    [ ! -f "${input}" ] && continue
+while read -r input1 ; do
+    [ ! -f "${input1}" ] && continue
 
 # create temporary working directory
 # ---------------------------------------------------------------------
-    work_tmp_step1="${work_tmp_main%/}/step1_tmp_$(date +%s)/"
+    work_tmp_step1="${work_tmp_main%/}/step1_tmp_$(uuidgen)/"
     mkdir -p "${work_tmp_step1}"
 
     printf "\n"
-    filename="${input##*/}"
+    filename="${input1##*/}"
     title="${filename%.*}"
+    keep_hash_input="${input1}"
     echo "${dashline2}"
     echo "CURRENT FILE:   ➜ ${filename}"
+    file_processing_log 1 "${filename}"
     date_start=$(date +%s)
     was_splitted=0
     split_error=0
 
     outputtmp="${work_tmp_step1%/}/${title}.pdf"
     echo "${log_indent}  temp. target file: ${outputtmp}"
+
+
+# adjust color
+# ---------------------------------------------------------------------
+    # Array für zusätzliche Argumente initialisieren
+    args=()
+    adjustColor=false
+    unset adjustColorSuccess
+
+    # --threshold nur hinzufügen, wenn adjustColorBWthreshold nicht leer ist
+    if [ "${adjustColorBWthreshold}" != "0" ]; then
+        args+=(--threshold "${adjustColorBWthreshold}")
+        adjustColor=true
+    fi
+
+    # --dpi nur hinzufügen, wenn adjustColorDPI nicht leer ist
+    if [ "${adjustColorDPI}" != "0" ]; then
+        # 0, 72, 75, 100, 150, 200, 300, 400, 450, 600
+        args+=(--dpi "$adjustColorDPI")
+#        adjustColor=true
+    fi
+
+    # --contrast nur hinzufügen, wenn nicht leer und nicht 1.0
+    if [ "${adjustColorContrast}" != "1.0" ]; then
+        args+=(--contrast "${adjustColorContrast}")
+        adjustColor=true
+    fi
+
+    # --sharpness nur hinzufügen, wenn nicht leer und nicht 1.0
+    if [ "${adjustColorSharpness}" != "1.0" ]; then
+        args+=(--sharpness "${adjustColorSharpness}")
+        adjustColor=true
+    fi
+
+    if [ "${adjustColor}" = true ] && [[ "${keep_hash}" = "true" ]]; then
+        printf "%s\n\n" "${log_indent}adjustColor is disabled because --keep_hash is set"
+    elif [ "${adjustColor}" = true ] && [ "${python_check}" = "ok" ]; then
+        printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" " adjust color" "${dashline1}"
+        printf "${log_indent}used parameter: %s\n" "${args[*]}"
+
+        mkdir "${work_tmp_step1%/}/pdf2bw"
+        color_adjustment_target="${work_tmp_step1%/}/pdf2bw/${outputtmp##*/}"
+        [ -s "${color_adjustment_target}" ] && rm -f "${color_adjustment_target}" # Delete previous file
+        unset input_bw
+
+        adjustColorLOG=$(python3 ./includes/color_adjustment.py "${input1}" "${color_adjustment_target}" "${args[@]}" )
+        wait
+        exit_code=$?
+
+        if [ $exit_code -eq 0 ]; then
+            printf "%s\n" "${log_indent}PDF successfully adjust color"
+            adjustColorSuccess=true
+        else
+            printf "%s\n" "${log_indent}ERROR – No valid target PDF file found or file does not exist."
+        fi
+        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}adjustColorLOG: $adjustColorLOG"
+        unset exit_code
+    fi
+
+    unset args
 
 
 # OCRmyPDF:
@@ -2024,7 +2201,7 @@ while read -r input ; do
 
             prepare_target_path "${INPUTDIR}ERRORFILES" "${filename}"
 
-            mv "${input}" "${output}"
+            mv "${input1}" "${output}"
             [ "${loglevel}" != 0 ] && cp "${current_logfile}" "${output}.log"
             echo "${log_indent}              ┖➜ move to ERRORFILES"
         fi
@@ -2035,7 +2212,7 @@ while read -r input ; do
     fi
 
 
-# detect & remove blank pagesj with scanrep (https://pypi.org/project/scanprep/):
+# detect & remove blank pages with scanrep (https://pypi.org/project/scanprep/):
 # ---------------------------------------------------------------------
     if [ "${blank_page_detection_switch}" = true ] && [ "${python_check}" = "ok" ]; then
         printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "detect & remove blank pages:" "${dashline1}"
@@ -2043,13 +2220,17 @@ while read -r input ; do
         pagePreCount=$( py_page_count "${outputtmp}" )
         mkdir "${work_tmp_step1%/}/scanrep"
 
+        ignore_text_param=""
+        [ "${blank_page_detection_ignoreText}" = "true" ] && ignore_text_param="--ignore_text"
+
         python3 ./includes/blank_page_detection.py "${outputtmp}" "${work_tmp_step1%/}/scanrep" \
             --threshold "${blank_page_detection_mainThreshold}" \
             --width-crop "${blank_page_detection_widthCropping}" \
             --height-crop "${blank_page_detection_hightCropping}" \
             --max-filter "${blank_page_detection_interferenceMaxFilter}" \
             --min-filter "${blank_page_detection_interferenceMinFilter}" \
-            --black-pixel-ratio "${blank_page_detection_black_pixel_ratio}"
+            --black-pixel-ratio "${blank_page_detection_black_pixel_ratio}" \
+            ${ignore_text_param}
         wait
 
         scanrep_out=("${work_tmp_step1%/}/scanrep/"*.pdf)
@@ -2243,7 +2424,7 @@ while read -r input ; do
                 if [ -f "${splitted_file}" ]; then
                     prepare_target_path "${work_tmp_main}" "${splitted_file_name}"
                     mv "${splitted_file}" "${output}"
-                    copy_attributes "${input}" "${output}"
+                    copy_attributes "${input1}" "${output}"
                     echo "${log_indent}➜ move the split file to: ${output}"
                     was_splitted=1
                 else
@@ -2258,26 +2439,35 @@ while read -r input ; do
         echo "${log_indent}no split pattern defined or splitting not possible"
     fi
 
+    if [[ ("${was_splitted}" = 0 || "${split_error}" = 1) && "${keep_hash}" != "true" ]]; then
+        copy_attributes "${input1}" "${outputtmp}"
+    fi
+
+    if [ "${was_splitted}" = 0 ] || [ "${split_error}" = 1 ]; then
+        mv "${outputtmp}" "${work_tmp_main}"
+    fi
+
+    # 2. main loop for PDF processing:
+    main_2nd_step
+
 
 # delete / save source file (takes into account existing files with the same name):
 # ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "handle source file:" "${dashline1}"
 
-    if [ "${was_splitted}" = 0 ] || [ "${split_error}" = 1 ]; then
-        copy_attributes "${input}" "${outputtmp}"
-    fi
-
     if [ "${backup}" = true ]; then
         prepare_target_path "${BACKUPDIR}" "${filename}"
-        mv "${input}" "${output}"
+        
+echo "BACKUPDIR:    ${BACKUPDIR}"
+echo "filename:     ${filename}"
+echo "input:        ${input1}"
+echo "output:       ${output}"
+
+        mv "${input1}" "${output}"
         echo "${log_indent}➜ backup source file to: ${output}"
     else
-        rm -f "${input}"
+        rm -f "${input1}"
         echo "${log_indent}➜ delete source file (${filename})"
-    fi
-
-    if [ "${was_splitted}" = 0 ] || [ "${split_error}" = 1 ]; then
-        mv "${outputtmp}" "${work_tmp_main}"
     fi
 
     rm -rfv "${work_tmp_step1}" | sed -e "s/^/${log_indent}/g"
@@ -2289,9 +2479,9 @@ while read -r input ; do
     echo "Stats:"
     echo "  runtime last file:              ➜ $(sec_to_time $(( $(date +%s) - date_start )))"
 
-done <<<"${files}"
+done <<<"${files_step1}"
 
-printf "%s\n\n" "  runtime 1st step (all files):   ➜ $(sec_to_time $(( $(date +%s) - date_start_all )))"
+#printf "%s\n\n" "  runtime 1st step (all files):   ➜ $(sec_to_time $(( $(date +%s) - date_start_all )))"
 
 }
 
@@ -2304,6 +2494,7 @@ main_2nd_step()
 printf "\n  %s\n  ● %-80s●\n  %s\n\n" "${dashline2}" "STEP 2 - SEARCH TAGS / RENAME / SORT:" "${dashline2}"
 
 collect_input_files "${work_tmp_main}" "pdf"
+files_step2="${files}"
 
 # make special characters visible if necessary
 # ---------------------------------------------------------------------
@@ -2324,32 +2515,17 @@ while read -r input ; do
     apprise_attachment="${apprise_attachment_saved}"
     notify_lang="${notify_lang_saved}"
 
-    if [ "${python_check}" = ok ]; then
-        pagecount_latest=$( py_page_count "${input}" ) 
-        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with python module pypdf)"
-    elif [ "$(which pdfinfo)" ]; then
-        pagecount_latest=$(pdfinfo "${input}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
-        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with pdfinfo)"
-    elif [ "$(which exiftool)" ]; then
-        pagecount_latest=$(exiftool -"*Count*" "${input}" 2>/dev/null | awk -F' ' '{print $NF}')
-        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with exiftool)"
-    fi
-
-    [ -z "${pagecount_latest}" ] && pagecount_latest=0 && echo "${log_indent}! ! ! ERROR - with pdfinfo / exiftool / pypdf - \$pagecount was set to 0"
-
-
-# adapt counter:
-# ---------------------------------------------------------------------
-    global_pagecount_new="$((global_pagecount_new+pagecount_latest))"
-    global_ocrcount_new="$((global_ocrcount_new+1))"
-    pagecount_profile_new="$((pagecount_profile_new+pagecount_latest))"
-    ocrcount_profile_new="$((ocrcount_profile_new+1))"
-
 
 # create temporary working directory
 # ---------------------------------------------------------------------
-    work_tmp_step2="${work_tmp_main%/}/step2_tmp_$(date +%s)/"
+    work_tmp_step2="${work_tmp_main%/}/step2_tmp_$(uuidgen)/"
     mkdir -p "${work_tmp_step2}"
+
+
+# move temporary file to destination folder:
+# ---------------------------------------------------------------------
+    output="${work_tmp_step2%/}/tmp_$(uuidgen).pdf"
+    cp "${input}" "${output}"
 
     echo -e
     filename="${input##*/}"
@@ -2360,34 +2536,36 @@ while read -r input ; do
     tmp_date_search_method="${date_search_method}"    # able to use a temporary fallback to regex for each file
 
     if [ "${delSearchPraefix}" = "yes" ] && [ -n "${SearchPraefix}" ]; then
-        # ToDo:
-        # currently, SearchPraefix will be delete globally
-        # check, if SearchPraefix a prefix or a suffix and delete only this
-        title="${title//${SearchPraefix_tmp}/}"
+        if [[ "${SearchPraefix}" == *\$ ]]; then
+            # Suffix mode: Remove the suffix at the end of the file name
+            suffix="${SearchPraefix%\$}"
+            title="${title%${suffix}}"
+        else
+            # Prefix mode: Remove the prefix at the beginning of the file name
+            title="${title#${SearchPraefix}}"
+        fi
     fi
 
 
-############################################################################
-# ToDo:    >>>>>>>>
-#   - wenn es keine Probleme (z.B. mit der Übertragung der Berechtigung) gibt, kann in der gesamten 
-#     Funktion möglicherweise die Variable $output durch $input ersetzt werden
-#   - prüfen, ob es Probleme gibt, wenn ein keine gültige Umbennungssyntax gibt 
-#     (es muss sichergestellt werden, dass die Datei im Ausgabeordner ankommt)
-
-# temporary output destination with seconds for uniqueness 
-# (otherwise there will be duplication if renaming syntax is missing)
+# adapt counter:
 # ---------------------------------------------------------------------
-#    output="${OUTPUTDIR}temp_${title}_$(date +%s).pdf"
-    output="${work_tmp_step2%/}/temp_${title}_$(date +%s).pdf"
+    if [ "${python_check}" = ok ]; then
+        pagecount_latest=$( py_page_count "${output}" ) 
+        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with python module pypdf)"
+    elif [ "$(which pdfinfo)" ]; then
+        pagecount_latest=$(pdfinfo "${output}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
+        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with pdfinfo)"
+    elif [ "$(which exiftool)" ]; then
+        pagecount_latest=$(exiftool -"*Count*" "${output}" 2>/dev/null | awk -F' ' '{print $NF}')
+        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with exiftool)"
+    fi
 
-# move temporary file to destination folder:
-# ---------------------------------------------------------------------
-    cp "${input}" "${output}"
-#    output="${input}"
+    [ -z "${pagecount_latest}" ] && pagecount_latest=0 && echo "${log_indent}! ! ! ERROR - with pdfinfo / exiftool / pypdf - \$pagecount was set to 0"
 
-# End ToDo <<<<<<<<
-############################################################################
-
+    global_pagecount_new="$((global_pagecount_new+pagecount_latest))"
+    global_ocrcount_new="$((global_ocrcount_new+1))"
+    pagecount_profile_new="$((pagecount_profile_new+pagecount_latest))"
+    ocrcount_profile_new="$((ocrcount_profile_new+1))"
 
 
 # source file permissions-Log:
@@ -2395,7 +2573,8 @@ while read -r input ; do
     if [ "${loglevel}" = 2 ] ; then
         echo "${log_indent}➜ File permissions source file:"
         echo -n "${log_indent}  "
-        ls -l "${input}"
+#       ls -l "${input}"
+        ls -l "${keep_hash_input}"
     fi
 
 
@@ -2437,12 +2616,12 @@ while read -r input ; do
     dateIsFound=no
     find_date 1
 
-    date_dd_source=$(stat -c %y "${input}" | awk '{print $1}' | awk -F- '{print $3}')
-    date_mm_source=$(stat -c %y "${input}" | awk '{print $1}' | awk -F- '{print $2}')
-    date_yy_source=$(stat -c %y "${input}" | awk '{print $1}' | awk -F- '{print $1}')
-    date_houre_source=$(stat -c %y "${input}" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $1}')
-    date_min_source=$(stat -c %y "${input}" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $2}')
-    date_sek_source=$(stat -c %y "${input}" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $3}')
+    date_dd_source=$(stat -c %y "${keep_hash_input}" | awk '{print $1}' | awk -F- '{print $3}')
+    date_mm_source=$(stat -c %y "${keep_hash_input}" | awk '{print $1}' | awk -F- '{print $2}')
+    date_yy_source=$(stat -c %y "${keep_hash_input}" | awk '{print $1}' | awk -F- '{print $1}')
+    date_houre_source=$(stat -c %y "${keep_hash_input}" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $1}')
+    date_min_source=$(stat -c %y "${keep_hash_input}" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $2}')
+    date_sek_source=$(stat -c %y "${keep_hash_input}" | awk '{print $2}' | awk -F. '{print $1}' | awk -F: '{print $3}')
 
     if [ "${dateIsFound}" = no ]; then
         echo "${log_indent}  Date not found in OCR text - use file date:"
@@ -2536,7 +2715,7 @@ while read -r input ; do
     echo "  delete tmp-files ..."
     rm -rfv "${input}" | sed -e "s/^/${log_indent}/g"   # rm ocred version - source file is backuped after ocrmypdf processing 
 
-done <<<"${files}"
+done <<<"${files_step2}"
 
     [ -d "${work_tmp_step2}" ] && rm -rfv "${work_tmp_step2}" | sed -e "s/^/${log_indent}/g"
     [ -d "${work_tmp_main}" ] && rm -rfv "${work_tmp_main}" | sed -e "s/^/${log_indent}/g"
@@ -2553,7 +2732,7 @@ done <<<"${files}"
 # prepare steps (check / install / activate python enviroment & check docker):
 # --------------------------------------------------------------------
     update_dockerimage
-    
+
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
     [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_all )))]"
 
@@ -2581,7 +2760,6 @@ done <<<"${files}"
     echo "Target temp directory:    ${work_tmp_main}"
 
     main_1st_step
-    main_2nd_step
     purge_log
     purge_backup
 

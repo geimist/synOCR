@@ -8,7 +8,7 @@ import pathlib
 
 # Algorithm inspired by: https://dsp.stackexchange.com/a/48837
 def page_is_empty(img, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, page_text):
-    threshold = np.mean(ImageStat.Stat(img).mean) - threshold_offset
+    threshold = np.mean(ImageStat.Stat(img).mean) + threshold_offset
     img = img.convert('L').point(lambda x: 255 if x > threshold else 0)
 
     # Staples, folds, punch holes et al. tend to be confined to the left and right margin, so we crop off 10% there.
@@ -31,26 +31,31 @@ def page_is_empty(img, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_f
 
     return ratio < black_pixel_ratio
 
-def get_new_docs_pages(doc, remove_blank, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio):
+def is_blank_page(page, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text=False):
+    # Text-basierte Prüfung
+    page_text = page.get_text() if not ignore_text else ""
+    
+    # Bild-basierte Prüfung
+    pix = page.get_pixmap()
+    # Convert pixmap to PIL Image
+    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    
+    return page_is_empty(img, threshold_offset, lr_margin_ratio, tb_margin_ratio, 
+                        max_filter_size, min_filter_size, black_pixel_ratio, page_text)
+
+def get_new_docs_pages(doc, remove_blank, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text=False):
     pages = []
-
-    for page in doc:
-        pixmap = page.getPixmap()
-        img = Image.frombytes("RGB", (pixmap.width, pixmap.height), pixmap.samples)
-        page_text = page.getText("text")
-
-        if remove_blank and page_is_empty(img, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, page_text):
-            continue
-
-        pages.append(page.number)
-
+    for page_no in range(doc.pageCount):
+        page = doc[page_no]
+        if not remove_blank or not is_blank_page(page, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text):
+            pages.append(page_no)
     return pages
 
-def emit_new_document(doc, filename, out_dir, remove_blank, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio):
+def emit_new_document(doc, filename, out_dir, remove_blank, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text):
     pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
 
-    pages = get_new_docs_pages(doc, remove_blank, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio)
-    new_doc = fitz.open()  # Will create a new, blank document.
+    pages = get_new_docs_pages(doc, remove_blank, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text)
+    new_doc = fitz.open()
     for page_no in pages:
         new_doc.insertPDF(doc, from_page=page_no, to_page=page_no)
     new_doc.save(os.path.join(out_dir, filename))
@@ -60,6 +65,7 @@ def main():
     parser.add_argument('input_pdf', help='The PDF document to process.')
     parser.add_argument('output_dir', help='The directory where the output document will be saved.', nargs='?', default=os.getcwd())
     parser.add_argument('--no-blank-removal', dest='remove_blank', action='store_false', help='Do not remove empty pages from the output.')
+    parser.add_argument('--ignore_text', action='store_true', help='Disable text analysis for blank page detection')
     parser.add_argument('--threshold', type=float, default=-50, help='Threshold offset for empty page detection.')
     parser.add_argument('--width-crop', type=float, default=0.10, help='Percentage of width to crop from the sides.')
     parser.add_argument('--height-crop', type=float, default=0.05, help='Percentage of height to crop from the top and bottom.')
@@ -79,8 +85,10 @@ def main():
         args.height_crop,
         args.max_filter,
         args.min_filter,
-        args.black_pixel_ratio
+        args.black_pixel_ratio,
+        args.ignore_text
     )
 
 if __name__ == '__main__':
     main()
+# disable_text
