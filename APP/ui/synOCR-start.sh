@@ -126,24 +126,51 @@ done
     APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
     cd "${APPDIR}" || exit 1
 
-if [ "${callFrom}" = shell ] ; then
-    # adjust PATH:
-    if [ "${machinetyp}" = "x86_64" ]; then
-        PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
-    elif [ "${machinetyp}" = "aarch64" ]; then
-        PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
+    source "./includes/functions.sh"
+
+# Load language variables:
+    language
+
+    if [ "${callFrom}" = shell ] ; then
+        # adjust PATH:
+        if [ "${machinetyp}" = "x86_64" ]; then
+            PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
+        elif [ "${machinetyp}" = "aarch64" ]; then
+            PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
+        fi
     fi
 
     # set docker and admin permission to user synOCR for DSM7 and above
     if [ "${dsm_major}" -ge 7 ]; then
         echo "synOCR run at DSM7 or above"
-        source "./check_permissions.sh"
-    fi
-fi
 
-# Load language variables:
-    source "./includes/functions.sh"
-    language
+# old method:
+source "./check_permissions.sh"
+
+        if [ $(whoami) = "root" ]; then
+            # check docker group and permissions:
+#           synogroupmoddocker
+
+            echo -n "    ➜ check admin permissions: "
+#           synogroupmoduser add administrators synOCR
+        else
+            echo -n "    ➜ check docker group and permissions: "
+            if grep ^docker: /etc/group | grep -q synOCR ; then
+                echo "ok [$(grep ^docker: /etc/group)]"
+            else
+                echo "ERROR - please run as root:"
+                echo "      /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
+            fi
+
+            echo -n "    ➜ check admin permissions: "
+            if grep ^administrators /etc/group | grep -q synOCR ; then
+                echo "ok"
+            else
+                echo "ERROR - please run as root:"
+                echo "      /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
+            fi
+        fi
+    fi
 
 # Check DB (ggf. erstellen / upgrade):
     DBupgradelog=$(./upgradeconfig.sh)

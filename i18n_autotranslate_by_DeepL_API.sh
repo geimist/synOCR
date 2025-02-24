@@ -3,7 +3,7 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.1.0 © 2025 by geimist                                                                        #
+    #     v1.1.1 © 2025 by geimist                                                                        #
     #     /volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n_autotranslate_by_DeepL_API.sh                     #
     #######################################################################################################
 
