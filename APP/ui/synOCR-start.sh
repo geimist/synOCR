@@ -144,17 +144,22 @@ done
     if [ "${dsm_major}" -ge 7 ]; then
         echo "synOCR run at DSM7 or above"
 
-# old method:
-source "./check_permissions.sh"
-
         if [ $(whoami) = "root" ]; then
-            # check docker group and permissions:
-#           synogroupmoddocker
+            echo -n "    ➜ check docker group: "
+            if grep ^docker: /etc/group | grep -q synOCR ; then
+                echo "ok [$(grep ^docker: /etc/group)]"
+            else
+                synogroupmoddocker
+            fi
 
-            echo -n "    ➜ check admin permissions: "
-#           synogroupmoduser add administrators synOCR
+            echo -n "    ➜ check permissions: "
+            if grep ^administrators /etc/group | grep -q synOCR ; then
+                echo "ok"
+            else
+                synogroupmoduser add administrators synOCR
+            fi
         else
-            echo -n "    ➜ check docker group and permissions: "
+            echo -n "    ➜ check docker group: "
             if grep ^docker: /etc/group | grep -q synOCR ; then
                 echo "ok [$(grep ^docker: /etc/group)]"
             else
@@ -162,7 +167,7 @@ source "./check_permissions.sh"
                 echo "      /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
             fi
 
-            echo -n "    ➜ check admin permissions: "
+            echo -n "    ➜ check permissions: "
             if grep ^administrators /etc/group | grep -q synOCR ; then
                 echo "ok"
             else

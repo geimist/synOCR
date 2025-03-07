@@ -2,6 +2,15 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.4.99.8 [2025-03-07]
+  IMPROVEMENT:
+ - [GUI]    an indicator for the profile change has been added
+ - [shell]  Duplicate detection of the target file is now more robust
+ - [shell]  use native DSM permission adjustment
+  BUGFIXES:
+ - [shell]  Issue with the delay in combination with folder monitoring
+ - [shell]  the counting of pages was changed from PyPDF to pymupdf to catch an error with EOF
+ 
 1.4.99.7 [2025-02-20]
   IMPLEMENTATIONS:
  - [shell]  If logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files

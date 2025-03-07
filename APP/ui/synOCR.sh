@@ -154,6 +154,8 @@
     global_pagecount=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")
     global_ocrcount=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")
     online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
+    # Delay in seconds
+    delay=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='inotify_delay'" )
 
 # Preset variables for correct calculation in the loop:
     global_pagecount_new="${global_pagecount}"
@@ -190,6 +192,8 @@
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
     echo "system-ID:                $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='UUID'")"
     echo "used image (created):     ${dockercontainer} ($(docker inspect -f '{{ .Created }}' "${dockercontainer}" 2>/dev/null | awk -F. '{print $1}'))"
+
+    [ ${delay:-0} -ne 0 ] && echo "OCR delay:                ${delay:-0} seconds"
 
     documentAuthor=$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}" | grep "\-\-author" | sed -e 's/--author //')
 #   documentAuthor=$(grep -oP -- '--author(=\S+)?\s*\K.*?(?=\s+--|\s*$)' <<<"${ocropt}")
@@ -496,7 +500,18 @@ OCRmyPDF()
         OCRinput="${input1}"
     fi
 
+    # workaround for Container Manager 24.0.2-1535 message: "Container synOCR in Container Manager was terminated unexpectedly."
+#    version="$(synopkg version ContainerManager)"
+#    ref_version="24.0.2-1535"
+
+#    if [ "$(printf '%s\n' "$ref_version" "$version" | sort -V | head -n1)" = "$ref_version" ]; then
+#        waiting=5
+#    else
+#        waiting=0
+#    fi
+
     cat "${OCRinput}" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
+
 }
 
 
@@ -1937,9 +1952,21 @@ py_page_count()
 # This function receives a PDF file path and give back number of pages                  #
 #########################################################################################
 
-    python3 -c "import sys, os, pypdf; \
+# Die Version 1.18.6 verwendet die alte CamelCase-Notation:
+    python3 -c "import sys, os, fitz; \
                 path = os.path.abspath(sys.argv[1]); \
-                print(len(pypdf.PdfReader(path).pages))" "$1"
+                doc = fitz.open(path); \
+                print(doc.pageCount)" "$1"
+                
+
+# Ab Version 1.19.0 (März 2022) wurde die PEP8-konforme Schreibweise eingeführt:
+#    python3 -c "import sys, os, fitz; \
+#                path = os.path.abspath(sys.argv[1]); \
+#                print(fitz.open(path).page_count)" "$1"
+
+#    python3 -c "import sys, os, pypdf; \
+#                path = os.path.abspath(sys.argv[1]); \
+#                print(len(pypdf.PdfReader(path).pages))" "$1"
 }
 
 
@@ -1994,32 +2021,76 @@ collect_input_files()
 prepare_target_path()
 {
 #########################################################################################
-# This function prepare variable $output for a given file to defined targed folder      #
-# and modfy it if necessary, if a file with the same name already exists                #
+# This function prepares the variable $output for a given file in the target folder,    #
+# modifying it if necessary to avoid duplicates by appending an incrementing counter.   #
 #                                                                                       #
 #   $1  ➜ target path                                                                   #
 #   $2  ➜ target filename                                                               #
 #                                                                                       #
-#   the variable $output will be used afterwards                                        #
-#                                                                                       #
+#   The variable $output will be set for subsequent use.                                #
 #########################################################################################
+
 
     local target_dir_path="${1%/}/"
     local target_filename="$2"
-    local target_fileext="${2##*.}"
+    local base ext source_counter=0
 
-    destfilecount=$(find "${target_dir_path}" -maxdepth 1 -type f -name "${target_filename%.*}*${target_fileext}" -printf '.' | wc -c)
-
-    if [ "${destfilecount}" -eq 0 ]; then
-        output="${target_dir_path}${target_filename%.*}.${target_fileext}"
+    # Quelldateinamen parsen
+    if [[ "$target_filename" =~ ^(.*)\ \(([0-9]+)\)\.([^.]*)$ ]]; then
+        base="${BASH_REMATCH[1]}"
+        source_counter="${BASH_REMATCH[2]}"
+        ext="${BASH_REMATCH[3]}"
+    elif [[ "$target_filename" =~ ^(.*)\.([^.]*)$ ]]; then
+        base="${BASH_REMATCH[1]}"
+        ext="${BASH_REMATCH[2]}"
     else
-        while [ -f "${target_dir_path}${target_filename%.*} (${destfilecount}).${target_fileext}" ]; do
-            destfilecount=$(( destfilecount + 1 ))
-            echo "${log_indent}  ➜ continue counting … (${destfilecount})"
-        done
-        output="${target_dir_path}${target_filename%.*} (${destfilecount}).${target_fileext}"
-        printf "%s\n\n" "${log_indent}➜ File name already exists! Add counter (${destfilecount})"
+        base="$target_filename"
+        ext=""
     fi
+
+    # Prüfen, ob der Quellzähler direkt verwendet werden kann
+    if ((source_counter > 0)); then
+        local source_counter_file="${target_dir_path}${base} (${source_counter}).${ext}"
+        if [ ! -f "$source_counter_file" ]; then
+            output="$source_counter_file"
+            printf "%s\n\n" "${log_indent}➜ Verwende Quellzähler: ${source_counter}"
+            return
+        fi
+    fi
+
+    # Existierende Zähler sammeln (inkl. Basisdatei)
+    local existing_counters=()
+    [ -f "${target_dir_path}${base}.${ext}" ] && existing_counters+=(0)
+    while IFS= read -r -d '' file; do
+        if [[ "$(basename "$file")" =~ \ \(([0-9]+)\)\.${ext}$ ]]; then
+            existing_counters+=("${BASH_REMATCH[1]}")
+        fi
+    done < <(find "${target_dir_path}" -maxdepth 1 -type f -name "${base} (*).${ext}" -print0 2>/dev/null)
+
+    # Keine Dateien vorhanden ➜ Basisname verwenden
+    if [ ${#existing_counters[@]} -eq 0 ]; then
+        output="${target_dir_path}${base}.${ext}"
+        return
+    fi
+
+    # Höchsten Zähler ermitteln
+    local existing_max=0
+    for n in "${existing_counters[@]}"; do
+        ((n > existing_max)) && existing_max=$n
+    done
+
+    # Startzähler festlegen
+    local start_counter=$((existing_max + 1))
+
+    # Nächsten verfügbaren Zähler finden
+    local counter=$start_counter
+    while [ -f "${target_dir_path}${base} (${counter}).${ext}" ]; do
+        counter=$((counter + 1))
+    done
+
+    # Ausgabepfad immer mit Zähler setzen, wenn Dateien existieren
+    output="${target_dir_path}${base} (${counter}).${ext}"
+    printf "%s\n\n" "${log_indent}➜ Neuer Zähler: (${counter})"
 
 }
 
@@ -2092,6 +2163,22 @@ files_step1="${files}"
 
 while read -r input1 ; do
     [ ! -f "${input1}" ] && continue
+
+
+# use delay for permanent writing scanners
+# ---------------------------------------------------------------------
+    if [[ ${delay:-0} -ne 0 ]]; then
+        while true; do
+            current_time=$(date +%s)
+            file_time=$(stat -c %Y "${input1}")
+            if [ $((current_time - file_time)) -ge ${delay} ]; then
+                printf "%s\n" "${log_indent}delayed processing started (file older than ${delay}s)"
+                break
+            fi
+            sleep 1
+        done
+    fi
+
 
 # create temporary working directory
 # ---------------------------------------------------------------------
@@ -2190,7 +2277,7 @@ while read -r input1 ; do
 # check if target file is valid (not empty), otherwise continue / 
 # defective source files are moved to ERROR including LOG:
 # ---------------------------------------------------------------------
-    if [ "$(stat -c %s "${outputtmp}")" -eq 0 ] || [ ! -f "${outputtmp}" ];then
+    if [ ! -f "${outputtmp}" ] || [ "$(stat -c %s "${outputtmp}" 2>/dev/null)" -eq 0 ]; then
         echo "${log_indent}  ┖➜ failed! (target file is empty or not available)"
         rm "${outputtmp}"
         if echo "${dockerlog}" | grep -iq ERROR ;then
@@ -2551,7 +2638,7 @@ while read -r input ; do
 # ---------------------------------------------------------------------
     if [ "${python_check}" = ok ]; then
         pagecount_latest=$( py_page_count "${output}" ) 
-        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with python module pypdf)"
+        [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with python module fitz)"
     elif [ "$(which pdfinfo)" ]; then
         pagecount_latest=$(pdfinfo "${output}" 2>/dev/null | grep "Pages\:" | awk '{print $2}')
         [ "${loglevel}" = 2 ] && echo "${log_indent}(pages counted with pdfinfo)"

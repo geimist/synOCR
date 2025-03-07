@@ -112,7 +112,7 @@ uuid=$(uuidgen)
                         \"blank_page_detection_interferenceMinFilter\" VARCHAR DEFAULT ('3') ,
                         \"blank_page_detection_black_pixel_ratio\" VARCHAR DEFAULT ('0.005') ,
                         \"blank_page_detection_ignoreText\" VARCHAR DEFAULT ('false') ,
-                        \"adjustColorBWthreshold\" VARCHAR DEFAULT ('40') ,
+                        \"adjustColorBWthreshold\" VARCHAR DEFAULT ('0') ,
                         \"adjustColorDPI\" VARCHAR DEFAULT ('0') ,
                         \"adjustColorContrast\" VARCHAR DEFAULT ('1.0') ,
                         \"adjustColorSharpness\" VARCHAR DEFAULT ('1.0')
@@ -865,7 +865,7 @@ fi
         # adjustColorBWthreshold:
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
-                                       ADD COLUMN \"adjustColorBWthreshold\" VARCHAR DEFAULT ('40'); 
+                                       ADD COLUMN \"adjustColorBWthreshold\" VARCHAR DEFAULT ('0'); 
                                        COMMIT;")
         wait $!
 

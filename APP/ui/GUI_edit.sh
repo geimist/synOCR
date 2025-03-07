@@ -785,7 +785,8 @@ if [[ "${page}" == "edit" ]]; then
             <label for="getprofile" class="ms-4">'"${lang_edit_change_profile}"'</label>
         </div>
         <div class="col-sm-5">
-            <select name="getprofile" id="getprofile" class="form-select form-select-sm" onchange="$(&quot;button[name='"page"'][value='"edit"']&quot;).click()"> '
+            <select name="getprofile" id="getprofile" class="form-select form-select-sm" onchange="document.getElementById('"'"'loading'"'"').style.display='"'"'inline-block'"'"';this.form.submit()">
+                '
 
                 while read -r entry; do
                     profile_ID_DB=$(echo "${entry}" | awk -F'\t' '{print $1}')
@@ -800,13 +801,13 @@ if [[ "${page}" == "edit" ]]; then
 
                 echo '
             </select>
-        </div>'
-        # Button:
-        echo '
+            <input type="hidden" name="page" value="edit" />
+        </div>
         <div class="col-sm-2">
-            <button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_buttonchange}"'</button>
-        </div>'
-    echo '
+            <div class="float-end">
+                <img src="./images/status_loading.gif" id="loading" style="display: none;">
+            </div>
+        </div>
     </div><br />'
 
 
