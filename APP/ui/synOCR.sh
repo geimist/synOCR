@@ -465,8 +465,6 @@ file_processing_log()
 # call: mode (1,2) "file"                                                               #
 #########################################################################################
 
-    (( ${loglevel:-0} == 1 || ${loglevel:-0} == 2 )) || return
-
     local mode="$1"
     local file="$2"
     local log_file="${LOGDIR}file_processing.log"
@@ -475,17 +473,25 @@ file_processing_log()
 
     case "${mode}" in
         1)  # Source-Log with unsuccessful warning
-            echo "[$(date +%Y-%m-%d_%H-%M-%S)] SOURCE: ${file}" >> "${log_file}"
-            echo "${temp_line}" >> "${log_file}"
+            if (( ${loglevel:-0} == 1 || ${loglevel:-0} == 2 )); then
+                echo "[$(date +%Y-%m-%d_%H-%M-%S)] SOURCE: ${file}" >> "${log_file}"
+                echo "${temp_line}" >> "${log_file}"
+            fi
             ;;
         2)  # Target-Log replace unsuccessful warning with target file
-            if [[ -s "${log_file}" ]]; then
-                last_line=$(tail -n 1 "${log_file}")
-                [[ "${last_line}" == "${temp_line}" ]] && sed -i '$d' "${log_file}"
+            [[ -s "${file}" ]] && process_error=0
+
+            # Logging nur bei aktiviertem Loglevel
+            if (( ${loglevel:-0} == 1 || ${loglevel:-0} == 2 )); then
+                if [[ -s "${log_file}" ]]; then
+                    last_line=$(tail -n 1 "${log_file}")
+                    [[ "${last_line}" == "${temp_line}" ]] && sed -i '$d' "${log_file}"
+                fi
+                echo "                      ➜ ${file}" >> "${log_file}"
             fi
-            echo "                      ➜ ${file}" >> "${log_file}"
             ;;
     esac
+
 }
 
 
@@ -2195,6 +2201,7 @@ while read -r input1 ; do
     date_start=$(date +%s)
     was_splitted=0
     split_error=0
+    process_error=1 # is set to 0 in the file_processing_log() function when the target file is successfully created
 
     outputtmp="${work_tmp_step1%/}/${title}.pdf"
     echo "${log_indent}  temp. target file: ${outputtmp}"
@@ -2435,7 +2442,7 @@ while read -r input1 ; do
 
                         # set startPage:
                         startPage=${page}
-    
+
                         # set endpage:
                         if [ "${arrayIndex}" = $(( SplitPageCount - 1)) ]; then
                             # if last splitpage:
@@ -2448,7 +2455,7 @@ while read -r input1 ; do
                         fi
                         splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     fi
-    
+
                     page=$((page+1))
                 done
             else
@@ -2464,7 +2471,7 @@ while read -r input1 ; do
                         endPage=${splitPage}
                         splitJob=$(printf '%s %s %s\n%s' "${currentPart}" "${startPage}" "${endPage}" "${splitJob}")
                     fi
-    
+
                     # startPage for next range:
                     if [ "${splitpagehandling}" = discard ]; then
                         startPage=$((splitPage+1))
@@ -2472,7 +2479,7 @@ while read -r input1 ; do
                         startPage=$((endPage+1))
                     fi
                 done
-        
+
                 # last range behind last splitPage:
                 if (( "${pageCount}" > ${splitPages[@]:(-1)} )); then
 
@@ -2542,16 +2549,24 @@ while read -r input1 ; do
 # ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "handle source file:" "${dashline1}"
 
-    if [ "${backup}" = true ]; then
+    if [ "${backup}" = true ] && [ "${process_error}" -eq 0 ]; then
         prepare_target_path "${BACKUPDIR}" "${filename}"
-        
-echo "BACKUPDIR:    ${BACKUPDIR}"
-echo "filename:     ${filename}"
-echo "input:        ${input1}"
-echo "output:       ${output}"
-
         mv "${input1}" "${output}"
         echo "${log_indent}➜ backup source file to: ${output}"
+    elif [ "${process_error}" -eq 1 ]; then
+        # target file is not valid / source files are moved to ERRORFILES including LOG:
+        echo "${log_indent}  ┖➜ failed! (process_error flag is 1)"
+        if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
+            echo "${log_indent}                  ERROR-Directory [${INPUTDIR}ERRORFILES] will be created!"
+            mkdir "${INPUTDIR}ERRORFILES"
+        fi
+
+        prepare_target_path "${INPUTDIR}ERRORFILES" "${input1}"
+
+        mv "${input1}" "${output}"
+        [ "${loglevel}" != 0 ] && cp "${current_logfile}" "${output}.log"
+        echo "${log_indent}              ┖➜ move to ERRORFILES"
+        rm -rf "${work_tmp_step1}"
     else
         rm -f "${input1}"
         echo "${log_indent}➜ delete source file (${filename})"

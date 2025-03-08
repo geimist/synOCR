@@ -1,3 +1,7 @@
+1.4.99.9 [2025-03-08]
+  IMPROVEMENT:
+ - [shell]  Improved protection of the source file in the event of an error
+
 1.4.99.8 [2025-03-07]
   IMPROVEMENT:
  - [GUI]    an indicator for the profile change has been added
