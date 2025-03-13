@@ -6,6 +6,8 @@ known issues / limitations:
   IMPROVEMENT:
  - [shell]  image correction has been made more robust to ensure the integrity of the PDF
  - [shell]  yaml key dirname_RegEx is implemented in order to be able to generate dynamic paths with path variable §dirname_RegEx
+  BUGFIXES:
+ - [shell]  sharpness and contrast were adjusted, although this was deactivated in the GUI
 
 1.4.99.9 [2025-03-08]
   IMPROVEMENT:

@@ -178,10 +178,9 @@
 
     machinetyp=$(uname --machine); echo "Architecture:             ${machinetyp}"
     dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                ${dsmbuild}"
-    devID=$(printf '%010d' "$(cksum </sys/class/net/eth0/address | awk '{print $1}')")
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
 
-    echo "Device:                   ${device} (${devID})"
+    echo "Device:                   ${device}"
     echo "current Profil:           ${profile}"
     echo -n "monitor is running?:      "
     if ps aux | grep -qE "[i]notifywait.*--fromfile.*inotify.list"; then
