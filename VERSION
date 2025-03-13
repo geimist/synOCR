@@ -5,12 +5,12 @@
   "dsm": {
     "dsm6": {
       "beta": {
-        "releaseDate": "2025-03-08T12:07:06.000Z",
+        "releaseDate": "2025-03-13T13:08:25.000Z",
         "version": "1.4.99.9",
         "size": "",
         "checksum": "",
         "file": "",
-        "downloadUrl": "https://geimist.eu/synOCR/updateserver.php?version=download&file=synOCR_DSM6_master_latest_[1.4.99.9]_(2025-03-08_13-07)_8883a6f_BETA.spk",
+        "downloadUrl": "https://geimist.eu/synOCR/updateserver.php?version=download&file=synOCR_DSM6_master_latest_[1.4.99.9]_(2025-03-13_14-08)_e46aa60_BETA.spk",
         "changeLogUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/PKG_DSM6/CHANGELOG_CURRENT_BETA"
       },
       "release": {
@@ -25,12 +25,12 @@
     },
     "dsm7": {
       "beta": {
-        "releaseDate": "2025-03-08T12:07:10.000Z",
+        "releaseDate": "2025-03-13T13:08:30.000Z",
         "version": "1.4.99.9",
         "size": "",
         "checksum": "",
         "file": "",
-        "downloadUrl": "https://geimist.eu/synOCR/updateserver.php?version=download&file=synOCR_DSM7_master_latest_[1.4.99.9]_(2025-03-08_13-07)_8883a6f_BETA.spk",
+        "downloadUrl": "https://geimist.eu/synOCR/updateserver.php?version=download&file=synOCR_DSM7_master_latest_[1.4.99.9]_(2025-03-13_14-08)_e46aa60_BETA.spk",
         "changeLogUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/PKG_DSM7/CHANGELOG_CURRENT_BETA"
       },
       "release": {

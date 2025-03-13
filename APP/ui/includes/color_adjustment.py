@@ -14,6 +14,7 @@ import argparse
 import sys
 import os
 import numpy as np
+import tempfile
 
 def enhance_image(img, contrast=1.0, sharpness=1.0):
     """
@@ -36,59 +37,68 @@ def convert_pdf_to_bw(input_path, output_path, threshold=None, dpi=300, contrast
     Returns:
         int: 0 = Erfolg, 1 = Fehler
     """
+    temp_output = output_path + ".tmp"
+    
     try:
-        pdf_document = fitz.open(input_path)
-        output_pdf = fitz.open()
-        
-        for page in pdf_document:
-            # Pixmap mit/ohne Skalierung erstellen
-            if dpi:
-                zoom = dpi / 72
-                matrix = fitz.Matrix(zoom, zoom)
-                pix = page.get_pixmap(matrix=matrix, alpha=False)
-            else:
-                pix = page.get_pixmap(alpha=False)
+        with fitz.open(input_path) as pdf_document:
+            output_pdf = fitz.open()
             
-            img_data = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            
-            # Bildverbesserungen immer anwenden
-            img_enhanced = enhance_image(img_data, contrast, sharpness)
-            
-            # Schwarzweiß-Konvertierung nur bei threshold
-            if threshold is not None:
-                img_gray = img_enhanced.convert('L')
-                img_array = np.array(img_gray)
-                kernel_size = 25
-                local_mean = np.zeros_like(img_array, dtype=float)
+            for page in pdf_document:
+                if dpi:
+                    zoom = max(dpi / 72, 1.0)  # Sicherer Zoom-Wert
+                    matrix = fitz.Matrix(zoom, zoom)
+                    pix = page.get_pixmap(matrix=matrix, alpha=False)
+                else:
+                    pix = page.get_pixmap(alpha=False)
                 
-                # Blockweise Mittelwertberechnung
-                for i in range(0, img_array.shape[0], kernel_size):
-                    for j in range(0, img_array.shape[1], kernel_size):
-                        block = img_array[i:i+kernel_size, j:j+kernel_size]
-                        local_mean[i:i+kernel_size, j:j+kernel_size] = np.mean(block)
+                img_data = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+                img_enhanced = enhance_image(img_data, contrast, sharpness)
                 
-                img_bw = Image.fromarray(np.where(img_array > local_mean - threshold, 255, 0).astype(np.uint8))
-                img_bw = img_bw.convert('1')
-                final_img = img_bw
-            else:
-                final_img = img_enhanced.convert('RGB')  # Farbmodus beibehalten
+                if threshold is not None:
+                    img_gray = img_enhanced.convert('L')
+                    img_array = np.array(img_gray)
+                    kernel_size = 25
+                    local_mean = np.zeros_like(img_array, dtype=float)
+                    
+                    # Blockweise Mittelwertberechnung
+                    for i in range(0, img_array.shape[0], kernel_size):
+                        for j in range(0, img_array.shape[1], kernel_size):
+                            block = img_array[i:i+kernel_size, j:j+kernel_size]
+                            local_mean[i:i+kernel_size, j:j+kernel_size] = np.mean(block)
+                    
+                    img_bw = Image.fromarray(np.where(img_array > local_mean - threshold, 255, 0).astype(np.uint8))
+                    img_bw = img_bw.convert('1')
+                    final_img = img_bw
+                else:
+                    final_img = img_enhanced.convert('RGB')
+                
+                # Sichereres Handling des Bildbuffers
+                with io.BytesIO() as img_bytes:
+                    final_img.save(img_bytes, format='PNG', optimize=True)
+                    img_bytes.seek(0)
+                    new_page = output_pdf.new_page(width=page.rect.width, height=page.rect.height)
+                    new_page.insert_image(new_page.rect, stream=img_bytes.getvalue())
+                    img_bytes.flush()  # Explizites Leeren des Buffers
             
-            # Bild in PDF einfügen
-            img_bytes = io.BytesIO()
-            final_img.save(img_bytes, format='PNG', optimize=True)
-            img_bytes.seek(0)
-            new_page = output_pdf.new_page(width=page.rect.width, height=page.rect.height)
-            new_page.insert_image(new_page.rect, stream=img_bytes.getvalue())
+            # Temporäre Ausgabe und atomares Umbenennen
+            output_pdf.save(temp_output, garbage=4, deflate=True, clean=True)
         
-        output_pdf.save(output_path, garbage=4, deflate=True)
-        pdf_document.close()
-        output_pdf.close()
+        # Erfolgsfall: Temp-Datei ersetzen
+        os.replace(temp_output, output_path)
         print(f"INFO: Bearbeitung erfolgreich: '{output_path}'")
         return 0
-    
+
     except Exception as e:
+        # Fehlerbereinigung
+        if os.path.exists(temp_output):
+            os.remove(temp_output)
         print(f"ERROR: {str(e)}", file=sys.stderr)
         return 1
+
+    finally:
+        # Sicherstellen, dass alle Ressourcen geschlossen werden
+        if 'output_pdf' in locals():
+            output_pdf.close()
 
 def main():
     parser = argparse.ArgumentParser(description='PDF-Bearbeitung: Kontrast/Schärfe anpassen und optional SW-Konvertierung')
@@ -105,11 +115,10 @@ def main():
     
     args = parser.parse_args()
     
-    # Parameterprüfung
     if args.threshold is not None and not (0 <= args.threshold <= 255):
         print("ERROR: Schwellenwert muss zwischen 0-255 liegen", file=sys.stderr)
         sys.exit(1)
-    if args.dpi is not None and args.dpi < 72:
+    if args.dpi < 72:
         print("ERROR: DPI muss ≥72 sein", file=sys.stderr)
         sys.exit(1)
     

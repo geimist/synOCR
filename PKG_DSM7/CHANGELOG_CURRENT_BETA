@@ -2,29 +2,34 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.4.99.10 [2025-03-13]
+  IMPROVEMENT:
+ - [shell]  image correction has been made more robust to ensure the integrity of the PDF
+ - [shell]  yaml key dirname_RegEx is implemented in order to be able to generate dynamic paths with path variable §dirname_RegEx
+
 1.4.99.9 [2025-03-08]
   IMPROVEMENT:
- - [shell]  Improved protection of the source file in the event of an error
+ - [shell]  improved protection of the source file in the event of an error
 
 1.4.99.8 [2025-03-07]
   IMPROVEMENT:
  - [GUI]    an indicator for the profile change has been added
- - [shell]  Duplicate detection of the target file is now more robust
+ - [shell]  duplicate detection of the target file is now more robust
  - [shell]  use native DSM permission adjustment
   BUGFIXES:
- - [shell]  Issue with the delay in combination with folder monitoring
+ - [shell]  issue with the delay in combination with folder monitoring
  - [shell]  the counting of pages was changed from PyPDF to pymupdf to catch an error with EOF
  
 1.4.99.7 [2025-02-20]
   IMPLEMENTATIONS:
- - [shell]  If logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files
- - [GUI]    A slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
- - [GUI]    The source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed (issue #59)
+ - [shell]  if logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files
+ - [GUI]    a slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
+ - [GUI]    the source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed (issue #59)
  - [GUI]    🔥 Color adjustments can now be used to configure the contrast, the sharpness and a black and white mode (1-bit).
   IMPROVEMENT:
  - [shell]  all non-alphanumeric characters at target file name will be compressed (issue #58)
- - [GUI]    Where possible, text fields and radio buttons have been replaced by sliders and switches.
- - [shell]  Changed D-M-Y, D.M.Y and D/M/Y regexes in search_all_numeric_dates to allow search for 2- and 4-digit years. (#56 thx @dklinger)
+ - [GUI]    where possible, text fields and radio buttons have been replaced by sliders and switches.
+ - [shell]  changed D-M-Y, D.M.Y and D/M/Y regexes in search_all_numeric_dates to allow search for 2- and 4-digit years. (#56 thx @dklinger)
   BUGFIXES:
  - [shell]  Search prefix and search suffix have been removed from the entire file name
  - [shell]  File names containing double quotation marks resulted in an error

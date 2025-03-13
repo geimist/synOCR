@@ -431,7 +431,10 @@ update_dockerimage()
         echo "${updatelog}" | sed -e "s/^/${log_indent}/g"
         echo "${log_indent}docker purge Log:"
         echo "${log_purge}" | sed -e "s/^/${log_indent}/g"
+
+        printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
     fi
+
 }
 
 
@@ -585,8 +588,6 @@ if [ "${type_of_rule}" = advanced ]; then
     for tagrule in $(echo "${tag_rule_content}" | jq -r ". | to_entries | .[] | .key" | sort -r); do
         found=0
 
-        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
-
         echo "${log_indent}search by tag rule: \"${tagrule}\" ➜  "
 
         condition=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.condition" | tr '[:upper:]' '[:lower:]')
@@ -598,6 +599,7 @@ if [ "${type_of_rule}" = advanced ]; then
         searchtag=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
         targetfolder=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.targetfolder" )
         tagname_RegEx=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.tagname_RegEx" )
+        dirname_RegEx=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.dirname_RegEx" )
         tagname_multiline_RegEx=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.multilineregex" )
         VARapprise_call=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.apprise_call" )
         VARapprise_attachment=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.apprise_attachment" )
@@ -627,6 +629,15 @@ if [ "${type_of_rule}" = advanced ]; then
                 tagname_multiline_RegEx=false
             else
                 echo "${log_indent}  ➜ multilineregex:   ${tagname_multiline_RegEx}" # true: set parameter -z to grep
+            fi
+        fi
+        if [[ "${dirname_RegEx}" != null ]] ; then
+            echo "${log_indent}  ➜ RegEx for tag:    ${dirname_RegEx}" # searchtag
+            if [ "${dirname_multiline_RegEx}" = null ] ; then
+                [ "${loglevel}" = 2 ] && echo "${log_indent}  ➜ multilineregex:   [value for multilineregex is empty - \"false\" is used]"
+                dirname_multiline_RegEx=false
+            else
+                echo "${log_indent}  ➜ multilineregex:   ${dirname_multiline_RegEx}" # true: set parameter -z to grep
             fi
         fi
 
@@ -897,6 +908,36 @@ if [ "${type_of_rule}" = advanced ]; then
                     printf "%s\n\n" "RegEx not found (fallback to ${searchtag})"
                 fi
             fi
+            # ---------------------------------------------------------------------
+            # dirname_RegEx
+            if [[ "${dirname_RegEx}" != null ]] ; then
+                echo -n "${log_indent}              ➜ search RegEx for dir ➜ "
+                # treat the file as one huge string (Parameter -z):
+                if [ "${dirname_multiline_RegEx}" = true ] ;then
+                    grep_opt="z"
+                else
+                    grep_opt=""
+                fi
+
+                dirname_RegEx_result=$( grep -oP${grep_opt} "${dirname_RegEx}" "${VARsearchfile}" | tr -d '\0' | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
+                if [ -n "${dirname_RegEx_result}" ] ; then
+
+                    # Ensure path compatibility: Replace unwanted characters with underscore
+                    sanitized=$(sed 's/[^A-Za-z0-9_.-]/_/g' <<< "${dirname_RegEx_result}")
+                    # Remove leading/trailing dots or hyphens
+                    sanitized=${sanitized%%[.-]}
+                    sanitized=${sanitized##[.-]}
+
+                    if echo "${targetfolder}" | grep -q "§dirname_RegEx" ; then
+                        targetfolder="${targetfolder//§dirname_RegEx/${sanitized}}"
+                    else
+                        targetfolder="${sanitized}"
+                    fi
+                    printf "%s\n\n" "${targetfolder}"
+                else
+                    printf "%s\n\n" "RegEx not found (fallback to ${targetfolder})"
+                fi
+            fi
 
             [ -n "${searchtag}" ] && renameTag="${tagsymbol}${searchtag// /%20} ${renameTag}" # with temporary space separator to finally check tags for uniqueness
             [ -n "${targetfolder}" ] && renameCat="${targetfolder// /%20} ${renameCat}"
@@ -926,7 +967,7 @@ else
     #        echo $a
     #    done
     while (( i < maxID )); do
-        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )) )]"
+        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )) )]"
 
         if echo "${tagarray[$i]}" | grep -q "=" ;then
             # for combination of tag and category
@@ -967,7 +1008,7 @@ else
         fi
         i=$((i + 1))
     done
-    
+
     # meta_keyword_list: without tagsymbol / separated with komma and space >, <:
     meta_keyword_list=$(echo "${renameTag}" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g;s/%20/ /g")
 fi
@@ -987,11 +1028,7 @@ fi
     renameTag_raw="${renameTag}"
 
 
-printf "\n%s\n\n" "${log_indent}rename tag is: \"${renameTag//%20/ /}\""
-
-if [ "${loglevel}" = 2 ] ; then
-    printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
-fi
+    printf "\n%s\n\n" "${log_indent}rename tag is: \"${renameTag//%20/ /}\""
 
 }
 
@@ -1509,10 +1546,6 @@ replace_variables()
 
 rename()
 {
-
-    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
-
-
 # rename target file:
 # ---------------------------------------------------------------------
     echo "${log_indent}➜ renaming:"
@@ -1561,7 +1594,7 @@ rename()
         echo "${NewName}"
     fi
 
-    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
+    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
 
 
 # set metadata:
@@ -1626,7 +1659,7 @@ rename()
             echo "FAILED! - exiftool not found / Python-check failed or enablePyMetaData was set to false manualy! Please install it when you need it and when you want to insert metadata"
         fi
 
-        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
+        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
     fi
 
 
@@ -2120,7 +2153,7 @@ while read -r input ; do
     filename="${input##*/}"
     title="${filename%.*}"
     echo "CURRENT FILE:   ➜ source: ${filename}"
-    date_start=$(date +%s)
+#    date_start=$(date +%s)
 
 
 # convert file
@@ -2198,7 +2231,7 @@ while read -r input1 ; do
     echo "${dashline2}"
     echo "CURRENT FILE:   ➜ ${filename}"
     file_processing_log 1 "${filename}"
-    date_start=$(date +%s)
+    date_start_file=$(date +%s)
     was_splitted=0
     split_error=0
     process_error=1 # is set to 0 in the file_processing_log() function when the target file is successfully created
@@ -2228,13 +2261,13 @@ while read -r input1 ; do
     fi
 
     # --contrast nur hinzufügen, wenn nicht leer und nicht 1.0
-    if [ "${adjustColorContrast}" != "1.0" ]; then
+    if [ "${adjustColorContrast}" != "1" ]; then
         args+=(--contrast "${adjustColorContrast}")
         adjustColor=true
     fi
 
     # --sharpness nur hinzufügen, wenn nicht leer und nicht 1.0
-    if [ "${adjustColorSharpness}" != "1.0" ]; then
+    if [ "${adjustColorSharpness}" != "1" ]; then
         args+=(--sharpness "${adjustColorSharpness}")
         adjustColor=true
     fi
@@ -2266,11 +2299,11 @@ while read -r input1 ; do
 
     unset args
 
+    printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
 
 # OCRmyPDF:
 # ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "processing PDF @ OCRmyPDF:" "${dashline1}"
-    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
 
     dockerlog=$(OCRmyPDF 2>&1)
 
@@ -2278,12 +2311,9 @@ while read -r input1 ; do
     echo "${dockerlog}" | sed -e "s/^/${log_indent}  /g"
     printf "%s\n\n" "${log_indent}← OCRmyPDF-LOG-END"
 
-    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start )))]"
-
-
-# check if target file is valid (not empty), otherwise continue / 
-# defective source files are moved to ERROR including LOG:
-# ---------------------------------------------------------------------
+    # check if target file is valid (not empty), otherwise continue / 
+    # defective source files are moved to ERROR including LOG:
+    # ---------------------------------------------------------------------
     if [ ! -f "${outputtmp}" ] || [ "$(stat -c %s "${outputtmp}" 2>/dev/null)" -eq 0 ]; then
         echo "${log_indent}  ┖➜ failed! (target file is empty or not available)"
         rm "${outputtmp}"
@@ -2305,6 +2335,7 @@ while read -r input1 ; do
         printf "%s\n\n" "${log_indent}target file (OK): ${outputtmp}"
     fi
 
+    printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
 
 # detect & remove blank pages with scanrep (https://pypi.org/project/scanprep/):
 # ---------------------------------------------------------------------
@@ -2340,6 +2371,7 @@ while read -r input1 ; do
         else
             printf "%s\n\n" "${log_indent}ERROR – No valid target PDF file found or file does not exist."
         fi
+        printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
     fi
 
 
@@ -2541,6 +2573,8 @@ while read -r input1 ; do
         mv "${outputtmp}" "${work_tmp_main}"
     fi
 
+    printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
+
     # 2. main loop for PDF processing:
     main_2nd_step
 
@@ -2574,16 +2608,8 @@ while read -r input1 ; do
 
     rm -rfv "${work_tmp_step1}" | sed -e "s/^/${log_indent}/g"
 
-
-# Stats:
-# ---------------------------------------------------------------------
     echo -e
-    echo "Stats:"
-    echo "  runtime last file:              ➜ $(sec_to_time $(( $(date +%s) - date_start )))"
-
 done <<<"${files_step1}"
-
-#printf "%s\n\n" "  runtime 1st step (all files):   ➜ $(sec_to_time $(( $(date +%s) - date_start_all )))"
 
 }
 
@@ -2634,7 +2660,6 @@ while read -r input ; do
     title="${filename%.*}"
     echo "${dashline2}"
     echo "CURRENT FILE:   ➜ ${filename}"
-    date_start=$(date +%s)
     tmp_date_search_method="${date_search_method}"    # able to use a temporary fallback to regex for each file
 
     if [ "${delSearchPraefix}" = "yes" ] && [ -n "${SearchPraefix}" ]; then
@@ -2710,7 +2735,7 @@ while read -r input ; do
 # ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "search tags in ocr text:" "${dashline1}"
     tag_search
-
+    printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
 
 # search by date:
 # ---------------------------------------------------------------------
@@ -2735,11 +2760,14 @@ while read -r input ; do
         echo "${log_indent}  year: ${date_yy}"
     fi
 
+    printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
+
 
 # compose and rename file names / move to target:
 # ---------------------------------------------------------------------
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "rename and sort to target folder:" "${dashline1}"
     rename
+    printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
 
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "final tasks:" "${dashline1}"
 
@@ -2805,7 +2833,7 @@ while read -r input ; do
     sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET pagecount='${pagecount_profile_new}' WHERE profile_ID='${profile_ID}'"
     sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET ocrcount='${ocrcount_profile_new}' WHERE profile_ID='${profile_ID}'"
 
-    echo "  runtime last file:    ➜ $(sec_to_time $(( $(date +%s) - date_start )))"
+    echo "  runtime last file:    ➜ $(sec_to_time $(( $(date +%s) - date_start_file )))"
     echo "  pagecount last file:  ➜ ${pagecount_latest}"
     echo "  file count profile :  ➜ (profile $profile) - ${ocrcount_profile_new} PDF's / ${pagecount_profile_new} Pages processed up to now"
     echo "  file count total:     ➜ ${global_ocrcount_new} PDF's / ${global_pagecount_new} Pages processed up to now since ${count_start_date}"
@@ -2836,7 +2864,7 @@ done <<<"${files_step2}"
     update_dockerimage
 
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
-    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_all )))]"
+    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_all )))]"
 
     prepare_python_log=$(prepare_python)
     if [ "$?" -eq 0 ]; then
