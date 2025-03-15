@@ -1,5 +1,6 @@
-1.4.99.10 [2025-03-13]
+1.4.99.10 [2025-03-15]
   IMPROVEMENT:
+ - [GUI]    the save dialog in the GUI now runs much faster
  - [shell]  image correction has been made more robust to ensure the integrity of the PDF
  - [shell]  yaml key dirname_RegEx is implemented in order to be able to generate dynamic paths with path variable §dirname_RegEx
   BUGFIXES:

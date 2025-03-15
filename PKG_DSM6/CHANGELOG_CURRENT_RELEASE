@@ -6,6 +6,7 @@
  - [GUI]    A slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
  - [GUI]    The source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed (issue #59)
   IMPROVEMENT:
+ - [GUI]    the save dialog in the GUI now runs much faster
  - [shell]  improved protection of the source file in the event of an error
  - [shell]  yaml key dirname_RegEx is implemented in order to be able to generate dynamic paths with path variable §dirname_RegEx
  - [GUI]    an indicator for the profile change has been added

@@ -5,7 +5,7 @@
 #   description:    initiate SPK GUI                                                        #
 #                                                                                           #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/index.cgi                      #
-#   © 2023 by geimist                                                                       #
+#   © 2025 by geimist                                                                       #
 #############################################################################################
 
 
@@ -31,31 +31,31 @@
 # --------------------------------------------------------------
 
     # To evaluate the login.cgi, change REQUEST_METHOD to GET
-	if [[ "${REQUEST_METHOD}" == "POST" ]]; then
-		REQUEST_METHOD="GET"
-		OLD_REQUEST_METHOD="POST"
-	fi
+    if [[ "${REQUEST_METHOD}" == "POST" ]]; then
+        REQUEST_METHOD="GET"
+        OLD_REQUEST_METHOD="POST"
+    fi
 
-	# Read and check the login authorization ( login.cgi )
-	syno_login=$(/usr/syno/synoman/webman/login.cgi)
+    # Read and check the login authorization ( login.cgi )
+    syno_login=$(/usr/syno/synoman/webman/login.cgi)
 
-	# Login permission ( result=success )
-	if echo ${syno_login} | grep -q result ; then
-		login_result=$(echo "${syno_login}" | grep result | cut -d ":" -f2 | cut -d '"' -f2)
-	fi
-	[[ ${login_result} != "success" ]] && { echo 'Access denied'; exit; }
+    # Login permission ( result=success )
+    if echo ${syno_login} | grep -q result ; then
+        login_result=$(echo "${syno_login}" | grep result | cut -d ":" -f2 | cut -d '"' -f2)
+    fi
+    [[ ${login_result} != "success" ]] && { echo 'Access denied'; exit; }
 
-	# Login successful ( success=true )
-	if echo ${syno_login} | grep -q success ; then
-		login_success=$(echo "${syno_login}" | grep success | cut -d "," -f3 | grep success | cut -d ":" -f2 | cut -d " " -f2 )
-	fi
-	[[ ${login_success} != "true" ]] && { echo 'Access denied'; exit; }
+    # Login successful ( success=true )
+    if echo ${syno_login} | grep -q success ; then
+        login_success=$(echo "${syno_login}" | grep success | cut -d "," -f3 | grep success | cut -d ":" -f2 | cut -d " " -f2 )
+    fi
+    [[ ${login_success} != "true" ]] && { echo 'Access denied'; exit; }
 
-	# Set REQUEST_METHOD back to POST again
-	if [[ "${OLD_REQUEST_METHOD}" == "POST" ]]; then
-		REQUEST_METHOD="POST"
-		unset OLD_REQUEST_METHOD
-	fi
+    # Set REQUEST_METHOD back to POST again
+    if [[ "${OLD_REQUEST_METHOD}" == "POST" ]]; then
+        REQUEST_METHOD="POST"
+        unset OLD_REQUEST_METHOD
+    fi
 
         
 # read MAC-adress (only to hide DEV pages)
@@ -83,7 +83,7 @@
 # --------------------------------------------------------------
     set_var="/usr/syno/bin/synosetkeyvalue"
     get_var="/bin/get_key_value"
-    var="${app_home}/etc/var.txt"
+    var="/tmp/synOCR_var.txt"   # work in RAM
     synocrred="color: #BD0010"
         
     # Backup of the Internal Field Separator (IFS) as well as the separation of 
@@ -188,23 +188,6 @@ echo '
                                 </a>
                             </li>'
                         fi
-
-#                        # Timer
-#                        if [[ "$mainpage" == "timer" ]] && [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
-#                            echo '
-#                            <li class="nav-item">
-#                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=timer">
-#                                    <img class="svg me-3" src="images/calendar_white@geimist.svg" height="25" width="25"/>'$lang_page3'
-#                                </a>
-#                            </li>'
-#                        elif [[ $(synogetkeyvalue /etc.defaults/VERSION majorversion) -lt 7 ]]; then
-#                            echo '
-#                            <li class="nav-item">
-#                                <a class="nav-link text-secondary" href="index.cgi?page=timer">
-#                                    <img class="svg me-3" src="images/calendar_grey3@geimist.svg" height="25" width="25"/>'$lang_page3'
-#                                </a>
-#                            </li>'
-#                        fi
 
                         # Help
                         if [[ "${mainpage}" == "help" ]]; then

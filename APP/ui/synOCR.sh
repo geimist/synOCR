@@ -191,6 +191,8 @@
     echo "DB-version:               $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
     echo "system-ID:                $(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='UUID'")"
     echo "used image (created):     ${dockercontainer} ($(docker inspect -f '{{ .Created }}' "${dockercontainer}" 2>/dev/null | awk -F. '{print $1}'))"
+    echo "ContainerManager:         $(synopkg version ContainerManager)"
+    echo "docker version:           $(docker --version)"
 
     [ ${delay:-0} -ne 0 ] && echo "OCR delay:                ${delay:-0} seconds"
 
