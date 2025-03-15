@@ -351,8 +351,8 @@ if [[ "${page}" == "edit-del_profile-query" ]] || [[ "${page}" == "edit-del_prof
                     # getprofile (write to $var without GUI):
                     encode_value="${getprofile}"
                     decode_value=$(urldecode "${encode_value}")
-                    "${set_var}" "./etc/var.txt" "getprofile" "${decode_value}"
-                    "${set_var}" "./etc/var.txt" "encode_getprofile" "${encode_value}"
+                    "${set_var}" "$var" "getprofile" "${decode_value}"
+                    "${set_var}" "$var" "encode_getprofile" "${encode_value}"
                     sleep 0.1
 
                     echo '
@@ -445,6 +445,11 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
                                     <p>
                                         '"${lang_edit_profname}"' <strong>'"${profile}"'</strong> '"${lang_edit_dup2}"' <strong>'"${new_profile_value}"'</strong> '"${lang_edit_dup3}"'.
                                     </p>'
+                                    # profile ID (write to $var without GUI)
+                                    getprofile=$(sqlite3 -separator $'\t' "${dbPath}" "SELECT profile_ID FROM config WHERE profile='${new_profile_value}'" | awk -F'\t' '{print $1}')
+                                    "${set_var}" "${var}" "profile_ID" "$(urldecode "${getprofile}")"
+                                    "${set_var}" "${var}" "encode_profile_ID" "${getprofile}"
+                                    "${set_var}" "${var}" "getprofile" "${getprofile}"
                                 else
                                     echo '
                                     <p class="text-danger">
@@ -526,11 +531,17 @@ if [[ "${page}" == "edit-new_profile-query" ]] || [[ "${page}" == "edit-new_prof
                             sSQL="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
                             if [ "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")" = 0 ] ; then
                                 new_profile "${new_profile_value}"
+
                                 if [ "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")" = 1 ] ; then
                                     echo '
                                     <p>
                                         '"${lang_edit_new2}"' <strong>'"${new_profile_value}"'</strong> '"${lang_edit_new3}"'.
                                     </p>'
+                                    # profile ID (write to $var without GUI)
+                                    getprofile=$(sqlite3 -separator $'\t' "${dbPath}" "SELECT profile_ID FROM config WHERE profile='${new_profile_value}'" | awk -F'\t' '{print $1}')
+                                    "${set_var}" "${var}" "profile_ID" "$(urldecode "${getprofile}")"
+                                    "${set_var}" "${var}" "encode_profile_ID" "${getprofile}"
+                                    "${set_var}" "${var}" "getprofile" "${getprofile}"
                                 else
                                     echo '
                                     <p class="text-danger">
