@@ -1,4 +1,48 @@
-1.4.5 [2023-09-25]
+1.5.0 [2025-03-28]
+    ⚠️ known issues / limitations: Devices with an ARM64 / aarch64 CPU are not supported with this release due to Python incompatibility❗️ 
+  IMPLEMENTATIONS:
+ - [GUI]    🔥 Color adjustments can now be used to configure the contrast, the sharpness and a black and white mode (1-bit).
+ - [GUI]    🔥 Blank page detection and removal has been implemented.
+ - [shell]  If logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files
+ - [GUI]    A slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
+ - [GUI]    The source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed (issue #59)
+  IMPROVEMENT:
+ - [GUI]    the save dialog in the GUI now runs much faster
+ - [shell]  improved protection of the source file in the event of an error
+ - [shell]  yaml key dirname_RegEx is implemented in order to be able to generate dynamic paths with path variable §dirname_RegEx
+ - [GUI]    an indicator for the profile change has been added
+ - [shell]  duplicate detection of the target file is now more robust
+ - [shell]  use native DSM permission adjustment
+ - [shell]  all non-alphanumeric characters at target file name will be compressed (issue #58)
+ - [GUI]    where possible, text fields and radio buttons have been replaced by sliders and switches.
+ - [GUI]    splitting pages can be set to each page
+ - [SHELL]  bump apprise library to 1.9.2
+ - [GUI]    bump Bootstrap framework to 5.3.3 (thx @Tommes)
+ - [GUI]    bump jQuery to 3.7.1 (thx @Tommes)
+ - [GUI]    invalid source directories are displayed in the GUI
+ - [shell]  changed D-M-Y, D.M.Y and D/M/Y regexes in search_all_numeric_dates to allow search for 2- and 4-digit years. (#56 thx @dklinger)
+ - [shell]  update find_dates.py from v0.4 ➜ v0.6 (thx @GThorsten)
+            search_alpha_numeric_dates()
+            -change regex after user hint
+            search_alpha_numeric_dates()
+            - optimize search for short dates (jun., Apr......)
+            - bugfix regex with whitespace after Month
+            - add some logging
+  BUGFIXES:
+ - [shell]  issue with the delay in combination with folder monitoring
+ - [shell]  the counting of pages was changed from PyPDF to pymupdf to catch an error with EOF
+ - [shell]  search prefix and search suffix have been removed from the entire file name
+ - [shell]  file names containing double quotation marks resulted in an error
+ - [shell]  bugfix for file names with a tilde
+ - [shell]  update find_dates.py
+            bugfix for dates like 15.6.2023
+            add language = de to dateparser (thx @dklinger)
+ - [shell]  update find_dates.py from v0.6 ➜ v0.7 (thx @dklinger)
+            fix for dateparser parsing current datetime from invalid string
+ - [SHELL]  fix error message "warning: ./synOCR.sh: line 780: command substitution: ignored null byte in input"
+ - [shell]  fixing some minor bugs
+ 
+ 1.4.5 [2023-09-25]
   BUGFIXES:
  - [SHELL] Fixed a bug that could block the start of monitoring
  - [SHELL] Fixed a bug that could not update the DB @DSM6

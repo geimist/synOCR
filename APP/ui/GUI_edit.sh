@@ -53,7 +53,7 @@ IFS=" " read -r -a tagarray <<< "$( echo "${taglist}" | sed -e "s/ /%20/g" | sed
 
 count=1
 
-samplefilecontent="    ##############################################################################################################
+samplefilecontent="    ##############################################################################################################################
     #
     #                        ${lang_edit_yamlsample_02}
     #
@@ -78,10 +78,14 @@ samplefilecontent="    #########################################################
     #           - ${lang_edit_yamlsample_17a}
     #           - ${lang_edit_yamlsample_18} (>tagname:<)
     #       > \"tagname_RegEx:\"
-    #           - ${lang_edit_yamlsample_15} >tagname_RegEx: RegEx< (${lang_edit_yamlsample_16})
-    #           - ${lang_edit_yamlsample_17}
+    #           - ${lang_edit_yamlsample_15} >tagname_RegEx: RegEx< (${lang_edit_yamlsample_16b})
+    #           - ${lang_edit_yamlsample_17c}
     #           - ${lang_edit_yamlsample_17b}
     #           - ${lang_edit_yamlsample_18} (>tagname_RegEx:<)
+    #       > \"tagname_multiline_RegEx:\"
+    #           - ${lang_edit_yamlsample_15} >tagname_multiline_RegEx: VALUE<  (${lang_edit_yamlsample_16})
+    #           - ${lang_edit_yamlsample_36} \"true\" / \"false\"
+    #             ${lang_edit_yamlsample_39} (\"false\")
     #       > \"postscript:\"
     #           - ${lang_edit_yamlsample_15} >postscript: command or path< (${lang_edit_yamlsample_16})
     #           - ${lang_edit_yamlsample_43}
@@ -97,6 +101,14 @@ samplefilecontent="    #########################################################
     #           - ${lang_edit_yamlsample_22a}
     #             ${lang_edit_yamlsample_22b}
     #           - ${lang_edit_yamlsample_18} (>targetfolder:<)
+    #       > \"dirname_RegEx:\"
+    #           - ${lang_edit_yamlsample_15} >dirname_RegEx: RegEx< (${lang_edit_yamlsample_16b})
+    #           - ${lang_edit_yamlsample_17d} >§dirname_RegEx<
+    #           - ${lang_edit_yamlsample_18} (>dirgname_RegEx:<)
+    #       > \"dirname_multiline_RegEx:\"
+    #           - ${lang_edit_yamlsample_15} >dirname_multiline_RegEx: VALUE<  (${lang_edit_yamlsample_16})
+    #           - ${lang_edit_yamlsample_36} \"true\" / \"false\"
+    #             ${lang_edit_yamlsample_39} (\"false\")
     #       > \"condition:\"
     #           - ${lang_edit_yamlsample_24}
     #           - ${lang_edit_yamlsample_15} >condition: VALUE<  (${lang_edit_yamlsample_16})
@@ -143,7 +155,7 @@ samplefilecontent="    #########################################################
     #   - ${lang_edit_yamlsample_41}:
     #       https://codebeautify.org/yaml-validator
     #
-    ##############################################################################################################"
+    ##############################################################################################################################"
 
 writesamplefile() {
 
@@ -155,24 +167,19 @@ echo "# synOCR_YAMLRULEFILE   # keep this line!
 
 # Help text with fixed width and closing #:
     echo "➜ write description"
-    echo "${samplefilecontent}" | while read -r data
-    do
+    echo "${samplefilecontent}" | while read -r data; do
         # Correct counting:
-        # ToDo: funktioniert noch nicht zuverlässig …
         lenRAW=${#data}
-        stringCLEAN=${data//[ööüßÄÜÖ]/}           # ToDo: keine Ausschlusssuche, sondern nach gültigen ASCII-Zeichen suchen und rest addieren / würde auch Sonderzeichen abdecken
+        stringCLEAN=${data//[äöüßÄÜÖ]/}
         lenCLEAN=${#stringCLEAN}
-
-    #    lenRAW=$( echo "$data" | wc -c)
-    #    lenCLEAN=$( echo "$data" | LC_ALL=C tr -dc '\0-\177' | wc -c)   # lenASCII
 
         DIFF=$((lenRAW - lenCLEAN))
         DIFF=$((DIFF / 2))
-        len=$((110 + DIFF))
+        len=$((130 + DIFF))
         printf "    %-${len}s#\n" "${data}" >> "${SAMPLECONFIGFILE}"
     done
 
-    sed -i 's/ > / ➜ /g;s/ - / • /g' "${SAMPLECONFIGFILE}"  # printf kommt mit diesen Zeichen nicht klar (Zählung stimmt nicht)
+    sed -i '/^#/ s/ > / ➜ /g; /^#/ s/ - / • /g' "${SAMPLECONFIGFILE}"
 
 echo "➜ write sample entry"
 echo "
@@ -180,9 +187,12 @@ echo "
 #sample:
 
 #sampletagrulename1:
-#    tagname: target_tag
-#    targetfolder: \"/<path>/\"
+#    tagname: target_tag §tagname_RegEx
 #    tagname_RegEx: \"HUK[[:digit:]]{2}\"
+#    tagname_multiline_RegEx: false
+#    targetfolder: \"/<path>/§dirname_RegEx\"
+#    dirname_RegEx: \"HUK[[:digit:]]{2}\"
+#    dirname_multiline_RegEx: false
 #    multilineregex: false
 #    postscript: 
 #    apprise_call: 

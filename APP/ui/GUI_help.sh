@@ -96,7 +96,7 @@ echo '
                 <h6 class="synocr-text-blue">'"${lang_help_FAQ_sub5_tit}"'</h6>
                 <ul>
                     <li><a href="https://github.com/geimist/synOCR/wiki/04_FAQ-(de)" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">synOCR Wiki</a></li>
-                    <li>'"${lang_help_FAQ_sub5_beforelink}"' <a href="https://www.synology-forum.de/showthread.html?99647-synOCR-GUI-f%C3%BCr-OCRmyPDF" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">'"${lang_help_FAQ_sub5_linktitle}"'</a>'"${lang_help_FAQ_sub5_afterlink}"'</li>
+                    <li>'"${lang_help_FAQ_sub5_beforelink}"' <a href="https://www.synology-forum.de/threads/synocr-gui-fuer-ocrmypdf.99647/" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">'"${lang_help_FAQ_sub5_linktitle}"'</a>'"${lang_help_FAQ_sub5_afterlink}"'</li>
                 </ul>
             </div>
         </div>

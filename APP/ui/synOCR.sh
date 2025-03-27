@@ -924,16 +924,13 @@ if [ "${type_of_rule}" = advanced ]; then
                 if [ -n "${dirname_RegEx_result}" ] ; then
 
                     # Ensure path compatibility: Replace unwanted characters with underscore
-                    sanitized=$(sed 's/[^A-Za-z0-9_.-]/_/g' <<< "${dirname_RegEx_result}")
+                    sanitized=$(sed 's/[^A-Za-z0-9_.- ]/_/g' <<< "${dirname_RegEx_result}")
                     # Remove leading/trailing dots or hyphens
                     sanitized=${sanitized%%[.-]}
                     sanitized=${sanitized##[.-]}
 
-                    if echo "${targetfolder}" | grep -q "§dirname_RegEx" ; then
-                        targetfolder="${targetfolder//§dirname_RegEx/${sanitized}}"
-                    else
-                        targetfolder="${sanitized}"
-                    fi
+                    targetfolder="${targetfolder//§dirname_RegEx/${sanitized}}"
+                        
                     printf "%s\n\n" "${targetfolder}"
                 else
                     printf "%s\n\n" "RegEx not found (fallback to ${targetfolder})"

@@ -2,75 +2,47 @@ known issues / limitations:
  -  The check whether a selected folder (OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.4.5 [2023-09-25]
-  BUGFIXES:
- - [SHELL] Fixed a bug that could block the start of monitoring
- - [SHELL] Fixed a bug that could not update the DB @DSM6
- 
-1.4.4 [2023-08-31]
-  BUGFIXES:
- - [SHELL] Search range for the date in the past was not calculated correctly
- - [SHELL] if an (encrypted) destination folder has not yet been mounted, the program run is now terminated.
- 
-1.4.3 [2023-08-08]
-  BUGFIXES:
- - [SHELL] a missing slash in the source path partly blocked a correct program run
-  IMPROVEMENT:
- - [GUI] In the update note not only the newest but also the installed version is displayed
- - [SHELL] apply shellcheck for functions.sh
- 
-1.4.2 [2023-07-26]
-  BUGFIXES:
- - [SHELL] fix build python environment at aarch64 (additionally Python 3.9 required)
-  IMPROVEMENT:
- - [SHELL] remove trailing spaces and tabs in YAML rules to improve compatibility
- - [SHELL] improve error handling of python date search
- - [SHELL] improve logging 
- - [SHELL] improve YAML validation
- 
-1.4.1 [2023-07-07]
-  BUGFIXES:
- - [SHELL] disable python environment backup due to an update error
- - [SHELL] minor bugfixes
-  IMPROVEMENT:
- - [SHELL] Bump apprise library to 1.4.5
- 
-1.4.0 [2023-07-04]
-  BUGFIXES:
- - [SHELL] if the path to the log file contained a hash, the date search via Python failed
- - [SHELL] Renaming parameters used as tag name components in YAML rules were not written as metadata
- - [SHELL] avoid empty renaming syntax
- - [SHELL] Error when parsing GUI-defined rules
- - [GUI] If the log level was set to 0, the log was incorrectly displayed in the GUI during a manual run
- - [GUI] fixed syntax error that caused a navigation error in the GUI
- - [SHELL] if two separation pages follow each other, this was result in an empty PDF file (thx @DeeKay1)
- - [GUI] synOCR starts at DSM7.2 only in a new window (iFrame support - thx @Tommes)
-  IMPROVEMENT:
- - [SHELL] splitting: change from pypdf to pikepdf because pypdf breaks the PDF/A attribute (thx @Gthorsten)
- - [SHELL] write metadata: change from pypdf to pikepdf because pypdf breaks the PDF/A attribute (thx @Gthorsten)
- - [SHELL] write metadata additionally as XMP data (thx @Gthorsten)
- - [SHELL] Python environment is preserved now during a package update
- - [GUI] Bump Bootstrap framework to 5.3.0 (thx @Tommes)
- - [GUI] Bump Bootstrap JavaScript to 5.3.0 (thx @Tommes)
- - [GUI] Bump jQuery to 3.7.0 (thx @Tommes)
- - [GUI] Made minor code optimizations in synOCR.js (thx @Tommes)
- - [GUI] In addition to local DSM users, the app can now be used by Domain and LDAP users (thx @Tommes)
- - [SHELL] improve DSM notification
- - [SHELL] most shell code was checked and adjusted to pass shellcheck
- - [GUI] If the monitoring is started via the task scheduler from root, the GUI now informs about it
- - [SHELL] incorrect separator page behavior for consecutive documents with separator pages
- - [GUI] profile changes automatically when another name is selected in the listbox (thx @HolerZ)
- - [GUI] the warning for an invalid source directory now also contains the name of the affected profile
- - [SHELL] update find_dates.py to version 1.0.4 (thx @GThorsten)
- - [SHELL] no temporary data is stored in the destination folder now
- - improved logging when monitoring cannot be started because a source folder is invalid
+1.5.0 [2025-03-28]
+    ⚠️ known issues / limitations: Devices with an ARM64 / aarch64 CPU are not supported with this release due to Python incompatibility❗️ 
   IMPLEMENTATIONS:
- - 🔥 inclusion of APPRISE library to support many notification services (native PushBullet support has been removed)
-   apprise_call (apprise service) apprise_attachment (true/false) notify_lang (DSM lang code) can be additionally defined and overwrite in every YAML rule
- - with value "postscript:" in YAML can be defined post script commands (command or path to script)
- - [YAML] >multilineregex: true< can be set at subrule and for tagname_RegEx
-   this will set the parameter -z for grep to find results over multi lines
- - [GUI] support for follow machine translated languages (by DeepL)
-    - Korean
-    - Norwegian
-    
+ - [GUI]    🔥 Color adjustments can now be used to configure the contrast, the sharpness and a black and white mode (1-bit).
+ - [GUI]    🔥 Blank page detection and removal has been implemented.
+ - [shell]  If logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files
+ - [GUI]    A slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
+ - [GUI]    The source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed (issue #59)
+  IMPROVEMENT:
+ - [GUI]    the save dialog in the GUI now runs much faster
+ - [shell]  improved protection of the source file in the event of an error
+ - [shell]  yaml key dirname_RegEx is implemented in order to be able to generate dynamic paths with path variable §dirname_RegEx
+ - [GUI]    an indicator for the profile change has been added
+ - [shell]  duplicate detection of the target file is now more robust
+ - [shell]  use native DSM permission adjustment
+ - [shell]  all non-alphanumeric characters at target file name will be compressed (issue #58)
+ - [GUI]    where possible, text fields and radio buttons have been replaced by sliders and switches.
+ - [GUI]    splitting pages can be set to each page
+ - [SHELL]  bump apprise library to 1.9.2
+ - [GUI]    bump Bootstrap framework to 5.3.3 (thx @Tommes)
+ - [GUI]    bump jQuery to 3.7.1 (thx @Tommes)
+ - [GUI]    invalid source directories are displayed in the GUI
+ - [shell]  changed D-M-Y, D.M.Y and D/M/Y regexes in search_all_numeric_dates to allow search for 2- and 4-digit years. (#56 thx @dklinger)
+ - [shell]  update find_dates.py from v0.4 ➜ v0.6 (thx @GThorsten)
+            search_alpha_numeric_dates()
+            -change regex after user hint
+            search_alpha_numeric_dates()
+            - optimize search for short dates (jun., Apr......)
+            - bugfix regex with whitespace after Month
+            - add some logging
+  BUGFIXES:
+ - [shell]  issue with the delay in combination with folder monitoring
+ - [shell]  the counting of pages was changed from PyPDF to pymupdf to catch an error with EOF
+ - [shell]  search prefix and search suffix have been removed from the entire file name
+ - [shell]  file names containing double quotation marks resulted in an error
+ - [shell]  bugfix for file names with a tilde
+ - [shell]  update find_dates.py
+            bugfix for dates like 15.6.2023
+            add language = de to dateparser (thx @dklinger)
+ - [shell]  update find_dates.py from v0.6 ➜ v0.7 (thx @dklinger)
+            fix for dateparser parsing current datetime from invalid string
+ - [SHELL]  fix error message "warning: ./synOCR.sh: line 780: command substitution: ignored null byte in input"
+ - [shell]  fixing some minor bugs
+  
