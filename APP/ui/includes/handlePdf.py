@@ -17,6 +17,8 @@
 #  Author: gthorsten
 #  Version:
 #
+#     0.3, 26.06.2025
+#           added metadata "title"
 #     0.2, 21.05.2023
 #           remove or change some debugging info
 #     0.1, 26.03.2023
@@ -225,6 +227,11 @@ class HandlePdf:
                     meta['dc:creator'] = [self.meta_data_dict['/Author']]
                     meta['pdf:Author'] = self.meta_data_dict['/Author']
 
+            if '/Title' in self.meta_data_dict:
+                if len(self.meta_data_dict['/Title']):
+                    meta['dc:title'] = self.meta_data_dict['/Title']
+                    meta['pdf:Title'] = self.meta_data_dict['/Title']
+
            # meta['pdf:Producer'] = 'pikepdf'
 
         self.logger_obj.debug('new meta_data....')
@@ -312,7 +319,7 @@ class HandlePdf:
             return HandlePdfErrorCode.ERROR_METADATA_INVALID
 
         # check for known keys
-        known_keys_list = ('/Author', '/Keywords', '/CreationDate', '/CreatorTool')
+        known_keys_list = ('/Author', '/Keywords', '/CreationDate', '/CreatorTool', '/Title')
 
         for dict_key in meta_data_dct.keys():
             if dict_key not in known_keys_list:
@@ -389,12 +396,14 @@ def main_fn():
 
 if __name__ == '__main__':
     test_str = {'/Author': 'John Doe',
+                '/Title': 'Test Document',
                 '/Keywords': 'Versicherung Allianz, KFZ, KFZ - Versicherung',
                 '/CreationDate': 'D:20221108',
                 '/CreatorTool': 'synOCR 1.022'
                 }
 
     test_str1 = {'/Author': '',
+                '/Title': '',
                 '/Keywords': 'Versicherung Allianz, KFZ, KFZ - Versicherung',
                 '/CreationDate': 'D:20221108',
                 '/CreatorTool': 'synOCR 1.022'

@@ -39,7 +39,7 @@
     date_start_all=$(date +%s)
     # hard coded setting to enable / disable metadata integration
     # /usr/syno/bin/synosetkeyvalue "/usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh" enablePyMetaData 0
-    enablePyMetaData=1            
+    enablePyMetaData=1
 
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     python_check=ok             # will be set to failed if the test fails
@@ -180,6 +180,24 @@
     dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                ${dsmbuild}"
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
 
+# docker shm-size calculation with Synology-optimized values:
+    calculate_shm() {
+      local mem=$1
+      case $(uname -m) in
+#        *arm*)
+#          [ $mem -le 2048 ] && echo 128m || echo 256m
+#          ;;
+        *aarch64*)
+          echo $(( mem < 4096 ? 256 : 512 ))m
+          ;;
+        *)
+          echo $(( mem < 8192 ? 256 : 1024 ))m
+          ;;
+      esac
+    }
+    total_mem=$(free -m | awk '/^Mem:/ {print $2}')
+    shm_size="$(calculate_shm $total_mem)"
+
     echo "Device:                   ${device}"
     echo "current Profil:           ${profile}"
     echo -n "monitor is running?:      "
@@ -199,6 +217,9 @@
     documentAuthor=$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}" | grep "\-\-author" | sed -e 's/--author //')
 #   documentAuthor=$(grep -oP -- '--author(=\S+)?\s*\K.*?(?=\s+--|\s*$)' <<<"${ocropt}")
     echo "document author:          ${documentAuthor}"
+
+    documentTitle=$(awk -F'[ ]-' '{for(i=1;i<=NF;i++){if($i)print "-"$i}}' <<<" ${ocropt}" | grep "\-\-title" | sed -e 's/--title //')
+    echo "document title:          ${documentTitle}"
 
     echo "used ocr-parameter (raw): ${ocropt}"
 
@@ -235,6 +256,7 @@
     unset c
 
     echo "ocropt_array:             ${ocropt_arr[*]}"
+    echo "shm-size:                 ${shm_size}"
     echo "search prefix:            ${SearchPraefix}"
     echo "replace search prefix:    ${delSearchPraefix}"
     echo "renaming syntax:          ${NameSyntax}"
@@ -510,18 +532,18 @@ OCRmyPDF()
         OCRinput="${input1}"
     fi
 
-    # workaround for Container Manager 24.0.2-1535 message: "Container synOCR in Container Manager was terminated unexpectedly."
-#    version="$(synopkg version ContainerManager)"
-#    ref_version="24.0.2-1535"
+#   cat "${OCRinput}" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
+# Standard v1.5.0:
+#   cat "${OCRinput}" | docker run --name synOCR --network none -i --log-driver none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
 
-#    if [ "$(printf '%s\n' "$ref_version" "$version" | sort -V | head -n1)" = "$ref_version" ]; then
-#        waiting=5
-#    else
-#        waiting=0
-#    fi
-
-    cat "${OCRinput}" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
-
+    docker run --rm \
+        --name synOCR \
+        --network none \
+        --shm-size="${shm_size}" \
+        -v "${OCRinput}":/input.pdf \
+        -v "${outputtmp%/*}":/output \
+        "${dockercontainer}" \
+        "${ocropt_arr[@]}" /input.pdf "/output/${outputtmp##*/}"
 }
 
 
@@ -1606,8 +1628,11 @@ rename()
 
             # replace parameters with values (rulenames can contain placeholders, which are replaced here)
             meta_keyword_list=$(replace_variables "${meta_keyword_list}")
+            documentAuthor=$(replace_variables "${documentAuthor}")
+            documentTitle=$(replace_variables "${documentTitle}")
 
             py_meta="'/Author': '${documentAuthor}',"
+            py_meta="$(printf "${py_meta}\n'/Title': \'${documentTitle}\',")"
             # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
             py_meta="$(printf "${py_meta}\n'/Keywords': \'$( echo "${meta_keyword_list}" | sed -e "s/^${tagsymbol}//g" )\',")"
             # shellcheck disable=SC2059  # Don't warn about "variables in the printf format string" in this function
@@ -1679,7 +1704,7 @@ rename()
 
         prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
 
-        echo "${log_indent}  target file: ${output##*/}"
+        echo "${log_indent}  target file: ${output}"
 
         if [[ "${keep_hash}" = "true" ]]; then
             cp -a "${keep_hash_input}" "${output}"
@@ -1704,7 +1729,7 @@ rename()
 
         prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
 
-        echo "${log_indent}  target file: $(basename "${output}")"
+        echo "${log_indent}  target file: ${output}"
 
         if [[ "${keep_hash}" = "true" ]]; then
             cp -a "${keep_hash_input}" "${output}"
@@ -1884,7 +1909,7 @@ rename()
     # ---------------------------------------------------------------------
         prepare_target_path "${OUTPUTDIR}" "${NewName}.pdf"
 
-        echo "${log_indent}  target file: $(basename "${output}")"
+        echo "${log_indent}  target file: ${output}"
 
         if [[ "${keep_hash}" = "true" ]]; then
             cp -af "${keep_hash_input}" "${output}"
@@ -2705,8 +2730,8 @@ while read -r input ; do
 
 # exact text
 # ---------------------------------------------------------------------
-    searchfile="${work_tmp_step2}/synOCR.txt"
-    searchfilename="${work_tmp_step2}/synOCR_filename.txt"    # for search in file name
+    searchfile="${work_tmp_step2%/}/synOCR.txt"
+    searchfilename="${work_tmp_step2%/}/synOCR_filename.txt"    # for search in file name
     echo "${title}" > "${searchfilename}"
 
 

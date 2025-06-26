@@ -2,7 +2,10 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.5.0 [2025-03-28]
- - v1.5.0 is released
- - full changelog: https://raw.githubusercontent.com/geimist/synOCR/master/PKG_DSM7/CHANGELOG_CURRENT_RELEASE
+1.5.99.1 [2025-06-26]
+  IMPLEMENTATIONS:
+ - [GUI]    "title" kann jetzt in Metadaten gesetzt werden (GUI ➜ OCR-Optionen: --title my title). Es können auch alle Umbenennungsparameter als Variablen gesetzt werden.
+  BUGFIXES:
+ - [shell]  fixing some minor bugs
+
 
