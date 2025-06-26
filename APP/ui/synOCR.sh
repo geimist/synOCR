@@ -180,6 +180,24 @@
     dsmbuild=$(uname -v | awk '{print $1}' | sed "s/#//g"); echo "DSM-build:                ${dsmbuild}"
     device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
 
+# docker shm-size calculation with Synology-optimized values:
+    calculate_shm() {
+      local mem=$1
+      case $(uname -m) in
+#        *arm*)
+#          [ $mem -le 2048 ] && echo 128m || echo 256m
+#          ;;
+        *aarch64*)
+          echo $(( mem < 4096 ? 256 : 512 ))m
+          ;;
+        *)
+          echo $(( mem < 8192 ? 256 : 1024 ))m
+          ;;
+      esac
+    }
+    total_mem=$(free -m | awk '/^Mem:/ {print $2}')
+    shm_size="$(calculate_shm $total_mem)"
+
     echo "Device:                   ${device}"
     echo "current Profil:           ${profile}"
     echo -n "monitor is running?:      "
@@ -235,6 +253,7 @@
     unset c
 
     echo "ocropt_array:             ${ocropt_arr[*]}"
+    echo "shm-size:                 ${shm_size}"
     echo "search prefix:            ${SearchPraefix}"
     echo "replace search prefix:    ${delSearchPraefix}"
     echo "renaming syntax:          ${NameSyntax}"
@@ -501,8 +520,6 @@ file_processing_log()
 
 OCRmyPDF()
 {
-    # shellcheck disable=SC2002  # Don't warn about "Useless cat" in this function
-    # https://www.synology-forum.de/showthread.html?99516-Container-Logging-in-Verbindung-mit-stdin-und-stdout
 
     if [[ "${adjustColorSuccess}" = true ]]; then
         OCRinput="${color_adjustment_target}"
@@ -510,17 +527,14 @@ OCRmyPDF()
         OCRinput="${input1}"
     fi
 
-    # workaround for Container Manager 24.0.2-1535 message: "Container synOCR in Container Manager was terminated unexpectedly."
-#    version="$(synopkg version ContainerManager)"
-#    ref_version="24.0.2-1535"
-
-#    if [ "$(printf '%s\n' "$ref_version" "$version" | sort -V | head -n1)" = "$ref_version" ]; then
-#        waiting=5
-#    else
-#        waiting=0
-#    fi
-
-    cat "${OCRinput}" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
+    docker run --rm \
+        --name synOCR \
+        --network none \
+        --shm-size="${shm_size}" \
+        -v "${OCRinput}":/input.pdf \
+        -v "${outputtmp%/*}":/output \
+        "${dockercontainer}" \
+        "${ocropt_arr[@]}" /input.pdf "/output/${outputtmp##*/}"
 
 }
 
@@ -1679,7 +1693,7 @@ rename()
 
         prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
 
-        echo "${log_indent}  target file: ${output##*/}"
+        echo "${log_indent}  target file: ${output}"
 
         if [[ "${keep_hash}" = "true" ]]; then
             cp -a "${keep_hash_input}" "${output}"
@@ -1704,7 +1718,7 @@ rename()
 
         prepare_target_path "${subOUTPUTDIR}" "${NewName}.pdf"
 
-        echo "${log_indent}  target file: $(basename "${output}")"
+        echo "${log_indent}  target file: ${output}"
 
         if [[ "${keep_hash}" = "true" ]]; then
             cp -a "${keep_hash_input}" "${output}"
@@ -1884,7 +1898,7 @@ rename()
     # ---------------------------------------------------------------------
         prepare_target_path "${OUTPUTDIR}" "${NewName}.pdf"
 
-        echo "${log_indent}  target file: $(basename "${output}")"
+        echo "${log_indent}  target file: ${output}"
 
         if [[ "${keep_hash}" = "true" ]]; then
             cp -af "${keep_hash_input}" "${output}"
@@ -2705,8 +2719,8 @@ while read -r input ; do
 
 # exact text
 # ---------------------------------------------------------------------
-    searchfile="${work_tmp_step2}/synOCR.txt"
-    searchfilename="${work_tmp_step2}/synOCR_filename.txt"    # for search in file name
+    searchfile="${work_tmp_step2%/}/synOCR.txt"
+    searchfilename="${work_tmp_step2%/}/synOCR_filename.txt"    # for search in file name
     echo "${title}" > "${searchfilename}"
 
 
