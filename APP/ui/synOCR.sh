@@ -2283,14 +2283,14 @@ while read -r input1 ; do
 #        adjustColor=true
     fi
 
-    # --contrast nur hinzufügen, wenn nicht leer und nicht 1.0
-    if [ "${adjustColorContrast}" != "1" ]; then
+    # --contrast nur hinzufügen, wenn nicht 1 und nicht 1.0
+    if [ "${adjustColorContrast}" != "1" ] && [ "${adjustColorContrast}" != "1.0" ]; then
         args+=(--contrast "${adjustColorContrast}")
         adjustColor=true
     fi
 
-    # --sharpness nur hinzufügen, wenn nicht leer und nicht 1.0
-    if [ "${adjustColorSharpness}" != "1" ]; then
+    # --sharpness nur hinzufügen, wenn nicht 1 und nicht 1.0
+    if [ "${adjustColorSharpness}" != "1" ] && [ "${adjustColorSharpness}" != "1.0" ]; then
         args+=(--sharpness "${adjustColorSharpness}")
         adjustColor=true
     fi

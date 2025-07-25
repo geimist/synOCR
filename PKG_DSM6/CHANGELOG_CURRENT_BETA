@@ -1,3 +1,7 @@
+1.5.99.2 [2025-xx-xx]
+  BUGFIXES:
+ - [shell]  color adjustment could not be completely deactivated
+
 1.5.99.1 [2025-06-26]
   IMPLEMENTATIONS:
  - [GUI]    "title" kann jetzt in Metadaten gesetzt werden (GUI ➜ OCR-Optionen: --title my title). Es können auch alle Umbenennungsparameter als Variablen gesetzt werden.
