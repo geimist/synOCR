@@ -2,7 +2,9 @@
   IMPROVEMENT:
  - [shell]  Introduces a function to calculate Docker --shm-size based on system memory for optimized Synology performance. 
  - [shell]  Updates the OCRmyPDF function to use volume mounts instead of piping input/output
- - [shell]  Improves file path handling and logging for target files and search files.
+ - [shell]  Improves file path handling and logging for target files and search files.1.5.99.2 [2025-xx-xx]
+  BUGFIXES:
+ - [shell]  color adjustment could not be completely deactivated
 
 1.5.0 [2025-03-28]
     ⚠️ known issues / limitations: Devices with an ARM64 / aarch64 CPU are not supported with this release due to Python incompatibility❗️ 
