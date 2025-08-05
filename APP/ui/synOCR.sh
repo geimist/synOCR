@@ -7,10 +7,13 @@
 #   © 2025 by geimist                                                           #
 #################################################################################
 
-    echo "    -----------------------------------"
-    echo "    |    ==> installation info <==    |"
-    echo "    -----------------------------------"
-    echo -e
+
+    # read out and change into the working directory:
+    # ---------------------------------------------------------------------
+    APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
+    cd "${APPDIR}" || exit 1
+
+    source ./includes/functions.sh
 
     set -E -o functrace     # for function failure()
 
@@ -24,14 +27,28 @@
         local msg="${2}"
         echo "ERROR at line ${lineno}: ${msg}"
     }
-    trap 'failure ${LINENO} "${BASH_COMMAND}"' ERR
 
-    IFSsaved=$IFS
+    cleanup_lockfile() {
+        if [ -d "${LOCKFILE}" ]; then
+            rm -rf "${LOCKFILE}"
+            echo "Lock file removed"
+        fi
+    }
+
+    trap 'failure ${LINENO} "${BASH_COMMAND}"' ERR
+    trap 'cleanup_lockfile' EXIT INT TERM
+
+
+    echo "    -----------------------------------"
+    echo "    |    ==> installation info <==    |"
+    echo "    -----------------------------------"
+    echo -e
 
 
 # ---------------------------------------------------------------------------------
 #           BASIC CONFIGURATIONS / INDIVIDUAL ADAPTATIONS / Default values        |
 # ---------------------------------------------------------------------------------
+    IFSsaved=$IFS
     workprofile="$1"            # the profile submitted by the start script
     current_logfile="$2"        # current logfile / is submitted by start script
     shopt -s globstar           # enable 'globstar' shell option (to use ** for directionary wildcard)
@@ -42,12 +59,36 @@
     enablePyMetaData=1
 
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
+    LOCKFILE="${APPDIR}/etc/synOCR.lock"
     python_check=ok             # will be set to failed if the test fails
     synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.9.2" "pymupdf==1.18.6" "numpy==1.19.5" ) 
                                 # "pymupdf==1.18.6" & "numpy==1.19.5" for blank page detection
                                 # apprise for notification
     dashline1="-----------------------------------------------------------------------------------"
     dashline2="●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
+
+
+# Lockfile check & creation
+# ---------------------------------------------------------------------
+    if ! mkdir "${LOCKFILE}" 2>/dev/null; then
+        if [ -d "${LOCKFILE}" ]; then
+            lock_pid=$(cat "${LOCKFILE}/pid" 2>/dev/null)
+            if [ -n "${lock_pid}" ] && kill -0 "${lock_pid}" 2>/dev/null; then
+                echo "synOCR is already running (PID: ${lock_pid})"
+                exit 1
+            else
+                echo "Removing stale lock file"
+                rm -rf "${LOCKFILE}"
+                mkdir "${LOCKFILE}" || exit 1
+            fi
+        else
+            echo "Failed to create lock file"
+            exit 1
+        fi
+    fi
+
+    echo $$ > "${LOCKFILE}/pid"
+    echo "Lock file created for PID $$"
 
 
 # to which user/group the DSM notification should be sent:
@@ -68,14 +109,6 @@
     else
         dsm_version=6
     fi
-
-
-# read out and change into the working directory:
-# ---------------------------------------------------------------------
-    APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
-    cd "${APPDIR}" || exit 1
-
-    source ./includes/functions.sh
 
 
 # load configuration:
@@ -532,18 +565,23 @@ OCRmyPDF()
         OCRinput="${input1}"
     fi
 
-#   cat "${OCRinput}" | docker run --name synOCR --network none --rm -i -log-driver=none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
-# Standard v1.5.0:
-#   cat "${OCRinput}" | docker run --name synOCR --network none -i --log-driver none -a stdin -a stdout -a stderr "${dockercontainer}" "${ocropt_arr[@]}" - - | cat - > "${outputtmp}"
+    run_and_log() {
+        [ "${loglevel}" = 2 ] && echo "$*"
+        "$@"
+    }
 
-    docker run --rm \
+    run_and_log docker run \
+        --rm \
         --name synOCR \
         --network none \
         --shm-size="${shm_size}" \
-        -v "${OCRinput}":/input.pdf \
-        -v "${outputtmp%/*}":/output \
+        -v "${OCRinput}:/input.pdf" \
+        -v "${outputtmp%/*}:/output" \
         "${dockercontainer}" \
-        "${ocropt_arr[@]}" /input.pdf "/output/${outputtmp##*/}"
+        "${ocropt_arr[@]}" \
+        /input.pdf \
+        "/output/${outputtmp##*/}"
+
 }
 
 
@@ -2915,6 +2953,7 @@ done <<<"${files_step2}"
     main_1st_step
     purge_log
     purge_backup
+    cleanup_lockfile
 
     [ -d "${work_tmp_main}" ] && rmdir -v "${work_tmp_main}" | sed -e "s/^/  /g"
 
