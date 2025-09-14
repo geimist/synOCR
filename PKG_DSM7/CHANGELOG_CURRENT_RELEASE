@@ -9,6 +9,7 @@ known issues / limitations:
  - [shell]  Improves file path handling and logging for target files and search files.
   BUGFIXES:
  - [shell]  color adjustment could not be completely deactivated
+ - [shell]  fixed bug related to the YAML variable §dirname_RegEx
 
 1.5.0 [2025-03-28]
     ⚠️ known issues / limitations: Devices with an ARM64 / aarch64 CPU are not supported with this release due to Python incompatibility❗️ 

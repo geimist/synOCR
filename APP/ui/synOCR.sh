@@ -647,7 +647,7 @@ if [ "${type_of_rule}" = advanced ]; then
             fi
         fi
         if [[ "${dirname_RegEx}" != null ]] ; then
-            echo "${log_indent}  ➜ RegEx for tag:    ${dirname_RegEx}" # searchtag
+            echo "${log_indent}  ➜ RegEx for dir:    ${dirname_RegEx}" # searchtag
             if [ "${dirname_multiline_RegEx}" = null ] ; then
                 [ "${loglevel}" = 2 ] && echo "${log_indent}  ➜ multilineregex:   [value for multilineregex is empty - \"false\" is used]"
                 dirname_multiline_RegEx=false
@@ -938,7 +938,7 @@ if [ "${type_of_rule}" = advanced ]; then
                 if [ -n "${dirname_RegEx_result}" ] ; then
 
                     # Ensure path compatibility: Replace unwanted characters with underscore
-                    sanitized=$(sed 's/[^A-Za-z0-9_.- ]/_/g' <<< "${dirname_RegEx_result}")
+                    sanitized=$(sed 's/[^A-Za-z0-9_. -]/_/g' <<< "${dirname_RegEx_result}")
                     # Remove leading/trailing dots or hyphens
                     sanitized=${sanitized%%[.-]}
                     sanitized=${sanitized##[.-]}
