@@ -1,20 +1,22 @@
-1.5.1 [2025-xx-xx]
+1.5.1 [2025-09-29]
   IMPROVEMENT:
- - [shell]  Introduces a function to calculate Docker --shm-size based on system memory for optimized Synology performance. 
- - [shell]  Updates the OCRmyPDF function to use volume mounts instead of piping input/output
- - [shell]  Improves file path handling and logging for target files and search files.1.5.99.2 [2025-xx-xx]
+ - [shell]  introduces a function to calculate Docker --shm-size based on system memory for optimized Synology performance. 
+ - [shell]  updates the OCRmyPDF function to use volume mounts instead of piping input/output
+ - [shell]  improves file path handling and logging for target files and search files
   BUGFIXES:
  - [shell]  color adjustment could not be completely deactivated
  - [shell]  fixed bug related to the YAML variable §dirname_RegEx
+ - [shell]  the Python module dependency that was preventing successful installation has been updated
+ - [shell]  date with single-digit month not recognized
 
 1.5.0 [2025-03-28]
     ⚠️ known issues / limitations: Devices with an ARM64 / aarch64 CPU are not supported with this release due to Python incompatibility❗️ 
   IMPLEMENTATIONS:
  - [GUI]    🔥 Color adjustments can now be used to configure the contrast, the sharpness and a black and white mode (1-bit).
  - [GUI]    🔥 Blank page detection and removal has been implemented.
- - [shell]  If logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files
- - [GUI]    A slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
- - [GUI]    The source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed (issue #59)
+ - [shell]  if logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files
+ - [GUI]    a slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
+ - [GUI]    the source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed (issue #59)
   IMPROVEMENT:
  - [GUI]    the save dialog in the GUI now runs much faster
  - [shell]  improved protection of the source file in the event of an error

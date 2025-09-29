@@ -43,7 +43,7 @@
 
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.9.2" "pymupdf==1.18.6" "numpy==1.19.5" ) 
+    synOCR_python_module_list=( "DateTime==5.5" "dateparser==1.2.1" "pypdf==3.5.1" "pikepdf==7.1.2" "Pillow==10.4.0" "Cython" "PyYAML==6.0.2" "yq==3.4.3" "apprise==1.9.2" "pymupdf==1.18.6" "numpy==1.19.5" )
                                 # "pymupdf==1.18.6" & "numpy==1.19.5" for blank page detection
                                 # apprise for notification
     dashline1="-----------------------------------------------------------------------------------"
