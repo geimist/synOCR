@@ -64,3 +64,5 @@ ___
 <br>    
 <img src="https://github.com/geimist/synOCR/raw/master/wiki_resources/synOCR_screenshot_2.png" width="800" />
 <br> 
+
+![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fgeimist%2FsynOCR&label=&icon=github&color=%23b02a37&message=&style=flat&tz=Europe%2FBerlin)
