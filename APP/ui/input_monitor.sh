@@ -29,8 +29,7 @@ inotify_start()
 {
 # start monitoring:
 # --------------------------------------------------------------
-    printf "\n%s\n" "---------- START MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
-
+    printf "\n%s\n" "[$(date +%Y-%m-%d_%H-%M-%S)] ---------------- START  MONITORING ----------" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
 
     while read -r value ; do
         dir="$(echo "${value}" | awk -F'\t' '{print $1}')"
@@ -38,14 +37,25 @@ inotify_start()
         [ ! -d "${dir}" ] && echo "ERROR @ profile ${profilename}: inotify-tools cannot be started because \"${dir}\" is not a valid folder! " | tee -a "${LOG_DIR_LIST[@]}" && return
     done <<< "$(sqlite3 -separator $'\t' /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )" 
 
-    nohup inotifywait --fromfile "${monitored_folders}" -e moved_to -e close_write --monitor --timeout -1 | 
+    nohup inotifywait --fromfile "${monitored_folders}" -e moved_to -e close_write --monitor 2>&1 | 
         while read -r line ; do 
-            printf "\n%s\n" "---------------- EVENT --------------- $(date +%Y-%m-%d_%H-%M-%S) ----------"
+            # Beim ersten "Watches established" einen initialen Scan ausführen
+            if [[ "$line" == "Watches established." ]]; then
+                printf "\n%s\n" "[$(date +%Y-%m-%d_%H-%M-%S)] ---------------- INITIAL SCAN ---------------"
+                printf "%s\n" "Monitoring started - running initial scan"
+                printf "\n%s\n" "synOCR-start.sh Log:"
+                /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
+                continue
+            fi
+
+            # Filtere andere Status-Nachrichten
+            [[ "$line" =~ ^(Setting up watches\.)$ ]] && continue
+
+            printf "\n%s\n" "[$(date +%Y-%m-%d_%H-%M-%S)] ---------------- EVENT ----------------------"
             printf "%s\n" "detected event: ${line}"
             printf "\n%s\n" "synOCR-start.sh Log:"
             /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
         done | tee -a "${LOG_DIR_LIST[@]}" &
-
     sleep 1
 }
 
@@ -54,7 +64,7 @@ inotify_stop()
 {
 # stop monitoring:
 # --------------------------------------------------------------
-    printf "\n%s\n" "---------- STOP  MONITORING ---------- $(date +%Y-%m-%d_%H-%M-%S) ----------" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
+    printf "\n%s\n" "[$(date +%Y-%m-%d_%H-%M-%S)] ---------------- STOP  MONITORING -----------" | tee -a "${LOG_DIR_LIST[@]}" # > /dev/null
     [ -f "${monitored_folders}" ] && rm -f "${monitored_folders}"
     if kill ${inotify_process_id}; then
         echo "Monitoring ended" | tee -a "${LOG_DIR_LIST[@]}" #> /dev/null
