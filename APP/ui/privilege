@@ -1,0 +1,27 @@
+{
+    "defaults": {
+        "run-as": "package"
+    },
+    "username": "synOCR",
+    "join-groupname": "system",
+    "api-access": {
+        "SYNO.API.Info": {
+            "allowed": ["query"]
+        },
+        "SYNO.API.Auth": {
+            "allowed": ["token"]
+        },
+        "SYNO.Core.Desktop": {
+            "allowed": ["getSessionData"]
+        },
+        "SYNO.FileStation.List": {
+            "allowed": ["list", "list_share"]
+        },
+        "SYNO.FileStation.Auth": {
+            "allowed": ["login"]
+        }
+    },
+    "privilege": {
+        "allow-csrf": true
+    }
+}

@@ -9,7 +9,7 @@
 #   arguments:      - start (starts inotifywait / restarts it, if needed)       #
 #                   - stop (stop inotifywait)                                   #
 #                   - GUI (log formated as html)                                #
-#   © 2025 by geimist                                                           #
+#   © 2026 by geimist                                                           #
 #################################################################################
 
 callFrom=shell

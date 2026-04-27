@@ -3,14 +3,33 @@
 
     #######################################################################################################
     # automatic translation script with DeepL                                                             #
-    #     v1.1.1 © 2025 by geimist                                                                        #
+    #     v1.1.2 © 2026 by geimist                                                                        #
     #     /volume3/DEV/SPK_DEVELOPING/synOCR_BUILD/i18n_autotranslate_by_DeepL_API.sh                     #
     #######################################################################################################
 
 DeepLapiKey=""
 # Fallback key from external file:
-[ -z "${DeepLapiKey}" ] && DeepLapiKey="${DeepLapiKey:-$(head -n1 "$(realpath "${0%/*}/../../DeepL_api-Key.txt")")}"
+[ -z "${DeepLapiKey}" ] && DeepLapiKey="${DeepLapiKey:-$(head -n1 "$(realpath "${0%/*}/../../DeepL_api-Key_synOCR.txt")")}"
+# Leerzeichen / CR / LF aus der Key-Datei entfernen (sonst 403 trotz gültigem Key)
+DeepLapiKey=$(printf '%s' "${DeepLapiKey}" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
+# DeepL-Übersetzungsaufrufe (curl): Verbindungs- und Gesamt-Timeout in Sekunden.
+# Bei Exit 28 (Zeitüberschreitung) ggf. DeepL_curl_max_time erhöhen, z. B.:
+#   DeepL_curl_max_time=180 bash i18n_autotranslate_by_DeepL_API.sh
+: "${DeepL_curl_connect_timeout:=20}"
+: "${DeepL_curl_max_time:=120}"
+
+# DeepL API-Host: Free (api-free) vs. Pro (api). Falscher Host → oft HTTP 403.
+# Free-Authentifizierungsschlüssel enden bei DeepL mit »:fx« (siehe Doku).
+# Manuell setzen z. B.: DeepL_api_base_url="https://api.deepl.com" bash …
+if [[ -z "${DeepL_api_base_url:-}" ]]; then
+    if [[ "${DeepLapiKey}" == *:fx ]]; then
+        DeepL_api_base_url="https://api-free.deepl.com"
+    else
+        DeepL_api_base_url="https://api.deepl.com"
+    fi
+fi
+DeepL_api_base_url="${DeepL_api_base_url%/}"
 
 # ToDo:
 #   - SPK Versionen mit abbilden 
@@ -23,7 +42,7 @@ DeepLapiKey=""
     # werden nur diese Werte im File benötigt. Bestehende gleiche Werte werden übersprungen.
     # Aufbau: variablename="value"
 #   masterFile="/usr/syno/synoman/webman/3rdparty/synOCR/lang/lang_ger.txt"
-    masterFile="/Users/stephangeisler/Documents/Computer/Code Projekte/GitHub/synOCR/synOCR/APP/ui/lang/lang_ger.txt"
+    masterFile="/Users/stephangeisler/Documents/Computer/Code_Projekte/GitHub/synOCR/synOCR/APP/ui/lang/lang_ger.txt"
         
     # die Version wird für die Mastertabelle gesetzt und zeigt, ob einzelne Übersetzungs-Strings aktuell oder veraltet sind
     langVersion=1
@@ -202,7 +221,10 @@ create_master() {
     
     cCount=0
     insertCount=0
-    synoLangCode=$( echo "${masterFile}" | cut -f 1 -d '.' | cut -f 2 -d '_')
+    # Synology-Sprachcode nur aus dem Dateinamen (lang_<code>.txt), nicht aus dem Pfad:
+    # Enthält der Pfad Unterstriche (z. B. .../Code_Projekte/...), liefert
+    # cut … am ganzen Pfad falsche Werte → leeres langID → master_template ohne langID → translate() überspringt.
+    synoLangCode=$(basename "${masterFile}" .txt | sed -e 's/^lang_//')
     langID=$(sqlite3 "${i18n_DB}" "SELECT langID FROM languages WHERE synoshortname='${synoLangCode}'")
 
     # setze bisherige Variablen auf false um nur die der Mastertabelle auf aktiv zu stellen
@@ -262,7 +284,12 @@ create_master() {
             insertCount=$((insertCount + 1))
         fi
     done <<< "$(grep -v "^$" "${masterFile}" | grep -v '^[[:space:]]*#' )"  #| grep lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR )
-    
+
+    # Bestehende Mastertabellen-Zeilen ohne langID (Folge früherer Pfad-Parsing-Fehler) der Mastersprache zuordnen
+    if [ -n "${langID}" ]; then
+        sqlite3 "${i18n_DB}" "UPDATE master_template SET langID='${langID}' WHERE langID IS NULL OR langID = '';"
+    fi
+
     printf "\n\n%s\n" "Es wurden ${insertCount} Datensätze in die Mastertabelle eingefügt, bzw. aktualisiert."
 
 }
@@ -287,7 +314,7 @@ manual_import() {
         progress_end=$(grep -v "^$" "${masterFile}" | grep -vc '^[[:space:]]*#')
         cCount=0
         insertCount=0
-        synoLangCode=$( echo "${masterFile}" | cut -f 1 -d '.' | cut -f 2 -d '_')
+        synoLangCode=$(basename "${masterFile}" .txt | sed -e 's/^lang_//')
         printf "%s\n" "language: ${synoLangCode}"
         langID=$(sqlite3 "${i18n_DB}" "SELECT langID FROM languages WHERE synoshortname='${synoLangCode}'")
         
@@ -463,28 +490,74 @@ translate() {
 
                 max_retries=3
                 backoff=1  # Starte mit 1 Sekunde
-                
-                for ((i=0; i<=max_retries; i++)); do
-                    response=$(curl -fs \
-                        https://api-free.deepl.com/v2/translate \
-                        -d auth_key="${DeepLapiKey}" \
-                        -d "text=${value}" \
-                        -d "source_lang=${masterDeeplShortName}" \
-                        -d "tag_handling=xml" \
-                        -d "target_lang=${targetDeeplShortName}")
+                transValue=""
+                last_curl_rc=-1
+                last_curl_msg=""
+                last_api_hint=""
 
-                    if [[ $? -eq 0 && -n "${response}" ]]; then
-                        transValue=$(jq -r '.translations[].text' <<<"${response}")
-                        break  # Erfolg → Schleife verlassen
+                for ((i=0; i<=max_retries; i++)); do
+                    _sdeepl_err=$(
+                        mktemp "${TMPDIR:-/tmp}/synocr_deepl_err.XXXXXX" 2>/dev/null ||
+                            echo "${TMPDIR:-/tmp}/synocr_deepl_err.$$.$i.log"
+                    )
+                    : >"${_sdeepl_err}"
+                    response=$(
+                        curl -fsS \
+                            --connect-timeout "${DeepL_curl_connect_timeout}" \
+                            --max-time "${DeepL_curl_max_time}" \
+                            -H "Authorization: DeepL-Auth-Key ${DeepLapiKey}" \
+                            -H "Content-Type: application/x-www-form-urlencoded" \
+                            --data-urlencode "text=${value}" \
+                            --data-urlencode "source_lang=${masterDeeplShortName}" \
+                            --data-urlencode "tag_handling=xml" \
+                            --data-urlencode "target_lang=${targetDeeplShortName}" \
+                            "${DeepL_api_base_url}/v2/translate" 2>"${_sdeepl_err}"
+                    )
+                    curl_rc=$?
+                    last_curl_rc=${curl_rc}
+                    last_curl_msg=$(tr '\n' ' ' <"${_sdeepl_err}" | head -c 500)
+                    rm -f "${_sdeepl_err}"
+
+                    if [[ ${curl_rc} -eq 0 && -n "${response}" ]]; then
+                        transValue=$(jq -r '(.translations // []) | .[].text // empty' <<<"${response}")
+                        if [[ -n "${transValue}" ]]; then
+                            last_api_hint=""
+                            break
+                        fi
+                        last_api_hint=$(
+                            jq -r '(.message // .error_message // .error // .) | tostring' <<<"${response}" 2>/dev/null |
+                                head -c 400
+                        )
+                        printf "\n    [DeepL] JSON ohne translations[] (varID=%s, Versuch %d/%d): %s\n" \
+                            "${varID}" "$((i + 1))" "$((max_retries + 1))" "${last_api_hint:-${response:0:300}}"
                     else
-#                       echo "Fehler (Attempt $i). Warte $backoff Sekunden..."
-                        sleep $backoff
-                        backoff=$((backoff * 2))  # Exponentialer Backoff
+                        printf "\n    [DeepL] Anfrage fehlgeschlagen (varID=%s, Versuch %d/%d, connect=%ss max=%ss, curl-Exit=%d)\n        %s\n" \
+                            "${varID}" "$((i + 1))" "$((max_retries + 1))" \
+                            "${DeepL_curl_connect_timeout}" "${DeepL_curl_max_time}" "${curl_rc}" "${last_curl_msg:-unbekannt}"
+                        if [[ ${curl_rc} -eq 28 ]]; then
+                            printf "        (Exit 28 = Zeitüberschreitung — ggf. DeepL_curl_max_time vergrößern oder später erneut versuchen.)\n"
+                        elif [[ "${last_curl_msg}" == *403* ]]; then
+                            printf "        (HTTP 403 laut DeepL: oft ungültiger/leerer Key, oder falscher Host. Host: %s; /v2/usage nutzt den Header — translate ebenfalls.)\n" "${DeepL_api_base_url}"
+                        fi
+                    fi
+
+                    if [[ ${i} -lt ${max_retries} ]]; then
+                        printf "        → Warte %ss (Backoff), erneuter Versuch …\n" "${backoff}"
+                        sleep "${backoff}"
+                        backoff=$((backoff * 2))
                     fi
                 done
 
                 if [[ -z "$transValue" ]]; then
-                    printf "%s" "    ÜBERSETZUNGSFEHLER (varID: ${varID} | Antwort: ${response} ) - überspringen ..."
+                    varNameFail=$(sqlite3 "${i18n_DB}" "SELECT varname FROM variables WHERE varID='${varID}'" 2>/dev/null)
+                    printf "\n    ÜBERSETZUNGSFEHLER — überspringe (varID=%s, varname=%s, Ziel=%s / %s, Quelltext ca. %d Zeichen)\n" \
+                        "${varID}" "${varNameFail:-?}" "${targetLongName}" "${targetDeeplShortName}" "${#value}"
+                    printf "        letzter curl-Exit: %s | curl: %s\n" "${last_curl_rc}" "${last_curl_msg:-—}"
+                    if [[ -n "${last_api_hint}" ]]; then
+                        printf "        API-Hinweis: %s\n" "${last_api_hint}"
+                    elif [[ -n "${response}" ]]; then
+                        printf "        Antwort (gekürzt): %s\n" "${response:0:400}"
+                    fi
                     error=1
                     continue
                 fi
@@ -571,7 +644,8 @@ export_langfiles() {
 }
 
 # lese den aktuellen Status des Übersetzungskontigents von DeepL (verbrauchte Zeichen im aktuellen Zeitraum):
-limitStateStart=$(curl -sH "Authorization: DeepL-Auth-Key ${DeepLapiKey}" https://api-free.deepl.com/v2/usage)
+printf "\n%s\n" "DeepL-Endpunkt: ${DeepL_api_base_url}  (Override: DeepL_api_base_url=…)"
+limitStateStart=$(curl -sH "Authorization: DeepL-Auth-Key ${DeepLapiKey}" "${DeepL_api_base_url}/v2/usage")
 
 # Informationen der definierten Mastersprache zusammentragen:
 languages=$(sqlite3 -separator $'\t' "${i18n_DB}" "SELECT langID, deeplshortname, longname FROM languages WHERE SynoShortName='${masterSynoShortName}'")
@@ -591,6 +665,6 @@ masterLongName="$(echo "${languages}" | awk -F'\t' '{print $3}')"
 
 printf "\n\n%s\n" "Statistik:"
 [ "${error}" -ne 0 ] && echo "    Es gab bei der Ausführung Fehler - bitte erneut aufrufen."
-limitState=$(curl -sH "Authorization: DeepL-Auth-Key ${DeepLapiKey}" https://api-free.deepl.com/v2/usage)
+limitState=$(curl -sH "Authorization: DeepL-Auth-Key ${DeepLapiKey}" "${DeepL_api_base_url}/v2/usage")
 printf "%s\n" "    Für die Übersetzung wurden $(( $(jq -r .character_count <<< "${limitState}" )-$(jq -r .character_count <<< "${limitStateStart}" ))) Zeichen berechnet."
 printf "%s\n" "    Im aktuellen Zeitraum wurden $(jq -r .character_count <<< "${limitState}" ) Zeichen von $(jq -r .character_limit <<< "${limitState}" ) verbraucht.    "

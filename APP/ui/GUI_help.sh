@@ -4,7 +4,7 @@
 #################################################################################
 #   description:    - generates the help page for the GUI                       #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/help.sh            #
-#   © 2025 by geimist                                                           #
+#   © 2026 by geimist                                                           #
 #################################################################################
 
 # -> Headline
@@ -43,6 +43,7 @@ echo '
                         <h6 class="synocr-text-blue">'"${lang_tab}"' &quot;'"${lang_help_QS_sub3_tit}"'&quot;:</h6>
                         <ul class="li_standard">
                             <li>'"${lang_help_QS_sub3_1}"'</li>
+                            <li>'"${lang_help_QS_sub3_2}"'</li>
                         </ul><br />
                         <h6 class="synocr-text-blue">'"${lang_tab}"' &quot;'"${lang_help_QS_sub4_tit}"'&quot;:</h6>
                         <ul class="li_standard">
@@ -70,19 +71,6 @@ echo '
                 <h6 class="synocr-text-blue">'"${lang_help_FAQ_sub1_tit}"'</h6>
                 <ul>
                     <li>'"${lang_help_FAQ_sub1_1_beforelink}"' <a href="https://ocrmypdf.readthedocs.io" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">'"${lang_help_FAQ_sub1_1_linktitle}"'</a>'"${lang_help_FAQ_sub1_1_afterlink}"'</li>
-                </ul>
-                <br />
-
-                <h6 class="synocr-text-blue">'"${lang_help_FAQ_sub2_tit}"'</h6>
-                <ul>
-                    <li>'"${lang_help_FAQ_sub2_1}"': &quot;<i>'"${lang_help_FAQ_sub2_2}"'</i>&quot; ('"${lang_help_FAQ_sub2_3}"')</li>
-                </ul>
-                <br />
-
-                <h6 class="synocr-text-blue">'"${lang_help_FAQ_sub3_tit}"'</h6>
-                <ul>
-                    <li>'"${lang_help_FAQ_sub3_1}"'</li>
-                    <li>'"${lang_help_FAQ_sub3_2}"'</li>
                 </ul>
                 <br />
 

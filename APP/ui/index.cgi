@@ -5,7 +5,7 @@
 #   description:    initiate SPK GUI                                                        #
 #                                                                                           #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/index.cgi                      #
-#   © 2025 by geimist                                                                       #
+#   © 2026 by geimist                                                                       #
 #############################################################################################
 
 
@@ -38,6 +38,8 @@
 
     # Read and check the login authorization ( login.cgi )
     syno_login=$(/usr/syno/synoman/webman/login.cgi)
+    # Extract sid from login response for JS
+    sid=$(echo "${syno_login}" | sed -n 's/.*Set-Cookie: id=\([^;]*\).*/\1/p' | cut -d'=' -f2)
 
     # Login permission ( result=success )
     if echo ${syno_login} | grep -q result ; then
@@ -142,18 +144,19 @@ echo '
         <!-- Include jQuery 3.7.1 -->
         <script src="template/jquery/jquery-3.7.1.min.js"></script>
 </head>
+<meta name="syno_sid" content="${sid}">
 <body>
 <header></header>
     <article>
         <!-- container -->
         <div class="container-fluid">
-            <div class="row mt-2">'
+            <div class="row mt-2 synocr-layout">'
 
                 # Left column - Navigation
                 # ------------------------------------------------------
                 echo '
-                <div class="col-3 pr-1 border-end border-light border-5">
-                    <ul class="nav nav-pills flex-column">'
+                <div class="col-3 pr-1 border-end border-light border-5 synocr-nav-col">
+                    <ul class="nav nav-pills flex-column synocr-nav-list">'
 
                         # Startpage
                         if [[ "${mainpage}" == "main" ]]; then
@@ -212,8 +215,8 @@ echo '
                 # Right column
                 # ------------------------------------------------------
                 echo '
-                <div class="col-9 pl-1">
-                    <form action="index.cgi" method="get" autocomplete="on">'
+                <div class="col-9 pl-1 synocr-content-col">
+                    <form action="index.cgi" method="get" autocomplete="on" class="synocr-content-scroll">'
 
                         # Dynamic page reloading
                         if [ -z "${mainpage}" ]; then

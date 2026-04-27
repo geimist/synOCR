@@ -5,7 +5,7 @@
 #   description:    checks / create the configuration DB for new variables      #
 #                   and adds them if necessary                                  #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/upgradeconfig.sh   #
-#   © 2025 by geimist                                                           #
+#   © 2026 by geimist                                                           #
 #################################################################################
 
 log=""

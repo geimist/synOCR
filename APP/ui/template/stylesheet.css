@@ -113,5 +113,134 @@ a:hover {
 
 /*code {
     color: #fff;
-    background-color: #000 !IMPORTANT; 
+    background-color: #000 !IMPORTANT;
 }*/
+
+/* Fix für flexcroll.js Konflikt in DSM iframe - native Scrollbars forcieren */
+.flexcroll, .fc-content, .fc-mask, .fc-viewport {
+    display: none !important;
+}
+
+#folderTree {
+    overflow-y: scroll !important;
+    -ms-overflow-style: scrollbar;
+    scrollbar-width: auto;
+}
+
+#folderTree::-webkit-scrollbar {
+    width: 8px;
+}
+
+#folderTree::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#folderTree::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+#folderTree::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Globale Deaktivierung von flexcroll-Events */
+* {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Folder picker: dezent, besser getrennte Ebenen */
+.synocr-folderpicker-modal .modal-content {
+    border: 1px solid #bcc7d4;
+    border-radius: 6px;
+}
+
+.synocr-folderpicker-modal .modal-header {
+    background-color: #f5f7fa;
+    border-bottom: 1px solid #d7dfe8;
+}
+
+.synocr-folderpicker-content {
+    background-color: #f9fbfd;
+    border-color: #d7dfe8 !important;
+    border-radius: 4px;
+}
+
+.synocr-folderpicker-list .list-group-item {
+    border-color: #e3e8ee;
+    padding: 0.5rem 0.75rem;
+}
+
+.synocr-folderpicker-section {
+    font-weight: 600;
+    background-color: #eef2f6;
+    color: #3f4b5b;
+    border-bottom: 1px solid #d4dce5;
+}
+
+.synocr-folderpicker-nav {
+    font-weight: 600;
+    background-color: #f3f6f9;
+}
+
+.synocr-folderpicker-item {
+    background-color: #ffffff;
+}
+
+.synocr-folderpicker-nav:hover,
+.synocr-folderpicker-item:hover {
+    background-color: #edf4fb;
+}
+
+.synocr-folderpicker-nav.active,
+.synocr-folderpicker-item.active {
+    color: #1f2f45;
+    background-color: #e1edf9;
+    border-color: #c5d8ec;
+}
+
+.synocr-folderpicker-list i.bi {
+    opacity: 0.85;
+    margin-right: 0.3rem;
+}
+
+/* Keep left navigation visible while right content scrolls */
+.synocr-layout {
+    height: calc(100vh - 1.5rem);
+}
+
+.synocr-nav-col,
+.synocr-content-col {
+    height: 100%;
+}
+
+.synocr-nav-list {
+    position: sticky;
+    top: 0.5rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+.synocr-content-scroll {
+    height: 100%;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+@media (max-width: 767.98px) {
+    .synocr-layout,
+    .synocr-nav-col,
+    .synocr-content-col,
+    .synocr-content-scroll {
+        height: auto;
+        max-height: none;
+    }
+
+    .synocr-nav-list {
+        position: static;
+        max-height: none;
+        overflow-y: visible;
+    }
+}

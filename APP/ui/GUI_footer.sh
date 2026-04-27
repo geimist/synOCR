@@ -4,7 +4,7 @@
 #################################################################################
 #   description:    - generates the foote for all pages in the GUI              #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/GUI_footer.sh      #
-#   © 2025 by geimist                                                           #
+#   © 2026 by geimist                                                           #
 #################################################################################
 
 if [[ "${mainpage}" == edit ]]; then

@@ -4,7 +4,7 @@
 #################################################################################
 #   description:    - generates the configuration page for the GUI              #
 #   path:            /usr/syno/synoman/webman/3rdparty/synOCR/edit.sh           #
-#   © 2025 by geimist                                                           #
+#   © 2026 by geimist                                                           #
 #################################################################################
 
 
@@ -946,6 +946,7 @@ if [[ "${page}" == "edit" ]]; then
                                 fi
                                 echo '
 
+                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="openFolderPicker('INPUTDIR')">🔎</button>
                                 <a data-bs-toggle="collapse" href="#INPUTDIR-info" role="button" aria-expanded="false" aria-controls="INPUTDIR-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
@@ -990,6 +991,7 @@ if [[ "${page}" == "edit" ]]; then
                                 fi
                                 echo '
 
+                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="openFolderPicker('OUTPUTDIR')">🔎</button>
                                 <a data-bs-toggle="collapse" href="#OUTPUTDIR-info" role="button" aria-expanded="false" aria-controls="OUTPUTDIR-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
@@ -1034,6 +1036,7 @@ if [[ "${page}" == "edit" ]]; then
                                 fi
                                 echo '
 
+                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="openFolderPicker('BACKUPDIR')">🔎</button>
                                 <a data-bs-toggle="collapse" href="#BACKUPDIR-info" role="button" aria-expanded="false" aria-controls="BACKUPDIR-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
@@ -1079,6 +1082,7 @@ if [[ "${page}" == "edit" ]]; then
                                 fi
                                 echo '
 
+                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="openFolderPicker('LOGDIR')">🔎</button>
                                 <a data-bs-toggle="collapse" href="#LOGDIR-info" role="button" aria-expanded="false" aria-controls="LOGDIR-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
@@ -3185,61 +3189,311 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
-    if [ "${dev_mode}" = "true" ]; then
-                    # accept_cpdf_license
-                    lang_edit_set3_accept_cpdf_license_help4="Now we're releasing the tools for free, under a special not-for-commercial-use license. If you like the tools and want to use them commercially, or need support, licenses are available from Coherent Graphics Ltd. Commercial use involves anything other than private, personal use. Charities and educational institutions still require a license, but one may be obtained at greatly reduced cost - ask us. If you're still not sure if you need a license, ask us."
-
-                    echo '
-                    <div class="row mb-3">
-                        <div class="col-sm-5">
-                            <label for="accept_cpdf_license"><a href="https://community.coherentpdf.com/" onclick="window.open(this.href); return false;" style="color: #BD0010;">cpdf '"${lang_edit_set3_accept_cpdf_license_title}"'</a></label>
-                        </div>
-                        <div class="col-sm-5">
-                            <select name="accept_cpdf_license" id="accept_cpdf_license" class="form-select form-select-sm">'
-
-                                if [[ "${accept_cpdf_license}" == "not_accepted" ]]; then
-                                    echo '<option value="not_accepted" selected>'"${lang_edit_set3_accept_cpdf_license_no}"'</option>'
-                                else
-                                    echo '<option value="not_accepted">'"${lang_edit_set3_accept_cpdf_license_no}"'</option>'
-                                fi
-                                if [[ "${accept_cpdf_license}" == "accepted" ]]; then
-                                    echo '<option value="accepted" selected>'"${lang_edit_set3_accept_cpdf_license_yes}"'</option>'
-                                else
-                                    echo '<option value="accepted">'"${lang_edit_set3_accept_cpdf_license_yes}"'</option>'
-                                fi
-
-                                echo '
-                            </select>
-                        </div>
-                        <div class="col-sm-2">
-                            <div class="float-end">
-                                <a data-bs-toggle="collapse" href="#accept_cpdf_license-info" role="button" aria-expanded="false" aria-controls="accept_cpdf_license-info">
-                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-sm-10">
-                            <div class="collapse" id="accept_cpdf_license-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
-                                    <span>
-                                        '"${lang_edit_set3_accept_cpdf_license_help1}"'<br>
-                                        '"${lang_edit_set3_accept_cpdf_license_help2}"'<br><br>
-                                        <b>'"${lang_edit_set3_accept_cpdf_license_help3}"'</b><br>
-                                        <i>"'"${lang_edit_set3_accept_cpdf_license_help4}"'"</i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-2"></div>
-                    </div>'
-    fi
-
-                    echo '
+                    # folder picker JS:
+                    OUTPUT=$(cat << 'EOF'
                 </div>
             </div>
         </div>
     </div>
-    <p>&nbsp;</p><p>&nbsp;</p>'
+    <!-- Folder Picker Modal -->
+    <div class="modal fade" id="folderPickerModal" tabindex="-1" aria-labelledby="folderPickerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg synocr-folderpicker-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="folderPickerModalLabel">lang_edit_set1_folderpicker_titel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="folderContent" class="border p-3 synocr-folderpicker-content" style="height: 300px; overflow-y: auto;">
+                        <!-- Folder list will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">lang_button_abort</button>
+                    <button type="button" class="btn btn-primary" onclick="selectCurrentFolder()">lang_edit_set1_folderpicker_titel</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Folder Picker JavaScript -->
+    <script type="text/javascript">
+        var folderPickerCurrentInput = null;
+        var currentFolderPath = "";
+        var sharesMap = {};
+        var sharesRealMap = {};
+
+        function openFolderPicker(inputId) {
+            console.log("openFolderPicker called with inputId:", inputId);
+            if (typeof inputId === 'string') {
+                folderPickerCurrentInput = document.getElementById(inputId);
+            } else {
+                folderPickerCurrentInput = inputId;
+            }
+            console.log("folderPickerCurrentInput set to:", folderPickerCurrentInput);
+            currentFolderPath = "";
+            sharesMap = {};
+            $("#folderPickerModal").modal("show");
+            loadShares();
+        }
+
+        function setCurrentPath(path) {
+            currentFolderPath = path;
+            console.log("currentFolderPath set to:", currentFolderPath);
+        }
+
+        function buildListItemClass(baseClass, itemPath) {
+            var activeClass = (itemPath && currentFolderPath === itemPath) ? " active" : "";
+            return "list-group-item list-group-item-action " + baseClass + activeClass;
+        }
+
+        function getRelativePath(fullPath) {
+            var bestMatch = '';
+            for (var realPath in sharesRealMap) {
+                if (fullPath.startsWith(realPath) && realPath.length > bestMatch.length) {
+                    bestMatch = realPath;
+                }
+            }
+            if (bestMatch) {
+                return sharesRealMap[bestMatch] + fullPath.substring(bestMatch.length);
+            } else {
+                return fullPath; // fallback
+            }
+        }
+
+        /** DSM Web API Guide: SynoToken should be obtained via SYNO.API.Auth method=token in JS (not only parent URL). */
+        function getSynoTokenFromUrlFallback() {
+            var t = new URLSearchParams(window.location.search).get('SynoToken');
+            if (t) return { token: t, source: 'self' };
+            if (window.parent !== window) {
+                try {
+                    t = new URLSearchParams(window.parent.location.search).get('SynoToken');
+                    if (t) return { token: t, source: 'parent' };
+                } catch (e) {
+                    return { token: null, source: 'parent_denied' };
+                }
+            }
+            return { token: null, source: 'none' };
+        }
+
+        function resolveSynoTokenForFolderPicker(cb) {
+            function tryTokenApi(ver) {
+                $.ajax({
+                    url: "/webapi/entry.cgi",
+                    type: "GET",
+                    timeout: 10000,
+                    data: { api: "SYNO.API.Auth", version: ver, method: "token" },
+                    success: function(resp) {
+                        if (resp.success && resp.data && resp.data.synotoken) {
+                            cb(resp.data.synotoken);
+                            return;
+                        }
+                        if (ver === 7) {
+                            tryTokenApi(6);
+                            return;
+                        }
+                        var fb = getSynoTokenFromUrlFallback();
+                        cb(fb.token);
+                    },
+                    error: function() {
+                        if (ver === 7) {
+                            tryTokenApi(6);
+                            return;
+                        }
+                        var fb = getSynoTokenFromUrlFallback();
+                        cb(fb.token);
+                    }
+                });
+            }
+            tryTokenApi(7);
+        }
+
+        function loadShares() {
+            console.log("loadShares called");
+            $("#folderContent").html("<div class=\"text-center\"><img src=\"./images/status_loading.gif\" alt=\"Loading...\"></div>");
+
+            resolveSynoTokenForFolderPicker(function(synoToken) {
+            if (!synoToken) {
+                $("#folderContent").html("<div class=\"alert alert-warning\"><strong>lang_edit_set1_folderpicker_not_available</strong><br><br>lang_edit_set1_folderpicker_csrf_message<br><br>lang_edit_set1_folderpicker_fix_instructions<br>lang_edit_set1_folderpicker_step1<br>lang_edit_set1_folderpicker_step2<br>lang_edit_set1_folderpicker_step3<br><br>lang_edit_set1_folderpicker_alternative</div>");
+                return;
+            }
+
+            $.ajax({
+                url: "/webapi/entry.cgi",
+                type: "GET",
+                timeout: 10000,
+                data: {
+                    api: "SYNO.FileStation.List",
+                    version: 2,
+                    method: "list_share",
+                    additional: '["name","path","isdir","perm","real_path"]',
+                    SynoToken: synoToken
+                },
+                success: function(response) {
+                    console.log("API Response:", response);
+                    if (response.success) {
+                        sharesMap = {};
+                        var html = "<ul class=\"list-group synocr-folderpicker-list\">";
+                        html += "<li class=\"list-group-item synocr-folderpicker-section\">lang_edit_set1_folderpicker_available_shares:</li>";
+                        // Add shares
+                        if (response.data && response.data.shares) {
+                            response.data.shares.forEach(function(share) {
+                                sharesMap[share.name] = share.additional.real_path;
+                                sharesRealMap[share.additional.real_path] = share.path;
+                                html += "<li class=\"" + buildListItemClass("synocr-folderpicker-item", share.additional.real_path) + "\" onclick=\"setCurrentPath('" + share.additional.real_path + "'); loadFolders('" + share.additional.real_path + "')\"><i class=\"bi bi-folder\"></i> " + share.name + "</li>";
+                            });
+                        }
+                        html += "</ul>";
+                        $("#folderContent").html(html);
+                    } else {
+                        var errorCode = response.error ? response.error.code : "unknown";
+                        if (errorCode == 119) {
+                            $("#folderContent").html("<div class=\"alert alert-warning\"><strong>lang_edit_set1_folderpicker_access_denied</strong><br><br>lang_edit_set1_folderpicker_csrf_message<br><br>lang_edit_set1_folderpicker_fix_instructions<br>lang_edit_set1_folderpicker_step1<br>lang_edit_set1_folderpicker_step2<br>lang_edit_set1_folderpicker_step3<br><br>lang_edit_set1_folderpicker_alternative</div>");
+                        } else {
+                            $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_shares " + errorCode + "</div>");
+                        }
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log("AJAX Error:", status, error);
+                    $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_shares " + status + "</div>");
+                }
+            });
+            });
+        }
+
+        function loadFolders(fullPath) {
+            console.log("loadFolders called with fullPath:", fullPath);
+            var folderPath = getRelativePath(fullPath);
+            console.log("using folder_path:", folderPath);
+            if (folderPath === fullPath) {
+                // Not a valid share path, go back to shares
+                loadShares();
+                return;
+            }
+            $("#folderContent").html("<div class=\"text-center\"><img src=\"./images/status_loading.gif\" alt=\"Loading...\"></div>");
+
+            resolveSynoTokenForFolderPicker(function(synoToken) {
+            if (!synoToken) {
+                $("#folderContent").html("<div class=\"alert alert-warning\"><strong>lang_edit_set1_folderpicker_not_available</strong><br><br>lang_edit_set1_folderpicker_csrf_message<br><br>lang_edit_set1_folderpicker_fix_instructions<br>lang_edit_set1_folderpicker_step1<br>lang_edit_set1_folderpicker_step2<br>lang_edit_set1_folderpicker_step3<br><br>lang_edit_set1_folderpicker_alternative</div>");
+                return;
+            }
+            $.ajax({
+                url: "/webapi/entry.cgi",
+                type: "GET",
+                timeout: 10000,
+                data: {
+                    api: "SYNO.FileStation.List",
+                    version: 2,
+                    method: "list",
+                    folder_path: folderPath,
+                    additional: '["name","path","isdir","perm"]',
+                    sort_by: "name",
+                    sort_direction: "asc",
+                    limit: 100,
+                    SynoToken: synoToken
+                },
+                success: function(response) {
+                    console.log("API Response:", response);
+                    if (response.success) {
+                        var html = "<ul class=\"list-group synocr-folderpicker-list\">";
+                        // Add back to shares button
+                        html += "<li class=\"" + buildListItemClass("synocr-folderpicker-nav", "__shares__") + "\" onclick=\"setCurrentPath(''); loadShares()\"><i class=\"bi bi-arrow-left\"></i> lang_edit_set1_folderpicker_back_to_shares</li>";
+                        // Add parent folder if not root
+                        if (folderPath !== "/") {
+                            var parentFullPath = fullPath.substring(0, fullPath.lastIndexOf("/")) || "/volume1";
+                            html += "<li class=\"" + buildListItemClass("synocr-folderpicker-nav", parentFullPath) + "\" onclick=\"setCurrentPath('" + parentFullPath + "'); loadFolders('" + parentFullPath + "')\"><i class=\"bi bi-arrow-up\"></i> ..</li>";
+                        }
+                        // Add folders
+                        if (response.data && response.data.files) {
+                            response.data.files.forEach(function(file) {
+                                if (file.isdir) {
+                                    var relativeFilePath = file.path.substring(folderPath.length);
+                                    var nextFullPath = fullPath + relativeFilePath;
+                                    html += "<li class=\"" + buildListItemClass("synocr-folderpicker-item", nextFullPath) + "\" onclick=\"setCurrentPath('" + nextFullPath + "'); loadFolders('" + nextFullPath + "')\"><i class=\"bi bi-folder\"></i> " + file.name + "</li>";
+                                }
+                            });
+                        }
+                        html += "</ul>";
+                        $("#folderContent").html(html);
+                    } else {
+                        $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_folders: " + (response.error ? response.error.code : "unknown") + "</div>");
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log("AJAX Error:", status, error);
+                    $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_folders: " + status + "</div>");
+                }
+            });
+            });
+        }
+
+        function selectFolder(path) {
+            console.log("selectFolder called with path:", path, "and currentInput:", folderPickerCurrentInput);
+            if (folderPickerCurrentInput) {
+                folderPickerCurrentInput.value = path;
+                $("#folderPickerModal").modal("hide");
+            } else {
+                console.error("folderPickerCurrentInput is null");
+            }
+        }
+
+        function selectCurrentFolder() {
+            if (currentFolderPath) {
+                var finalPath = currentFolderPath;
+                console.log("selectCurrentFolder: currentFolderPath =", currentFolderPath);
+                if (!finalPath.startsWith('/volume')) {
+                    var parts = finalPath.split('/');
+                    var shareName = parts[1];
+                    console.log("shareName =", shareName, "sharesMap[shareName] =", sharesMap[shareName]);
+                    if (shareName && sharesMap[shareName]) {
+                        finalPath = sharesMap[shareName] + finalPath.substring(shareName.length + 1);
+                        console.log("corrected finalPath =", finalPath);
+                    }
+                } else {
+                    console.log("Path already starts with /volume");
+                }
+                selectFolder(finalPath);
+            } else {
+                console.log("No current folder selected");
+            }
+        }
+    </script>
+    <p>&nbsp;</p><p>&nbsp;</p>
+EOF
+)
+
+    # Sprachvariablen nach dem Heredoc ersetzen, um JS-Kompatibilität zu erhalten
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_titel/$lang_edit_set1_folderpicker_titel}"
+    OUTPUT="${OUTPUT//lang_button_abort/$lang_button_abort}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_not_available/$lang_edit_set1_folderpicker_not_available}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_csrf_message/$lang_edit_set1_folderpicker_csrf_message}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_fix_instructions/$lang_edit_set1_folderpicker_fix_instructions}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_step1/$lang_edit_set1_folderpicker_step1}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_step2/$lang_edit_set1_folderpicker_step2}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_step3/$lang_edit_set1_folderpicker_step3}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_alternative/$lang_edit_set1_folderpicker_alternative}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_access_denied/$lang_edit_set1_folderpicker_access_denied}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_failed_loading_shares/$lang_edit_set1_folderpicker_failed_loading_shares}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_available_shares/$lang_edit_set1_folderpicker_available_shares}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_back_to_shares/$lang_edit_set1_folderpicker_back_to_shares}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_failed_loading_folders/$lang_edit_set1_folderpicker_failed_loading_folders}"
+
+    echo "${OUTPUT}"
 fi
+
+INFO_LANG_HELP='
+    search="a*b?name[1]\stuff"   # Beispiel: kann beliebige Metazeichen enthalten
+    repl="ERSETZT"
+
+    # 1) Backslashes zuerst escapen
+    safe=${search//\\/\\\\}
+
+    # 2) dann Glob-Metazeichen escapen
+    safe=${safe//\*/\\*}
+    safe=${safe//\?/\\?}
+    safe=${safe//\[/\\[}
+    safe=${safe//\]/\\]}
+
+    # 3) dann sichere Ersetzung
+    OUTPUT="${OUTPUT//"$safe"/$repl}"'

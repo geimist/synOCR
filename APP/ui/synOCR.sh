@@ -4,7 +4,7 @@
 #################################################################################
 #   description:    main script for running synOCR                              #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh          #
-#   © 2025 by geimist                                                           #
+#   © 2026 by geimist                                                           #
 #################################################################################
 
 
@@ -61,7 +61,7 @@
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     LOCKFILE="${APPDIR}/etc/synOCR.lock"
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.9.2" "pymupdf==1.18.6" "numpy==1.19.5" ) 
+    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.10.0" "pymupdf==1.18.6" "numpy==1.19.5" ) 
                                 # "pymupdf==1.18.6" & "numpy==1.19.5" for blank page detection
                                 # apprise for notification
     dashline1="-----------------------------------------------------------------------------------"
@@ -693,7 +693,7 @@ if [ "${type_of_rule}" = advanced ]; then
             fi
         fi
         if [[ "${dirname_RegEx}" != null ]] ; then
-            echo "${log_indent}  ➜ RegEx for tag:    ${dirname_RegEx}" # searchtag
+            echo "${log_indent}  ➜ RegEx for dir:    ${dirname_RegEx}" # searchtag
             if [ "${dirname_multiline_RegEx}" = null ] ; then
                 [ "${loglevel}" = 2 ] && echo "${log_indent}  ➜ multilineregex:   [value for multilineregex is empty - \"false\" is used]"
                 dirname_multiline_RegEx=false
@@ -984,7 +984,7 @@ if [ "${type_of_rule}" = advanced ]; then
                 if [ -n "${dirname_RegEx_result}" ] ; then
 
                     # Ensure path compatibility: Replace unwanted characters with underscore
-                    sanitized=$(sed 's/[^A-Za-z0-9_.- ]/_/g' <<< "${dirname_RegEx_result}")
+                    sanitized=$(sed 's/[^A-Za-z0-9_. -]/_/g' <<< "${dirname_RegEx_result}")
                     # Remove leading/trailing dots or hyphens
                     sanitized=${sanitized%%[.-]}
                     sanitized=${sanitized##[.-]}
