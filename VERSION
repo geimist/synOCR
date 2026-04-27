@@ -25,12 +25,12 @@
     },
     "dsm7": {
       "beta": {
-        "releaseDate": "2026-04-27T21:00:49.000Z",
+        "releaseDate": "2026-04-27T21:16:48.000Z",
         "version": "1.5.99.2",
         "size": "",
         "checksum": "",
         "file": "",
-        "downloadUrl": "https://geimist.eu/synOCR/updateserver.php?version=download&file=synOCR_DSM7_master_latest_[1.5.99.2]_(2026-04-27_23-00)_f8bc458_BETA.spk",
+        "downloadUrl": "https://geimist.eu/synOCR/updateserver.php?version=download&file=synOCR_DSM7_master_latest_[1.5.99.2]_(2026-04-27_23-16)_f438a94_BETA.spk",
         "changeLogUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/PKG_DSM7/CHANGELOG_CURRENT_BETA"
       },
       "release": {
