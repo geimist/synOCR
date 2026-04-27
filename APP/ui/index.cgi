@@ -26,6 +26,27 @@
     app_link=$(echo /webman/3rdparty/${app_name})
     [ ! -d "${app_home}" ] && exit
 
+    # Cache-bust static UI assets: URL changes when any of these files change (avoids stale CSS/JS from browser or proxy cache)
+    synocr_asset_ver=0
+    for _synocr_f in \
+        "${app_home}/template/stylesheet.css" \
+        "${app_home}/template/bootstrap/css/bootstrap.min.css" \
+        "${app_home}/template/jquery/jquery-3.7.1.min.js" \
+        "${app_home}/template/bootstrap/js/bootstrap.min.js"
+    do
+        [ -f "${_synocr_f}" ] || continue
+        _synocr_m=$(stat -c %Y "${_synocr_f}" 2>/dev/null)
+        [ -z "${_synocr_m}" ] && _synocr_m=$(stat -f %m "${_synocr_f}" 2>/dev/null)
+        [ -z "${_synocr_m}" ] && _synocr_m=0
+        [ "${_synocr_m}" -gt "${synocr_asset_ver}" ] && synocr_asset_ver=${_synocr_m}
+    done
+    [ "${synocr_asset_ver}" -eq 0 ] 2>/dev/null && synocr_asset_ver=$(date +%s)
+    synocr_asset_q="?v=${synocr_asset_ver}"
+    synocr_bootstrap_css_href="template/bootstrap/css/bootstrap.min.css${synocr_asset_q}"
+    synocr_stylesheet_href="template/stylesheet.css${synocr_asset_q}"
+    synocr_jq_src="template/jquery/jquery-3.7.1.min.js${synocr_asset_q}"
+    synocr_bootstrap_js_src="template/bootstrap/js/bootstrap.min.js${synocr_asset_q}"
+    unset _synocr_f _synocr_m
 
 # Evaluate app authentication
 # --------------------------------------------------------------
@@ -127,6 +148,7 @@
 # ----------------------------------------------------------
 echo "Content-type: text/html"
 echo
+# shellcheck disable=SC2016
 echo '
 <!doctype html>
 <html lang="en">
@@ -136,13 +158,13 @@ echo '
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <!-- Include bootstrap framework 5.3.2 -->
-        <link rel="stylesheet" href="template/bootstrap/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="'${synocr_bootstrap_css_href}'" />
 
         <!-- Include custom CSS formatting -->
-        <link rel="stylesheet" href="template/stylesheet.css" />
+        <link rel="stylesheet" href="'${synocr_stylesheet_href}'" />
 
         <!-- Include jQuery 3.7.1 -->
-        <script src="template/jquery/jquery-3.7.1.min.js"></script>
+        <script src="'${synocr_jq_src}'"></script>
 </head>
 <meta name="syno_sid" content="${sid}">
 <body>
@@ -243,7 +265,7 @@ echo '
     </article>
 
     <!-- Include bootstrap JavaScript 5.3.2 -->
-    <script src="template/bootstrap/js/bootstrap.min.js"></script>
+    <script src="'${synocr_bootstrap_js_src}'"></script>
 
 </body>
 </html>'
