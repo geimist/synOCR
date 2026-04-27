@@ -17,7 +17,6 @@ auto translate:
 - [DSM7](https://geimist.eu/synOCR/synOCR_DSM7_stable.html)
 
 ### Hier findest du den Download der aktuelle BETA Version:       
-- [DSM6](https://geimist.eu/synOCR/synOCR_DSM6_snapshot_build.html)
 - [DSM7](https://geimist.eu/synOCR/synOCR_DSM7_snapshot_build.html)
 <hr>
 
