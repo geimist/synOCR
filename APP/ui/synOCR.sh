@@ -61,7 +61,7 @@
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     LOCKFILE="${APPDIR}/etc/synOCR.lock"
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.10.0" "pymupdf==1.18.6" "numpy==1.19.5" ) 
+    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.9.3" "pymupdf==1.18.6" "numpy==1.19.5" ) 
                                 # "pymupdf==1.18.6" & "numpy==1.19.5" for blank page detection
                                 # apprise for notification
     dashline1="-----------------------------------------------------------------------------------"
@@ -1631,8 +1631,15 @@ rename()
     NewName=$(replace_variables "${NameSyntax}")
 
     # parameters without replace_variables function:
-    NewName=$( echo "${NewName}" | sed "s~§tag~${renameTag}~g;s~§tit~${title}~g;s~%20~ ~g" )
-    
+    # Escape sed replacement metacharacters so '&' is treated literally.
+    renameTag_sed="${renameTag//\\/\\\\}"
+    renameTag_sed="${renameTag_sed//&/\\&}"
+    renameTag_sed="${renameTag_sed//~/\\~}"
+    title_sed="${title//\\/\\\\}"
+    title_sed="${title_sed//&/\\&}"
+    title_sed="${title_sed//~/\\~}"
+    NewName=$( echo "${NewName}" | sed "s~§tag~${renameTag_sed}~g;s~§tit~${title_sed}~g;s~%20~ ~g" )
+
     # fallback to old  parameters:    
     NewName="${NewName//§d/${date_dd}}"
     NewName="${NewName//§m/${date_mm}}"

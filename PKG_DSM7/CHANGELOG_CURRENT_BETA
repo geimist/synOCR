@@ -2,6 +2,11 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.5.99.3 [2026-04-28] 
+  BUGFIXES:
+ - [shell]  The Python environment could not be created
+ - [YAML]   Tag names containing the "&" character resulted in incorrect naming
+
 1.5.99.2 [2026-04-28] 
   IMPLEMENTATIONS:
  - [GUI]    🔥 A folder picker has been implemented so that folder paths can be selected directly
