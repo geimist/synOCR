@@ -2,6 +2,14 @@
   "app": "synOCR",
   "description": "current synOCR versions",
   "serverURL": "https://geimist.eu/synOCR/updateserver.php",
+  "distribution": {
+    "packageRepo": {
+      "name": "007daver",
+      "feedUrl": "https://spkrepo.007daver.workers.dev/",
+      "hostPattern": "spkrepo.007daver.workers.dev",
+      "setupGuideImageUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/wiki_resources/spkrepo.007daver.workers.dev.png"
+    }
+  },
   "dsm": {
     "dsm6": {
       "beta": {
