@@ -106,7 +106,11 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
 
     echo '
     <h2 class="synocr-text-blue mt-3">synOCR '"${lang_page1}"'</h2>'
-#   echo '<p>&nbsp;</p>'
+
+    echo '
+    <h5 class="text-center">
+        <strong class="synocr-text-red">'"${lang_main_title1}"'</strong>
+    </h5>'
 
     # monitoring active?:
     PID=$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}')
@@ -148,11 +152,24 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         release_channel=release
     fi
     
-    server_url=$(curl -s "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION" | jq -r '.serverURL')
-    server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "${server_url}?file=VERSION" )
+    version_info=$(curl -s "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION")
+    server_url=$(echo "${version_info}" | jq -r '.serverURL // empty')
+    if [ -n "${server_url}" ]; then
+        server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "${server_url}?file=VERSION" )
+    else
+        server_info=""
+    fi
     online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".version )
     downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".downloadUrl )
     changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".changeLogUrl )
+    repo_feed_url=$(echo "${version_info}" | jq -r '.distribution.packageRepo.feedUrl // empty')
+    repo_name=$(echo "${version_info}" | jq -r '.distribution.packageRepo.name // empty')
+    repo_host_pattern=$(echo "${version_info}" | jq -r '.distribution.packageRepo.hostPattern // empty')
+    repo_setup_guide_image=$(echo "${version_info}" | jq -r '.distribution.packageRepo.setupGuideImageUrl // empty')
+
+    if [ -z "${repo_host_pattern}" ] && [ -n "${repo_feed_url}" ]; then
+        repo_host_pattern=$(echo "${repo_feed_url}" | sed -E 's#^https?://##; s#/.*$##')
+    fi
 
     local_version=$(grep "^version" /var/packages/synOCR/INFO  | cut -d '"' -f2)
     highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
@@ -165,10 +182,73 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         </h5>'
     fi
 
-    echo '
-    <h5 class="text-center">
-        <strong class="synocr-text-red">'"${lang_main_title1}"'</strong>
-    </h5>'
+    repo_config_ready=0
+    if [ -n "${repo_feed_url}" ] && [ -n "${repo_name}" ] && [ -n "${repo_setup_guide_image}" ]; then
+        repo_config_ready=1
+    fi
+
+    repo_feed_missing=0
+    if [ "${repo_config_ready}" -eq 1 ]; then
+        if [ -r "/usr/syno/etc/packages/feeds" ]; then
+            if jq -e --arg feed "${repo_feed_url}" '.[] | select(.feed == $feed or .feed == ($feed + "/") or .feed == ($feed | sub("/$"; "")))' /usr/syno/etc/packages/feeds >/dev/null 2>&1; then
+                repo_feed_missing=0
+            elif [ -n "${repo_host_pattern}" ] && grep -Fq "${repo_host_pattern}" /usr/syno/etc/packages/feeds; then
+                repo_feed_missing=0
+            else
+                repo_feed_missing=1
+            fi
+        fi
+    fi
+
+    if [ "${repo_feed_missing}" -eq 1 ]; then
+        echo '
+        <div class="alert alert-warning mt-2 mb-2" role="alert" style="font-size: 0.85rem;">
+            <details>
+                <summary><strong>'"${lang_main_update_repo_missing_title}"'</strong></summary>
+                <div class="mt-2">
+                    '"${lang_main_update_repo_missing_desc1}"'<br>
+                    '"${lang_main_update_repo_missing_desc2}"'<br>
+                    <br><br>
+                    <b>'"${lang_main_update_repo_missing_steps_title}"'</b><br>
+                    1. '"${lang_main_update_repo_missing_step1}"'<br>
+                    2. '"${lang_main_update_repo_missing_step2}"'<br>
+                    3. '"${lang_main_update_repo_missing_step3}"'<br>
+                    4. '"${lang_main_update_repo_missing_step4}"'<br>
+                    5. '"${lang_main_update_repo_missing_step5}"' <code>'"${repo_feed_url}"'</code><br>
+                    <p class="mt-2 mb-0 text-center">
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#spkrepoGuideModal">'"${lang_main_update_repo_missing_button_guide}"'</button>
+                    </p>
+                </div>
+            </details>
+        </div>
+
+        <div class="modal fade" id="spkrepoGuideModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">'"${lang_main_update_repo_missing_modal_title}"'</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="spkrepoGuideImage" data-src="'"${repo_setup_guide_image}"'" alt="'"${lang_main_update_repo_missing_modal_img_alt}"'" style="max-width: 100%; height: auto;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                var guideModal = document.getElementById("spkrepoGuideModal");
+                if (!guideModal) { return; }
+                guideModal.addEventListener("shown.bs.modal", function () {
+                    var guideImage = document.getElementById("spkrepoGuideImage");
+                    if (guideImage && !guideImage.getAttribute("src")) {
+                        guideImage.setAttribute("src", guideImage.getAttribute("data-src"));
+                    }
+                });
+            });
+        </script>'
+    fi
+
 
 # check Docker and show indicator icon:
     if [ ! "$(which docker)" ]; then

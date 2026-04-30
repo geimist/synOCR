@@ -2,6 +2,13 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.5.99.4 [2026-xx-xx] 
+  IMPROVEMENT:
+ - [GUI]    Hinweis und Anleitung zur Einrichtung des Paketservers, sofern nicht bereits im DSM konfiguriert
+  BUGFIXES:
+ - [shell]  …
+ - [YAML]   …
+
 1.5.99.3 [2026-04-28] 
   BUGFIXES:
  - [shell]  The Python environment could not be created
