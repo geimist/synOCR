@@ -90,6 +90,21 @@ a:hover {
     text-decoration: none;
 }
 
+/* Links styled as Bootstrap buttons: global a:link color would make text unreadable on colored backgrounds */
+a.btn.btn-primary,
+a.btn.btn-primary:link,
+a.btn.btn-primary:visited,
+a.btn.btn-primary:hover {
+    color: #fff !important;
+}
+
+a.btn.btn-secondary,
+a.btn.btn-secondary:link,
+a.btn.btn-secondary:visited,
+a.btn.btn-secondary:hover {
+    color: #fff !important;
+}
+
 /* Globale Switch-Farben (Rot=inaktiv, Grün=aktiv) */
 .form-switch .form-check-input:not(:checked) {
     background-color: #dc3545 !important;

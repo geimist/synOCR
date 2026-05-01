@@ -274,6 +274,61 @@ chmod 755 "${SAMPLECONFIGFILE}"
     return 0
 }
 
+restoreDatabaseFromInputDir ()
+{
+# Restore ./etc/synOCR.sqlite from current profile INPUTDIR
+# --------------------------------------------------------------
+    restore_result="error"
+    restore_message=""
+
+    restore_source_db="${INPUTDIR%/}/synOCR.sqlite"
+    restore_target_db="${dbPath}"
+    restore_timestamp=$(date +"%Y%m%d_%H%M%S")
+    restore_backup_db="${INPUTDIR%/}/synOCR_(Backup ${restore_timestamp}).sqlite"
+    restore_upgrade_log=""
+
+    if [ -z "${INPUTDIR}" ] || [ ! -d "${INPUTDIR}" ]; then
+        restore_message="${lang_edit_restore_error_inputdir}"
+        return 1
+    fi
+
+    if [ ! -f "${restore_source_db}" ]; then
+        restore_message="${lang_edit_restore_error_source_missing} (${restore_source_db})"
+        return 1
+    fi
+
+    if [ ! -f "${restore_target_db}" ]; then
+        restore_message="${lang_edit_restore_error_target_missing} (${restore_target_db})"
+        return 1
+    fi
+
+    if ! cp -f "${restore_target_db}" "${restore_backup_db}" ; then
+        restore_message="${lang_edit_restore_error_backup} (${restore_backup_db})"
+        return 1
+    fi
+
+    if ! cp -f "${restore_source_db}" "${restore_target_db}" ; then
+        restore_message="${lang_edit_restore_error_replace} (${restore_target_db})"
+        return 1
+    fi
+
+    restore_upgrade_log=$(./upgradeconfig.sh 2>&1)
+    if [ "$?" -ne 0 ]; then
+        restore_message="${lang_edit_restore_error_upgrade}<br><small>${restore_upgrade_log}</small>"
+        return 1
+    fi
+
+    /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1
+    if [ "$?" -ne 0 ]; then
+        restore_message="${lang_edit_restore_error_restart}"
+        return 1
+    fi
+
+    restore_result="ok"
+    restore_message="${lang_edit_restore_success}<br><small>${lang_edit_restore_success_backup}: ${restore_backup_db}</small>"
+    return 0
+}
+
 # --------------------------------------------------------------
 # -> convert existing tag list to YAML file:
 # --------------------------------------------------------------
@@ -590,6 +645,89 @@ if [[ "${page}" == "edit-new_profile-query" ]] || [[ "${page}" == "edit-new_prof
 fi
 
 # --------------------------------------------------------------
+# -> Restore DB from INPUTDIR:
+# --------------------------------------------------------------
+if [[ "${page}" == "edit-restore-query" ]] || [[ "${page}" == "edit-restore" ]]; then
+    echo '
+    <!-- Modal -->
+    <div class="modal fade" id="popup-validation" tabindex="-1" aria-labelledby="label-validation" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title align-baseline">'"${lang_popup_note}"'</h5>
+                    <a href="index.cgi" onclick="history.go(-1); event.preventDefault();" class="btn-close" aria-label="Close"></a>
+                </div>'
+
+                if [ -z "${getprofile}" ] ; then
+                    restore_profile_id="1"
+                else
+                    restore_profile_id="${getprofile}"
+                fi
+                INPUTDIR=$(sqlite3 -separator $'\t' "${dbPath}" "SELECT INPUTDIR FROM config WHERE profile_ID='${restore_profile_id}' LIMIT 1;" | awk -F'\t' '{print $1}')
+                restore_source_db="${INPUTDIR%/}/synOCR.sqlite"
+
+                if [[ "${page}" == "edit-restore-query" ]]; then
+                    if [ -f "${restore_source_db}" ]; then
+                        echo '
+                    <div class="modal-body text-center">
+                        <p class="text-warning">
+                            <strong>'"${lang_attention}"':</strong><br />
+                            '"${lang_edit_restore_warn_all_profiles}"'
+                        </p>
+                        <p>
+                            '"${lang_edit_restore_confirm_source}"'<br />
+                            <code>'"${restore_source_db}"'</code>
+                        </p>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <a href="index.cgi?page=edit-restore" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_yes}"'</a>&nbsp;&nbsp;&nbsp;
+                        <a href="index.cgi?page=edit&value=" class="btn btn-secondary btn-sm">'"${lang_button_abort}"'</a>
+                    </div>'
+                    else
+                        echo '
+                    <div class="modal-body text-center">
+                        <p class="text-danger">
+                            '"${lang_edit_restore_error_source_missing}"'<br />
+                            <code>'"${restore_source_db}"'</code>
+                        </p>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_buttonnext}"'...</button>
+                    </div>'
+                    fi
+                elif [[ "${page}" == "edit-restore" ]]; then
+                    restoreDatabaseFromInputDir
+                    # Persist restore result and show it as alert on page=edit after redirect
+                    restore_edit_profile=$(sqlite3 "${dbPath}" "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" 2>/dev/null)
+                    [ -z "${restore_edit_profile}" ] && restore_edit_profile="1"
+
+                    restore_notice=$(echo "${restore_message}" | sed -e 's/<[^>]*>//g' -e 's/[[:space:]]\+/ /g')
+                    "${set_var}" "${var}" "restore_status" "${restore_result}"
+                    "${set_var}" "${var}" "restore_notice" "${restore_notice}"
+                    "${set_var}" "${var}" "getprofile" "${restore_edit_profile}"
+                    "${set_var}" "${var}" "encode_getprofile" "${restore_edit_profile}"
+
+                    echo '
+                    <div class="modal-body text-center">
+                        <p>'"${lang_main_reload_manualy}"' ...</p>
+                        <p><a href="index.cgi?page=edit&getprofile='"${restore_edit_profile}"'" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_buttonnext}"'...</a></p>
+                    </div>
+                    <script type="text/javascript">
+                        window.location.replace("index.cgi?page=edit&getprofile='"${restore_edit_profile}"'");
+                    </script>'
+                fi
+                echo '
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(window).on("load", function() {
+            $("#popup-validation").modal("show");
+        });
+    </script>'
+fi
+
+# --------------------------------------------------------------
 # -> Write record to DB:
 # --------------------------------------------------------------
 if [[ "${page}" == "edit-save" ]]; then
@@ -785,6 +923,17 @@ if [[ "${page}" == "edit" ]]; then
     <p>'"${lang_edit_summary2}"'</p>
     <p>'"${lang_edit_summary3}"'</p>
     <p>'"${lang_edit_summary4}"' ('"${lang_example}"' <code>/volume1/…</code>)</p>'
+
+        if [ -n "${restore_status}" ] ; then
+            if [ "${restore_status}" = "ok" ]; then
+                restore_alert_class="alert-success"
+            else
+                restore_alert_class="alert-danger"
+            fi
+            echo '<div class="alert '"${restore_alert_class}"' mt-2 mb-3" role="alert">'"${restore_notice}"'</div>'
+            "${set_var}" "${var}" "restore_status" ""
+            "${set_var}" "${var}" "restore_notice" ""
+        fi
 
         if [ -n "${DBupgradelog}" ] ; then
             DBupgradelog=$(echo "${DBupgradelog}" | tr "\n" "@" | sed -e "s/@/<br>/g")

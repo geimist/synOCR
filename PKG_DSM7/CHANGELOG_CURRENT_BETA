@@ -3,8 +3,11 @@ known issues / limitations:
     does not work when running the program without root privileges (due to the known rights restrictions)
 
 1.5.99.4 [2026-xx-xx] 
+  IMPLEMENTATIONS:
+ - [GUI]    manuelle Restore-Möglichkeit für die Konfigurationsdatenbank
   IMPROVEMENT:
  - [GUI]    Hinweis und Anleitung zur Einrichtung des Paketservers, sofern nicht bereits im DSM konfiguriert
+ - [GUI]    …
   BUGFIXES:
  - [shell]  …
  - [YAML]   …
