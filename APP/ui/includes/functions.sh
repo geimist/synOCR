@@ -63,7 +63,6 @@ synogroupmoduser() {
             # Create new list without the user
             local -a NEWLIST=()
             for u in "${USERLIST[@]}"; do
-            echo "user: $u"
                 if [[ "$u" == "$USER" ]]; then
                     user_found=1
                 else
@@ -85,7 +84,7 @@ synogroupmoduser() {
         echo "CRITICAL ERROR: Group update failed! Restore from backup …" >&2
 
         # Restore
-        IFS=',' read -ra RESTORE_LIST <<< "$(cat "$BACKUP_FILE")"
+        IFS=',' read -ra RESTORE_LIST <<< "$( < "$BACKUP_FILE")"
         if ! synogroup --member "$GROUP" "${RESTORE_LIST[@]}"; then
             echo "FATAL ERROR: Restore failed! Backup: $BACKUP_FILE" >&2
             return 2
@@ -108,6 +107,11 @@ synogroupmoduser() {
 synogroupmoddocker() {
 # Check docker group and permissions
 
+    if [ ! -S /var/run/docker.sock ]; then
+        echo "ERROR: docker.sock not found (/var/run/docker.sock)." >&2
+        return 1
+    fi
+
     # Create group if not existing
     if ! synogroup --get docker >/dev/null 2>&1; then
         echo -n "Creating docker group … "
@@ -117,7 +121,7 @@ synogroupmoddocker() {
             echo "OK"
         else
             echo "FAILED to create docker group!" >&2
-            exit 1
+            return 1
         fi
     else
         # Check permissions
@@ -135,6 +139,25 @@ synogroupmoddocker() {
         fi
     fi
 
+    return 0
+}
+
+check_permissions_needed() {
+    local admin_ok=0
+    local docker_ok=0
+    local sock_ok=0
+
+    grep "^administrators" /etc/group | grep -q "\bsynOCR\b" && admin_ok=1
+    grep "^docker:" /etc/group | grep -q "\bsynOCR\b" && docker_ok=1
+
+    if [ -S /var/run/docker.sock ] && [ "$(stat -c '%G' /var/run/docker.sock 2>/dev/null)" = "docker" ]; then
+        sock_ok=1
+    fi
+
+    if [ "${admin_ok}" -eq 1 ] && [ "${docker_ok}" -eq 1 ] && [ "${sock_ok}" -eq 1 ]; then
+        return 1
+    fi
+    return 0
 }
 
 # -------------------------------------------------------------------------- #

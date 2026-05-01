@@ -8,6 +8,7 @@
 #                                   /volume[x]/@appstore/[Package Name]
 # SYNOPKG_TEMP_UPGRADE_FOLDER   =   Temporary upgrade folder
 #                                   /volume1/@tmp/synopkg.tmp/[Package Name]
+# SYNOPKG_PKG_STATUS            =   INSTALL or UPGRADE (see Synology developer guide)
 # -------------------------------------------------------------------------------------
 
 
@@ -28,8 +29,27 @@ TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 # Action...
 # -------------------------------------------------------------------------------------
 
-# um unseren Platzhalter auf / zu bringen
-rm -rf $SYNOPKG_PKGDEST/ocr_docker
-ln -s / $SYNOPKG_PKGDEST/ocr_docker
+LOGDIR="/var/log/packages"
+touch "${LOGDIR}/${SYNOPKG_PKGNAME}.history" 2>/dev/null || LOGDIR="/tmp"
+HISTORY_LOG="${LOGDIR}/${SYNOPKG_PKGNAME}.history"
+
+# Keep ocr_docker as a normal Docker build context while DSM acquires the docker
+# resource. host_root is only a harmless placeholder during acquisition; after
+# that worker phase, replace it with the host-root symlink used by getroot.
+rm -rf "${SYNOPKG_PKGDEST}/host_root"
+ln -s / "${SYNOPKG_PKGDEST}/host_root"
+
+# Docker/getroot: conf/resource must ship the docker block in the SPK. DSM owns
+# /var/packages/.../conf/resource (root); postinst runs as synOCR and cannot cp over it.
+
+PDIR=$(dirname "$0")
+if [ -f "${PDIR}/pkg_diag.sh" ]; then
+    # shellcheck source=pkg_diag.sh
+    . "${PDIR}/pkg_diag.sh"
+    synocr_pkg_diag postinst "SYNOPKG_PKG_STATUS=${SYNOPKG_PKG_STATUS:-} after host_root symlink"
+fi
+
+echo "${TIMESTAMP} - postinst completed." >> "${HISTORY_LOG}"
+echo "${TIMESTAMP} - NOTE: if permissions are missing, run /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh as root once." >> "${HISTORY_LOG}"
 
 exit 0

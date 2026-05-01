@@ -1,6 +1,46 @@
 #!/bin/sh
 
-chroot /mnt/synoroot/ /usr/syno/synoman/webman/3rdparty/synOCR/check_permissions.sh
+LOGFILE="/mnt/synoroot/var/log/packages/synOCR.getroot.log"
+_ts="$(date '+%Y-%m-%d %H:%M:%S')"
+echo "${_ts} - getroot start" >> "${LOGFILE}"
+{
+    echo "${_ts} - getroot context (inside helper container)"
+    id 2>&1
+    echo "--- /mnt/synoroot mount ---"
+    ls -ld /mnt/synoroot 2>&1
+    echo "--- host resource before chroot ---"
+    wc -c /mnt/synoroot/var/packages/synOCR/conf/resource 2>&1
+    head -c 500 /mnt/synoroot/var/packages/synOCR/conf/resource 2>&1; echo
+    echo "--- check_permissions.sh on host ---"
+    ls -la /mnt/synoroot/usr/syno/synoman/webman/3rdparty/synOCR/check_permissions.sh 2>&1
+    echo "--- chroot test (true) ---"
+    chroot /mnt/synoroot/ /bin/true 2>&1; echo "chroot_true_exit=$?"
+} >> "${LOGFILE}" 2>&1
 
-# resourcefile must be deleted to be able to delete the container without errors
-rm -f /mnt/synoroot/var/packages/synOCR/conf/resource
+chroot /mnt/synoroot/ /usr/syno/synoman/webman/3rdparty/synOCR/check_permissions.sh
+exit_code=$?
+echo "$(date '+%Y-%m-%d %H:%M:%S') - getroot check_permissions exit=${exit_code}" >> "${LOGFILE}"
+
+# switch runtime resource back to minimal mode while still root
+if [ "${exit_code}" -eq 0 ]; then
+    cat > /mnt/synoroot/var/packages/synOCR/conf/resource <<'EOF'
+{
+    "usr-local-linker": {
+        "bin": ["bin/synOCR-cli"]
+    }
+}
+EOF
+    if [ $? -eq 0 ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - getroot switched runtime resource to minimal mode" >> "${LOGFILE}"
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - getroot WARNING failed to switch runtime resource to minimal mode" >> "${LOGFILE}"
+    fi
+fi
+
+# leave a marker for troubleshooting; no destructive resource file removal
+date +%Y-%m-%d_%H:%M:%S > /mnt/synoroot/tmp/synOCR.getroot.last_run
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') - getroot final host resource bytes:" >> "${LOGFILE}"
+wc -c /mnt/synoroot/var/packages/synOCR/conf/resource >> "${LOGFILE}" 2>&1 || true
+
+exit "${exit_code}"

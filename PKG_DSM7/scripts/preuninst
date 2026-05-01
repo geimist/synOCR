@@ -24,12 +24,18 @@ PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
 # Timestamp - Formatting the Timestamp to terminate log entries
 TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 # -------------------------------------------------------------------------------------
+TRACE_LOG="/tmp/${SYNOPKG_PKGNAME}.lifecycle.trace"
 
 
 # Action...
 # -------------------------------------------------------------------------------------
 
-# delete Cronjob for synOTR
-    sed -i "/synOCR-start.sh/d" "/etc/crontab"
+{
+    echo "${TIMESTAMP} [preuninst] begin"
+    echo "whoami=$(whoami)"
+    echo "id=$(id)"
+    echo "pkgdest=${SYNOPKG_PKGDEST}"
+    echo "${TIMESTAMP} [preuninst] end ok"
+} >> "${TRACE_LOG}" 2>&1
 
 exit 0

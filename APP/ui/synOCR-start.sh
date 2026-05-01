@@ -21,7 +21,13 @@ dsm_buildnumber=$(grep "^buildnumber" /etc.defaults/VERSION | cut -d '"' -f2 )
 machinetyp=$(uname --machine)
 device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
-sysInfo="$(sqlite3 "/usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite" "SELECT value_1 FROM system WHERE key IN ('checkmon', 'global_pagecount', 'global_ocrcount', 'UUID');" | tr '\n' '\t')"
+synocr_db="/usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite"
+# Skip sqlite until DB is non-empty and schema exists (empty file, or pre-migration DB without `system` — e.g. upgrade stop while old package still runs).
+if [ -s "${synocr_db}" ] && sqlite3 "${synocr_db}" "SELECT 1 FROM sqlite_master WHERE type='table' AND name='system' LIMIT 1;" 2>/dev/null | grep -q 1; then
+    sysInfo="$(sqlite3 "${synocr_db}" "SELECT value_1 FROM system WHERE key IN ('checkmon', 'global_pagecount', 'global_ocrcount', 'UUID');" 2>/dev/null | tr '\n' '\t')"
+else
+    sysInfo=""
+fi
 checkmon="$(echo "${sysInfo}" | awk -F'\t' '{print $1}')"
 global_pagecount="$(echo "${sysInfo}" | awk -F'\t' '{print $2}')"
 global_ocrcount="$(echo "${sysInfo}" | awk -F'\t' '{print $3}')"
@@ -32,9 +38,13 @@ umask 0011   # so that creaded files can also be edited by other users / http://
 # create list (array need for tee) with all active log folders:
 # --------------------------------------------------------------
 log_dir_list=()
+_logdir_sql=""
+if [ -s "${synocr_db}" ] && sqlite3 "${synocr_db}" "SELECT 1 FROM sqlite_master WHERE type='table' AND name='config' LIMIT 1;" 2>/dev/null | grep -q 1; then
+    _logdir_sql=$(sqlite3 "${synocr_db}" "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")
+fi
 while read -r value ; do
     [ -d "${value%/*}" ] && log_dir_list+=( "${value}" ) #&& chmod 766 "$value"
-done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
+done <<< "${_logdir_sql}"
 
 
 inotify_process_id () {
@@ -144,35 +154,24 @@ done
     if [ "${dsm_major}" -ge 7 ]; then
         echo "synOCR run at DSM7 or above"
 
-        if [ $(whoami) = "root" ]; then
-            echo -n "    ➜ check docker group: "
-            if grep ^docker: /etc/group | grep -q synOCR ; then
-                echo "ok [$(grep ^docker: /etc/group)]"
+        if [ "$(whoami)" = "root" ]; then
+            if check_permissions_needed; then
+                echo "    ➜ permissions incomplete - run check_permissions.sh ..."
+                if ./check_permissions.sh; then
+                    echo "    ➜ permissions fixed"
+                else
+                    echo "    ➜ ERROR: check_permissions.sh failed (see /var/log/packages/synOCR.permissions.log)"
+                fi
             else
-                synogroupmoddocker
-            fi
-
-            echo -n "    ➜ check permissions: "
-            if grep ^administrators /etc/group | grep -q synOCR ; then
-                echo "ok"
-            else
-                synogroupmoduser add administrators synOCR
+                echo "    ➜ permissions already ok"
             fi
         else
-            echo -n "    ➜ check docker group: "
-            if grep ^docker: /etc/group | grep -q synOCR ; then
-                echo "ok [$(grep ^docker: /etc/group)]"
-            else
+            if check_permissions_needed; then
+                echo "    ➜ permissions incomplete"
                 echo "ERROR - please run as root:"
                 echo "      /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
-            fi
-
-            echo -n "    ➜ check permissions: "
-            if grep ^administrators /etc/group | grep -q synOCR ; then
-                echo "ok"
             else
-                echo "ERROR - please run as root:"
-                echo "      /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
+                echo "    ➜ permissions already ok"
             fi
         fi
     fi

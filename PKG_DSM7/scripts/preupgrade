@@ -29,28 +29,46 @@ PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
 # Timestamp - Formatting the Timestamp to terminate log entries
 TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 # -------------------------------------------------------------------------------------
+TRACE_LOG="/tmp/${SYNOPKG_PKGNAME}.lifecycle.trace"
 
+{
+    echo "${TIMESTAMP} [preupgrade] begin"
+    echo "whoami=$(whoami)"
+    echo "id=$(id)"
+    echo "pkgdest=${SYNOPKG_PKGDEST}"
+    echo "tmp_upgrade=${SYNOPKG_TEMP_UPGRADE_FOLDER}"
+} >> "${TRACE_LOG}" 2>&1
+
+PDIR=$(dirname "$0")
+if [ -f "${PDIR}/pkg_diag.sh" ]; then
+    # shellcheck source=pkg_diag.sh
+    . "${PDIR}/pkg_diag.sh"
+    synocr_pkg_diag preupgrade_begin "before etc backup"
+fi
 
 # Action...
 # -------------------------------------------------------------------------------------
-echo '${TIMESTAMP} - Start package update --> ${SYNOPKG_PKGNAME} ${SYNOPKG_PKGVER}' >>/tmp/${SYNOPKG_PKGNAME}.history
-echo '------------------------------------------------------------------------------------------------------------------------------------------' >>/tmp/${SYNOPKG_PKGNAME}.history
+echo "${TIMESTAMP} - Start package update --> ${SYNOPKG_PKGNAME} ${SYNOPKG_PKGVER}" >>"/tmp/${SYNOPKG_PKGNAME}.history"
+echo "------------------------------------------------------------------------------------------------------------------------------------------" >>"/tmp/${SYNOPKG_PKGNAME}.history"
 
-echo "WEBGUI_FOLDER: ${WEBGUI_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
+echo "WEBGUI_FOLDER: ${WEBGUI_FOLDER}/etc" >>"/tmp/${SYNOPKG_PKGNAME}.history"
 
 # backup config:
 if [ -d "${WEBGUI_FOLDER}/etc" ]; then
-    [ ! -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" ] && mkdir -p -m 755 ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc
-    cp -rf ${WEBGUI_FOLDER}/etc/* ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc
-    echo ''${TIMESTAMP}' - Backup the SQLite database from '${WEBGUI_FOLDER}'/etc to '${SYNOPKG_TEMP_UPGRADE_FOLDER}'/etc' >> /tmp/${SYNOPKG_PKGNAME}.history
+    [ ! -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" ] && mkdir -p -m 755 "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc"
+    cp -rf "${WEBGUI_FOLDER}/etc/"* "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc/"
+    echo "${TIMESTAMP} - Backup the SQLite database from ${WEBGUI_FOLDER}/etc to ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" >> "/tmp/${SYNOPKG_PKGNAME}.history"
 
-    echo "stored source files:" >> /tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${WEBGUI_FOLDER}/etc >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "stored source files:" >> "/tmp/${SYNOPKG_PKGNAME}.history"
+    ls -la "${WEBGUI_FOLDER}/etc" >> "/tmp/${SYNOPKG_PKGNAME}.history"
 
-    echo "stored target files:" >> /tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "stored target files:" >> "/tmp/${SYNOPKG_PKGNAME}.history"
+    ls -la "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" >> "/tmp/${SYNOPKG_PKGNAME}.history"
+    if [ -f "${PDIR}/pkg_diag.sh" ]; then
+        synocr_pkg_diag preupgrade_backup_done "after etc backup to SYNOPKG_TEMP_UPGRADE_FOLDER"
+    fi
 else
-    echo '${TIMESTAMP} - Backup of SQLite database failed' >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "${TIMESTAMP} - Backup of SQLite database failed" >> "/tmp/${SYNOPKG_PKGNAME}.history"
     exit 1
 fi
 
@@ -62,12 +80,8 @@ fi
 #fi
 
 # -------------------------------------------------------------------------------------
-# select language:
-    if [ -f $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE} ] ; then
-         . $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE}
-    else
-         . $(/usr/bin/dirname $0)/lang/enu
-    fi
+# keep preupgrade robust even if language files are malformed
+PKG_NOINSTALL_MISSING_DOCKER_ERROR="The Docker service is missing. Please install/start Container Manager before upgrading synOCR."
 
 # timer in older installations is no longer available. Please use the DSM task scheduler!:
     if [[ $(printf "1.1.999\n$SYNOPKG_OLD_PKGVER" | sort -V | tail -n1) = "1.1.999" ]] ; then
@@ -77,7 +91,12 @@ fi
 # check docker:
 if [ ! -e "/var/run/docker.sock" ]; then
     echo "${PKG_NOINSTALL_MISSING_DOCKER_ERROR}" > $SYNOPKG_TEMP_LOGFILE
+    echo "${TIMESTAMP} [preupgrade] docker.sock missing -> exit 1" >> "${TRACE_LOG}" 2>&1
     exit 1
 fi
 
+if [ -f "${PDIR}/pkg_diag.sh" ]; then
+    synocr_pkg_diag preupgrade_end "before exit 0 (docker.sock ok)"
+fi
+echo "${TIMESTAMP} [preupgrade] end ok" >> "${TRACE_LOG}" 2>&1
 exit 0

@@ -29,22 +29,48 @@ PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
 # Timestamp - Formatting the Timestamp to terminate log entries
 # -------------------------------------------------------------------------------------
 TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
+LOGDIR="/var/log/packages"
+touch "${LOGDIR}/${SYNOPKG_PKGNAME}.history" 2>/dev/null || LOGDIR="/tmp"
+HISTORY_LOG="${LOGDIR}/${SYNOPKG_PKGNAME}.history"
+TRACE_LOG="/tmp/${SYNOPKG_PKGNAME}.lifecycle.trace"
+PDIR=$(dirname "$0")
+if [ -f "${PDIR}/pkg_diag.sh" ]; then
+    # shellcheck source=pkg_diag.sh
+    . "${PDIR}/pkg_diag.sh"
+    synocr_pkg_diag postupgrade_begin "before etc restore"
+fi
 
 # Action...
 # -------------------------------------------------------------------------------------
+{
+    echo "${TIMESTAMP} [postupgrade] begin"
+    echo "whoami=$(whoami)"
+    echo "id=$(id)"
+    echo "logdir=${LOGDIR}"
+    echo "webgui_folder=${WEBGUI_FOLDER}"
+} >> "${TRACE_LOG}" 2>&1
+
 # restore config & python environment:
 if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}" ]; then
     # restore config:
 #   cp -rf ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc/* ${WEBGUI_FOLDER}/etc
     mv ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc ${WEBGUI_FOLDER}/
     chmod -R 755 ${WEBGUI_FOLDER}/etc
-    echo "${TIMESTAMP} - Restore the SQLite database from ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc to ${WEBGUI_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
+    echo "${TIMESTAMP} - Restore the SQLite database from ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc to ${WEBGUI_FOLDER}/etc" >> "${HISTORY_LOG}"
 
-    echo "restored source files:"  >> /tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc  >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "restored source files:"  >> "${HISTORY_LOG}"
+    if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" ]; then
+        ls -la ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc  >> "${HISTORY_LOG}"
+    else
+        echo "(source folder already moved)" >> "${HISTORY_LOG}"
+    fi
 
-    echo "restored target files:"  >> /tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${WEBGUI_FOLDER}/etc  >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "restored target files:"  >> "${HISTORY_LOG}"
+    ls -la ${WEBGUI_FOLDER}/etc  >> "${HISTORY_LOG}"
+
+    if [ -f "${PDIR}/pkg_diag.sh" ]; then
+        synocr_pkg_diag postupgrade_after_etc_restore "after mv etc from SYNOPKG_TEMP_UPGRADE_FOLDER"
+    fi
 
     # restore python3_env:
 # disabled in v1.4.1 due to an update error:
@@ -52,13 +78,28 @@ if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}" ]; then
 #    chmod -R 755 ${WEBGUI_FOLDER}/python3_env
 
     # DB upgrade:
-    echo "${TIMESTAMP} - Add new variables to configuration file (upgradeconfig.sh)" >> /tmp/${SYNOPKG_PKGNAME}.history
-    /bin/bash ${WEBGUI_FOLDER}/upgradeconfig.sh >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "${TIMESTAMP} - Add new variables to configuration file (upgradeconfig.sh)" >> "${HISTORY_LOG}"
+    /bin/bash ${WEBGUI_FOLDER}/upgradeconfig.sh >> "${HISTORY_LOG}" 2>&1
+    uc=$?
+    echo "${TIMESTAMP} - upgradeconfig.sh exit code=${uc}" >> "${HISTORY_LOG}"
+    if [ -f "${PDIR}/pkg_diag.sh" ]; then
+        synocr_pkg_diag postupgrade_after_upgradeconfig "upgradeconfig exit=${uc}"
+    fi
 else
-    echo "${TIMESTAMP} - Restore of SQLite database failed!" >>/tmp/synOCR.upgrade
+    echo "${TIMESTAMP} - Restore of SQLite database failed!" >> "${HISTORY_LOG}"
+    echo "${TIMESTAMP} [postupgrade] restore etc failed" >> "${TRACE_LOG}" 2>&1
+    if [ -f "${PDIR}/pkg_diag.sh" ]; then
+        synocr_pkg_diag postupgrade_restore_failed "SYNOPKG_TEMP_UPGRADE_FOLDER not a directory"
+    fi
 fi
 
-echo "${TIMESTAMP} - Package update completed." >>/tmp/${SYNOPKG_PKGNAME}.history
-echo "------------------------------------------------------------------------------------------------------------------------------------------\n" >>/tmp/${SYNOPKG_PKGNAME}.history
+echo "${TIMESTAMP} - postupgrade permission check start" >> "${HISTORY_LOG}"
+echo "${TIMESTAMP} - postupgrade permission check skipped in package context." >> "${HISTORY_LOG}"
+echo "${TIMESTAMP} - NOTE: if permissions are missing, run /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh as root once." >> "${HISTORY_LOG}"
+echo "${TIMESTAMP} - Diagnostics also in /tmp/synOCR.upgrade-debug.log (see /tmp/${SYNOPKG_PKGNAME}.lifecycle.trace for pointers)." >> "${HISTORY_LOG}"
+
+echo "${TIMESTAMP} - Package update completed." >> "${HISTORY_LOG}"
+echo "------------------------------------------------------------------------------------------------------------------------------------------\n" >> "${HISTORY_LOG}"
+echo "${TIMESTAMP} [postupgrade] end ok" >> "${TRACE_LOG}" 2>&1
 
 exit 0

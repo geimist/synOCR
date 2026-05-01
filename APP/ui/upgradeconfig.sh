@@ -36,7 +36,7 @@ uuid=$(uuidgen)
     # Call: new_profile "profile name"
     # --------------------------------------------------------------
         # shellcheck disable=2034
-        sqliteinfo=$(sqlite3 "${dbPath}" "INSERT INTO config ( profile ) VALUES ( '$1' ); COMMIT;")
+        sqliteinfo=$(sqlite3 "${dbPath}" "INSERT INTO config ( profile ) VALUES ( '$1' );")
     }
 
     lift_db ()
@@ -47,11 +47,11 @@ uuid=$(uuidgen)
         sqlite3 "${dbPath}" "UPDATE system 
                                        SET value_1='$2' 
                                        WHERE key='db_version'; 
-                                       COMMIT;"
+"
         sqlite3 "${dbPath}" "UPDATE system 
                                        SET value_1=(datetime('now','localtime')) 
                                        WHERE key='timestamp'; 
-                                       COMMIT;"
+"
         log="${log}
         DB-Upgrade successfully processed ( v$1 ➜ v$2)"
     }
@@ -117,7 +117,7 @@ uuid=$(uuidgen)
                         \"adjustColorContrast\" VARCHAR DEFAULT ('1.0') ,
                         \"adjustColorSharpness\" VARCHAR DEFAULT ('1.0')
                     );
-                    COMMIT;"
+"
 
         wait $!
 
@@ -132,11 +132,11 @@ uuid=$(uuidgen)
                         \"value_3\" VARCHAR ,
                         \"value_4\" VARCHAR 
                     );
-                    COMMIT;"
+"
 
         # write default data:
         # ---------------------------------------------------------------------
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
+        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('timestamp', datetime('now','localtime'));"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('db_version', '11');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
@@ -157,7 +157,7 @@ uuid=$(uuidgen)
                         \"image\" varchar,
                         \"date_checked\" varchar 
                     );
-                    COMMIT;"
+"
 
         wait $!
 
@@ -177,7 +177,7 @@ uuid=$(uuidgen)
                         'default', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${taglist}', '${searchAll}', 
                         '${moveTaggedFiles}', '${NameSyntax}', '${ocropt}', '${dockercontainer}', '${PBTOKEN}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}'
                     );
-                    COMMIT;"
+"
 
                 mv "./etc/Konfiguration.txt" "./etc/Konfiguration_imported.txt"
                 log="${log} 
@@ -199,7 +199,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             # ---------------------------------------------------------------------
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            ADD COLUMN \"filedate\" varchar DEFAULT ('ocr'); 
-                                           COMMIT;")
+")
             wait $!
 
             # check:
@@ -214,7 +214,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             # ---------------------------------------------------------------------
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            ADD COLUMN \"tagsymbol\" varchar DEFAULT ('#');
-                                           COMMIT;")
+")
             wait $!
 
             # check:
@@ -229,13 +229,13 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             # ---------------------------------------------------------------------
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE system 
                                            ADD COLUMN \"checkmon\" varchar; 
-                                           COMMIT;")
+")
             wait $!
 
             sqlite3 "${dbPath}" "UPDATE system 
                                            SET checkmon='$(get_key_value ./etc/counter checkmon)' 
                                            WHERE rowid=1;
-                                           COMMIT;"
+"
 
             # check:
             if ! sqlite3 "${dbPath}" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q checkmon ; then
@@ -265,7 +265,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             # ---------------------------------------------------------------------
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE system 
                                            ADD COLUMN \"dockerimageupdate\" varchar DEFAULT ('1'); 
-                                           COMMIT;")
+")
             wait $!
 
             # check:
@@ -284,7 +284,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
                                                 \"image\" varchar,
                                                 \"date_checked\" varchar 
                                             ); 
-                                            COMMIT;")
+")
             wait $!
 
             # check:
@@ -313,7 +313,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             # ---------------------------------------------------------------------
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            ADD COLUMN \"documentSplitPattern\" varchar DEFAULT ('SYNOCR-SEPARATOR-SHEET'); 
-                                           COMMIT;")
+")
             wait $!
 
             # check:
@@ -328,7 +328,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             # ---------------------------------------------------------------------
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            ADD COLUMN \"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31'); 
-                                           COMMIT;")
+")
             wait $!
 
             # check:
@@ -358,7 +358,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             # ---------------------------------------------------------------------
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            ADD COLUMN \"backup_max\" VARCHAR; 
-                                           COMMIT;")
+")
 
             # check:
             if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_max ; then
@@ -370,7 +370,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            ADD COLUMN \"backup_max_type\" VARCHAR DEFAULT ('files'); 
-                                           COMMIT;")
+")
             wait $!
 
             # check:
@@ -393,7 +393,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
                                                 \"value_3\" VARCHAR ,
                                                 \"value_4\" VARCHAR 
                                             ); 
-                                            COMMIT;"
+"
             wait $!
 
             # read stored data:
@@ -406,7 +406,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('checkmon', '$(echo "$sqlerg" | awk -F'\t' '{print $3}')');"
             sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('dockerimageupdate', '$(echo "$sqlerg" | awk -F'\t' '{print $4}')');"
             sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('online_version', ''); 
-                                           COMMIT;"
+"
 
             # migrate global data from 'counter' file:
             if [ -f ./etc/counter ] ; then
@@ -424,10 +424,10 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             if sqlite3 "${dbPath}" ".tables" | grep -q system_new ; then
                 sqlite3 "${dbPath}" "ALTER TABLE system 
                                                RENAME TO system_archived;
-                                               COMMIT;"
+"
                 sqlite3 "${dbPath}" "ALTER TABLE system_new 
                                                RENAME TO system; 
-                                               COMMIT;"
+"
                 wait $!
             fi
 
@@ -435,7 +435,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             # create new columns:
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            ADD COLUMN \"pagecount\" VARCHAR DEFAULT ('0'); 
-                                           COMMIT;")
+")
             wait $!
 
             # check:
@@ -449,7 +449,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            ADD COLUMN \"ocrcount\" VARCHAR DEFAULT ('0'); 
-                                           COMMIT;")
+")
             wait $!
 
             # check:
@@ -494,7 +494,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"search_nearest_date\" VARCHAR DEFAULT ('firstfound'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -509,7 +509,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"date_search_method\" VARCHAR DEFAULT ('python'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -524,7 +524,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"clean_up_spaces\" VARCHAR DEFAULT ('false'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -551,7 +551,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"img2pdf\" VARCHAR DEFAULT ('false'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -578,7 +578,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"DateSearchMinYear\" VARCHAR DEFAULT ('0'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -593,7 +593,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"DateSearchMaxYear\" VARCHAR DEFAULT ('0'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -608,7 +608,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"splitpagehandling\" VARCHAR DEFAULT ('discard'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -637,13 +637,13 @@ fi
             # column renaming is supported
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            RENAME COLUMN \"PBTOKEN\" TO \"apprise_call\"; 
-                                           COMMIT;")
+")
             wait $!
         else
             # column renaming is not supported
             sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                            ADD COLUMN \"apprise_call\" VARCHAR; 
-                                           COMMIT;")
+")
             wait $!
         fi
 
@@ -655,14 +655,14 @@ fi
             error=1
         else
             # delete old PushBullet token:
-            sqlite3 "${dbPath}" "UPDATE config SET apprise_call = NULL; COMMIT;"
+            sqlite3 "${dbPath}" "UPDATE config SET apprise_call = NULL;"
         fi
 
         # apprise - notification language:
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"notify_lang\" VARCHAR DEFAULT ('enu'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -677,7 +677,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"apprise_attachment\" VARCHAR DEFAULT ('false'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -692,7 +692,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_switch\" VARCHAR DEFAULT ('false'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -707,7 +707,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_threshold_bw\" VARCHAR DEFAULT ('150'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -722,7 +722,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_threshold_black_pxl\" VARCHAR DEFAULT ('10'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -749,7 +749,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_mainThreshold\" VARCHAR DEFAULT ('-50'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -764,7 +764,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_widthCropping\" VARCHAR DEFAULT ('0.10'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -779,7 +779,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_hightCropping\" VARCHAR DEFAULT ('0.05'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -794,7 +794,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_interferenceMaxFilter\" VARCHAR DEFAULT ('1'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -809,7 +809,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_interferenceMinFilter\" VARCHAR DEFAULT ('3'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -824,7 +824,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_black_pixel_ratio\" VARCHAR DEFAULT ('0.005'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -851,7 +851,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_ignoreText\" VARCHAR DEFAULT ('false'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -866,7 +866,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"adjustColorBWthreshold\" VARCHAR DEFAULT ('0'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -881,7 +881,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"adjustColorDPI\" VARCHAR DEFAULT ('0'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -896,7 +896,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"adjustColorContrast\" VARCHAR DEFAULT ('1.0'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:
@@ -911,7 +911,7 @@ fi
         # ---------------------------------------------------------------------
         sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
                                        ADD COLUMN \"adjustColorSharpness\" VARCHAR DEFAULT ('1.0'); 
-                                       COMMIT;")
+")
         wait $!
 
         # check:

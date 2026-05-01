@@ -4,6 +4,11 @@
 project="synOCR"
 beta_status=""              # will be set by script
 #######
+
+# Avoid macOS AppleDouble files/xattrs in tar archives (._resource, ._privilege, ...).
+export COPYFILE_DISABLE=1
+export COPY_EXTENDED_ATTRIBUTES_DISABLE=1
+
 #----------------------------------------------------------------------------------------
 # Folder structure:
 #----------------------------------------------------------------------------------------
@@ -142,6 +147,14 @@ exit 1
         FAKEROOT=$(command -v fakeroot)
     fi
 
+    TAR_CREATE_OPTS=(--format=ustar)
+    if tar --help 2>&1 | awk '/--no-xattrs/ { found=1 } END { exit !found }'; then
+        TAR_CREATE_OPTS+=(--no-xattrs)
+    fi
+    if tar --help 2>&1 | awk '/--no-mac-metadata/ { found=1 } END { exit !found }'; then
+        TAR_CREATE_OPTS+=(--no-mac-metadata)
+    fi
+
 
 # read working directory and change into it:
 # ---------------------------------------------------------------------
@@ -153,7 +166,9 @@ exit 1
     printf "\n-----------------------------------------------------------------------------------\n\n"
 
     if [ "$buildversion" = local ]; then
-        cp -r ./ "$build_tmp"
+        # Copy local sources without following stale helper symlinks from earlier
+        # test builds.
+        tar --exclude='./APP/host_root' --exclude='./.git' --exclude='./*.spk' --exclude='.DS_Store' --exclude='._*' -cf - . | tar -C "$build_tmp" -xf -
     else
         git pull
         git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
@@ -190,7 +205,6 @@ exit 1
         mv $build_tmp/APP/ui/images_DSM6 $build_tmp/APP/ui/images
         rm -rf $build_tmp/APP/ui/images_DSM7
     fi
-
 
     create_notify_file() {
         {   echo '[app]'
@@ -374,17 +388,34 @@ exit 1
     [ ! -d "${build_tmp}/APP/cfg" ] && echo "    create dir ${build_tmp}/APP/cfg" && mkdir "${build_tmp}/APP/cfg"
     [ ! -d "${build_tmp}/APP/log" ] && echo "    create dir ${build_tmp}/APP/log" && mkdir "${build_tmp}/APP/log"
     [ ! -d "${build_tmp}/APP/ui/etc" ] && echo "    create dir ${build_tmp}/APP/ui/etc" && mkdir "${build_tmp}/APP/ui/etc"
+    rm -rf "${build_tmp}/APP/host_root"
+    mkdir "${build_tmp}/APP/host_root"
  #  [ ! -d "${build_tmp}/APP/ui/usersettings" ] && echo "    create dir ${build_tmp}/APP/ui/usersettings" && mkdir "${build_tmp}/APP/ui/usersettings"
 
     printf "\n - INFO: adjust permissions ...\n"
     chmod -R 755 "${build_tmp}/APP/"
     chmod -R 755 "${build_tmp}/$PKG/"
     chmod -R 755 "${build_tmp}/APP/ui/texts/"
+    if command -v xattr >/dev/null 2>&1; then
+        xattr -cr "${build_tmp}/APP" "${build_tmp}/$PKG" 2>/dev/null || true
+    fi
+
+    if [ -L "${build_tmp}/APP/ocr_docker" ] || [ ! -f "${build_tmp}/APP/ocr_docker/Dockerfile" ]; then
+        echo "ERROR: APP/ocr_docker must be a normal Docker build context in the package tree" >&2
+        exit 1
+    fi
+    if [ -L "${build_tmp}/APP/host_root" ] || [ ! -d "${build_tmp}/APP/host_root" ]; then
+        echo "ERROR: APP/host_root must be a normal placeholder directory in the package tree" >&2
+        exit 1
+    fi
+
+    rm -f "$build_tmp"/APP/._* "$build_tmp"/$PKG/._* 2>/dev/null || true
+    find "$build_tmp/APP" "$build_tmp/$PKG" -name '._*' -delete
 
 # Packing and dropping the current installation into the appropriate /Pack folder
     printf "\n - INFO: The archive package.tgz will be created ...\n"
 
-    $FAKEROOT tar -C "${build_tmp}/APP" --exclude='.DS_Store' --exclude='._*' -czf "${build_tmp}/$PKG"/package.tgz .
+    $FAKEROOT tar "${TAR_CREATE_OPTS[@]}" -C "${build_tmp}/APP" --exclude='.DS_Store' --exclude='._*' -czf "${build_tmp}/$PKG"/package.tgz .
 
 # Change to the storage location of package.tgz regarding the structure of the SPKs
     cd "${build_tmp}/${PKG}"
@@ -393,7 +424,7 @@ exit 1
     printf "\n - INFO: the SPK will be created ...\n"
     TargetName="${project}_DSM${TargetDSM}_${set_spk_version}${beta_status}.spk"
     # $build_version
-    $FAKEROOT tar --exclude='.DS_Store' --exclude='._*' -cf "${TargetName}" *
+    $FAKEROOT tar "${TAR_CREATE_OPTS[@]}" --exclude='.DS_Store' --exclude='._*' -cf "${TargetName}" *
     cp -f "${TargetName}" "${APPDIR}"
 
     printf "\n-----------------------------------------------------------------------------------\n"

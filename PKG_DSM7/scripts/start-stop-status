@@ -23,6 +23,7 @@ PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
 
 # Timestamp - Formatting the Timestamp to terminate log entries
 TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
+TRACE_LOG="/tmp/${SYNOPKG_PKGNAME}.lifecycle.trace"
 
 MYSCRIPT=$(basename "$0")
 MYLOGIN=$(whoami)
@@ -35,14 +36,27 @@ MYID=$(id)
 case $1 in
     start)
         echo "Starting..."
+        {
+            echo "${TIMESTAMP} [start-stop-status:start] begin"
+            echo "whoami=$(whoami)"
+            echo "id=$(id)"
+        } >> "${TRACE_LOG}" 2>&1
         echo ''${TIMESTAMP}' - Start as '${MYID}'' >/tmp/${SYNOPKG_PKGNAME}.start
         [ $(which inotifywait) ] && /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
+        echo "${TIMESTAMP} [start-stop-status:start] end ok" >> "${TRACE_LOG}" 2>&1
         exit 0
       ;;
     stop)
         echo "Stopping..."
+        {
+            echo "${TIMESTAMP} [start-stop-status:stop] begin"
+            echo "whoami=$(whoami)"
+            echo "id=$(id)"
+        } >> "${TRACE_LOG}" 2>&1
         echo ''${TIMESTAMP}' - Stop as '${MYID}'' >/tmp/${SYNOPKG_PKGNAME}.stop
-        /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh stop
+        # Upgrade runs stop on the *previous* package; its synOCR-start may query sqlite before schema exists (stderr noise in synopkg.log).
+        /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh stop 2>/dev/null
+        echo "${TIMESTAMP} [start-stop-status:stop] end ok" >> "${TRACE_LOG}" 2>&1
         exit 0
       ;;
     status)
