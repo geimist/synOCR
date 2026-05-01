@@ -2,16 +2,13 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.5.99.4 [2026-xx-xx] 
+1.5.99.4 [2026-05-02] 
   IMPLEMENTATIONS:
- - [GUI]    manuelle Restore-Möglichkeit für die Konfigurationsdatenbank
+ - [GUI]    Manual restore option for the configuration database
   IMPROVEMENT:
- - [GUI]    Hinweis und Anleitung zur Einrichtung des Paketservers, sofern nicht bereits im DSM konfiguriert
- - [GUI]    Instant-Indikator für Pfadvalidierung
- - [GUI]    Warnung bei ungespeicherten Änderungen
-  BUGFIXES:
- - [shell]  …
- - [YAML]   …
+ - [GUI]    Notes and instructions for setting up the package server, unless it has already been configured in DSM
+ - [GUI]    Instant indicator for path validation
+ - [GUI]    Warning about unsaved changes
 
 1.5.99.3 [2026-04-28] 
   BUGFIXES:
