@@ -1078,9 +1078,9 @@ if [[ "${page}" == "edit" ]]; then
                         </div>
                         <div class="col-sm-5">'
                             if [ -n "${INPUTDIR}" ]; then
-                                echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm" value="'"${INPUTDIR}"'" />'
+                                echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm" value="'"${INPUTDIR}"'" data-initial-path="'"${INPUTDIR}"'" onblur="updatePathStatusIcon('\''INPUTDIR'\'')" />'
                             else
-                                echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm" value="" />'
+                                echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm" value="" data-initial-path="" onblur="updatePathStatusIcon('\''INPUTDIR'\'')" />'
                             fi
                             echo '
                         </div>
@@ -1089,9 +1089,9 @@ if [[ "${page}" == "edit" ]]; then
 
                                 # folder status:
                                 if [ -d "${INPUTDIR}" ]; then
-                                    echo '<img src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
+                                    echo '<img id="INPUTDIR-status" data-server-valid="true" src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
                                 else
-                                    echo '<img src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
+                                    echo '<img id="INPUTDIR-status" data-server-valid="false" src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
                                 fi
                                 echo '
 
@@ -1123,9 +1123,9 @@ if [[ "${page}" == "edit" ]]; then
                         </div>
                         <div class="col-sm-5">'
                             if [ -n "${OUTPUTDIR}" ]; then
-                                echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm" value="'"${OUTPUTDIR}"'" />'
+                                echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm" value="'"${OUTPUTDIR}"'" data-initial-path="'"${OUTPUTDIR}"'" onblur="updatePathStatusIcon('\''OUTPUTDIR'\'')" />'
                             else
-                                echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm" value="" />'
+                                echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm" value="" data-initial-path="" onblur="updatePathStatusIcon('\''OUTPUTDIR'\'')" />'
                             fi
                             echo '
                         </div>
@@ -1134,9 +1134,9 @@ if [[ "${page}" == "edit" ]]; then
 
                                 # folder status:
                                 if [ -d "${OUTPUTDIR}" ]; then
-                                    echo '<img src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
+                                    echo '<img id="OUTPUTDIR-status" data-server-valid="true" src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
                                 else
-                                    echo '<img src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
+                                    echo '<img id="OUTPUTDIR-status" data-server-valid="false" src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
                                 fi
                                 echo '
 
@@ -1168,9 +1168,9 @@ if [[ "${page}" == "edit" ]]; then
                         </div>
                         <div class="col-sm-5">'
                             if [ -n "${BACKUPDIR}" ]; then
-                                echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm" value="'"${BACKUPDIR}"'" />'
+                                echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm" value="'"${BACKUPDIR}"'" data-initial-path="'"${BACKUPDIR}"'" onblur="updatePathStatusIcon('\''BACKUPDIR'\'')" />'
                             else
-                                echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm" value="" />'
+                                echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm" value="" data-initial-path="" onblur="updatePathStatusIcon('\''BACKUPDIR'\'')" />'
                             fi
                             echo '
                         </div>
@@ -1179,9 +1179,9 @@ if [[ "${page}" == "edit" ]]; then
 
                                 # folder status:
                                 if [ -d "${BACKUPDIR}" ]; then
-                                    echo '<img src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
+                                    echo '<img id="BACKUPDIR-status" data-server-valid="true" src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
                                 else
-                                    echo '<img src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
+                                    echo '<img id="BACKUPDIR-status" data-server-valid="false" src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
                                 fi
                                 echo '
 
@@ -1214,9 +1214,9 @@ if [[ "${page}" == "edit" ]]; then
                         </div>
                         <div class="col-sm-5">'
                             if [ -n "${LOGDIR}" ]; then
-                                echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm" value="'"${LOGDIR}"'" />'
+                                echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm" value="'"${LOGDIR}"'" data-initial-path="'"${LOGDIR}"'" onblur="updatePathStatusIcon('\''LOGDIR'\'')" />'
                             else
-                                echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm" value="" />'
+                                echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm" value="" data-initial-path="" onblur="updatePathStatusIcon('\''LOGDIR'\'')" />'
                             fi
                             echo '
                         </div>
@@ -1225,9 +1225,9 @@ if [[ "${page}" == "edit" ]]; then
 
                                 # folder status:
                                 if [ -d "${LOGDIR}" ]; then
-                                    echo '<img src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
+                                    echo '<img id="LOGDIR-status" data-server-valid="true" src="images/status_green@geimist.svg" height="18" width="18" class="me-3"/>'
                                 else
-                                    echo '<img src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
+                                    echo '<img id="LOGDIR-status" data-server-valid="false" src="images/status_error@geimist.svg" height="18" width="18" class="me-3"/>'
                                 fi
                                 echo '
 
@@ -3457,6 +3457,158 @@ if [[ "${page}" == "edit" ]]; then
             tryTokenApi(7);
         }
 
+        function setPathStatusIcon(inputId, isValid) {
+            var statusIcon = document.getElementById(inputId + "-status");
+            if (!statusIcon) return;
+            statusIcon.src = isValid ? "images/status_green@geimist.svg" : "images/status_error@geimist.svg";
+        }
+
+        function normalizeFolderPath(path) {
+            if (!path) return path;
+            if (path === "/") return path;
+            return path.replace(/\/+$/, "");
+        }
+
+        function restoreInitialPathStatusIcon(inputId) {
+            var statusIcon = document.getElementById(inputId + "-status");
+            if (!statusIcon) return;
+            var initialValid = statusIcon.getAttribute("data-server-valid") === "true";
+            setPathStatusIcon(inputId, initialValid);
+        }
+
+        function mapRealPathToSharePath(path) {
+            var bestMatch = "";
+            for (var realPath in sharesRealMap) {
+                if (path.startsWith(realPath) && realPath.length > bestMatch.length) {
+                    bestMatch = realPath;
+                }
+            }
+            if (bestMatch) {
+                return sharesRealMap[bestMatch] + path.substring(bestMatch.length);
+            }
+            return path;
+        }
+
+        function validatePathWithFileStation(path, synoToken, cb) {
+            var normalizedPath = normalizeFolderPath(path);
+            $.ajax({
+                url: "/webapi/entry.cgi",
+                type: "GET",
+                timeout: 10000,
+                data: {
+                    api: "SYNO.FileStation.List",
+                    version: 2,
+                    method: "list",
+                    folder_path: normalizedPath,
+                    limit: 1,
+                    SynoToken: synoToken
+                },
+                success: function(response) {
+                    if (response && response.success) {
+                        cb(true);
+                        return;
+                    }
+
+                    // Fallback: /volume*-Pfad auf Share-Pfad mappen und erneut pruefen.
+                    if (!normalizedPath.startsWith("/volume")) {
+                        cb(false);
+                        return;
+                    }
+
+                    $.ajax({
+                        url: "/webapi/entry.cgi",
+                        type: "GET",
+                        timeout: 10000,
+                        data: {
+                            api: "SYNO.FileStation.List",
+                            version: 2,
+                            method: "list_share",
+                            additional: '["name","path","isdir","perm","real_path"]',
+                            SynoToken: synoToken
+                        },
+                        success: function(shareResponse) {
+                            if (!(shareResponse && shareResponse.success && shareResponse.data && shareResponse.data.shares)) {
+                                cb(false);
+                                return;
+                            }
+
+                            sharesMap = {};
+                            sharesRealMap = {};
+                            shareResponse.data.shares.forEach(function(share) {
+                                sharesMap[share.name] = share.additional.real_path;
+                                sharesRealMap[share.additional.real_path] = share.path;
+                            });
+
+                            var mappedPath = mapRealPathToSharePath(normalizedPath);
+                            var normalizedMappedPath = normalizeFolderPath(mappedPath);
+                            if (normalizedMappedPath === normalizedPath) {
+                                cb(false);
+                                return;
+                            }
+
+                            $.ajax({
+                                url: "/webapi/entry.cgi",
+                                type: "GET",
+                                timeout: 10000,
+                                data: {
+                                    api: "SYNO.FileStation.List",
+                                    version: 2,
+                                    method: "list",
+                                    folder_path: normalizedMappedPath,
+                                    limit: 1,
+                                    SynoToken: synoToken
+                                },
+                                success: function(mappedResponse) {
+                                    cb(!!(mappedResponse && mappedResponse.success));
+                                },
+                                error: function() {
+                                    cb(false);
+                                }
+                            });
+                        },
+                        error: function() {
+                            cb(false);
+                        }
+                    });
+                },
+                error: function() {
+                    cb(false);
+                }
+            });
+        }
+
+        function updatePathStatusIcon(inputId) {
+            var inputElem = document.getElementById(inputId);
+            if (!inputElem) return;
+
+            var rawPath = (inputElem.value || "").trim();
+            var rawInitialPath = (inputElem.getAttribute("data-initial-path") || "").trim();
+            var path = normalizeFolderPath(rawPath);
+            var initialPath = normalizeFolderPath(rawInitialPath);
+
+            // Wenn der Wert wieder dem initialen Serverwert entspricht, den initialen Status explizit wiederherstellen.
+            if (path === initialPath) {
+                restoreInitialPathStatusIcon(inputId);
+                return;
+            }
+
+            if (!path || path.charAt(0) !== "/") {
+                setPathStatusIcon(inputId, false);
+                return;
+            }
+
+            resolveSynoTokenForFolderPicker(function(synoToken) {
+                if (!synoToken) {
+                    setPathStatusIcon(inputId, false);
+                    return;
+                }
+
+                validatePathWithFileStation(path, synoToken, function(isValid) {
+                    setPathStatusIcon(inputId, isValid);
+                });
+            });
+        }
+
         function loadShares() {
             console.log("loadShares called");
             $("#folderContent").html("<div class=\"text-center\"><img src=\"./images/status_loading.gif\" alt=\"Loading...\"></div>");
@@ -3581,6 +3733,7 @@ if [[ "${page}" == "edit" ]]; then
             console.log("selectFolder called with path:", path, "and currentInput:", folderPickerCurrentInput);
             if (folderPickerCurrentInput) {
                 folderPickerCurrentInput.value = path;
+                updatePathStatusIcon(folderPickerCurrentInput.id);
                 $("#folderPickerModal").modal("hide");
             } else {
                 console.error("folderPickerCurrentInput is null");
