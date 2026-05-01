@@ -955,7 +955,7 @@ if [[ "${page}" == "edit" ]]; then
             <label for="getprofile" class="ms-4">'"${lang_edit_change_profile}"'</label>
         </div>
         <div class="col-sm-5">
-            <select name="getprofile" id="getprofile" class="form-select form-select-sm" onchange="document.getElementById('"'"'loading'"'"').style.display='"'"'inline-block'"'"';this.form.submit()">
+            <select name="getprofile" id="getprofile" class="form-select form-select-sm" onchange="handleProfileSelectionChange(this)">
                 '
 
                 while read -r entry; do
@@ -3367,6 +3367,85 @@ if [[ "${page}" == "edit" ]]; then
 
     <!-- Folder Picker JavaScript -->
     <script type="text/javascript">
+        var editPageIsDirty = false;
+        var currentProfileSelection = "";
+        var dirtyWarningMessage = "lang_edit_unsaved_changes_warning";
+
+        function markEditPageDirty(event) {
+            var target = event && event.target ? event.target : null;
+            if (target && target.id === "getprofile") {
+                return;
+            }
+            editPageIsDirty = true;
+        }
+
+        function resetEditPageDirty() {
+            editPageIsDirty = false;
+        }
+
+        function handleProfileSelectionChange(selectElement) {
+            if (!selectElement) return;
+            var selectedValue = selectElement.value;
+
+            if (!currentProfileSelection) {
+                currentProfileSelection = selectedValue;
+            }
+
+            if (selectedValue === currentProfileSelection) {
+                return;
+            }
+
+            if (editPageIsDirty) {
+                var proceed = window.confirm(dirtyWarningMessage);
+                if (!proceed) {
+                    selectElement.value = currentProfileSelection;
+                    return;
+                }
+            }
+
+            currentProfileSelection = selectedValue;
+            resetEditPageDirty();
+            document.getElementById("loading").style.display = "inline-block";
+            selectElement.form.submit();
+        }
+
+        window.addEventListener("beforeunload", function(event) {
+            if (!editPageIsDirty) return;
+            event.preventDefault();
+            event.returnValue = dirtyWarningMessage;
+            return dirtyWarningMessage;
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var profileSelect = document.getElementById("getprofile");
+            if (profileSelect) {
+                currentProfileSelection = profileSelect.value;
+            }
+
+            var editableFields = document.querySelectorAll("input, select, textarea");
+            editableFields.forEach(function(field) {
+                field.addEventListener("input", markEditPageDirty);
+                field.addEventListener("change", markEditPageDirty);
+            });
+
+            var forms = document.querySelectorAll("form");
+            forms.forEach(function(form) {
+                form.addEventListener("submit", function(event) {
+                    var submitter = event.submitter || document.activeElement;
+                    if (submitter && submitter.name === "page" && submitter.value === "edit-save") {
+                        resetEditPageDirty();
+                        return;
+                    }
+
+                    if (submitter && submitter.id === "getprofile") {
+                        return;
+                    }
+
+                    resetEditPageDirty();
+                });
+            });
+        });
+
         var folderPickerCurrentInput = null;
         var currentFolderPath = "";
         var sharesMap = {};
@@ -3780,6 +3859,7 @@ EOF
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_available_shares/$lang_edit_set1_folderpicker_available_shares}"
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_back_to_shares/$lang_edit_set1_folderpicker_back_to_shares}"
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_failed_loading_folders/$lang_edit_set1_folderpicker_failed_loading_folders}"
+    OUTPUT="${OUTPUT//lang_edit_unsaved_changes_warning/$lang_edit_unsaved_changes_warning}"
 
     echo "${OUTPUT}"
 fi
