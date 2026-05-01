@@ -3813,6 +3813,7 @@ if [[ "${page}" == "edit" ]]; then
             if (folderPickerCurrentInput) {
                 folderPickerCurrentInput.value = path;
                 updatePathStatusIcon(folderPickerCurrentInput.id);
+                markEditPageDirty({ target: folderPickerCurrentInput });
                 $("#folderPickerModal").modal("hide");
             } else {
                 console.error("folderPickerCurrentInput is null");
