@@ -2,6 +2,14 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.5.99.5 [2026-xx-xx] 
+  IMPLEMENTATIONS:
+ - [GUI]    …
+  IMPROVEMENT:
+ - [GUI]    Paketserver kann nur über einen Button automatisch hinzugefügt werden
+ - [GUI]    …
+ - [GUI]    …
+
 1.5.99.4 [2026-05-02] 
   IMPLEMENTATIONS:
  - [GUI]    Manual restore option for the configuration database

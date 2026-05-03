@@ -95,6 +95,88 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
         echo '<meta http-equiv="refresh" content="0; URL=index.cgi?page=main">'
     fi
 
+# configure DSM package feed (synOCR repo) via Docker:
+# ---------------------------------------------------------------------
+    if [[ "${page}" == "main-setup-repo-feed" ]]; then
+        echo '
+    <h2 class="synocr-text-blue mt-3">synOCR '"${lang_page1}"'</h2>
+    <div class="Content_1Col_full text-center">
+        <p class="mt-4 mb-3 px-2" style="font-size: 0.95rem;">'"${lang_main_update_repo_feed_wait_prepare}"'</p>
+        <div class="mb-4"><img src="images/status_loading.gif" width="32" height="32" alt="" role="presentation"></div>
+        <p class="text-muted small mb-3"><a href="index.cgi?page=main-setup-repo-feed-run">'"${lang_main_update_repo_feed_wait_fallback_link}"'</a></p>
+        <noscript><p class="small"><a href="index.cgi?page=main-setup-repo-feed-run">'"${lang_main_update_repo_feed_wait_fallback_link}"'</a></p></noscript>
+        <script>setTimeout(function(){ window.location.replace("index.cgi?page=main-setup-repo-feed-run"); }, 150);</script>
+    </div>'
+    fi
+
+    if [[ "${page}" == "main-setup-repo-feed-run" ]]; then
+        echo '
+    <h2 class="synocr-text-blue mt-3">synOCR '"${lang_page1}"'</h2>
+    <div class="Content_1Col_full">
+        <p class="text-center mt-3 mb-2 px-2" style="font-size: 0.95rem;">'"${lang_main_update_repo_feed_wait_working}"'</p>
+        <div id="synocr-feed-wait-spinner" class="text-center mb-3"><img src="images/status_loading.gif" width="32" height="32" alt="" role="presentation"></div>'
+        setup_version_info=$(curl -s --connect-timeout 10 --max-time 20 "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION")
+        setup_repo_feed_url=$(echo "${setup_version_info}" | jq -r '.distribution.packageRepo.feedUrl // empty')
+        setup_repo_name=$(echo "${setup_version_info}" | jq -r '.distribution.packageRepo.name // empty')
+        setup_repo_host_pattern=$(echo "${setup_version_info}" | jq -r '.distribution.packageRepo.hostPattern // empty')
+        setup_repo_setup_guide_image=$(echo "${setup_version_info}" | jq -r '.distribution.packageRepo.setupGuideImageUrl // empty')
+        if [ -z "${setup_repo_host_pattern}" ] && [ -n "${setup_repo_feed_url}" ]; then
+            setup_repo_host_pattern=$(echo "${setup_repo_feed_url}" | sed -E 's#^https?://##; s#/.*$##')
+        fi
+        setup_repo_config_ready=0
+        if [ -n "${setup_repo_feed_url}" ] && [ -n "${setup_repo_name}" ] && [ -n "${setup_repo_setup_guide_image}" ]; then
+            setup_repo_config_ready=1
+        fi
+        setup_msg="lang_main_update_repo_feed_setup_error_unknown"
+        setup_rc=""
+        if [ "${setup_repo_config_ready}" -ne 1 ]; then
+            setup_msg="lang_main_update_repo_feed_setup_error_config"
+        elif [ ! "$(which docker)" ]; then
+            setup_msg="lang_main_update_repo_feed_setup_error_no_docker"
+        elif ! docker info >/dev/null 2>&1; then
+            setup_msg="lang_main_update_repo_feed_setup_error_no_docker"
+        else
+            export SYNOCR_APP_HOME="${app_home}"
+            export SYNOCR_REPO_NAME="${setup_repo_name}"
+            export SYNOCR_REPO_FEED="${setup_repo_feed_url}"
+            export SYNOCR_REPO_HOST_PATTERN="${setup_repo_host_pattern}"
+#            chmod +x ./synocr-setup-package-feed.sh 2>/dev/null
+
+            ./includes/synocr-setup-package-feed.sh
+
+            setup_rc=$?
+            case "${setup_rc}" in
+                0) setup_msg="lang_main_update_repo_feed_setup_success" ;;
+                7) setup_msg="lang_main_update_repo_feed_setup_msg_already" ;;
+                2) setup_msg="lang_main_update_repo_feed_setup_error_no_docker" ;;
+                3) setup_msg="lang_main_update_repo_feed_setup_error_feeds_read" ;;
+                4) setup_msg="lang_main_update_repo_feed_setup_error_feeds_json" ;;
+                5) setup_msg="lang_main_update_repo_feed_setup_error_merge" ;;
+                6) setup_msg="lang_main_update_repo_feed_setup_error_docker" ;;
+                8) setup_msg="lang_main_update_repo_feed_setup_error_config" ;;
+                *) setup_msg="lang_main_update_repo_feed_setup_error_unknown" ;;
+            esac
+        fi
+        setup_msg_text="${!setup_msg}"
+        alert_class="danger"
+        case "${setup_rc:-}" in
+            0) alert_class="success" ;;
+            7) alert_class="info" ;;
+        esac
+        if [ "${setup_msg}" = "lang_main_update_repo_feed_setup_error_config" ]; then
+            alert_class="warning"
+        fi
+        echo '
+        <div class="alert alert-'"${alert_class}"' mt-2 mb-3" role="alert" style="font-size: 0.9rem;">'"${setup_msg_text}"'</div>
+        <p class="text-center text-muted" style="font-size: 0.85rem;">'"${lang_main_reload_manualy}"'</p>
+        <meta http-equiv="refresh" content="6; URL=index.cgi?page=main">'
+        if [ "${setup_rc:-}" = 0 ] || [ "${setup_rc:-}" = 7 ]; then
+        echo '<script>(function(){var s=document.getElementById("synocr-feed-wait-spinner");if(s)s.style.display="none";})();</script>'
+        fi
+        echo '
+    </div>'
+    fi
+
 # check inotifywait:
 # ---------------------------------------------------------------------
     [ "$(which inotifywait)" ] && inotify_tools_ready=1 || inotify_tools_ready=0
@@ -200,6 +282,13 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         fi
     fi
 
+    repo_auto_setup_docker_ok=0
+    if [ "$(which docker)" ]; then
+        if [ "${dsm_major}" -lt 7 ] || { grep "^administrators" /etc/group | grep -q synOCR && grep "^docker:" /etc/group | grep -q synOCR; }; then
+            repo_auto_setup_docker_ok=1
+        fi
+    fi
+
     if [ "${repo_feed_missing}" -eq 1 ]; then
         echo '
         <div class="alert alert-warning mt-2 mb-2" role="alert" style="font-size: 0.85rem;">
@@ -208,7 +297,15 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
                 <div class="mt-2">
                     '"${lang_main_update_repo_missing_desc1}"'<br>
                     '"${lang_main_update_repo_missing_desc2}"'<br>
-                    <br><br>
+                    <br>'
+        if [ "${repo_auto_setup_docker_ok}" -eq 1 ]; then
+        echo '
+                    <p class="mb-2"><b>'"${lang_main_update_repo_missing_before_auto}"'</b></p>
+                    <p class="text-center mb-3">
+                        <button name="page" type="submit" class="btn btn-sm btn-primary" value="main-setup-repo-feed">'"${lang_main_update_repo_missing_button_auto_setup}"'</button>
+                    </p>'
+        fi
+        echo '
                     <b>'"${lang_main_update_repo_missing_steps_title}"'</b><br>
                     1. '"${lang_main_update_repo_missing_step1}"'<br>
                     2. '"${lang_main_update_repo_missing_step2}"'<br>
@@ -216,7 +313,7 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
                     4. '"${lang_main_update_repo_missing_step4}"'<br>
                     5. '"${lang_main_update_repo_missing_step5}"' <code>'"${repo_feed_url}"'</code><br>
                     <p class="mt-2 mb-0 text-center">
-                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#spkrepoGuideModal">'"${lang_main_update_repo_missing_button_guide}"'</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#spkrepoGuideModal">'"${lang_main_update_repo_missing_button_guide}"'</button>
                     </p>
                 </div>
             </details>
