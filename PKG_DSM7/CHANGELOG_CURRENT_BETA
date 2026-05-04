@@ -4,7 +4,7 @@ known issues / limitations:
 
 1.5.99.5 [2026-xx-xx] 
   IMPLEMENTATIONS:
- - [GUI]    …
+ - [GUI]    NameSyntax-Editor verbessert: Platzhalter können jetzt als Chips komfortabel per Drag&Drop eingefügt werden.
   IMPROVEMENT:
  - [GUI]    Paketserver kann nur über einen Button automatisch hinzugefügt werden
  - [GUI]    …

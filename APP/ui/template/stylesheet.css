@@ -259,3 +259,101 @@ a.btn.btn-secondary:hover {
         overflow-y: visible;
     }
 }
+
+/* NameSyntax chip editor (GUI edit) */
+.synocr-namesyntax-editor-wrap {
+    max-width: 100%;
+    position: relative;
+    z-index: 1;
+    isolation: isolate;
+}
+
+.synocr-namesyntax-drop-indicator {
+    display: none;
+    position: absolute;
+    width: 3px;
+    margin-left: -1px;
+    background-color: #dc3545;
+    border-radius: 1px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 8px 2px rgba(220, 53, 69, 0.55);
+    pointer-events: none;
+    z-index: 100002;
+    min-height: 1.1em;
+}
+
+.synocr-namesyntax-editor {
+    min-height: calc(1.5em + 0.5rem + 2px);
+    white-space: pre;
+    overflow-x: auto;
+    cursor: text;
+}
+
+.synocr-namesyntax-editor:focus {
+    outline: 0;
+}
+
+.synocr-namesyntax-palette-item {
+    display: inline-block;
+    padding: 0.3em 0.55em;
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.25;
+    border-radius: 0.35rem;
+    cursor: grab;
+    user-select: none;
+    background-color: #e8f2fb;
+    color: #2a4a66;
+    border: 1px solid #8eb8e0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.synocr-namesyntax-palette-item:hover {
+    background-color: #dceaf8;
+    border-color: #6fa3d4;
+    color: #1f3d56;
+}
+
+.synocr-namesyntax-palette-item:active {
+    cursor: grabbing;
+}
+
+.synocr-namesyntax-help-table {
+    --synocr-help-table-border: #c5d8ec;
+    font-size: 0.86rem;
+    margin-bottom: 0;
+    border-color: var(--synocr-help-table-border) !important;
+}
+
+.synocr-namesyntax-help-table thead th {
+    color: #1e3a52;
+    font-weight: 600;
+    background-color: #dbeaf7 !important;
+    border-color: var(--synocr-help-table-border) !important;
+    white-space: nowrap;
+}
+
+.synocr-namesyntax-help-table td,
+.synocr-namesyntax-help-table th {
+    border-color: var(--synocr-help-table-border) !important;
+    vertical-align: top;
+}
+
+.synocr-namesyntax-help-table td:first-child {
+    color: #2a4a66;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.synocr-namesyntax-help-table code {
+    font-size: 0.88em;
+    color: #0d3b66;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 0.1em 0.35em;
+    border-radius: 0.2rem;
+}
+
+.synocr-namesyntax-chip {
+    margin: 0 0.12em;
+    vertical-align: baseline;
+    font-weight: 500;
+}

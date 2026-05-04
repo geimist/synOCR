@@ -2514,20 +2514,51 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
-                    # OCR Rename-Syntax
+                    # OCR Rename-Syntax (chip editor: hidden canonical value + visual + palette)
+                    _ns_val="${NameSyntax//&/&amp;}"
+                    _ns_val="${_ns_val//\"/&quot;}"
+                    _ns_val="${_ns_val//</&lt;}"
+                    _ns_val="${_ns_val//>/&gt;}"
+                    # Token labels for the editor are read from the palette (data-token) in the browser; no server-side JSON required.
+
                     echo '
                     <div class="row mb-3">
                         <div class="col-sm-5">
-                            <label for="NameSyntax">'"${lang_edit_set2_renamesyntax_title}"'</label>
+                            <label for="NameSyntax-visual">'"${lang_edit_set2_renamesyntax_title}"'</label>
                         </div>
                         <div class="col-sm-5">'
-
-                            if [ -n "${NameSyntax}" ]; then
-                                echo '<input type="text" name="NameSyntax" id="NameSyntax" class="form-control form-control-sm" value="'"${NameSyntax}"'" />'
-                            else
-                                echo '<input type="text" name="NameSyntax" id="NameSyntax" class="form-control form-control-sm" value="" />'
-                            fi
-
+                            echo '<input type="hidden" name="NameSyntax" id="NameSyntax-hidden" value="'"${_ns_val}"'" />
+                            <div class="synocr-namesyntax-editor-wrap">
+                                <div id="NameSyntax-visual" class="form-control form-control-sm synocr-namesyntax-editor" contenteditable="true" role="textbox" aria-multiline="false" spellcheck="false" tabindex="0"></div>
+                            </div>
+                            <div id="NameSyntax-palette" class="synocr-namesyntax-palette d-flex flex-wrap gap-1 mt-2">
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§docr" title="§docr">'"${lang_edit_set2_renamesyntax_chip_docr}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§mocr" title="§mocr">'"${lang_edit_set2_renamesyntax_chip_mocr}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§yocr2" title="§yocr2">'"${lang_edit_set2_renamesyntax_chip_yocr2}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§yocr4" title="§yocr4">'"${lang_edit_set2_renamesyntax_chip_yocr4}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§ssnow" title="§ssnow">'"${lang_edit_set2_renamesyntax_chip_ssnow}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§mmnow" title="§mmnow">'"${lang_edit_set2_renamesyntax_chip_mmnow}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§hhnow" title="§hhnow">'"${lang_edit_set2_renamesyntax_chip_hhnow}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§dnow" title="§dnow">'"${lang_edit_set2_renamesyntax_chip_dnow}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§mnow" title="§mnow">'"${lang_edit_set2_renamesyntax_chip_mnow}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§ynow2" title="§ynow2">'"${lang_edit_set2_renamesyntax_chip_ynow2}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§ynow4" title="§ynow4">'"${lang_edit_set2_renamesyntax_chip_ynow4}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§sssource" title="§sssource">'"${lang_edit_set2_renamesyntax_chip_sssource}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§mmsource" title="§mmsource">'"${lang_edit_set2_renamesyntax_chip_mmsource}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§hhsource" title="§hhsource">'"${lang_edit_set2_renamesyntax_chip_hhsource}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§dsource" title="§dsource">'"${lang_edit_set2_renamesyntax_chip_dsource}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§msource" title="§msource">'"${lang_edit_set2_renamesyntax_chip_msource}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§ysource2" title="§ysource2">'"${lang_edit_set2_renamesyntax_chip_ysource2}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§ysource4" title="§ysource4">'"${lang_edit_set2_renamesyntax_chip_ysource4}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§tag" title="§tag">'"${lang_edit_set2_renamesyntax_chip_tag}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§tit" title="§tit">'"${lang_edit_set2_renamesyntax_chip_tit}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§pagecount" title="§pagecount">'"${lang_edit_set2_renamesyntax_chip_pagecount}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§pagecounttotal" title="§pagecounttotal">'"${lang_edit_set2_renamesyntax_chip_pagecounttotal}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§filecounttotal" title="§filecounttotal">'"${lang_edit_set2_renamesyntax_chip_filecounttotal}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§pagecountprofile" title="§pagecountprofile">'"${lang_edit_set2_renamesyntax_chip_pagecountprofile}"'</span>
+                                <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§filecountprofile" title="§filecountprofile">'"${lang_edit_set2_renamesyntax_chip_filecountprofile}"'</span>
+                            </div>'
+                            echo '<script src="template/synocr_namesyntax_editor.js?v=8"></script>'
                             echo '
                         </div>
                         <div class="col-sm-2">
@@ -2541,39 +2572,52 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-10">
                             <div class="collapse" id="NameSyntax-info">
                                 <div class="card card-body mb-3" style="background-color: #F2FAFF;">
-                                    <span>
-                                        '"${lang_edit_set2_renamesyntax_help1}"'<br /><br />
-                                        '"${lang_edit_set2_renamesyntax_help2}"'<br />
-                                        '"${lang_edit_set2_renamesyntax_help3}"':<br />
-                                        <strong>§docr</strong> ('"${lang_edit_set2_renamesyntax_help4}"')<br />
-                                        <strong>§mocr</strong> ('"${lang_edit_set2_renamesyntax_help5}"')<br />
-                                        <strong>§yocr2</strong> ('"${lang_edit_set2_renamesyntax_help6a}"')<br />
-                                        <strong>§yocr4</strong> ('"${lang_edit_set2_renamesyntax_help6b}"')<br />
-                                        <strong>§ssnow</strong> ('"${lang_edit_set2_renamesyntax_help22}"')<br />
-                                        <strong>§mmnow</strong> ('"${lang_edit_set2_renamesyntax_help23}"')<br />
-                                        <strong>§hhnow</strong> ('"${lang_edit_set2_renamesyntax_help24}"')<br />
-                                        <strong>§dnow</strong> ('"${lang_edit_set2_renamesyntax_help7}"')<br />
-                                        <strong>§mnow</strong> ('"${lang_edit_set2_renamesyntax_help8}"')<br />
-                                        <strong>§ynow2</strong> ('"${lang_edit_set2_renamesyntax_help9a}"')<br />
-                                        <strong>§ynow4</strong> ('"${lang_edit_set2_renamesyntax_help9b}"')<br />
-                                        <strong>§sssource</strong> ('"${lang_edit_set2_renamesyntax_help25}"')<br />
-                                        <strong>§mmsource</strong> ('"${lang_edit_set2_renamesyntax_help26}"')<br />
-                                        <strong>§hhsource</strong> ('"${lang_edit_set2_renamesyntax_help27}"')<br />
-                                        <strong>§dsource</strong> ('"${lang_edit_set2_renamesyntax_help10}"')<br />
-                                        <strong>§msource</strong> ('"${lang_edit_set2_renamesyntax_help11}"')<br />
-                                        <strong>§ysource2</strong> ('"${lang_edit_set2_renamesyntax_help12a}"')<br />
-                                        <strong>§ysource4</strong> ('"${lang_edit_set2_renamesyntax_help12b}"')<br />
-                                        <strong>§tag</strong> ('"${lang_edit_set2_renamesyntax_help13}"')<br />
-                                        <strong>§tit</strong> ('"${lang_edit_set2_renamesyntax_help14}"')<br />
-                                        <strong>§pagecount</strong> ('"${lang_edit_set2_renamesyntax_help18a}"')<br />
-                                        <strong>§pagecounttotal</strong> ('"${lang_edit_set2_renamesyntax_help18}"')<br />
-                                        <strong>§filecounttotal</strong> ('"${lang_edit_set2_renamesyntax_help19}"')<br />
-                                        <strong>§pagecountprofile</strong> ('"${lang_edit_set2_renamesyntax_help20}"')<br />
-                                        <strong>§filecountprofile</strong> ('"${lang_edit_set2_renamesyntax_help21}"')<br /><br />
-                                        >><strong>§yocr4-§mocr-§docr_§tag_§tit</strong><< '"${lang_edit_set2_renamesyntax_help15}"'<br />
-                                        '"${lang_example}"' >><strong>2018-12-09_#Rechnung_00376.pdf</strong><<<br />
-                                        <br />'"${lang_edit_set2_renamesyntax_help17}"'
-                                    </span>
+                                    <div class="synocr-namesyntax-help-text">
+                                        <p class="mb-2">'"${lang_edit_set2_renamesyntax_help1}"'</p>
+                                        <p class="mb-2">'"${lang_edit_set2_renamesyntax_help2}"'</p>
+                                        <p class="mb-3 text-muted small">'"${lang_edit_set2_renamesyntax_help3}"'</p>
+                                        <div class="table-responsive mb-3">
+                                            <table class="table table-sm table-bordered synocr-namesyntax-help-table mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">'"${lang_edit_set2_renamesyntax_help_th_gui}"'</th>
+                                                        <th scope="col">'"${lang_edit_set2_renamesyntax_help_th_yaml}"'</th>
+                                                        <th scope="col">'"${lang_edit_set2_renamesyntax_help_th_desc}"'</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_docr}"'</td><td><code>§docr</code></td><td>'"${lang_edit_set2_renamesyntax_help4}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_mocr}"'</td><td><code>§mocr</code></td><td>'"${lang_edit_set2_renamesyntax_help5}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_yocr2}"'</td><td><code>§yocr2</code></td><td>'"${lang_edit_set2_renamesyntax_help6a}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_yocr4}"'</td><td><code>§yocr4</code></td><td>'"${lang_edit_set2_renamesyntax_help6b}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_ssnow}"'</td><td><code>§ssnow</code></td><td>'"${lang_edit_set2_renamesyntax_help22}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_mmnow}"'</td><td><code>§mmnow</code></td><td>'"${lang_edit_set2_renamesyntax_help23}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_hhnow}"'</td><td><code>§hhnow</code></td><td>'"${lang_edit_set2_renamesyntax_help24}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_dnow}"'</td><td><code>§dnow</code></td><td>'"${lang_edit_set2_renamesyntax_help7}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_mnow}"'</td><td><code>§mnow</code></td><td>'"${lang_edit_set2_renamesyntax_help8}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_ynow2}"'</td><td><code>§ynow2</code></td><td>'"${lang_edit_set2_renamesyntax_help9a}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_ynow4}"'</td><td><code>§ynow4</code></td><td>'"${lang_edit_set2_renamesyntax_help9b}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_sssource}"'</td><td><code>§sssource</code></td><td>'"${lang_edit_set2_renamesyntax_help25}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_mmsource}"'</td><td><code>§mmsource</code></td><td>'"${lang_edit_set2_renamesyntax_help26}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_hhsource}"'</td><td><code>§hhsource</code></td><td>'"${lang_edit_set2_renamesyntax_help27}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_dsource}"'</td><td><code>§dsource</code></td><td>'"${lang_edit_set2_renamesyntax_help10}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_msource}"'</td><td><code>§msource</code></td><td>'"${lang_edit_set2_renamesyntax_help11}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_ysource2}"'</td><td><code>§ysource2</code></td><td>'"${lang_edit_set2_renamesyntax_help12a}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_ysource4}"'</td><td><code>§ysource4</code></td><td>'"${lang_edit_set2_renamesyntax_help12b}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_tag}"'</td><td><code>§tag</code></td><td>'"${lang_edit_set2_renamesyntax_help13}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_tit}"'</td><td><code>§tit</code></td><td>'"${lang_edit_set2_renamesyntax_help14}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_pagecount}"'</td><td><code>§pagecount</code></td><td>'"${lang_edit_set2_renamesyntax_help18a}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_pagecounttotal}"'</td><td><code>§pagecounttotal</code></td><td>'"${lang_edit_set2_renamesyntax_help18}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_filecounttotal}"'</td><td><code>§filecounttotal</code></td><td>'"${lang_edit_set2_renamesyntax_help19}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_pagecountprofile}"'</td><td><code>§pagecountprofile</code></td><td>'"${lang_edit_set2_renamesyntax_help20}"'</td></tr>
+                                                    <tr><td>'"${lang_edit_set2_renamesyntax_chip_filecountprofile}"'</td><td><code>§filecountprofile</code></td><td>'"${lang_edit_set2_renamesyntax_help21}"'</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <p class="mb-1"><small>&gt;&gt;<strong>§yocr4-§mocr-§docr_§tag_§tit</strong>&lt;&lt; '"${lang_edit_set2_renamesyntax_help15}"'</small></p>
+                                        <p class="mb-2"><small>'"${lang_example}"' &gt;&gt;<strong>2018-12-09_#Rechnung_00376.pdf</strong>&lt;&lt;</small></p>
+                                        <p class="mb-0 small text-muted">'"${lang_edit_set2_renamesyntax_help17}"'</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
