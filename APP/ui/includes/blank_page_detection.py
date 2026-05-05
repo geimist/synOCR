@@ -34,18 +34,18 @@ def page_is_empty(img, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_f
 def is_blank_page(page, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text=False):
     # Text-basierte Prüfung
     page_text = page.get_text() if not ignore_text else ""
-    
-    # Bild-basierte Prüfung
-    pix = page.get_pixmap()
-    # Convert pixmap to PIL Image
+
+    # Bild-basierte Prüfung – Pixmap explizit als RGB ohne Alpha rendern,
+    # damit die Konvertierung zu PIL unabhängig vom PDF-Colorspace funktioniert.
+    pix = page.get_pixmap(colorspace=fitz.csRGB, alpha=False)
     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-    
-    return page_is_empty(img, threshold_offset, lr_margin_ratio, tb_margin_ratio, 
+
+    return page_is_empty(img, threshold_offset, lr_margin_ratio, tb_margin_ratio,
                         max_filter_size, min_filter_size, black_pixel_ratio, page_text)
 
 def get_new_docs_pages(doc, remove_blank, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text=False):
     pages = []
-    for page_no in range(doc.pageCount):
+    for page_no in range(doc.page_count):
         page = doc[page_no]
         if not remove_blank or not is_blank_page(page, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text):
             pages.append(page_no)
@@ -57,7 +57,7 @@ def emit_new_document(doc, filename, out_dir, remove_blank, threshold_offset, lr
     pages = get_new_docs_pages(doc, remove_blank, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text)
     new_doc = fitz.open()
     for page_no in pages:
-        new_doc.insertPDF(doc, from_page=page_no, to_page=page_no)
+        new_doc.insert_pdf(doc, from_page=page_no, to_page=page_no)
     new_doc.save(os.path.join(out_dir, filename))
 
 def main():

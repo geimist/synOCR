@@ -7,8 +7,8 @@ known issues / limitations:
  - [GUI]    NameSyntax-Editor verbessert: Platzhalter können jetzt als Chips komfortabel per Drag&Drop eingefügt werden.
   IMPROVEMENT:
  - [GUI]    Paketserver kann nur über einen Button automatisch hinzugefügt werden
- - [GUI]    …
- - [GUI]    …
+  BUGFIXES:
+ - [shell]  Kompatibilität zu aarch64 wiederhergestellt
 
 1.5.99.4 [2026-05-02] 
   IMPLEMENTATIONS:

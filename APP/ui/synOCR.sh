@@ -61,7 +61,7 @@
     python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
     LOCKFILE="${APPDIR}/etc/synOCR.lock"
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.9.3" "pymupdf==1.18.6" "numpy==1.19.5" ) 
+    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.9.3" "pymupdf==1.24.11" "numpy==1.19.5" ) 
                                 # "pymupdf==1.18.6" & "numpy==1.19.5" for blank page detection
                                 # apprise for notification
     dashline1="-----------------------------------------------------------------------------------"
@@ -2059,17 +2059,16 @@ py_page_count()
 # This function receives a PDF file path and give back number of pages                  #
 #########################################################################################
 
-# Die Version 1.18.6 verwendet die alte CamelCase-Notation:
+# Ab Version 1.19.0 (März 2022) wurde die PEP8-konforme Schreibweise eingeführt:
     python3 -c "import sys, os, fitz; \
                 path = os.path.abspath(sys.argv[1]); \
-                doc = fitz.open(path); \
-                print(doc.pageCount)" "$1"
-                
+                print(fitz.open(path).page_count)" "$1"
 
-# Ab Version 1.19.0 (März 2022) wurde die PEP8-konforme Schreibweise eingeführt:
+# Die Version 1.18.6 verwendet die alte CamelCase-Notation:
 #    python3 -c "import sys, os, fitz; \
 #                path = os.path.abspath(sys.argv[1]); \
-#                print(fitz.open(path).page_count)" "$1"
+#                doc = fitz.open(path); \
+#                print(doc.pageCount)" "$1"
 
 #    python3 -c "import sys, os, pypdf; \
 #                path = os.path.abspath(sys.argv[1]); \
