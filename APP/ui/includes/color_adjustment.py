@@ -8,13 +8,11 @@
 #############################################################################################
 
 import fitz
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageChops, ImageEnhance, ImageFilter
 import io
 import argparse
 import sys
 import os
-import numpy as np
-import tempfile
 
 def enhance_image(img, contrast=1.0, sharpness=1.0):
     """
@@ -29,6 +27,33 @@ def enhance_image(img, contrast=1.0, sharpness=1.0):
         img = sharpness_enhancer.enhance(sharpness)
     
     return img
+
+
+def adaptive_window_size(dpi):
+    """
+    Ermittelt eine ungerade Fenstergröße für adaptive Schwellwerte.
+    Die Größe skaliert mit der Renderauflösung, damit sich 150/300/600 DPI
+    ähnlich verhalten.
+    """
+    size = max(15, min(121, int(round(dpi / 8))))
+    return size if size % 2 else size + 1
+
+
+def convert_image_to_bw(img, threshold, dpi):
+    """
+    Konvertiert ein Bild mit einer gleitenden lokalen Schwelle nach 1-Bit-SW.
+    Der threshold-Wert bleibt kompatibel zur bisherigen Logik: höhere Werte
+    machen mehr Pixel weiß und priorisieren kleinere, sauberere Ausgaben.
+    """
+    img_gray = img.convert('L')
+    window_size = adaptive_window_size(dpi)
+    local_mean = img_gray.filter(ImageFilter.BoxBlur(window_size // 2))
+
+    threshold_diff = ImageChops.subtract(img_gray, local_mean, offset=threshold)
+    img_bw = threshold_diff.point(lambda value: 255 if value > 0 else 0)
+    no_dither = Image.Dither.NONE if hasattr(Image, 'Dither') else Image.NONE
+    return img_bw.convert('1', dither=no_dither)
+
 
 def convert_pdf_to_bw(input_path, output_path, threshold=None, dpi=300, contrast=1.0, sharpness=1.0):
     """
@@ -47,28 +72,15 @@ def convert_pdf_to_bw(input_path, output_path, threshold=None, dpi=300, contrast
                 if dpi:
                     zoom = max(dpi / 72, 1.0)  # Sicherer Zoom-Wert
                     matrix = fitz.Matrix(zoom, zoom)
-                    pix = page.get_pixmap(matrix=matrix, alpha=False)
+                    pix = page.get_pixmap(matrix=matrix, colorspace=fitz.csRGB, alpha=False)
                 else:
-                    pix = page.get_pixmap(alpha=False)
+                    pix = page.get_pixmap(colorspace=fitz.csRGB, alpha=False)
                 
                 img_data = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
                 img_enhanced = enhance_image(img_data, contrast, sharpness)
                 
                 if threshold is not None:
-                    img_gray = img_enhanced.convert('L')
-                    img_array = np.array(img_gray)
-                    kernel_size = 25
-                    local_mean = np.zeros_like(img_array, dtype=float)
-                    
-                    # Blockweise Mittelwertberechnung
-                    for i in range(0, img_array.shape[0], kernel_size):
-                        for j in range(0, img_array.shape[1], kernel_size):
-                            block = img_array[i:i+kernel_size, j:j+kernel_size]
-                            local_mean[i:i+kernel_size, j:j+kernel_size] = np.mean(block)
-                    
-                    img_bw = Image.fromarray(np.where(img_array > local_mean - threshold, 255, 0).astype(np.uint8))
-                    img_bw = img_bw.convert('1')
-                    final_img = img_bw
+                    final_img = convert_image_to_bw(img_enhanced, threshold, dpi)
                 else:
                     final_img = img_enhanced.convert('RGB')
                 

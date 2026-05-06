@@ -2351,14 +2351,13 @@ while read -r input1 ; do
         unset input_bw
 
         adjustColorLOG=$(python3 ./includes/color_adjustment.py "${input1}" "${color_adjustment_target}" "${args[@]}" )
-        wait
         exit_code=$?
 
-        if [ $exit_code -eq 0 ]; then
+        if [ "${exit_code}" -eq 0 ] && [ -s "${color_adjustment_target}" ]; then
             printf "%s\n" "${log_indent}PDF successfully adjust color"
             adjustColorSuccess=true
         else
-            printf "%s\n" "${log_indent}ERROR – No valid target PDF file found or file does not exist."
+            printf "%s\n" "${log_indent}ERROR – adjust color failed or no valid target PDF file was created. (exit code: ${exit_code})"
         fi
         [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}adjustColorLOG: $adjustColorLOG"
         unset exit_code
