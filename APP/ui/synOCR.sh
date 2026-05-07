@@ -2282,6 +2282,10 @@ while read -r input1 ; do
             if [ $((current_time - file_time)) -ge ${delay} ]; then
                 printf "%s\n" "${log_indent}delayed processing started (file older than ${delay}s)"
                 break
+            elif [ ${file_time} -gt $((current_time + delay)) ]; then
+                sleep ${delay}
+                printf "%s\n" "${log_indent}delayed processing started as file date in the future: ${file_time}"
+                break
             fi
             sleep 1
         done
