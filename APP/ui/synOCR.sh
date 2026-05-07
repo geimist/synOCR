@@ -180,6 +180,7 @@
     adjustColorDPI=$(echo "${sqlerg}" | awk -F'\t' '{print $48}')
     adjustColorContrast=$(echo "${sqlerg}" | awk -F'\t' '{print $49}')
     adjustColorSharpness=$(echo "${sqlerg}" | awk -F'\t' '{print $50}')
+    adjustColorBWabsoluteThreshold=96 # optional GUI candidate: keeps very dark filled areas black in BW mode (0 disables)
 
 # read global values:
     dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
@@ -299,6 +300,7 @@
 
     echo "adjust color:"
     echo "  BW threshold:           ${adjustColorBWthreshold}"
+    echo "  BW absolute threshold:  ${adjustColorBWabsoluteThreshold}"
     echo "  DPI:                    ${adjustColorDPI}"
     echo "  contrast:               ${adjustColorContrast}"
     echo "  sharpness:              ${adjustColorSharpness}"
@@ -2317,6 +2319,9 @@ while read -r input1 ; do
     # --threshold nur hinzufügen, wenn adjustColorBWthreshold nicht leer ist
     if [ "${adjustColorBWthreshold}" != "0" ]; then
         args+=(--threshold "${adjustColorBWthreshold}")
+        if [ "${adjustColorBWabsoluteThreshold}" != "0" ]; then
+            args+=(--absolute-threshold "${adjustColorBWabsoluteThreshold}")
+        fi
         adjustColor=true
     fi
 

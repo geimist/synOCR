@@ -39,11 +39,12 @@ def adaptive_window_size(dpi):
     return size if size % 2 else size + 1
 
 
-def convert_image_to_bw(img, threshold, dpi):
+def convert_image_to_bw(img, threshold, dpi, absolute_threshold=0):
     """
     Konvertiert ein Bild mit einer gleitenden lokalen Schwelle nach 1-Bit-SW.
     Der threshold-Wert bleibt kompatibel zur bisherigen Logik: höhere Werte
     machen mehr Pixel weiß und priorisieren kleinere, sauberere Ausgaben.
+    absolute_threshold erhält sehr dunkle Vollflächen, z.B. in Logos.
     """
     img_gray = img.convert('L')
     window_size = adaptive_window_size(dpi)
@@ -51,11 +52,16 @@ def convert_image_to_bw(img, threshold, dpi):
 
     threshold_diff = ImageChops.subtract(img_gray, local_mean, offset=threshold)
     img_bw = threshold_diff.point(lambda value: 255 if value > 0 else 0)
+
+    if absolute_threshold > 0:
+        absolute_bw = img_gray.point(lambda value: 0 if value <= absolute_threshold else 255)
+        img_bw = ImageChops.darker(img_bw, absolute_bw)
+
     no_dither = Image.Dither.NONE if hasattr(Image, 'Dither') else Image.NONE
     return img_bw.convert('1', dither=no_dither)
 
 
-def convert_pdf_to_bw(input_path, output_path, threshold=None, dpi=300, contrast=1.0, sharpness=1.0):
+def convert_pdf_to_bw(input_path, output_path, threshold=None, dpi=300, contrast=1.0, sharpness=1.0, absolute_threshold=0):
     """
     Hauptfunktion für die PDF-Bearbeitung
     
@@ -80,7 +86,7 @@ def convert_pdf_to_bw(input_path, output_path, threshold=None, dpi=300, contrast
                 img_enhanced = enhance_image(img_data, contrast, sharpness)
                 
                 if threshold is not None:
-                    final_img = convert_image_to_bw(img_enhanced, threshold, dpi)
+                    final_img = convert_image_to_bw(img_enhanced, threshold, dpi, absolute_threshold)
                 else:
                     final_img = img_enhanced.convert('RGB')
                 
@@ -118,6 +124,8 @@ def main():
     parser.add_argument('output', help='Ausgabe-PDF')
     parser.add_argument('--threshold', type=int, default=None,
                       help='Optional: Schwellenwert für SW-Konvertierung (0-255)')
+    parser.add_argument('--absolute-threshold', type=int, default=0,
+                      help='Optional: absolute Dunkelschwelle für SW-Flächen (0-255, 0 = deaktiviert)')
     parser.add_argument('--dpi', type=int, default=300,
                       help='Optional: Zielauflösung in DPI (Standard: 300 DPI)')
     parser.add_argument('--contrast', type=float, default=1.0,
@@ -130,12 +138,15 @@ def main():
     if args.threshold is not None and not (0 <= args.threshold <= 255):
         print("ERROR: Schwellenwert muss zwischen 0-255 liegen", file=sys.stderr)
         sys.exit(1)
+    if not (0 <= args.absolute_threshold <= 255):
+        print("ERROR: Absolute Dunkelschwelle muss zwischen 0-255 liegen", file=sys.stderr)
+        sys.exit(1)
     if args.dpi < 72:
         print("ERROR: DPI muss ≥72 sein", file=sys.stderr)
         sys.exit(1)
     
     exit_code = convert_pdf_to_bw(
-        args.input, args.output, args.threshold, args.dpi, args.contrast, args.sharpness
+        args.input, args.output, args.threshold, args.dpi, args.contrast, args.sharpness, args.absolute_threshold
     )
     sys.exit(exit_code)
 
