@@ -8,6 +8,7 @@ known issues / limitations:
   IMPROVEMENT:
  - [GUI]    Paketserver kann nur über einen Button automatisch hinzugefügt werden
  - [shell]  OCR-optimierte schwarzweiß-Konvertierung
+ - [shell]  delay-Optimierung für den Fall, dass die Uhr des Scanners vor geht (#82 thanks to @tacarrie)
   BUGFIXES:
  - [shell]  Kompatibilität zu aarch64 wiederhergestellt
 
