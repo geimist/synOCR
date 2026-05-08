@@ -2274,17 +2274,32 @@ while read -r input1 ; do
 
 
 # use delay for permanent writing scanners
+# (some scanners write each page individually and reopen the file. The delay
+#  ensures we only start when the file has been quiet for ${delay}s AND at
+#  least ${delay}s have passed since we first noticed the file. mtime values
+#  far in the future, e.g. due to scanner clock skew or wrong time zones,
+#  are capped so the loop cannot block indefinitely.)
 # ---------------------------------------------------------------------
     if [[ ${delay:-0} -ne 0 ]]; then
+        delay_loop_start=$(date +%s)
         while true; do
             current_time=$(date +%s)
             file_time=$(stat -c %Y "${input1}")
-            if [ $((current_time - file_time)) -ge ${delay} ]; then
-                printf "%s\n" "${log_indent}delayed processing started (file older than ${delay}s)"
-                break
-            elif [ ${file_time} -gt $((current_time + delay)) ]; then
-                sleep ${delay}
-                printf "%s\n" "${log_indent}delayed processing started as file date in the future: ${file_time}"
+
+            # cap mtime that lies more than ${delay}s in the future
+            if [ "${file_time}" -gt $((delay_loop_start + delay)) ]; then
+                effective_mtime=${delay_loop_start}
+                future_note=" [mtime ${file_time} more than ${delay}s in the future, capped to loop start]"
+            else
+                effective_mtime=${file_time}
+                future_note=""
+            fi
+
+            # condition 1: at least ${delay}s elapsed since loop start
+            # condition 2: file (effective) mtime is at least ${delay}s old
+            if [ "${current_time}" -ge $((delay_loop_start + delay)) ] \
+               && [ "${current_time}" -ge $((effective_mtime + delay)) ]; then
+                printf "%s\n" "${log_indent}delayed processing started (waited $((current_time - delay_loop_start))s, delay=${delay}s${future_note})"
                 break
             fi
             sleep 1
