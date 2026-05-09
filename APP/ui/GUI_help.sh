@@ -7,6 +7,26 @@
 #   © 2026 by geimist                                                           #
 #################################################################################
 
+# Donation configuration from VERSION (remote):
+donation_version_info=$(curl -s --connect-timeout 10 --max-time 20 "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION")
+# Prefer distribution.donation (plan); fall back to root-level .donation (current upstream VERSION shape)
+donation_url=$(echo "${donation_version_info}" | jq -r '(.distribution.donation.url // .donation.url // empty)' 2>/dev/null)
+donation_image_url=$(echo "${donation_version_info}" | jq -r '(.distribution.donation.imageUrl // .donation.imageUrl // empty)' 2>/dev/null)
+
+if [ -n "${donation_image_url}" ]; then
+    donation_visual='<img src="'"${donation_image_url}"'" alt="donation" style="float:left;padding:10px" height="60" width="200"/>'
+else
+    donation_visual='<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60" role="img" aria-label="donation" style="float:left;padding:10px"><title>donation</title><rect x="0.5" y="0.5" width="199" height="59" rx="12" ry="12" fill="#f5a623" stroke="#d97706" stroke-width="1"/><text x="100" y="37" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="600" fill="#1f2937">Donation</text></svg>'
+fi
+donation_block=""
+if [ -n "${donation_url}" ]; then
+    donation_block='
+        '"${lang_help_about_3}"'<br />
+        <a href="'"${donation_url}"'" onclick="window.open(this.href); return false;">
+            '"${donation_visual}"'
+        </a><br /><br /><br />'
+fi
+
 # -> Headline
 echo '
 <h2 class="synocr-text-blue mt-3">synOCR '"${lang_page4}"'</h2>
@@ -99,10 +119,7 @@ echo '
     <p>
         '"${lang_help_about_1}"'<br />
         '"${lang_help_about_2}"'<br />
-        '"${lang_help_about_3}"'<br />
-        <a href="https://www.paypal.me/geimist" onclick="window.open(this.href); return false;">
-            <img src="images/paypal.png" alt="PayPal" style="float:left;padding:10px" height="60" width="200"/>
-        </a><br /><br /><br />
+        '"${donation_block}"'
     </p>
     <p>
         <hr>
