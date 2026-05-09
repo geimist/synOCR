@@ -10,6 +10,10 @@
       "setupGuideImageUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/wiki_resources/spkrepo.007daver.workers.dev.png"
     }
   },
+  "donation": {
+    "url": "https://www.paypal.me/geimist",
+    "imageUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/wiki_resources/paypal.png"
+  },
   "dsm": {
     "dsm6": {
       "beta": {
