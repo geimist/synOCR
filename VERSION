@@ -3,6 +3,7 @@
   "description": "current synOCR versions",
   "serverURL": "https://geimist.eu/synOCR/updateserver.php",
   "distribution": {
+    "_comment": "for Pakage Center configuration in GUI_main.sh",
     "packageRepo": {
       "name": "007daver",
       "feedUrl": "https://spkrepo.007daver.workers.dev/",
@@ -10,6 +11,7 @@
       "setupGuideImageUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/wiki_resources/spkrepo.007daver.workers.dev.png"
     },
     "donation": {
+      "_comment": "for donation configuration in GUI_help.sh / empty URL disabled message in GUI",
       "url": "https://www.paypal.me/geimist",
       "imageUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/wiki_resources/paypal.png"
     }
