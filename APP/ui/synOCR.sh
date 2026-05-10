@@ -2037,8 +2037,30 @@ purge_backup()
 # delete surplus backup files:
 # ---------------------------------------------------------------------
     if [[ "${backup_max_type}" == days ]]; then
-        echo "  delete $(find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" | wc -l) backup files ( > ${backup_max} days)"
-        find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" -exec rm -f"${rm_log_level}" {} \; | sed -e "s/^/${log_indent}/g"
+        if [[ -e ${BACKUPDIR}/synOCR-backup.lst ]]; then
+          echo "  delete $(cat ${BACKUPDIR}/synOCR-backup.lst | wc -l) backup files ( > ${backup_max} days)"
+          while read -r line ; do
+                [ -z "${line}" ] && continue
+                filename=$(echo ${line} | cut -d ';' -f 2)
+                if [ -f "${filename}" ]; then
+                  current_date=$(date +%s)
+                  backup_date=$(echo ${line} | cut -d ';' -f 1)
+                  delta_date=$((current_date-backup_date))
+                  delta_days=$((delta_date/14400))
+                  echo "backup date for file ${filename} is: ${backup_date}"
+                  echo "delta_date: $delta_date, delta_days: $delta_days"
+                  if [[ $delta_days -ge $backup_max ]]; then
+                    echo "Deleting file ${filename}"
+                    rm -fv "${filename}" | sed -e "s/^/${log_indent}/g"
+                  fi
+                else
+                  echo "File \"${filename}\" not found in ${BACKUPDIR}/."
+                fi
+          done <<< "$(cat ${BACKUPDIR}/synOCR-backup.lst | sort -n)" | sed -e "s/^/${log_indent}/g"
+        else
+          echo "  delete $(find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" | wc -l) backup files ( > ${backup_max} days)"
+          find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" -exec rm -f"${rm_log_level}" {} \; | sed -e "s/^/${log_indent}/g"
+        fi
     else
         count2del=$(( $(find "${BACKUPDIR}" -maxdepth 1 -type f -regex ".*\.${source_file_type4find}$" -printf '.' | wc -c) - backup_max ))
         [ "${count2del}" -lt 0 ] && count2del=0
@@ -2245,6 +2267,7 @@ while read -r input ; do
             echo "${log_indent}➜ backup source file" # to $output"
             prepare_target_path "${BACKUPDIR}" "${filename}"
             mv "${input}" "${output}"
+            echo "$(date +%s);${filename}" >> ${BACKUPDIR}/synOCR-backup.lst
         else
             echo "${log_indent}➜ delete source file (${filename})"
             rm -f "${input}"
