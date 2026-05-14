@@ -1,3 +1,6 @@
+
+![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fgeimist%2FsynOCR&label=Visotors&icon=github&color=%23ffc107&message=&style=flat&tz=Europe%2FBerlin)   
+   
 auto translate: 
 [![de](https://flagcdn.com/w20/de.png)](https://github.com/geimist/synOCR)
 [![cz](https://flagcdn.com/w20/cz.png)](http://translate.google.com/translate?js=n&sl=auto&tl=cs&u=https://github.com/geimist/synOCR)
@@ -63,5 +66,3 @@ ___
 <br>    
 <img src="https://github.com/geimist/synOCR/raw/master/wiki_resources/synOCR_screenshot_2.png" width="800" />
 <br> 
-
-![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Fgeimist%2FsynOCR&label=Visotors&icon=github&color=%23ffc107&message=&style=flat&tz=Europe%2FBerlin)
