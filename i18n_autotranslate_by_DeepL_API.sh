@@ -95,6 +95,12 @@ get_key_value() {
     grep "^${2}=" "$1" | sed -e 's~^'"$2"'=~~;s~^"~~g;s~"$~~g'
     }
 
+# Wert für Ausgabezeilen varname="…" escapen (synOCR lädt Sprachdateien per source).
+# Reihenfolge: zuerst Backslash, dann doppelte Anführungszeichen.
+i18n_escape_for_double_quoted_assign() {
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
 sec_to_time () {
 # this function converts a second value to hh:mm:ss
 # call: sec_to_time "string"
@@ -634,12 +640,11 @@ export_langfiles() {
         } > "${langFile}"
         
         chmod 755 "${langFile}"
-        
-        content=$(sqlite3 -separator $'="' "${i18n_DB}" "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='${langID}' AND  variables.inuse='1' ORDER BY varname ASC" )
 
-        while read -r line; do
-            echo "${line}\"" >> "${langFile}"
-        done <<< "${content}"
+        while IFS=$'\t' read -r varname langstring; do
+            escaped=$(i18n_escape_for_double_quoted_assign "${langstring}")
+            printf '%s="%s"\n' "${varname}" "${escaped}" >> "${langFile}"
+        done < <(sqlite3 -separator $'\t' "${i18n_DB}" "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='${langID}' AND variables.inuse='1' ORDER BY varname ASC")
     done <<<"$(sqlite3 "${i18n_DB}" "SELECT DISTINCT langID FROM strings ORDER by langID ASC")"
 }
 

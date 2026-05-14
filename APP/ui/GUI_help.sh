@@ -68,7 +68,7 @@ echo '
                         <h6 class="synocr-text-blue">'"${lang_tab}"' &quot;'"${lang_help_QS_sub4_tit}"'&quot;:</h6>
                         <ul class="li_standard">
                             <li>'"${lang_help_QS_sub4_1}"'</li><br />
-                            <code><span style="background-color:#cccccc;font-hight:1.1em;">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start</span></code>
+                            <code><span style="background-color:#cccccc;font-hight:1.1em;">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</span></code>
                         </ul><br />
                 </ol>
             </div>

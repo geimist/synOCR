@@ -2,7 +2,7 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.5.99.5 [2026-xx-xx] 
+1.5.99.6 [2026-xx-xx] 
   IMPLEMENTATIONS:
  - [GUI]    NameSyntax-Editor verbessert: Platzhalter können jetzt als Chips komfortabel per Drag&Drop eingefügt werden.
   IMPROVEMENT:
