@@ -9,29 +9,29 @@ known issues / limitations:
  - [GUI]    Paketserver kann nur über einen Button automatisch hinzugefügt werden
  - [shell]  OCR-optimierte schwarzweiß-Konvertierung
  - [shell]  delay-Optimierung für den Fall, dass die Uhr des Scanners vor geht (#82 thanks to @tacarrie)
- - [pkg]    preinst/preupgrade: Frühe Prüfung auf Python ≥ 3.9 für aarch64 (saubere Fehlermeldung statt späterer Abbruch beim ersten Start)
+ - [pkg]    preinst/preupgrade: Frühe Prüfung auf Python ≥ 3.9 für aarch64
   BUGFIXES:
  - [shell]  Kompatibilität zu aarch64 wiederhergestellt
  - [pkg]    build_spk: scripts/lang-Zeilen mit printf %q erzeugen, damit Meldungen nach . …/lang/* zuverlässig gesetzt werden und im Paketzentrum erscheinen
 
 1.5.99.4 [2026-05-02] 
   IMPLEMENTATIONS:
- - [GUI]    Manual restore option for the configuration database
+ - [GUI]    Option zur manuellen Wiederherstellung der Konfigurationsdatenbank
   IMPROVEMENT:
- - [GUI]    Notes and instructions for setting up the package server, unless it has already been configured in DSM
- - [GUI]    Instant indicator for path validation
- - [GUI]    Warning about unsaved changes
+ - [GUI]    Hinweise und Anweisungen zur Einrichtung des Paket-Servers, sofern dieser nicht bereits in DSM konfiguriert wurde
+ - [GUI]    Sofortanzeige der Pfadvalidierung
+ - [GUI]    Warnung wegen nicht gespeicherter Änderungen
 
 1.5.99.3 [2026-04-28] 
   BUGFIXES:
- - [shell]  The Python environment could not be created
- - [YAML]   Tag names containing the "&" character resulted in incorrect naming
+ - [shell]  Die Python-Laufzeitumgebung konnte nicht erstellt werden
+ - [YAML]   Tag-Namen, die das Zeichen „&“ enthielten, führten zu einer fehlerhaften Benennung
 
 1.5.99.2 [2026-04-28] 
   IMPLEMENTATIONS:
- - [GUI]    🔥 A folder picker has been implemented so that folder paths can be selected directly
+ - [GUI]    🔥 Es wurde eine grafische Ordnerauswahl (Folder Picker) implementiert, damit Ordnerpfade direkt ausgewählt werden können
   BUGFIXES:
- - [shell]  color adjustment could not be completely deactivated
+ - [shell]  Die Farbanpassung konnte nicht vollständig deaktiviert werden
 
 1.5.99.1 [2025-06-26]
   IMPLEMENTATIONS:
