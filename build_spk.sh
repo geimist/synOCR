@@ -93,10 +93,11 @@ exit 1
 
     synosetkeyvalue() {
     # this function is a workaround replacement of synology DSM binary synosetkeyvalue
-    # $1 = file
-    # $2 = key
-    # $3 = value
-    sed_i 's~^'$2'=.*~'$2'='$3'~' "$1"
+    # $1 = file, $2 = key, $3 = value
+    # scripts/lang/* are sourced by /bin/sh on DSM; values may contain spaces, quotes, etc.
+    # Use bash printf %q so the assignment line is safe for POSIX sh when sourced.
+    grep -v "^$2=" "$1" > "$1.synosetkeyvalue.tmp" && mv "$1.synosetkeyvalue.tmp" "$1"
+    printf '%s=%q\n' "$2" "$3" >> "$1"
     }
 
     get_key_value() {
@@ -307,12 +308,14 @@ exit 1
             echo 'PKG_NOINSTALL_ERROR_PART3="lang_PKG_NOINSTALL_ERROR_PART3"' >> "${scripts_lang_lang}"
             echo 'PKG_NOINSTALL_MISSING_DOCKER_ERROR="lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR"' >> "${scripts_lang_lang}"
             echo 'PKG_DELETE_TIMER="lang_PKG_DELETE_TIMER"' >> "${scripts_lang_lang}"
+            echo 'PKG_NOINSTALL_PYTHON_AARCH64_ERROR="lang_PKG_NOINSTALL_PYTHON_AARCH64_ERROR"' >> "${scripts_lang_lang}"
         fi
-        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART1 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART1)
-        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART2 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART2)
-        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART3 $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART3)
-        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_MISSING_DOCKER_ERROR $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR)
-        synosetkeyvalue "${scripts_lang_lang}" PKG_DELETE_TIMER $(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_DELETE_TIMER)
+        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART1 "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART1)"
+        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART2 "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART2)"
+        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART3 "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART3)"
+        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_MISSING_DOCKER_ERROR "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR)"
+        synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_PYTHON_AARCH64_ERROR "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_PYTHON_AARCH64_ERROR)"
+        synosetkeyvalue "${scripts_lang_lang}" PKG_DELETE_TIMER "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_DELETE_TIMER)"
 
         # install_uifile:
         install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"

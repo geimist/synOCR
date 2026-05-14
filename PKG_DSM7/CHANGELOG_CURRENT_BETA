@@ -2,15 +2,17 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.5.99.6 [2026-xx-xx] 
+1.5.99.6 [2026-05-14] 
   IMPLEMENTATIONS:
  - [GUI]    NameSyntax-Editor verbessert: Platzhalter können jetzt als Chips komfortabel per Drag&Drop eingefügt werden.
   IMPROVEMENT:
  - [GUI]    Paketserver kann nur über einen Button automatisch hinzugefügt werden
  - [shell]  OCR-optimierte schwarzweiß-Konvertierung
  - [shell]  delay-Optimierung für den Fall, dass die Uhr des Scanners vor geht (#82 thanks to @tacarrie)
+ - [pkg]    preinst/preupgrade: Frühe Prüfung auf Python ≥ 3.9 für aarch64 (saubere Fehlermeldung statt späterer Abbruch beim ersten Start)
   BUGFIXES:
  - [shell]  Kompatibilität zu aarch64 wiederhergestellt
+ - [pkg]    build_spk: scripts/lang-Zeilen mit printf %q erzeugen, damit Meldungen nach . …/lang/* zuverlässig gesetzt werden und im Paketzentrum erscheinen
 
 1.5.99.4 [2026-05-02] 
   IMPLEMENTATIONS:

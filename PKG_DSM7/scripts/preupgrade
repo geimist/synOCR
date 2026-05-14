@@ -38,6 +38,38 @@ echo '--------------------------------------------------------------------------
 
 echo "WEBGUI_FOLDER: ${WEBGUI_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
 
+# -------------------------------------------------------------------------------------
+# select language (sourced early so language strings are available for all checks below):
+    if [ -f $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE} ] ; then
+         . $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE}
+    else
+         . $(/usr/bin/dirname $0)/lang/enu
+    fi
+
+# on aarch64 at least Python 3.9 must be available
+# (reason: see prepare_python in APP/ui/synOCR.sh - dateparser dependency backports.zoneinfo)
+machinetyp=$(uname --machine)
+if [ "${machinetyp}" = "aarch64" ]; then
+    python_ok=0
+    for py in /bin/python3.* /usr/bin/python3.* /usr/local/bin/python3.*; do
+        [ -x "$py" ] || continue
+        ver=$("$py" -c "import sys; print('%d.%d' % sys.version_info[:2])" 2>/dev/null)
+        [ -z "$ver" ] && continue
+        major=${ver%%.*}
+        minor=${ver#*.}
+        if [ "$major" -gt 3 ] || { [ "$major" -eq 3 ] && [ "$minor" -ge 9 ]; }; then
+            python_ok=1
+            break
+        fi
+    done
+
+    if [ "$python_ok" -eq 0 ]; then
+        echo "${PKG_NOINSTALL_PYTHON_AARCH64_ERROR}" > $SYNOPKG_TEMP_LOGFILE
+
+        exit 1
+    fi
+fi
+
 # backup config:
 if [ -d "${WEBGUI_FOLDER}/etc" ]; then
     [ ! -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" ] && mkdir -p -m 755 ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc
@@ -60,14 +92,6 @@ fi
 #    mv ${WEBGUI_FOLDER}/python3_env ${SYNOPKG_TEMP_UPGRADE_FOLDER}/
 #    echo ''${TIMESTAMP}' - Backup python3_env from '${WEBGUI_FOLDER}'/python3_env to '${SYNOPKG_TEMP_UPGRADE_FOLDER}'/python3_env' >> /tmp/${SYNOPKG_PKGNAME}.history
 #fi
-
-# -------------------------------------------------------------------------------------
-# select language:
-    if [ -f $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE} ] ; then
-         . $(/usr/bin/dirname $0)/lang/${SYNOPKG_DSM_LANGUAGE}
-    else
-         . $(/usr/bin/dirname $0)/lang/enu
-    fi
 
 # timer in older installations is no longer available. Please use the DSM task scheduler!:
     if [[ $(printf "1.1.999\n$SYNOPKG_OLD_PKGVER" | sort -V | tail -n1) = "1.1.999" ]] ; then

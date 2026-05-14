@@ -44,6 +44,27 @@ if [ $machinetyp != "x86_64" ] && [ $machinetyp != "aarch64" ]; then
     exit 1
 fi
 
+# on aarch64 at least Python 3.9 must be available
+# (reason: see prepare_python in APP/ui/synOCR.sh - dateparser dependency backports.zoneinfo)
+if [ "${machinetyp}" = "aarch64" ]; then
+    python_ok=0
+    for py in /bin/python3.* /usr/bin/python3.* /usr/local/bin/python3.*; do
+        [ -x "$py" ] || continue
+        ver=$("$py" -c "import sys; print('%d.%d' % sys.version_info[:2])" 2>/dev/null)
+        [ -z "$ver" ] && continue
+        major=${ver%%.*}
+        minor=${ver#*.}
+        if [ "$major" -gt 3 ] || { [ "$major" -eq 3 ] && [ "$minor" -ge 9 ]; }; then
+            python_ok=1
+            break
+        fi
+    done
+    if [ "$python_ok" -eq 0 ]; then
+        echo "${PKG_NOINSTALL_PYTHON_AARCH64_ERROR}" > $SYNOPKG_TEMP_LOGFILE
+        exit 1
+    fi
+fi
+
 if [ ! -e "/var/run/docker.sock" ]; then
     echo "${PKG_NOINSTALL_MISSING_DOCKER_ERROR}" > $SYNOPKG_TEMP_LOGFILE
     exit 1
