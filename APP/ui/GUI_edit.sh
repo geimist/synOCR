@@ -3454,6 +3454,16 @@ if [[ "${page}" == "edit" ]]; then
                     <div id="folderContent" class="border p-3 synocr-folderpicker-content" style="height: 300px; overflow-y: auto;">
                         <!-- Folder list will be loaded here -->
                     </div>
+                    <div id="folderPickerCreateSection" class="mt-3 border-top pt-3">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" role="switch" id="folderPickerCreateEnable" disabled onchange="updateFolderPickerCreateControls()">
+                            <label class="form-check-label" for="folderPickerCreateEnable">lang_edit_set1_folderpicker_create_enable</label>
+                        </div>
+                        <div class="mb-0">
+                            <label for="folderPickerCreateName" class="form-label small mb-1">lang_edit_set1_folderpicker_create_name_label</label>
+                            <input type="text" class="form-control form-control-sm" id="folderPickerCreateName" disabled autocomplete="off">
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">lang_button_abort</button>
@@ -3548,6 +3558,143 @@ if [[ "${page}" == "edit" ]]; then
         var currentFolderPath = "";
         var sharesMap = {};
         var sharesRealMap = {};
+        var folderPickerTitles = {
+            INPUTDIR: "FOLDERPICKER_TITLE_INPUTDIR",
+            OUTPUTDIR: "FOLDERPICKER_TITLE_OUTPUTDIR",
+            BACKUPDIR: "FOLDERPICKER_TITLE_BACKUPDIR",
+            LOGDIR: "FOLDERPICKER_TITLE_LOGDIR"
+        };
+        var folderPickerDefaultTitle = "lang_edit_set1_folderpicker_titel";
+        var folderPickerCreatePlaceholders = {
+            INPUTDIR: "FOLDERPICKER_PLACEHOLDER_INPUTDIR",
+            OUTPUTDIR: "FOLDERPICKER_PLACEHOLDER_OUTPUTDIR",
+            BACKUPDIR: "FOLDERPICKER_PLACEHOLDER_BACKUPDIR",
+            LOGDIR: "FOLDERPICKER_PLACEHOLDER_LOGDIR"
+        };
+        var folderPickerDefaultPlaceholder = "FOLDERPICKER_PLACEHOLDER_OUTPUTDIR";
+        var folderPickerCreateMsg = {
+            noParent: "lang_edit_set1_folderpicker_create_no_parent",
+            nameEmpty: "lang_edit_set1_folderpicker_create_name_empty",
+            nameInvalid: "lang_edit_set1_folderpicker_create_name_invalid",
+            failed: "lang_edit_set1_folderpicker_create_failed",
+            exists: "lang_edit_set1_folderpicker_create_exists",
+            denied: "lang_edit_set1_folderpicker_create_denied"
+        };
+
+        function resetFolderPickerCreateUI() {
+            var enableEl = document.getElementById("folderPickerCreateEnable");
+            var nameEl = document.getElementById("folderPickerCreateName");
+            if (enableEl) {
+                enableEl.checked = false;
+            }
+            if (nameEl) {
+                nameEl.value = "";
+            }
+            updateFolderPickerCreateControls();
+        }
+
+        function updateFolderPickerCreateControls() {
+            var enableEl = document.getElementById("folderPickerCreateEnable");
+            var nameEl = document.getElementById("folderPickerCreateName");
+            if (!enableEl || !nameEl) return;
+            var hasParent = !!currentFolderPath;
+            enableEl.disabled = !hasParent;
+            if (!hasParent) {
+                enableEl.checked = false;
+            }
+            nameEl.disabled = !hasParent || !enableEl.checked;
+        }
+
+        function isValidParentForCreate(parentFullPath) {
+            if (!parentFullPath) return false;
+            var parentSharePath = getRelativePath(parentFullPath);
+            if (parentSharePath === parentFullPath && !parentFullPath.startsWith("/volume")) {
+                return false;
+            }
+            return true;
+        }
+
+        function mapCurrentPathToVolumePath(path) {
+            var finalPath = path;
+            if (!finalPath.startsWith("/volume")) {
+                var parts = finalPath.split("/");
+                var shareName = parts[1];
+                if (shareName && sharesMap[shareName]) {
+                    finalPath = sharesMap[shareName] + finalPath.substring(shareName.length + 1);
+                }
+            }
+            return finalPath;
+        }
+
+        function validateNewFolderName(name) {
+            var trimmed = (name || "").trim();
+            if (!trimmed) {
+                return folderPickerCreateMsg.nameEmpty;
+            }
+            if (trimmed.length > 255) {
+                return folderPickerCreateMsg.nameInvalid;
+            }
+            if (/[\/\\]/.test(trimmed) || trimmed === ".." || trimmed.indexOf("..") !== -1) {
+                return folderPickerCreateMsg.nameInvalid;
+            }
+            if (/^\.|\.$/.test(trimmed)) {
+                return folderPickerCreateMsg.nameInvalid;
+            }
+            return null;
+        }
+
+        function mapCreateFolderError(errorCode) {
+            var code = parseInt(errorCode, 10);
+            if (code === 1104) {
+                return folderPickerCreateMsg.exists;
+            }
+            if (code === 117 || code === 119) {
+                return folderPickerCreateMsg.denied;
+            }
+            if (errorCode) {
+                return folderPickerCreateMsg.failed + " (" + errorCode + ")";
+            }
+            return folderPickerCreateMsg.failed;
+        }
+
+        function createSubfolder(parentFullPath, folderName, callback) {
+            if (!isValidParentForCreate(parentFullPath)) {
+                callback(folderPickerCreateMsg.noParent);
+                return;
+            }
+            var parentSharePath = getRelativePath(parentFullPath);
+            resolveSynoTokenForFolderPicker(function(synoToken) {
+                if (!synoToken) {
+                    callback(folderPickerCreateMsg.failed);
+                    return;
+                }
+                $.ajax({
+                    url: "/webapi/entry.cgi",
+                    type: "GET",
+                    timeout: 10000,
+                    data: {
+                        api: "SYNO.FileStation.CreateFolder",
+                        version: 2,
+                        method: "create",
+                        folder_path: JSON.stringify([parentSharePath]),
+                        name: JSON.stringify([folderName]),
+                        SynoToken: synoToken
+                    },
+                    success: function(response) {
+                        if (response && response.success) {
+                            var newFullPath = normalizeFolderPath(parentFullPath + "/" + folderName);
+                            callback(null, newFullPath);
+                            return;
+                        }
+                        var errorCode = response.error ? response.error.code : "unknown";
+                        callback(mapCreateFolderError(errorCode));
+                    },
+                    error: function(xhr, status) {
+                        callback(mapCreateFolderError(status));
+                    }
+                });
+            });
+        }
 
         function openFolderPicker(inputId) {
             console.log("openFolderPicker called with inputId:", inputId);
@@ -3557,8 +3704,16 @@ if [[ "${page}" == "edit" ]]; then
                 folderPickerCurrentInput = inputId;
             }
             console.log("folderPickerCurrentInput set to:", folderPickerCurrentInput);
+            var resolvedId = (typeof inputId === "string") ? inputId : (folderPickerCurrentInput && folderPickerCurrentInput.id);
+            var title = (resolvedId && folderPickerTitles[resolvedId]) ? folderPickerTitles[resolvedId] : folderPickerDefaultTitle;
+            $("#folderPickerModalLabel").text(title);
+            var placeholder = (resolvedId && folderPickerCreatePlaceholders[resolvedId])
+                ? folderPickerCreatePlaceholders[resolvedId]
+                : folderPickerDefaultPlaceholder;
+            $("#folderPickerCreateName").attr("placeholder", placeholder);
             currentFolderPath = "";
             sharesMap = {};
+            resetFolderPickerCreateUI();
             $("#folderPickerModal").modal("show");
             loadShares();
         }
@@ -3566,6 +3721,7 @@ if [[ "${page}" == "edit" ]]; then
         function setCurrentPath(path) {
             currentFolderPath = path;
             console.log("currentFolderPath set to:", currentFolderPath);
+            updateFolderPickerCreateControls();
         }
 
         function buildListItemClass(baseClass, itemPath) {
@@ -3823,6 +3979,7 @@ if [[ "${page}" == "edit" ]]; then
                         }
                         html += "</ul>";
                         $("#folderContent").html(html);
+                        updateFolderPickerCreateControls();
                     } else {
                         var errorCode = response.error ? response.error.code : "unknown";
                         if (errorCode == 119) {
@@ -3830,11 +3987,13 @@ if [[ "${page}" == "edit" ]]; then
                         } else {
                             $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_shares " + errorCode + "</div>");
                         }
+                        updateFolderPickerCreateControls();
                     }
                 },
                 error: function(xhr, status, error) {
                     console.log("AJAX Error:", status, error);
                     $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_shares " + status + "</div>");
+                    updateFolderPickerCreateControls();
                 }
             });
             });
@@ -3894,13 +4053,16 @@ if [[ "${page}" == "edit" ]]; then
                         }
                         html += "</ul>";
                         $("#folderContent").html(html);
+                        updateFolderPickerCreateControls();
                     } else {
                         $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_folders: " + (response.error ? response.error.code : "unknown") + "</div>");
+                        updateFolderPickerCreateControls();
                     }
                 },
                 error: function(xhr, status, error) {
                     console.log("AJAX Error:", status, error);
                     $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_folders: " + status + "</div>");
+                    updateFolderPickerCreateControls();
                 }
             });
             });
@@ -3919,21 +4081,34 @@ if [[ "${page}" == "edit" ]]; then
         }
 
         function selectCurrentFolder() {
-            if (currentFolderPath) {
-                var finalPath = currentFolderPath;
-                console.log("selectCurrentFolder: currentFolderPath =", currentFolderPath);
-                if (!finalPath.startsWith('/volume')) {
-                    var parts = finalPath.split('/');
-                    var shareName = parts[1];
-                    console.log("shareName =", shareName, "sharesMap[shareName] =", sharesMap[shareName]);
-                    if (shareName && sharesMap[shareName]) {
-                        finalPath = sharesMap[shareName] + finalPath.substring(shareName.length + 1);
-                        console.log("corrected finalPath =", finalPath);
-                    }
-                } else {
-                    console.log("Path already starts with /volume");
+            var createEnableEl = document.getElementById("folderPickerCreateEnable");
+            var createNameEl = document.getElementById("folderPickerCreateName");
+            var createEnabled = createEnableEl && createEnableEl.checked;
+
+            if (createEnabled) {
+                if (!currentFolderPath || !isValidParentForCreate(currentFolderPath)) {
+                    alert(folderPickerCreateMsg.noParent);
+                    return;
                 }
-                selectFolder(finalPath);
+                var folderName = createNameEl ? createNameEl.value : "";
+                var nameError = validateNewFolderName(folderName);
+                if (nameError) {
+                    alert(nameError);
+                    return;
+                }
+                folderName = folderName.trim();
+                createSubfolder(currentFolderPath, folderName, function(err, newFullPath) {
+                    if (err) {
+                        alert(err);
+                        return;
+                    }
+                    selectFolder(mapCurrentPathToVolumePath(newFullPath));
+                });
+                return;
+            }
+
+            if (currentFolderPath) {
+                selectFolder(mapCurrentPathToVolumePath(currentFolderPath));
             } else {
                 console.log("No current folder selected");
             }
@@ -3944,6 +4119,10 @@ EOF
 )
 
     # Sprachvariablen nach dem Heredoc ersetzen, um JS-Kompatibilität zu erhalten
+    OUTPUT="${OUTPUT//FOLDERPICKER_TITLE_INPUTDIR/$lang_edit_set1_sourcedir_title}"
+    OUTPUT="${OUTPUT//FOLDERPICKER_TITLE_OUTPUTDIR/$lang_edit_set1_targetdir_title}"
+    OUTPUT="${OUTPUT//FOLDERPICKER_TITLE_BACKUPDIR/$lang_edit_set1_backupdir_title}"
+    OUTPUT="${OUTPUT//FOLDERPICKER_TITLE_LOGDIR/$lang_edit_set1_logdir_title}"
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_titel/$lang_edit_set1_folderpicker_titel}"
     OUTPUT="${OUTPUT//lang_button_abort/$lang_button_abort}"
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_not_available/$lang_edit_set1_folderpicker_not_available}"
@@ -3958,6 +4137,18 @@ EOF
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_available_shares/$lang_edit_set1_folderpicker_available_shares}"
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_back_to_shares/$lang_edit_set1_folderpicker_back_to_shares}"
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_failed_loading_folders/$lang_edit_set1_folderpicker_failed_loading_folders}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_enable/$lang_edit_set1_folderpicker_create_enable}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_name_label/$lang_edit_set1_folderpicker_create_name_label}"
+    OUTPUT="${OUTPUT//FOLDERPICKER_PLACEHOLDER_INPUTDIR/$lang_edit_set1_folderpicker_create_name_placeholder_inputdir}"
+    OUTPUT="${OUTPUT//FOLDERPICKER_PLACEHOLDER_OUTPUTDIR/$lang_edit_set1_folderpicker_create_name_placeholder_outputdir}"
+    OUTPUT="${OUTPUT//FOLDERPICKER_PLACEHOLDER_BACKUPDIR/$lang_edit_set1_folderpicker_create_name_placeholder_backupdir}"
+    OUTPUT="${OUTPUT//FOLDERPICKER_PLACEHOLDER_LOGDIR/$lang_edit_set1_folderpicker_create_name_placeholder_logdir}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_no_parent/$lang_edit_set1_folderpicker_create_no_parent}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_name_empty/$lang_edit_set1_folderpicker_create_name_empty}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_name_invalid/$lang_edit_set1_folderpicker_create_name_invalid}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_failed/$lang_edit_set1_folderpicker_create_failed}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_exists/$lang_edit_set1_folderpicker_create_exists}"
+    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_denied/$lang_edit_set1_folderpicker_create_denied}"
     OUTPUT="${OUTPUT//lang_edit_unsaved_changes_warning/$lang_edit_unsaved_changes_warning}"
 
     echo "${OUTPUT}"

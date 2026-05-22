@@ -9,9 +9,7 @@ known issues / limitations:
             In der GUI kann der User definieren, wie mit verwaisten Einträgen verfahren werden soll.
             ⚠️ Bestehende Backupdateien fallen durch dieses Update aus der Rotation und müssen ggf. selbst gelöscht werden.
   IMPROVEMENT:
- - [shell]  
-  BUGFIXES:
- - [shell]  
+ - [GUI]    Im Folder Picker können jetzt Zielordner automatisch erstellt werden und weitere Detailverbesserungen (extra für DaveR 😉)
 
 1.5.99.6 [2026-05-14] 
   IMPLEMENTATIONS:
