@@ -122,7 +122,7 @@
             blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, 
             blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, 
             blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, 
-            adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
+            adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness, backup_clean_orphaned
         FROM 
             config 
         WHERE 
@@ -180,6 +180,8 @@
     adjustColorDPI=$(echo "${sqlerg}" | awk -F'\t' '{print $48}')
     adjustColorContrast=$(echo "${sqlerg}" | awk -F'\t' '{print $49}')
     adjustColorSharpness=$(echo "${sqlerg}" | awk -F'\t' '{print $50}')
+    backup_clean_orphaned=$(echo "${sqlerg}" | awk -F'\t' '{print $51}')
+    [ -z "${backup_clean_orphaned}" ] && backup_clean_orphaned=false
     adjustColorBWabsoluteThreshold=96 # optional GUI candidate: keeps very dark filled areas black in BW mode (0 disables)
 
 # read global values:
@@ -2014,6 +2016,181 @@ purge_log()
 }
 
 
+sql_escape()
+{
+#########################################################################################
+# This function escapes strings for single quoted SQLite values                          #
+#########################################################################################
+
+    printf "%s" "$1" | sed "s/'/''/g"
+
+}
+
+
+register_backup_file()
+{
+#########################################################################################
+# This function stores the backup file path and processing timestamp in the DB           #
+#########################################################################################
+
+    local backup_file_path="$1"
+    local backup_dir_path="${backup_file_path%/*}/"
+    local backup_filename="${backup_file_path##*/}"
+    local backup_dir_sql backup_filename_sql sqlite3log
+
+    if [ ! -f "${backup_file_path}" ]; then
+        [ "${loglevel}" = 2 ] && echo "${log_indent}backup DB entry skipped (file not found): ${backup_file_path}"
+        return
+    fi
+
+    if ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_dirs LIMIT 1;" >/dev/null 2>&1 \
+       || ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_files LIMIT 1;" >/dev/null 2>&1; then
+        echo "${log_indent}backup DB entry skipped (backup tables missing)"
+        return
+    fi
+
+    backup_dir_sql=$(sql_escape "${backup_dir_path}")
+    backup_filename_sql=$(sql_escape "${backup_filename}")
+
+    sqlite3log=$(sqlite3 ./etc/synOCR.sqlite "BEGIN;
+        INSERT OR IGNORE INTO backup_dirs (backup_dir) VALUES ('${backup_dir_sql}');
+        DELETE FROM backup_files
+            WHERE backup_dir_ID=(SELECT backup_dir_ID FROM backup_dirs WHERE backup_dir='${backup_dir_sql}')
+              AND filename='${backup_filename_sql}';
+        INSERT INTO backup_files (backup_dir_ID, profile_ID, filename, processing_timestamp)
+            VALUES (
+                (SELECT backup_dir_ID FROM backup_dirs WHERE backup_dir='${backup_dir_sql}'),
+                '${profile_ID}',
+                '${backup_filename_sql}',
+                datetime('now','localtime')
+            );
+        COMMIT;" 2>&1)
+
+    if [ $? != 0 ]; then
+        echo "${log_indent}backup DB entry failed:"
+        echo "${sqlite3log}" | sed -e "s/^/${log_indent}/g"
+    elif [ "${loglevel}" = 2 ]; then
+        echo "${log_indent}backup DB entry created: ${backup_file_path}"
+    fi
+
+}
+
+
+purge_backup_db_entries()
+{
+#########################################################################################
+# This function deletes backup files selected from the DB and cleans up DB entries       #
+#########################################################################################
+
+    local backup_file_ID backup_file_path backup_file_dir rm_output rm_status
+
+    while IFS=$'\t' read -r backup_file_ID backup_file_path ; do
+        [ -z "${backup_file_ID}" ] && continue
+
+        backup_file_dir="${backup_file_path%/*}"
+
+        if [ -f "${backup_file_path}" ]; then
+            rm_output=$(rm -f"${rm_log_level}" "${backup_file_path}" 2>&1)
+            rm_status=$?
+            [ -n "${rm_output}" ] && echo "${rm_output}" | sed -e "s/^/${log_indent}/g"
+
+            if [ "${rm_status}" -eq 0 ]; then
+                sqlite3 ./etc/synOCR.sqlite "DELETE FROM backup_files WHERE backup_file_ID='${backup_file_ID}';"
+            else
+                echo "${log_indent}backup file could not be removed, DB entry kept: ${backup_file_path}"
+            fi
+        elif [ -d "${backup_file_dir}" ]; then
+            echo "${log_indent}backup file already missing, remove DB entry: ${backup_file_path}"
+            sqlite3 ./etc/synOCR.sqlite "DELETE FROM backup_files WHERE backup_file_ID='${backup_file_ID}';"
+        else
+            echo "${log_indent}backup path not available, DB entry kept: ${backup_file_path}"
+        fi
+    done
+
+}
+
+
+check_orphaned_backup_entries()
+{
+#########################################################################################
+# This function checks orphaned backup DB entries once per day for the current profile #
+#########################################################################################
+
+    local orphan_system_key="backup_orphan_check_${profile_ID}"
+    local last_check_date orphan_entries orphan_checked=0 orphan_count=0 orphan_deleted=0
+    local backup_file_ID backup_file_path orphan_id_batch batch_size=500 id_count_in_batch
+
+    if ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_dirs LIMIT 1;" >/dev/null 2>&1 \
+       || ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_files LIMIT 1;" >/dev/null 2>&1; then
+        return
+    fi
+
+    last_check_date=$(sqlite3 ./etc/synOCR.sqlite "SELECT substr(value_1,1,10) FROM system WHERE key='${orphan_system_key}';")
+    if [ "${last_check_date}" = "$(date +%F)" ]; then
+        [ "${loglevel}" = 2 ] && printf "\n%s\n" "  orphaned backup check skipped (already done today)"
+        return
+    fi
+
+    printf "\n%s\n" "  check orphaned backup DB entries ..."
+
+    orphan_entries=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT
+            bf.backup_file_ID,
+            bd.backup_dir || bf.filename
+        FROM backup_files bf
+        JOIN backup_dirs bd ON bf.backup_dir_ID=bd.backup_dir_ID
+        WHERE bf.profile_ID='${profile_ID}'
+        ORDER BY bf.backup_file_ID;")
+
+    orphan_id_batch=""
+    id_count_in_batch=0
+
+    while IFS=$'\t' read -r backup_file_ID backup_file_path ; do
+        [ -z "${backup_file_ID}" ] && continue
+        orphan_checked=$(( orphan_checked + 1 ))
+
+        if [ ! -e "${backup_file_path}" ]; then
+            orphan_count=$(( orphan_count + 1 ))
+
+            if [ "${backup_clean_orphaned}" = true ]; then
+                if [ -n "${orphan_id_batch}" ]; then
+                    orphan_id_batch="${orphan_id_batch},${backup_file_ID}"
+                else
+                    orphan_id_batch="${backup_file_ID}"
+                fi
+                id_count_in_batch=$(( id_count_in_batch + 1 ))
+
+                if [ "${id_count_in_batch}" -ge "${batch_size}" ]; then
+                    sqlite3 ./etc/synOCR.sqlite "DELETE FROM backup_files WHERE backup_file_ID IN (${orphan_id_batch});"
+                    orphan_deleted=$(( orphan_deleted + id_count_in_batch ))
+                    orphan_id_batch=""
+                    id_count_in_batch=0
+                fi
+            fi
+        fi
+    done <<< "${orphan_entries}"
+
+    if [ "${backup_clean_orphaned}" = true ] && [ -n "${orphan_id_batch}" ]; then
+        sqlite3 ./etc/synOCR.sqlite "DELETE FROM backup_files WHERE backup_file_ID IN (${orphan_id_batch});"
+        orphan_deleted=$(( orphan_deleted + id_count_in_batch ))
+    fi
+
+    if [ "$(sqlite3 ./etc/synOCR.sqlite "SELECT COUNT(*) FROM system WHERE key='${orphan_system_key}';")" -eq 0 ]; then
+        sqlite3 ./etc/synOCR.sqlite "INSERT INTO system (key, value_1, value_2)
+            VALUES ('${orphan_system_key}', datetime('now','localtime'), '${orphan_count}');"
+    else
+        sqlite3 ./etc/synOCR.sqlite "UPDATE system
+            SET value_1=datetime('now','localtime'), value_2='${orphan_count}'
+            WHERE key='${orphan_system_key}';"
+    fi
+
+    echo "  checked ${orphan_checked} backup DB entries, found ${orphan_count} orphaned"
+    if [ "${backup_clean_orphaned}" = true ]; then
+        echo "  removed ${orphan_deleted} orphaned backup DB entries"
+    fi
+
+}
+
+
 purge_backup()
 {
 #########################################################################################
@@ -2025,30 +2202,70 @@ purge_backup()
         return
     fi
 
-    printf "\n%s\n" "  purge backup files ..."
-
-    if [ "${img2pdf}" = true ]; then
-        source_file_type4find="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\|PDF\|pdf\)"
-    else
-        source_file_type4find="\(PDF\|pdf\)"
+    if ! [[ "${backup_max}" =~ ^[0-9]+$ ]]; then
+        printf "\n%s\n" "  purge backup skipped (invalid backup_max: ${backup_max})"
+        return
     fi
 
+    printf "\n%s\n" "  purge backup files ..."
+
+    if ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_dirs LIMIT 1;" >/dev/null 2>&1 \
+       || ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_files LIMIT 1;" >/dev/null 2>&1; then
+        echo "  backup rotation skipped (backup tables missing)"
+        return
+    fi
+
+    if [ "${img2pdf}" = true ]; then
+        source_file_type4sql="(
+            LOWER(bf.filename) GLOB '*.jpg' OR
+            LOWER(bf.filename) GLOB '*.jpeg' OR
+            LOWER(bf.filename) GLOB '*.png' OR
+            LOWER(bf.filename) GLOB '*.tiff' OR
+            LOWER(bf.filename) GLOB '*.pdf'
+        )"
+    else
+        source_file_type4sql="(LOWER(bf.filename) GLOB '*.pdf')"
+    fi
 
 # delete surplus backup files:
 # ---------------------------------------------------------------------
     if [[ "${backup_max_type}" == days ]]; then
-        echo "  delete $(find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" | wc -l) backup files ( > ${backup_max} days)"
-        find "${BACKUPDIR}" -maxdepth 1 -regex ".*\.${source_file_type4find}$" -mtime +"${backup_max}" -exec rm -f"${rm_log_level}" {} \; | sed -e "s/^/${log_indent}/g"
+        count2del=$(sqlite3 ./etc/synOCR.sqlite "SELECT COUNT(*)
+            FROM backup_files bf
+            WHERE bf.profile_ID='${profile_ID}'
+              AND ${source_file_type4sql}
+              AND datetime(bf.processing_timestamp) < datetime('now','localtime','-${backup_max} days');")
+        backup_files2del=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT
+                bf.backup_file_ID,
+                bd.backup_dir || bf.filename
+            FROM backup_files bf
+            JOIN backup_dirs bd ON bf.backup_dir_ID=bd.backup_dir_ID
+            WHERE bf.profile_ID='${profile_ID}'
+              AND ${source_file_type4sql}
+              AND datetime(bf.processing_timestamp) < datetime('now','localtime','-${backup_max} days')
+            ORDER BY datetime(bf.processing_timestamp), bf.backup_file_ID;")
+        echo "  delete ${count2del} backup files ( > ${backup_max} days)"
+        purge_backup_db_entries <<< "${backup_files2del}"
     else
-        count2del=$(( $(find "${BACKUPDIR}" -maxdepth 1 -type f -regex ".*\.${source_file_type4find}$" -printf '.' | wc -c) - backup_max ))
+        backup_file_count=$(sqlite3 ./etc/synOCR.sqlite "SELECT COUNT(*)
+            FROM backup_files bf
+            WHERE bf.profile_ID='${profile_ID}'
+              AND ${source_file_type4sql};")
+        count2del=$(( backup_file_count - backup_max ))
         [ "${count2del}" -lt 0 ] && count2del=0
         echo "  delete ${count2del} backup files ( > ${backup_max} files)"
 
         if [ "${count2del}" -gt 0 ]; then
-            while read -r line ; do
-                [ -z "${line}" ] && continue
-                [ -f "${line}" ] && rm -fv "${line}" | sed -e "s/^/${log_indent}/g"
-            done <<< "$(find "${BACKUPDIR}" -maxdepth 1 -type f -regex ".*\.${source_file_type4find}$" -printf '%T@ %p\n' | sort -n | cut -d ' ' -f 2- | head -n${count2del} )"
+            backup_files2del=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT
+                    bf.backup_file_ID,
+                    bd.backup_dir || bf.filename
+                FROM backup_files bf
+                JOIN backup_dirs bd ON bf.backup_dir_ID=bd.backup_dir_ID
+                WHERE bf.profile_ID='${profile_ID}'
+                  AND ${source_file_type4sql}
+                ORDER BY datetime(bf.processing_timestamp), bf.backup_file_ID
+                LIMIT ${count2del};")
+            purge_backup_db_entries <<< "${backup_files2del}"
         fi
     fi
 
@@ -2244,7 +2461,11 @@ while read -r input ; do
         if [ "${backup}" = true ]; then
             echo "${log_indent}➜ backup source file" # to $output"
             prepare_target_path "${BACKUPDIR}" "${filename}"
-            mv "${input}" "${output}"
+            if mv "${input}" "${output}"; then
+                register_backup_file "${output}"
+            else
+                echo "${log_indent}backup source file failed: ${input}"
+            fi
         else
             echo "${log_indent}➜ delete source file (${filename})"
             rm -f "${input}"
@@ -2675,8 +2896,12 @@ while read -r input1 ; do
 
     if [ "${backup}" = true ] && [ "${process_error}" -eq 0 ]; then
         prepare_target_path "${BACKUPDIR}" "${filename}"
-        mv "${input1}" "${output}"
-        echo "${log_indent}➜ backup source file to: ${output}"
+        if mv "${input1}" "${output}"; then
+            echo "${log_indent}➜ backup source file to: ${output}"
+            register_backup_file "${output}"
+        else
+            echo "${log_indent}➜ backup source file failed: ${input1}"
+        fi
     elif [ "${process_error}" -eq 1 ]; then
         # target file is not valid / source files are moved to ERRORFILES including LOG:
         echo "${log_indent}  ┖➜ failed! (process_error flag is 1)"
@@ -2982,6 +3207,7 @@ done <<<"${files_step2}"
     main_1st_step
     purge_log
     purge_backup
+    check_orphaned_backup_entries
     cleanup_lockfile
 
     [ -d "${work_tmp_main}" ] && rmdir -v "${work_tmp_main}" | sed -e "s/^/  /g"

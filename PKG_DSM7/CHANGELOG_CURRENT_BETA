@@ -2,6 +2,17 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.5.99.7 [2026-xx-xx] 
+  IMPLEMENTATIONS:
+ - [shell]  Es wird jetzt ein Verzeichnis Backup-Dateien in der DB geführt. 
+            Das gewährleistet eine saubere Rotation auch bei älteren Dateien oder wenn die Systemzeit des Scanners falsch ist. (issue #79)
+            In der GUI kann der User definieren, wie mit verwaisten Einträgen verfahren werden soll.
+            ⚠️ Bestehende Backupdateien fallen durch dieses Update aus der Rotation und müssen ggf. selbst gelöscht werden.
+  IMPROVEMENT:
+ - [shell]  
+  BUGFIXES:
+ - [shell]  
+
 1.5.99.6 [2026-05-14] 
   IMPLEMENTATIONS:
  - [GUI]    NameSyntax-Editor verbessert: Platzhalter können jetzt als Chips komfortabel per Drag&Drop eingefügt werden.

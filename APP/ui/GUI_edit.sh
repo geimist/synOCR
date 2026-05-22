@@ -496,11 +496,11 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
                             if [ "$(sqlite3 "${dbPath}" "${sSQL}")" = 0 ] ; then
                                 sqlite3 "${dbPath}" "INSERT INTO config 
                                     ( 
-                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
+                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, backup_clean_orphaned, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
                                     ) 
                                         VALUES 
                                     ( 
-                                        '${new_profile_value}', '${active}', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${documentSplitPattern}', '${taglist}', '${searchAll}', '${moveTaggedFiles}', '${NameSyntax}', '${ocropt//\'/\'\'}', '${dockercontainer}', '${apprise_call}', '${apprise_attachment}', '${notify_lang}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}', '${filedate}', '${tagsymbol}', '${ignoredDate}', '${backup_max}', '${backup_max_type}', '${search_nearest_date}', '${date_search_method}', '${clean_up_spaces}', '${img2pdf}', '${DateSearchMinYear}', '${DateSearchMaxYear}', '${splitpagehandling}', '${blank_page_detection_switch}', '${blank_page_detection_mainThreshold}', '${blank_page_detection_widthCropping}', '${blank_page_detection_hightCropping}', '${blank_page_detection_interferenceMaxFilter}', '${blank_page_detection_interferenceMinFilter}', '${blank_page_detection_black_pixel_ratio}', '${blank_page_detection_ignoreText}', '${adjustColorBWthreshold}', '${adjustColorDPI}', '${adjustColorContrast}', '${adjustColorSharpness}'
+                                        '${new_profile_value}', '${active}', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${documentSplitPattern}', '${taglist}', '${searchAll}', '${moveTaggedFiles}', '${NameSyntax}', '${ocropt//\'/\'\'}', '${dockercontainer}', '${apprise_call}', '${apprise_attachment}', '${notify_lang}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}', '${filedate}', '${tagsymbol}', '${ignoredDate}', '${backup_max}', '${backup_max_type}', '${backup_clean_orphaned}', '${search_nearest_date}', '${date_search_method}', '${clean_up_spaces}', '${img2pdf}', '${DateSearchMinYear}', '${DateSearchMaxYear}', '${splitpagehandling}', '${blank_page_detection_switch}', '${blank_page_detection_mainThreshold}', '${blank_page_detection_widthCropping}', '${blank_page_detection_hightCropping}', '${blank_page_detection_interferenceMaxFilter}', '${blank_page_detection_interferenceMinFilter}', '${blank_page_detection_black_pixel_ratio}', '${blank_page_detection_ignoreText}', '${adjustColorBWthreshold}', '${adjustColorDPI}', '${adjustColorContrast}', '${adjustColorSharpness}'
                                     )"
 
                                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
@@ -773,6 +773,7 @@ if [[ "${page}" == "edit-save" ]]; then
                                 ignoredDate='${ignoredDate}', 
                                 backup_max='${backup_max}', 
                                 backup_max_type='${backup_max_type}',
+                                backup_clean_orphaned='${backup_clean_orphaned}',
                                 search_nearest_date='${search_nearest_date}',
                                 date_search_method='${date_search_method}',
                                 clean_up_spaces='${clean_up_spaces}',
@@ -840,7 +841,7 @@ if [[ "${page}" == "edit" ]]; then
                 ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, 
                 apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, 
                 blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, 
-                adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
+                adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness, backup_clean_orphaned
             FROM 
                 config 
             WHERE 
@@ -852,7 +853,7 @@ if [[ "${page}" == "edit" ]]; then
                 ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, 
                 apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, 
                 blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, 
-                adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
+                adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness, backup_clean_orphaned
             FROM 
                 config 
             WHERE 
@@ -910,10 +911,15 @@ if [[ "${page}" == "edit" ]]; then
         adjustColorDPI=$(echo "${sqlerg}" | awk -F'\t' '{print $47}')
         adjustColorContrast=$(echo "${sqlerg}" | awk -F'\t' '{print $48}')
         adjustColorSharpness=$(echo "${sqlerg}" | awk -F'\t' '{print $49}')
+        backup_clean_orphaned=$(echo "${sqlerg}" | awk -F'\t' '{print $50}')
+        [ -z "${backup_clean_orphaned}" ] && backup_clean_orphaned=false
 
     # read global values:
         inotify_delay=$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='inotify_delay' ")
         dockerimageupdate=$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
+        backup_orphan_last_check=$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='backup_orphan_check_${profile_ID}';")
+        backup_orphan_last_count=$(sqlite3 "${dbPath}" "SELECT value_2 FROM system WHERE key='backup_orphan_check_${profile_ID}';")
+        [ -z "${backup_orphan_last_count}" ] && backup_orphan_last_count=0
 
     # -> Headline
     echo '
@@ -3025,6 +3031,54 @@ if [[ "${page}" == "edit" ]]; then
                                     </span>
                                 </div>
                             </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # BACKUP ORPHAN CLEANUP
+                    echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="backup_clean_orphaned">'"${lang_edit_set3_backup_clean_orphaned_title}"'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="backup_clean_orphaned" value="false">
+                                <input class="form-check-input" type="checkbox" role="switch" id="backup_clean_orphaned"
+                                    name="backup_clean_orphaned" value="true"'; \
+                                    [[ "${backup_clean_orphaned}" == "true" ]] && echo -n ' checked'; \
+                                    echo '>
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#backup_clean_orphaned-info" role="button" aria-expanded="false" aria-controls="backup_clean_orphaned-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="backup_clean_orphaned-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>
+                                        '"${lang_edit_set3_backup_clean_orphaned_help1}"'<br /><br />
+                                        '"${lang_edit_set3_backup_clean_orphaned_help2}"'
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-10">
+                            <small class="text-muted">'
+                    if [ -n "${backup_orphan_last_check}" ]; then
+                        printf "${lang_edit_set3_backup_orphan_status}" "${backup_orphan_last_count}" "${backup_orphan_last_check}"
+                    else
+                        echo "${lang_edit_set3_backup_orphan_status_never}"
+                    fi
+                    echo '</small>
                         </div>
                         <div class="col-sm-2"></div>
                     </div>'

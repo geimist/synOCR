@@ -95,6 +95,7 @@ uuid=$(uuidgen)
                         \"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31') ,
                         \"backup_max\" VARCHAR ,
                         \"backup_max_type\" VARCHAR DEFAULT ('files') ,
+                        \"backup_clean_orphaned\" VARCHAR DEFAULT ('false') ,
                         \"pagecount\" VARCHAR DEFAULT ('0') ,
                         \"ocrcount\" VARCHAR  DEFAULT ('0') ,
                         \"search_nearest_date\" VARCHAR  DEFAULT ('false') ,
@@ -137,7 +138,7 @@ uuid=$(uuidgen)
         # write default data:
         # ---------------------------------------------------------------------
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('db_version', '11');"
+        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('db_version', '12');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
         sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0');"
@@ -157,6 +158,36 @@ uuid=$(uuidgen)
                         \"image\" varchar,
                         \"date_checked\" varchar 
                     );
+                    COMMIT;"
+
+        wait $!
+
+        # table backup_dirs:
+        # ---------------------------------------------------------------------
+        sqlite3 "${dbPath}" "BEGIN;
+                    CREATE TABLE \"backup_dirs\" 
+                    (
+                        \"backup_dir_ID\" INTEGER PRIMARY KEY ,
+                        \"backup_dir\" VARCHAR NOT NULL UNIQUE
+                    );
+                    COMMIT;"
+
+        wait $!
+
+        # table backup_files:
+        # ---------------------------------------------------------------------
+        sqlite3 "${dbPath}" "BEGIN;
+                    CREATE TABLE \"backup_files\" 
+                    (
+                        \"backup_file_ID\" INTEGER PRIMARY KEY ,
+                        \"backup_dir_ID\" INTEGER NOT NULL ,
+                        \"profile_ID\" INTEGER NOT NULL ,
+                        \"filename\" VARCHAR NOT NULL ,
+                        \"processing_timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,
+                        UNIQUE (\"backup_dir_ID\", \"filename\")
+                    );
+                    CREATE INDEX \"idx_backup_files_profile_timestamp\" ON \"backup_files\" (\"profile_ID\", \"processing_timestamp\");
+                    CREATE INDEX \"idx_backup_files_backup_dir_ID\" ON \"backup_files\" (\"backup_dir_ID\");
                     COMMIT;"
 
         wait $!
@@ -925,6 +956,77 @@ fi
         if [[ "${error}" == 0 ]]; then
             # lift DB version:
             lift_db 10 11
+        fi
+        error=0
+    fi
+
+
+# DB-update from v11 to v12:
+# ---------------------------------------------------------------------
+    if [ "$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='db_version';")" -eq 11 ] ; then
+
+        # backup_dirs:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "${dbPath}" "BEGIN;
+                    CREATE TABLE IF NOT EXISTS \"backup_dirs\" 
+                    (
+                        \"backup_dir_ID\" INTEGER PRIMARY KEY ,
+                        \"backup_dir\" VARCHAR NOT NULL UNIQUE
+                    );
+                    COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "${dbPath}" "PRAGMA table_info(backup_dirs);" | awk -F'|' '{print $2}' | grep -q backup_dir ; then
+            log="${log} 
+            ➜ ERROR: the DB table could not be created (backup_dirs)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # backup_files:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "${dbPath}" "BEGIN;
+                    CREATE TABLE IF NOT EXISTS \"backup_files\" 
+                    (
+                        \"backup_file_ID\" INTEGER PRIMARY KEY ,
+                        \"backup_dir_ID\" INTEGER NOT NULL ,
+                        \"profile_ID\" INTEGER NOT NULL ,
+                        \"filename\" VARCHAR NOT NULL ,
+                        \"processing_timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,
+                        UNIQUE (\"backup_dir_ID\", \"filename\")
+                    );
+                    CREATE INDEX IF NOT EXISTS \"idx_backup_files_profile_timestamp\" ON \"backup_files\" (\"profile_ID\", \"processing_timestamp\");
+                    CREATE INDEX IF NOT EXISTS \"idx_backup_files_backup_dir_ID\" ON \"backup_files\" (\"backup_dir_ID\");
+                    COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "${dbPath}" "PRAGMA table_info(backup_files);" | awk -F'|' '{print $2}' | grep -q processing_timestamp ; then
+            log="${log} 
+            ➜ ERROR: the DB table could not be created (backup_files)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # backup_clean_orphaned:
+        # ---------------------------------------------------------------------
+        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+                                       ADD COLUMN \"backup_clean_orphaned\" VARCHAR DEFAULT ('false'); 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_clean_orphaned ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (backup_clean_orphaned)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        if [[ "${error}" == 0 ]]; then
+            # lift DB version:
+            lift_db 11 12
         fi
         error=0
     fi
