@@ -2,7 +2,7 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.5.99.7 [2026-xx-xx] 
+1.5.99.7 [2026-05-24] 
   IMPLEMENTATIONS:
  - [shell]  Es wird jetzt ein Verzeichnis Backup-Dateien in der DB geführt. 
             Das gewährleistet eine saubere Rotation auch bei älteren Dateien oder wenn die Systemzeit des Scanners falsch ist. (issue #79)
@@ -10,6 +10,7 @@ known issues / limitations:
             ⚠️ Bestehende Backupdateien fallen durch dieses Update aus der Rotation und müssen ggf. selbst gelöscht werden.
   IMPROVEMENT:
  - [GUI]    Im Folder Picker können jetzt Zielordner automatisch erstellt werden und weitere Detailverbesserungen (extra für DaveR 😉)
+ - [GUI]    Auf der Übersichtsseite gibt es jetzt eine Echzeitfortschrittsanzeige (extra für DaveR 😉)
 
 1.5.99.6 [2026-05-14] 
   IMPLEMENTATIONS:

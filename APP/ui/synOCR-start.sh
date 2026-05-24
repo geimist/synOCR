@@ -118,6 +118,9 @@ for i in "$@" ; do
             callFrom=GUI
 #           shift
             ;;
+        run)
+            callFrom=shell
+            ;;
     esac
 done
 
@@ -225,16 +228,28 @@ done
 
 # monthly check for update in background:
     check_update() {
-        if [[ "${checkmon}" != $(date +%m) ]]; then
-            server_url=$(curl -s "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION" | jq -r '.serverURL')
-            local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
-            if [ "$(grep "^beta" /var/packages/synOCR/INFO | cut -d '"' -f2)" = yes ]; then
-                release_channel=beta
-            else
-                release_channel=release
+        if [[ "${checkmon}" = $(date +%m) ]]; then
+            version_json=""
+            version_json=$(synocr_fetch_version_json) || true
+            if [ -z "${version_json}" ]; then
+                return 0
             fi
+            server_url=$(synocr_version_server_url "${version_json}")
+            synocr_version_parse_package_repo "${version_json}"
+            package_repo=$(synocr_package_repo_feed_status "${repo_feed_url}" "${repo_host_pattern}" "${repo_config_ready}")
+            local_version=$(grep "^version" /var/packages/synOCR/INFO | cut -d '"' -f2)
+            release_channel=$(synocr_release_channel)
 
-            server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "${server_url}?file=VERSION&version=${local_version}&arch=${machinetyp}&dsm=${dsm_version}&dsm_build=${dsm_buildnumber}&total_pages=${global_pagecount}&total_documents=${global_ocrcount}&uuid=${UUID}&device=${device}" )
+            server_info=$(synocr_server_fetch_version_info "${server_url}" \
+                "version=${local_version}" \
+                "arch=${machinetyp}" \
+                "dsm=${dsm_version}" \
+                "dsm_build=${dsm_buildnumber}" \
+                "total_pages=${global_pagecount}" \
+                "total_documents=${global_ocrcount}" \
+                "uuid=${UUID}" \
+                "device=${device}" \
+                "package_repo=${package_repo}")
             online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".version)
             downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".downloadUrl )
             changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".changeLogUrl )
@@ -264,6 +279,12 @@ done
         fi
     }
     check_update &
+
+    # GUI progress: begin or extend session (overlapping runs must not reset counters)
+    SYNOCR_PROGRESS_TOTAL=$(synocr_count_input_files)
+    SYNOCR_PROGRESS_STARTED_AT=$(date +%s)
+    export SYNOCR_PROGRESS_TOTAL SYNOCR_PROGRESS_STARTED_AT
+    synocr_status_begin_run "${SYNOCR_PROGRESS_TOTAL}"
 
 # load configuration:
     sSQL="SELECT 
@@ -401,6 +422,9 @@ done
             continue
         fi
 
+        export SYNOCR_PROGRESS_PROFILE="${profile}"
+        export SYNOCR_PROGRESS_PROFILE_ID="${profile_ID}"
+
         if echo "${LOGDIR}" | grep -q "/volume" && [ -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] ;then
             ./synOCR.sh "${profile_ID}" "${LOGFILE}" >> "${LOGFILE}" 2>&1     # $LOGFILE is passed as a parameter to synOCR, since the file may be needed there for ERRORFILES
         else
@@ -434,6 +458,9 @@ done
             exit_status=ERROR
         fi
     done <<< "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")"
+
+    # Drop status only when no worker is active (avoid clearing during overlapping runs)
+    synocr_status_clear_if_idle
 
 if  [ "${exit_status}" = ERROR ] ; then
     exit 1

@@ -35,8 +35,15 @@
         fi
     }
 
+    synocr_exit_cleanup() {
+        if [ -n "${work_tmp_main:-}" ] && [ -d "${work_tmp_main}" ]; then
+            rm -rf "${work_tmp_main}"
+        fi
+        cleanup_lockfile
+    }
+
     trap 'failure ${LINENO} "${BASH_COMMAND}"' ERR
-    trap 'cleanup_lockfile' EXIT INT TERM
+    trap 'synocr_exit_cleanup' EXIT INT TERM
 
 
     echo "    -----------------------------------"
@@ -89,6 +96,10 @@
 
     echo $$ > "${LOCKFILE}/pid"
     echo "Lock file created for PID $$"
+
+    if [ -n "${SYNOCR_PROGRESS_TOTAL:-}" ]; then
+        synocr_status_begin_run "${SYNOCR_PROGRESS_TOTAL}"
+    fi
 
 
 # to which user/group the DSM notification should be sent:
@@ -329,6 +340,17 @@
         echo "  thresh. black pxl:      ${blank_page_detection_black_pixel_ratio}"
     fi
     echo "clean up spaces:          ${clean_up_spaces}"
+
+    synocr_status_write \
+        profile "${profile}" \
+        profile_id "${profile_ID}"
+    if [ -n "${SYNOCR_PROGRESS_TOTAL:-}" ]; then
+        synocr_status_begin_run "${SYNOCR_PROGRESS_TOTAL}"
+    fi
+    if [ -n "${SYNOCR_PROGRESS_STARTED_AT:-}" ]; then
+        synocr_status_write started_at "${SYNOCR_PROGRESS_STARTED_AT}"
+    fi
+
     echo -n "Date search method:       "
     if [ "${date_search_method}" = python ] ; then
         echo "use Python"
@@ -2439,6 +2461,7 @@ while read -r input ; do
     filename="${input##*/}"
     title="${filename%.*}"
     echo "CURRENT FILE:   ➜ source: ${filename}"
+    synocr_status_update_step img2pdf "${filename}"
 #    date_start=$(date +%s)
 
 
@@ -2502,6 +2525,7 @@ while read -r input1 ; do
 #  are capped so the loop cannot block indefinitely.)
 # ---------------------------------------------------------------------
     if [[ ${delay:-0} -ne 0 ]]; then
+        synocr_status_update_step delay "${filename}"
         delay_loop_start=$(date +%s)
         while true; do
             current_time=$(date +%s)
@@ -2540,6 +2564,7 @@ while read -r input1 ; do
     echo "${dashline2}"
     echo "CURRENT FILE:   ➜ ${filename}"
     file_processing_log 1 "${filename}"
+    synocr_status_file_pipeline_start "${filename}"
     date_start_file=$(date +%s)
     was_splitted=0
     split_error=0
@@ -2587,6 +2612,7 @@ while read -r input1 ; do
     if [ "${adjustColor}" = true ] && [[ "${keep_hash}" = "true" ]]; then
         printf "%s\n\n" "${log_indent}adjustColor is disabled because --keep_hash is set"
     elif [ "${adjustColor}" = true ] && [ "${python_check}" = "ok" ]; then
+        synocr_status_update_step color_adjust "${filename}"
         printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" " adjust color" "${dashline1}"
         printf "${log_indent}used parameter: %s\n" "${args[*]}"
 
@@ -2614,6 +2640,7 @@ while read -r input1 ; do
 
 # OCRmyPDF:
 # ---------------------------------------------------------------------
+    synocr_status_update_step ocr "${filename}"
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "processing PDF @ OCRmyPDF:" "${dashline1}"
 
     dockerlog=$(OCRmyPDF 2>&1)
@@ -2651,6 +2678,7 @@ while read -r input1 ; do
 # detect & remove blank pages with scanrep (https://pypi.org/project/scanprep/):
 # ---------------------------------------------------------------------
     if [ "${blank_page_detection_switch}" = true ] && [ "${python_check}" = "ok" ]; then
+        synocr_status_update_step blank_pages "${filename}"
         printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "detect & remove blank pages:" "${dashline1}"
 
         pagePreCount=$( py_page_count "${outputtmp}" )
@@ -2689,6 +2717,7 @@ while read -r input1 ; do
 # document split handling
 # ---------------------------------------------------------------------
     if [ -n "${documentSplitPattern}" ] && [ "${python_check}" = "ok" ]; then
+        synocr_status_update_step split "${filename}"
         printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "document split handling:" "${dashline1}"
 
     # identify split pages / write to an array:
@@ -2975,6 +3004,7 @@ while read -r input ; do
     title="${filename%.*}"
     echo "${dashline2}"
     echo "CURRENT FILE:   ➜ ${filename}"
+    synocr_status_update_step pdftotext "${filename}"
     tmp_date_search_method="${date_search_method}"    # able to use a temporary fallback to regex for each file
 
     if [ "${delSearchPraefix}" = "yes" ] && [ -n "${SearchPraefix}" ]; then
@@ -3048,12 +3078,14 @@ while read -r input ; do
 
 # search by tags:
 # ---------------------------------------------------------------------
+    synocr_status_update_step tags "${filename}"
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "search tags in ocr text:" "${dashline1}"
     tag_search
     printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
 
 # search by date:
 # ---------------------------------------------------------------------
+    synocr_status_update_step date "${filename}"
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "search for a valid date in ocr text:" "${dashline1}"
     dateIsFound=no
     find_date 1
@@ -3080,12 +3112,14 @@ while read -r input ; do
 
 # compose and rename file names / move to target:
 # ---------------------------------------------------------------------
+    synocr_status_update_step rename "${filename}"
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "rename and sort to target folder:" "${dashline1}"
     rename
     printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_file )))]"
 
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "final tasks:" "${dashline1}"
 
+    synocr_status_update_step notify "${filename}"
 
 # Notification:
 # ---------------------------------------------------------------------
@@ -3155,6 +3189,9 @@ while read -r input ; do
 
     printf "\ncleanup:\n"
 
+    synocr_status_increment_files_completed
+    synocr_status_update_step cleanup "${filename}"
+
 # delete temporary working directory:
 # ---------------------------------------------------------------------
     echo "  delete tmp-files ..."
@@ -3176,6 +3213,7 @@ done <<<"${files_step2}"
 
 # prepare steps (check / install / activate python enviroment & check docker):
 # --------------------------------------------------------------------
+    synocr_status_update_step prepare
     update_dockerimage
 
     printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
@@ -3191,6 +3229,11 @@ done <<<"${files_step2}"
         printf "%s\n" "${log_indent}prepare_python: ! ! ! ERROR ! ! ! "
     fi
 
+    # GUI: publish this profile's step list to synOCR.status.json (equal-weight steps)
+    synocr_build_step_list
+    synocr_status_publish_steps
+    synocr_status_write profile "${profile}" profile_id "${profile_ID}"
+
 
 # main steps:
 # ---------------------------------------------------------------------
@@ -3201,7 +3244,6 @@ done <<<"${files_step2}"
 # create temporary working directory
 # ---------------------------------------------------------------------
     work_tmp_main=$(mktemp -d -t tmp.XXXXXXXXXX)
-    trap '[ -d "${work_tmp_main}" ] && rm -rf "${work_tmp_main}"; exit' EXIT
     echo "Target temp directory:    ${work_tmp_main}"
 
     main_1st_step

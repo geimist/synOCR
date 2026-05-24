@@ -12,62 +12,69 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 
 # Read file status:
 # ---------------------------------------------------------------------
-    # Count of unfinished PDF files:
-    count_input_file=0
+    count_input_file=$(synocr_count_input_files)
 
-    while read -r entry ; do
-        INPUTDIR=$(echo "$entry" | awk -F'\t' '{print $1}')
-        INPUTDIR="${INPUTDIR%/}/"
-        SearchPraefix=$(echo "$entry" | awk -F'\t' '{print $2}')
-        img2pdf=$(echo "$entry" | awk -F'\t' '{print $3}')
+    # Live progress: initial render server-side; bars/icon/open-file count via synocr-progress.js
+    [ -z "${lang_main_progress_files}" ] && lang_main_progress_files='Gesamt: <x id="done"/> von <x id="total"/> Dateien'
+    [ -z "${lang_main_alldone}" ] && lang_main_alldone="All done"
 
-        if [ "$img2pdf" = true ]; then
-            source_file_type="\(JPG\|jpg\|PNG\|png\|TIFF\|tiff\|JPEG\|jpeg\|PDF\|pdf\)"
-        else
-            source_file_type="\(PDF\|pdf\)"
-        fi
+    synocr_progress_compute
+    _synocr_progress_style="display:none;"
+    if [ "${synocr_pg_running:-0}" -eq 1 ]; then
+        _synocr_progress_style=""
+    fi
 
-        exclusion=false
+    _synocr_open_files_row_style="display:none;"
+    if [ "${count_input_file:-0}" -gt 0 ] && [ "${synocr_pg_running:-0}" -eq 0 ]; then
+        _synocr_open_files_row_style=""
+    fi
 
-        if echo "${SearchPraefix}" | grep -qE '^!' ; then
-            # is the prefix / suffix an exclusion criterion?
-            exclusion=true
-            SearchPraefix="${SearchPraefix#!}"
-        fi
+    [ -z "${lang_edit_profname}" ] && lang_edit_profname="Profile name"
 
-        if echo "${SearchPraefix}" | grep -q "\$"$ ; then
-            # is suffix
-            SearchPraefix="${SearchPraefix%?}"
-            if [[ "$exclusion" = false ]] ; then
-                count_input_file=$(( $(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*${SearchPraefix}\.${source_file_type}$" -type f -printf '.' | wc -c ) + count_input_file ))
-            elif [[ "$exclusion" = true ]] ; then
-                count_input_file=$(( $(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*\.${source_file_type}$" -not -iname "*${SearchPraefix}.*" -type f -printf '.' | wc -c ) + count_input_file ))
-            fi
-        else
-            # is prefix
-            SearchPraefix="${SearchPraefix%%\$}"
-            if [[ "$exclusion" = false ]] ; then
-                count_input_file=$(( $(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}${SearchPraefix}.*\.${source_file_type}$" -type f -printf '.' | wc -c ) + count_input_file ))
-            elif [[ "$exclusion" = true ]] ; then
-                count_input_file=$(( $(find "${INPUTDIR}" -maxdepth 1 -regex "${INPUTDIR}.*\.${source_file_type}$" -not -iname "${SearchPraefix}*" -type f -printf '.' | wc -c ) + count_input_file ))
-            fi
-        fi
-    done <<< "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT INPUTDIR, SearchPraefix, img2pdf FROM config WHERE active='1' ")"
+    _pg_display_file="-"
+    [ -n "${synocr_pg_file}" ] && _pg_display_file="${synocr_pg_file}"
+    _pg_display_step="-"
+    [ -n "${synocr_pg_step_label}" ] && _pg_display_step="${synocr_pg_step_label}"
+    _pg_step_fraction=""
+    if [ "${synocr_pg_step_total:-0}" -gt 0 ]; then
+        _pg_step_fraction=" (${synocr_pg_step_index:-0}/${synocr_pg_step_total})"
+    fi
+    _pg_files_label=$(synocr_lang_fill_x "${lang_main_progress_files}" done "${synocr_pg_files_done:-0}" total "${synocr_pg_files_total:-0}")
+
+    _pg_files_bar_class="progress-bar"
+    _pg_file_bar_class="progress-bar bg-info"
+    if [ "${synocr_pg_running:-0}" -eq 1 ]; then
+        _pg_files_bar_class="progress-bar progress-bar-striped progress-bar-animated"
+        _pg_file_bar_class="progress-bar bg-info progress-bar-striped progress-bar-animated"
+    fi
+
+    _pg_profile_style="display:none;"
+    _pg_profile_text=""
+    if [ -n "${synocr_pg_profile}" ]; then
+        _pg_profile_style=""
+        _pg_profile_text="${synocr_pg_profile}"
+    fi
+
+    synocr_progress_config_json=$(jq -n \
+        --arg statusUrl "index.cgi?page=main-status" \
+        --arg filesTpl "${lang_main_progress_files}" \
+        --arg iconIdle "images/status_green@geimist.svg" \
+        --arg iconBusy "images/sanduhr_blue@geimist.svg" \
+        --arg allDoneText "${lang_main_alldone}" \
+        --arg profileLabel "${lang_edit_profname}" \
+        --argjson pollMs 2500 \
+        '{statusUrl:$statusUrl,filesTpl:$filesTpl,iconIdle:$iconIdle,iconBusy:$iconBusy,allDoneText:$allDoneText,profileLabel:$profileLabel,pollMs:$pollMs}' 2>/dev/null) || synocr_progress_config_json=""
 
 # manual synOCR start:
 # ---------------------------------------------------------------------
-    if [[ "$page" == "main-run-synocr" ]]; then
-        echo '
-        <div class="Content_1Col_full">'
-            /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh GUI
-            echo '
-            <meta http-equiv="refresh" content="2; URL=index.cgi?page=main">
-        </div>'
+    if [[ "${synocr_request_page}" == "main-run-synocr" ]]; then
+        nohup /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh run >/dev/null 2>&1 &
+        echo '<meta http-equiv="refresh" content="0; URL=index.cgi?page=main">'
     fi
 
 # manual synOCR start monitoring:
 # ---------------------------------------------------------------------
-    if [[ "$page" == "main-run-synocr-monitoring" ]]; then
+    if [[ "${synocr_request_page}" == "main-run-synocr-monitoring" ]]; then
         /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1 &
 
         echo '
@@ -78,7 +85,7 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 
 # manual synOCR stop monitoring:
 # ---------------------------------------------------------------------
-    if [[ "${page}" == "main-stop-synocr-monitoring" ]]; then
+    if [[ "${synocr_request_page}" == "main-stop-synocr-monitoring" ]]; then
         /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh stop >/dev/null 2>&1 &
        
         echo '
@@ -89,15 +96,16 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 
 # Force synOCR exit:
 # ---------------------------------------------------------------------
-    if [[ "${page}" == "main-kill-synocr" ]]; then
+    if [[ "${synocr_request_page}" == "main-kill-synocr" ]]; then
         killall synOCR.sh
         docker stop -t 0 synOCR > /dev/null  2>&1
+        synocr_status_clear
         echo '<meta http-equiv="refresh" content="0; URL=index.cgi?page=main">'
     fi
 
 # configure DSM package feed (synOCR repo) via Docker:
 # ---------------------------------------------------------------------
-    if [[ "${page}" == "main-setup-repo-feed" ]]; then
+    if [[ "${synocr_request_page}" == "main-setup-repo-feed" ]]; then
         echo '
     <h2 class="synocr-text-blue mt-3">synOCR '"${lang_page1}"'</h2>
     <div class="Content_1Col_full text-center">
@@ -109,23 +117,16 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
     </div>'
     fi
 
-    if [[ "${page}" == "main-setup-repo-feed-run" ]]; then
+    if [[ "${synocr_request_page}" == "main-setup-repo-feed-run" ]]; then
         echo '
     <h2 class="synocr-text-blue mt-3">synOCR '"${lang_page1}"'</h2>
     <div class="Content_1Col_full">
         <p class="text-center mt-3 mb-2 px-2" style="font-size: 0.95rem;">'"${lang_main_update_repo_feed_wait_working}"'</p>
         <div id="synocr-feed-wait-spinner" class="text-center mb-3"><img src="images/status_loading.gif" width="32" height="32" alt="" role="presentation"></div>'
-        setup_version_info=$(curl -s --connect-timeout 10 --max-time 20 "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION")
-        setup_repo_feed_url=$(echo "${setup_version_info}" | jq -r '.distribution.packageRepo.feedUrl // empty')
-        setup_repo_name=$(echo "${setup_version_info}" | jq -r '.distribution.packageRepo.name // empty')
-        setup_repo_host_pattern=$(echo "${setup_version_info}" | jq -r '.distribution.packageRepo.hostPattern // empty')
-        setup_repo_setup_guide_image=$(echo "${setup_version_info}" | jq -r '.distribution.packageRepo.setupGuideImageUrl // empty')
-        if [ -z "${setup_repo_host_pattern}" ] && [ -n "${setup_repo_feed_url}" ]; then
-            setup_repo_host_pattern=$(echo "${setup_repo_feed_url}" | sed -E 's#^https?://##; s#/.*$##')
-        fi
+        setup_version_info=""
         setup_repo_config_ready=0
-        if [ -n "${setup_repo_feed_url}" ] && [ -n "${setup_repo_name}" ] && [ -n "${setup_repo_setup_guide_image}" ]; then
-            setup_repo_config_ready=1
+        if setup_version_info=$(synocr_fetch_version_json --connect-timeout 10 --max-time 20); then
+            synocr_version_parse_package_repo "${setup_version_info}" setup_repo_
         fi
         setup_msg="lang_main_update_repo_feed_setup_error_unknown"
         setup_rc=""
@@ -183,7 +184,7 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 
 # Body:
 # ---------------------------------------------------------------------
-if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
+if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == "" ]]; then
     # -> Headline
 
     echo '
@@ -228,30 +229,23 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
 
 #   notify about update, if necessary:
 # ---------------------------------------------------------------------
-    if [ "$(grep "^beta" /var/packages/synOCR/INFO | cut -d '"' -f2)" = yes ]; then
-        release_channel=beta
-    else
-        release_channel=release
-    fi
-    
-    version_info=$(curl -s "https://raw.githubusercontent.com/geimist/synOCR/master/VERSION")
-    server_url=$(echo "${version_info}" | jq -r '.serverURL // empty')
-    if [ -n "${server_url}" ]; then
-        server_info=$(wget --no-check-certificate --timeout=20 --tries=3 -q -O - "${server_url}?file=VERSION" )
-    else
-        server_info=""
+    release_channel=$(synocr_release_channel)
+
+    version_info=""
+    server_info=""
+    repo_feed_url=""
+    repo_name=""
+    repo_host_pattern=""
+    repo_setup_guide_image=""
+    repo_config_ready=0
+    if version_info=$(synocr_fetch_version_json); then
+        server_url=$(synocr_version_server_url "${version_info}")
+        server_info=$(synocr_server_fetch_version_info "${server_url}")
+        synocr_version_parse_package_repo "${version_info}"
     fi
     online_version=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".version )
     downloadUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".downloadUrl )
     changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".changeLogUrl )
-    repo_feed_url=$(echo "${version_info}" | jq -r '.distribution.packageRepo.feedUrl // empty')
-    repo_name=$(echo "${version_info}" | jq -r '.distribution.packageRepo.name // empty')
-    repo_host_pattern=$(echo "${version_info}" | jq -r '.distribution.packageRepo.hostPattern // empty')
-    repo_setup_guide_image=$(echo "${version_info}" | jq -r '.distribution.packageRepo.setupGuideImageUrl // empty')
-
-    if [ -z "${repo_host_pattern}" ] && [ -n "${repo_feed_url}" ]; then
-        repo_host_pattern=$(echo "${repo_feed_url}" | sed -E 's#^https?://##; s#/.*$##')
-    fi
 
     local_version=$(grep "^version" /var/packages/synOCR/INFO  | cut -d '"' -f2)
     highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
@@ -264,22 +258,9 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         </h5>'
     fi
 
-    repo_config_ready=0
-    if [ -n "${repo_feed_url}" ] && [ -n "${repo_name}" ] && [ -n "${repo_setup_guide_image}" ]; then
-        repo_config_ready=1
-    fi
-
     repo_feed_missing=0
-    if [ "${repo_config_ready}" -eq 1 ]; then
-        if [ -r "/usr/syno/etc/packages/feeds" ]; then
-            if jq -e --arg feed "${repo_feed_url}" '.[] | select(.feed == $feed or .feed == ($feed + "/") or .feed == ($feed | sub("/$"; "")))' /usr/syno/etc/packages/feeds >/dev/null 2>&1; then
-                repo_feed_missing=0
-            elif [ -n "${repo_host_pattern}" ] && grep -Fq "${repo_host_pattern}" /usr/syno/etc/packages/feeds; then
-                repo_feed_missing=0
-            else
-                repo_feed_missing=1
-            fi
-        fi
+    if [ "$(synocr_package_repo_feed_status "${repo_feed_url}" "${repo_host_pattern}" "${repo_config_ready}")" = missing ]; then
+        repo_feed_missing=1
     fi
 
     repo_auto_setup_docker_ok=0
@@ -368,7 +349,7 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         docker image rm synocr_helper_image >/dev/null 2>&1
         echo '
         <div class="float-end">
-            <img src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px" '"${css_pulsate}"' '"${monitoring_title}"'>
+            <img id="synocr-main-status-icon" src="images/status_green@geimist.svg" height="120" width="120" style="padding: 10px" '"${css_pulsate}"' '"${monitoring_title}"' alt="">
         </div>'
     else
         # remove dockercontainer & image synocr_helper
@@ -376,7 +357,7 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         docker image rm synocr_helper_image >/dev/null 2>&1
         echo '
         <div class="float-end">
-            <img src="images/sanduhr_blue@geimist.svg" height="120" width="120" style="padding: 10px" '"${css_pulsate}"' '"${monitoring_title}"'>
+            <img id="synocr-main-status-icon" src="images/sanduhr_blue@geimist.svg" height="120" width="120" style="padding: 10px" '"${css_pulsate}"' '"${monitoring_title}"' alt="">
         </div>'
     fi
 
@@ -439,52 +420,40 @@ if [[ "${page}" == "main" ]] || [[ "${page}" == "" ]]; then
         fi
     fi
 
-# Section Status / Statistics:
+# Status / statistics (progress while running; open-file count only when queued and idle)
 echo '
-<div class="accordion" id="Accordion-01">
-    <div class="accordion-item border-start-0 border-end-0" style="border-style: dashed none dashed none; size: 1px;">
-        <h2 class="accordion-header" id="Heading-01">
-            <button class="accordion-button collapsed bg-white synocr-accordion-glow-off" type="button" data-bs-toggle="collapse" data-bs-target="#Collapse-01" aria-expanded="false" aria-controls="collapseTwo">
-                <span class="synocr-text-blue">'"${lang_main_statshead}"':</span>
-            </button>
-        </h2>
-        <div id="Collapse-01" class="accordion-collapse collapse border-white" aria-labelledby="Heading-01" data-bs-parent="#Accordion-01">
-            <div class="accordion-body">
-                <table class="table table-borderless" style="width: 70%;">
-                    <thead">
-                        <tr>
-                            <th scope="col">'"${lang_main_openjobs}"':</th>
-                            <th scope="col">&nbsp;</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>'
-                            if [[ "${count_input_file}" == 0 ]]; then
-                                echo '
-                                <td class="synocr-text-blue">'"${lang_main_openfilecount}"':</td>
-                                <td class="synocr-text-green">'"${lang_main_alldone}"'</td>'
-                            else
-                                echo '
-                                <td class="synocr-text-blue">'"${lang_main_openfilecount}"': </td>
-                                <td class="synocr-text-red">'"${count_input_file}"'</td>'
-                            fi
-                            echo '
-                        </tr>
-                        <tr>
-                            <td class="synocr-text-blue">'"${lang_main_totalsince}"' '"$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")"' (PDF / '"${lang_main_pages}"'):</td>
-                            <td class="synocr-text-green">'"$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")"' / '"$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")"'</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+<div id="synocr-status-stats" class="mb-3">
+    <p class="synocr-text-blue mb-2"><strong>'"${lang_main_statshead}"'</strong></p>
+    <div id="synocr-progress" class="mb-2" style="'"${_synocr_progress_style}"'">
+        <label class="small text-muted mb-1" id="synocr-progress-files-label">'"${_pg_files_label}"'</label>
+        <div class="progress mb-2" style="height: 1.25rem;">
+            <div id="synocr-progress-files-bar" class="'"${_pg_files_bar_class}"'" role="progressbar" style="width: '"${synocr_pg_percent_files:-0}"'%;" aria-valuenow="'"${synocr_pg_percent_files:-0}"'" aria-valuemin="0" aria-valuemax="100">'"${synocr_pg_percent_files:-0}"'%</div>
         </div>
+        <div class="small text-muted mb-1">
+            <div id="synocr-progress-file-name">'"${_pg_display_file}"'</div>
+            <div><span id="synocr-progress-step-label">'"${_pg_display_step}"'</span><span id="synocr-progress-step-fraction">'"${_pg_step_fraction}"'</span></div>
+        </div>
+        <div class="progress mb-1" style="height: 1.25rem;">
+            <div id="synocr-progress-file-bar" class="'"${_pg_file_bar_class}"'" role="progressbar" style="width: '"${synocr_pg_percent_file:-0}"'%;" aria-valuenow="'"${synocr_pg_percent_file:-0}"'" aria-valuemin="0" aria-valuemax="100">'"${synocr_pg_percent_file:-0}"'%</div>
+        </div>
+        <p id="synocr-progress-profile" class="small text-muted mb-0" style="'"${_pg_profile_style}"'">
+            <span class="synocr-text-blue">'"${lang_edit_profname}"':</span>
+            <span id="synocr-progress-profile-value">'"${_pg_profile_text}"'</span>
+        </p>
     </div>
-</div>
+    <table class="table table-borderless mb-0" style="width: 70%;">
+        <tbody>
+            <tr id="synocr-open-files-row" style="'"${_synocr_open_files_row_style}"'">
+                <td class="synocr-text-blue">'"${lang_main_openfilecount}"':</td>
+                <td id="synocr-open-files-value" class="synocr-text-red">'"${count_input_file}"'</td>
+            </tr>
+            <tr>
+                <td class="synocr-text-blue">'"${lang_main_totalsince}"' '"$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")"' (PDF / '"${lang_main_pages}"'):</td>
+                <td class="synocr-text-green">'"$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")"' / '"$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")"'</td>
+            </tr>
+        </tbody>
+    </table>
+</div>'
 
-
-        <!-- <p>Hier soll in Zukunft noch eine Statusübersicht / Statistik zu finden sein …<br>
-        - https://developers.google.com/chart/interactive/docs/quick_start<br>
-        - http://jsfiddle.net/api/post/jquery/1.6/ (http://elycharts.com/examples) </p>
-        <br><div class="tab"><p>'"${dbinfo}"'</p></div>-->'
 
 fi

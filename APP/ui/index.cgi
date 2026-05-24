@@ -32,7 +32,8 @@
         "${app_home}/template/stylesheet.css" \
         "${app_home}/template/bootstrap/css/bootstrap.min.css" \
         "${app_home}/template/jquery/jquery-3.7.1.min.js" \
-        "${app_home}/template/bootstrap/js/bootstrap.min.js"
+        "${app_home}/template/bootstrap/js/bootstrap.min.js" \
+        "${app_home}/template/synocr-progress.js"
     do
         [ -f "${_synocr_f}" ] || continue
         _synocr_m=$(stat -c %Y "${_synocr_f}" 2>/dev/null)
@@ -46,6 +47,7 @@
     synocr_stylesheet_href="template/stylesheet.css${synocr_asset_q}"
     synocr_jq_src="template/jquery/jquery-3.7.1.min.js${synocr_asset_q}"
     synocr_bootstrap_js_src="template/bootstrap/js/bootstrap.min.js${synocr_asset_q}"
+    synocr_progress_js_src="template/synocr-progress.js${synocr_asset_q}"
     unset _synocr_f _synocr_m
 
 # Evaluate app authentication
@@ -134,6 +136,7 @@
         source "${var}"
     fi
 
+    synocr_request_page="${page}"
     mainpage=${page%%-*}
 
     if [ -z "${page}" ]; then
@@ -142,6 +145,18 @@
     fi
     
     "${set_var}" "${var}" "page" ""
+
+    # Live progress JSON for synocr-progress.js (no HTML shell)
+    if [ "${synocr_request_page}" = "main-status" ]; then
+        cd "${app_home}" || exit 1
+        export SYNOCR_APP_HOME="${app_home}"
+        echo "Content-type: application/json"
+        echo
+        if ! synocr_render_main_status_json; then
+            echo '{"state":"error","running":false,"files_remaining":0,"files_total":0,"files_done":0,"percent_files":0,"percent_file":0,"file":"","profile":"","step_id":"","step_label":"","step_index":0,"step_total":0}'
+        fi
+        exit 0
+    fi
 
 
 # Layout - Open basic framework incl. navigation -
@@ -265,7 +280,14 @@ echo '
     </article>
 
     <!-- Include bootstrap JavaScript 5.3.2 -->
-    <script src="'${synocr_bootstrap_js_src}'"></script>
+    <script src="'${synocr_bootstrap_js_src}'"></script>'
+# Main page: live progress script after bootstrap, outside the form
+if [ "${mainpage}" = "main" ] && [ -n "${synocr_progress_config_json:-}" ]; then
+    echo '
+    <script type="application/json" id="synocr-progress-config">'"${synocr_progress_config_json}"'</script>
+    <script src="'"${synocr_progress_js_src}"'"></script>'
+fi
+echo '
 
 </body>
 </html>'
