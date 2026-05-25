@@ -93,10 +93,25 @@ fi
 #    echo ''${TIMESTAMP}' - Backup python3_env from '${WEBGUI_FOLDER}'/python3_env to '${SYNOPKG_TEMP_UPGRADE_FOLDER}'/python3_env' >> /tmp/${SYNOPKG_PKGNAME}.history
 #fi
 
-# timer in older installations is no longer available. Please use the DSM task scheduler!:
-    if [[ $(printf "1.1.999\n$SYNOPKG_OLD_PKGVER" | sort -V | tail -n1) = "1.1.999" ]] ; then
-        echo "${PKG_DELETE_TIMER}" > $SYNOPKG_TEMP_LOGFILE
+# upgrade notices (timer, backup rotation) for Package Center:
+pkg_upgrade_notice=""
+
+if [[ $(printf "1.1.999\n${SYNOPKG_OLD_PKGVER}" | sort -V | tail -n1) = "1.1.999" ]]; then
+    pkg_upgrade_notice="${PKG_DELETE_TIMER}"
+fi
+
+if [[ $(printf "1.5.99.6\n${SYNOPKG_OLD_PKGVER}" | sort -V | tail -n1) = "1.5.99.6" ]]; then
+    backup_notice="⚠️ ${PKG_UPGRADE_BACKUP_ROTATION_TITLE}: ${PKG_UPGRADE_BACKUP_ROTATION_BODY}"
+    if [ -n "${pkg_upgrade_notice}" ]; then
+        pkg_upgrade_notice="${pkg_upgrade_notice}
+
+${backup_notice}"
+    else
+        pkg_upgrade_notice="${backup_notice}"
     fi
+fi
+
+[ -n "${pkg_upgrade_notice}" ] && echo "${pkg_upgrade_notice}" > "${SYNOPKG_TEMP_LOGFILE}"
 
 # check docker:
 if [ ! -e "/var/run/docker.sock" ]; then

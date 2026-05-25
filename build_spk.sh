@@ -309,6 +309,8 @@ exit 1
             echo 'PKG_NOINSTALL_MISSING_DOCKER_ERROR="lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR"' >> "${scripts_lang_lang}"
             echo 'PKG_DELETE_TIMER="lang_PKG_DELETE_TIMER"' >> "${scripts_lang_lang}"
             echo 'PKG_NOINSTALL_PYTHON_AARCH64_ERROR="lang_PKG_NOINSTALL_PYTHON_AARCH64_ERROR"' >> "${scripts_lang_lang}"
+            echo 'PKG_UPGRADE_BACKUP_ROTATION_TITLE="lang_PKG_UPGRADE_BACKUP_ROTATION_TITLE"' >> "${scripts_lang_lang}"
+            echo 'PKG_UPGRADE_BACKUP_ROTATION_BODY="lang_PKG_UPGRADE_BACKUP_ROTATION_BODY"' >> "${scripts_lang_lang}"
         fi
         synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART1 "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART1)"
         synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_ERROR_PART2 "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_ERROR_PART2)"
@@ -316,6 +318,8 @@ exit 1
         synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_MISSING_DOCKER_ERROR "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR)"
         synosetkeyvalue "${scripts_lang_lang}" PKG_NOINSTALL_PYTHON_AARCH64_ERROR "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_NOINSTALL_PYTHON_AARCH64_ERROR)"
         synosetkeyvalue "${scripts_lang_lang}" PKG_DELETE_TIMER "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_DELETE_TIMER)"
+        synosetkeyvalue "${scripts_lang_lang}" PKG_UPGRADE_BACKUP_ROTATION_TITLE "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_UPGRADE_BACKUP_ROTATION_TITLE)"
+        synosetkeyvalue "${scripts_lang_lang}" PKG_UPGRADE_BACKUP_ROTATION_BODY "$(get_key_value "$build_tmp/APP/ui/lang/lang_${lang}.txt" lang_PKG_UPGRADE_BACKUP_ROTATION_BODY)"
 
         # install_uifile:
         install_uifile_lang="$build_tmp/$PKG/WIZARD_UIFILES/install_uifile_${lang}"
