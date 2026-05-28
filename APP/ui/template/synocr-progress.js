@@ -2,12 +2,22 @@
  * Main page live UI: polls index.cgi?page=main-status (see #synocr-progress-config).
  * Loaded outside the <form> after bootstrap — DSM often blocks inline scripts in forms.
  * Updates: progress bars (while running), status icon, open-file row (queued and idle).
+ * After run ends: hold at 100% (doneHoldMs), subtle ring countdown, then fade-out (doneFadeMs).
  */
 (function () {
     "use strict";
 
     var pollMs = 2500;
     var timer = null;
+    var wasRunning = false;
+    /** @type {"hidden"|"running"|"doneHold"|"fading"} */
+    var progressPhase = "hidden";
+    var holdTimer = null;
+    var fadeTimer = null;
+    var fadeListener = null;
+
+    var RING_RADIUS = 8;
+    var RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
     function getConfig() {
         var el = document.getElementById("synocr-progress-config");
@@ -42,15 +52,251 @@
     }
 
     function formatFilesLabel(cfg, done, total) {
-        var tpl = cfg.filesTpl || 'Gesamt: <x id="done"/> von <x id="total"/> Dateien';
-        return fillXTags(tpl, { done: String(done), total: String(total) });
+        return fillXTags(cfg.filesTpl || "", { done: String(done), total: String(total) });
     }
 
     function formatStepFraction(stepIndex, stepTotal) {
         if (!stepTotal || stepTotal <= 0) {
             return "";
         }
-        return " (" + String(stepIndex || 0) + "/" + String(stepTotal) + ")";
+        return "(" + String(stepIndex || 0) + "/" + String(stepTotal) + ") ";
+    }
+
+    function clearCompletionTimers() {
+        if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+        }
+        if (fadeTimer) {
+            clearTimeout(fadeTimer);
+            fadeTimer = null;
+        }
+    }
+
+    function getProgressElements() {
+        return {
+            box: document.getElementById("synocr-progress"),
+            filesBar: document.getElementById("synocr-progress-files-bar"),
+            fileBar: document.getElementById("synocr-progress-file-bar"),
+            filesLabel: document.getElementById("synocr-progress-files-label"),
+            fileNameEl: document.getElementById("synocr-progress-file-name"),
+            stepLabelEl: document.getElementById("synocr-progress-step-label"),
+            stepFractionEl: document.getElementById("synocr-progress-step-fraction"),
+            profileLine: document.getElementById("synocr-progress-profile"),
+            profileValue: document.getElementById("synocr-progress-profile-value"),
+            ring: document.getElementById("synocr-progress-done-ring")
+        };
+    }
+
+    function setBarPercent(bar, pct, animated) {
+        if (!bar) {
+            return;
+        }
+        bar.style.width = pct + "%";
+        bar.setAttribute("aria-valuenow", pct);
+        bar.textContent = pct + "%";
+        bar.classList.remove("progress-bar-striped", "progress-bar-animated");
+        if (animated) {
+            bar.classList.add("progress-bar-striped", "progress-bar-animated");
+        }
+    }
+
+    function resetProgressVisualState(box) {
+        if (!box) {
+            return;
+        }
+        box.classList.remove("synocr-progress--done", "synocr-progress--hiding");
+        box.style.opacity = "";
+        box.style.transition = "";
+
+        var ring = document.getElementById("synocr-progress-done-ring");
+        if (ring) {
+            ring.classList.remove("synocr-progress-done-ring--active");
+            var arc = ring.querySelector(".synocr-progress-done-ring__arc");
+            if (arc) {
+                arc.style.transition = "";
+                arc.style.strokeDasharray = "";
+                arc.style.strokeDashoffset = "";
+            }
+        }
+    }
+
+    function removeFadeListener(box) {
+        if (fadeListener && box) {
+            box.removeEventListener("transitionend", fadeListener);
+            fadeListener = null;
+        }
+    }
+
+    function hideProgressBox(box) {
+        if (!box) {
+            return;
+        }
+        clearCompletionTimers();
+        removeFadeListener(box);
+        resetProgressVisualState(box);
+        box.style.display = "none";
+        progressPhase = "hidden";
+    }
+
+    function startRingCountdown(cfg, ring) {
+        if (!ring) {
+            return;
+        }
+        var arc = ring.querySelector(".synocr-progress-done-ring__arc");
+        if (!arc) {
+            return;
+        }
+        var holdMs = cfg.doneHoldMs || 5000;
+        ring.classList.add("synocr-progress-done-ring--active");
+        arc.style.strokeDasharray = String(RING_CIRCUMFERENCE);
+        arc.style.strokeDashoffset = "0";
+        arc.style.transition = "none";
+        arc.getBoundingClientRect();
+        arc.style.transition = "stroke-dashoffset " + holdMs + "ms linear";
+        arc.style.strokeDashoffset = String(RING_CIRCUMFERENCE);
+    }
+
+    function applyDoneHoldUI(cfg, data) {
+        var el = getProgressElements();
+        var box = el.box;
+        if (!box) {
+            return;
+        }
+
+        var total = data.files_total || 0;
+        var done = data.files_done || 0;
+        if (total > 0 && done < total) {
+            done = total;
+        }
+
+        box.style.display = "block";
+        box.style.opacity = "1";
+        box.classList.add("synocr-progress--done");
+        box.classList.remove("synocr-progress--hiding");
+
+        setBarPercent(el.filesBar, 100, false);
+        setBarPercent(el.fileBar, 100, false);
+
+        if (el.filesLabel) {
+            if (cfg.allDoneText) {
+                el.filesLabel.textContent = cfg.allDoneText;
+            } else {
+                el.filesLabel.textContent = formatFilesLabel(cfg, done, total || done);
+            }
+        }
+        if (el.profileLine) {
+            el.profileLine.style.display = "none";
+        }
+
+        startRingCountdown(cfg, el.ring);
+    }
+
+    function beginFadeOut(cfg, box) {
+        if (!box) {
+            return;
+        }
+        progressPhase = "fading";
+        box.classList.remove("synocr-progress--done");
+        box.classList.add("synocr-progress--hiding");
+
+        var ring = document.getElementById("synocr-progress-done-ring");
+        if (ring) {
+            ring.classList.remove("synocr-progress-done-ring--active");
+        }
+
+        var fadeMs = cfg.doneFadeMs || 500;
+        box.style.transition = "opacity " + fadeMs + "ms ease";
+        removeFadeListener(box);
+
+        fadeListener = function (e) {
+            if (e.target !== box || e.propertyName !== "opacity") {
+                return;
+            }
+            removeFadeListener(box);
+            if (fadeTimer) {
+                clearTimeout(fadeTimer);
+                fadeTimer = null;
+            }
+            hideProgressBox(box);
+        };
+        box.addEventListener("transitionend", fadeListener);
+
+        fadeTimer = setTimeout(function () {
+            fadeTimer = null;
+            removeFadeListener(box);
+            hideProgressBox(box);
+        }, fadeMs + 150);
+
+        box.style.opacity = "1";
+        box.getBoundingClientRect();
+        box.style.opacity = "0";
+    }
+
+    function startDoneHold(cfg, data) {
+        var box = document.getElementById("synocr-progress");
+        if (!box) {
+            return;
+        }
+        clearCompletionTimers();
+        removeFadeListener(box);
+        progressPhase = "doneHold";
+        applyDoneHoldUI(cfg, data);
+
+        var holdMs = cfg.doneHoldMs || 5000;
+        holdTimer = setTimeout(function () {
+            holdTimer = null;
+            beginFadeOut(cfg, box);
+        }, holdMs);
+    }
+
+    function cancelCompletionAndShowRunning(cfg, data) {
+        var el = getProgressElements();
+        var box = el.box;
+        if (!box) {
+            return;
+        }
+        clearCompletionTimers();
+        removeFadeListener(box);
+        resetProgressVisualState(box);
+        progressPhase = "running";
+        wasRunning = true;
+        box.style.display = "block";
+        box.style.opacity = "1";
+        renderRunningProgress(cfg, data, el);
+    }
+
+    function renderRunningProgress(cfg, data, el) {
+        el = el || getProgressElements();
+        var pf = data.percent_files || 0;
+        var pfile = data.percent_file || 0;
+
+        setBarPercent(el.filesBar, pf, true);
+        setBarPercent(el.fileBar, pfile, true);
+
+        if (el.filesLabel) {
+            el.filesLabel.textContent = formatFilesLabel(cfg, data.files_done || 0, data.files_total || 0);
+        }
+        if (el.fileNameEl) {
+            el.fileNameEl.textContent = data.file || "-";
+        }
+        if (el.stepLabelEl) {
+            el.stepLabelEl.textContent = data.step_label || "-";
+        }
+        if (el.stepFractionEl) {
+            el.stepFractionEl.textContent = formatStepFraction(
+                data.step_index || 0,
+                data.step_total || 0
+            );
+        }
+        if (el.profileLine && el.profileValue) {
+            if (data.profile) {
+                el.profileLine.style.display = "block";
+                el.profileValue.textContent = data.profile;
+            } else {
+                el.profileLine.style.display = "none";
+            }
+        }
     }
 
     /** Green check when idle and no input files; hourglass while running or files queued. */
@@ -80,57 +326,33 @@
             return;
         }
 
-        if (!data.running) {
-            box.style.display = "none";
+        if (data.running) {
+            if (progressPhase === "doneHold" || progressPhase === "fading") {
+                cancelCompletionAndShowRunning(cfg, data);
+                return;
+            }
+            progressPhase = "running";
+            wasRunning = true;
+            box.style.display = "block";
+            box.style.opacity = "1";
+            renderRunningProgress(cfg, data);
             return;
         }
 
-        box.style.display = "block";
+        if (progressPhase === "doneHold" || progressPhase === "fading") {
+            return;
+        }
 
-        var filesBar = document.getElementById("synocr-progress-files-bar");
-        var fileBar = document.getElementById("synocr-progress-file-bar");
-        var filesLabel = document.getElementById("synocr-progress-files-label");
-        var fileNameEl = document.getElementById("synocr-progress-file-name");
-        var stepLabelEl = document.getElementById("synocr-progress-step-label");
-        var stepFractionEl = document.getElementById("synocr-progress-step-fraction");
-        var profileLine = document.getElementById("synocr-progress-profile");
-        var profileValue = document.getElementById("synocr-progress-profile-value");
+        if (wasRunning && progressPhase === "running") {
+            wasRunning = false;
+            startDoneHold(cfg, data);
+            return;
+        }
 
-        var pf = data.percent_files || 0;
-        var pfile = data.percent_file || 0;
-
-        if (filesBar) {
-            filesBar.style.width = pf + "%";
-            filesBar.setAttribute("aria-valuenow", pf);
-            filesBar.textContent = pf + "%";
-        }
-        if (fileBar) {
-            fileBar.style.width = pfile + "%";
-            fileBar.setAttribute("aria-valuenow", pfile);
-            fileBar.textContent = pfile + "%";
-        }
-        if (filesLabel) {
-            filesLabel.textContent = formatFilesLabel(cfg, data.files_done || 0, data.files_total || 0);
-        }
-        if (fileNameEl) {
-            fileNameEl.textContent = data.file || "-";
-        }
-        if (stepLabelEl) {
-            stepLabelEl.textContent = data.step_label || "-";
-        }
-        if (stepFractionEl) {
-            stepFractionEl.textContent = formatStepFraction(
-                data.step_index || 0,
-                data.step_total || 0
-            );
-        }
-        if (profileLine && profileValue) {
-            if (data.profile) {
-                profileLine.style.display = "block";
-                profileValue.textContent = data.profile;
-            } else {
-                profileLine.style.display = "none";
-            }
+        if (progressPhase !== "hidden") {
+            hideProgressBox(box);
+        } else {
+            box.style.display = "none";
         }
     }
 

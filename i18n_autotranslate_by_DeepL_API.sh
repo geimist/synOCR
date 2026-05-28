@@ -101,6 +101,10 @@ i18n_escape_for_double_quoted_assign() {
     printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
 }
 
+sql_escape() {
+    printf "%s" "$1" | sed "s/'/''/g"
+}
+
 sec_to_time () {
 # this function converts a second value to hh:mm:ss
 # call: sec_to_time "string"
@@ -283,9 +287,11 @@ create_master() {
             continue
         fi
 
+        value_sql=$(sql_escape "${value}")
+
         # speichere die Werte in der Mastertabelle:
-        if ! sqlite3 "${i18n_DB}" "INSERT OR REPLACE INTO master_template ( $IDname varID, langID, version, timestamp, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion',(datetime('now','localtime')),'$value' ) "; then
-            echo "! ! ! ERROR @ LINE: INSERT OR REPLACE INTO master_template ( $IDname varID, langID, version, timestamp, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion',(datetime('now','localtime')),'$value' )"
+        if ! sqlite3 "${i18n_DB}" "INSERT OR REPLACE INTO master_template ( $IDname varID, langID, version, timestamp, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion',(datetime('now','localtime')),'${value_sql}' ) "; then
+            echo "! ! ! ERROR @ LINE: INSERT OR REPLACE INTO master_template ( $IDname varID, langID, version, timestamp, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion',(datetime('now','localtime')),'${value_sql}' )"
         else
             insertCount=$((insertCount + 1))
         fi
@@ -370,8 +376,7 @@ manual_import() {
             fi
 
             # maskiere single quotes:
-            value=$(echo "${value}" | sed -e "s/'/''/g")
-##          value="${value//\'/\'\'}"
+            value=$(sql_escape "${value}")
 
             # speichere die Werte in der strings-Tabelle:
             if ! sqlite3 "${i18n_DB}" "INSERT OR REPLACE INTO strings ( $IDname varID, langID, version, verified, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion','1','$value' ) "; then

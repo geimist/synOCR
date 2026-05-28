@@ -260,6 +260,51 @@ a.btn.btn-secondary:hover {
     }
 }
 
+/* Main page progress: completion hold + fade-out */
+#synocr-progress {
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+#synocr-progress.synocr-progress--hiding {
+    opacity: 0;
+}
+
+.synocr-progress-files-header {
+    min-height: 1.25rem;
+}
+
+.synocr-progress-done-ring {
+    display: none;
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    opacity: 0.55;
+}
+
+.synocr-progress-done-ring--active {
+    display: block;
+}
+
+.synocr-progress-done-ring__track {
+    stroke: #d7dfe8;
+    stroke-width: 2;
+}
+
+.synocr-progress-done-ring__arc {
+    stroke: #0086e5;
+    stroke-width: 2;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+#synocr-progress-step-fraction {
+    display: inline-block;
+    min-width: 3.5rem;
+    margin-right: 0.25rem;
+}
+
 /* NameSyntax chip editor (GUI edit) */
 .synocr-namesyntax-editor-wrap {
     max-width: 100%;

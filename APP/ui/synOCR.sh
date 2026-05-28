@@ -485,7 +485,7 @@ update_dockerimage()
 
     check_date=$(date +%Y-%m-%d)
 
-    if echo "${dockercontainer}" | grep -qE "latest$" && [ "${dockerimageupdate}" = 1 ] && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='${dockercontainer}' ") = "${check_date}" ]]; then
+    if synocr_needs_dockerimage_update; then
         printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "checks for ocrmypdf image update:" "${dashline1}"
         echo -n "${log_indent}➜ update image [${dockercontainer}] ➜ "
         updatelog=$(docker pull "${dockercontainer}" 2>/dev/null)
@@ -3214,10 +3214,21 @@ done <<<"${files_step2}"
 # prepare steps (check / install / activate python enviroment & check docker):
 # --------------------------------------------------------------------
     synocr_status_update_step prepare
-    update_dockerimage
 
-    printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
-    [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_all )))]"
+    synocr_build_step_list
+    synocr_status_publish_steps
+    synocr_status_write profile "${profile}" profile_id "${profile_ID}"
+
+    if synocr_needs_dockerimage_update; then
+        synocr_status_update_step docker_update
+        update_dockerimage
+    fi
+
+    if synocr_needs_python_env_prepare; then
+        synocr_status_update_step python_env
+        printf "\n  %s\n  | %-80s|\n  %s\n\n" "${dashline1}" "check the python3 installation and the necessary modules:" "${dashline1}"
+        [ "${loglevel}" = 2 ] && printf "\n%s\n\n" "${log_indent}[runtime up to now:    $(sec_to_time $(( $(date +%s) - date_start_all )))]"
+    fi
 
     prepare_python_log=$(prepare_python)
     if [ "$?" -eq 0 ]; then
@@ -3229,10 +3240,8 @@ done <<<"${files_step2}"
         printf "%s\n" "${log_indent}prepare_python: ! ! ! ERROR ! ! ! "
     fi
 
-    # GUI: publish this profile's step list to synOCR.status.json (equal-weight steps)
     synocr_build_step_list
     synocr_status_publish_steps
-    synocr_status_write profile "${profile}" profile_id "${profile_ID}"
 
 
 # main steps:

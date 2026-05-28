@@ -21,11 +21,6 @@ dsm_buildnumber=$(grep "^buildnumber" /etc.defaults/VERSION | cut -d '"' -f2 )
 machinetyp=$(uname --machine)
 device=$(uname -a | awk -F_ '{print $NF}' | sed "s/+/plus/g")
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
-sysInfo="$(sqlite3 "/usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite" "SELECT value_1 FROM system WHERE key IN ('checkmon', 'global_pagecount', 'global_ocrcount', 'UUID');" | tr '\n' '\t')"
-checkmon="$(echo "${sysInfo}" | awk -F'\t' '{print $1}')"
-global_pagecount="$(echo "${sysInfo}" | awk -F'\t' '{print $2}')"
-global_ocrcount="$(echo "${sysInfo}" | awk -F'\t' '{print $3}')"
-UUID="$(echo "${sysInfo}" | awk -F'\t' '{print $4}')"
 
 umask 0011   # so that creaded files can also be edited by other users / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
@@ -187,6 +182,12 @@ done
         echo "${lang_edit_dbupdate}: ${DBupgradelog}"
     fi
 
+    DBPATH="${APPDIR}/etc/synOCR.sqlite"
+    checkmon=$(sqlite3 "${DBPATH}" "SELECT value_1 FROM system WHERE key='checkmon';")
+    global_pagecount=$(sqlite3 "${DBPATH}" "SELECT value_1 FROM system WHERE key='global_pagecount';")
+    global_ocrcount=$(sqlite3 "${DBPATH}" "SELECT value_1 FROM system WHERE key='global_ocrcount';")
+    UUID=$(sqlite3 "${DBPATH}" "SELECT value_1 FROM system WHERE key='UUID';")
+
 # is an instance of synOCR already running?
     synOCR_pid=$( /bin/pidof synOCR.sh )
     if [ -n "${synOCR_pid}" ] ; then
@@ -228,7 +229,7 @@ done
 
 # monthly check for update in background:
     check_update() {
-        if [[ "${checkmon}" = $(date +%m) ]]; then
+        if [[ "${checkmon}" != $(date +%m) ]]; then
             version_json=""
             version_json=$(synocr_fetch_version_json) || true
             if [ -z "${version_json}" ]; then
@@ -255,7 +256,7 @@ done
             changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".changeLogUrl )
 
             if grep -qE '^[0-9.]+$' <<< "${online_version}"; then
-                sqlite3 "./etc/synOCR.sqlite"  "BEGIN;
+                sqlite3 "${DBPATH}"  "BEGIN;
                                                 UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon';
                                                 INSERT INTO system (key, value_1) SELECT 'online_version', '${online_version}' WHERE NOT EXISTS (SELECT 1 FROM system WHERE key='online_version');
                                                 UPDATE system SET value_1='${online_version}' WHERE key='online_version';

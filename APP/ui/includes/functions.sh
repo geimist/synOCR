@@ -287,6 +287,7 @@ synocr_server_fetch_version_info() {
         key="${pair%%=*}"
         val="${pair#*=}"
         [ -z "${key}" ] || [ "${key}" = "${pair}" ] && continue
+        [ -z "${val}" ] && continue
         query="${query}&${key}=${val}"
     done
 
@@ -511,10 +512,87 @@ synocr_would_adjust_color() {
     [ "${adjustColor}" = true ] && [ "${keep_hash:-false}" != "true" ] && [ "${python_check:-failed}" = "ok" ]
 }
 
+# Same condition as update_dockerimage() in synOCR.sh (latest tag + setting + not checked today).
+synocr_needs_dockerimage_update() {
+    local check_date
+    check_date=$(date +%Y-%m-%d)
+    if echo "${dockercontainer:-}" | grep -qE "latest$" \
+        && [ "${dockerimageupdate:-0}" = 1 ] \
+        && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='${dockercontainer}' " 2>/dev/null) = "${check_date}" ]]; then
+        return 0
+    fi
+    return 1
+}
+
+# Sets global python_path (same search as prepare_python in synOCR.sh).
+synocr_resolve_python_path() {
+    python_path=""
+    if [ "${machinetyp:-}" = aarch64 ]; then
+        local python_versions py_interpreter py_version latest_py_version
+        IFS=$'\n' read -d '' -ra python_versions <<< "$(find /bin /usr/bin /usr/local/bin -maxdepth 1 -name 'python3.*' 2>/dev/null)" ; IFS="${IFSsaved:-$' \t\n'}"
+        latest_py_version="3.8"
+        for py_interpreter in "${python_versions[@]}"; do
+            py_version=$("${py_interpreter}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" 2>/dev/null) || continue
+            if [[ "${py_version}" > "${latest_py_version}" ]]; then
+                latest_py_version="${py_version}"
+                python_path="${py_interpreter}"
+            fi
+        done
+        [ "${latest_py_version}" = "3.8" ] && python_path=""
+    else
+        python_path="$(which python3 2>/dev/null)"
+    fi
+}
+
+# True when prepare_python would create/repair venv or install modules (GUI preflight step).
+synocr_needs_python_env_prepare() {
+    local env_version py_version module moduleName moduleList py_bin
+
+    synocr_resolve_python_path
+    [ -z "${python_path:-}" ] && return 0
+
+    if [ ! -d "${python3_env:-}" ]; then
+        return 0
+    fi
+
+    py_bin="${python3_env}/bin/python3"
+    if [ ! -x "${py_bin}" ]; then
+        return 0
+    fi
+
+    env_version=$("${py_bin}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" 2>/dev/null)
+    py_version=$("${python_path}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" 2>/dev/null)
+    if [[ "${env_version}" != "${py_version}" ]]; then
+        return 0
+    fi
+
+    if [ "$(head -n1 "${python3_env}/synOCR_python_env_version" 2>/dev/null)" != "${local_version:-}" ]; then
+        return 0
+    fi
+
+    moduleList=$("${py_bin}" -m pip list 2>/dev/null)
+    for module in "${synOCR_python_module_list[@]}"; do
+        moduleName=$(echo "${module}" | awk -F'=' '{print $1}')
+        if ! grep -qi "${moduleName}" <<<"${moduleList}"; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 # Build step list for current profile (bash 4+ arrays). Sets synocr_step_ids and synocr_step_ids_json.
 synocr_build_step_list() {
     synocr_step_ids=()
     synocr_step_ids+=(prepare)
+
+    if synocr_needs_dockerimage_update; then
+        synocr_step_ids+=(docker_update)
+    fi
+
+    if synocr_needs_python_env_prepare; then
+        synocr_step_ids+=(python_env)
+    fi
 
     if [ "${img2pdf:-false}" = true ] && [ "${keep_hash:-false}" != "true" ]; then
         synocr_step_ids+=(img2pdf)
@@ -613,6 +691,22 @@ synocr_status_init_run() {
     fi
 }
 
+# Replace DeepL-safe <x id="…"/> placeholders (same variants as fillXTags in synocr-progress.js).
+synocr_lang_fill_x() {
+    local tpl="$1" id val sed_args=()
+    shift
+    while [ $# -ge 2 ]; do
+        id="$1"
+        val="$2"
+        shift 2
+        sed_args+=(-e "s|<x id=\"${id}\"/>|${val}|g" -e "s|<x id='${id}'/>|${val}|g")
+    done
+    if [ ${#sed_args[@]} -gt 0 ]; then
+        tpl=$(printf '%s' "$tpl" | sed "${sed_args[@]}")
+    fi
+    printf '%s' "$tpl"
+}
+
 synocr_progress_step_label() {
     local step_id="$1"
     local key="" label=""
@@ -626,6 +720,8 @@ synocr_progress_step_label() {
         rename) key=lang_edit_set2_renamesyntax_title ;;
         notify) key=lang_edit_set3_dsmtextnotify_title ;;
         prepare) key=lang_main_progress_step_prepare ;;
+        docker_update) key=lang_main_progress_step_docker_update ;;
+        python_env) key=lang_main_progress_step_python_env ;;
         delay) key=lang_main_progress_step_delay ;;
         ocr) key=lang_main_progress_step_ocr ;;
         split) key=lang_main_progress_step_split ;;
