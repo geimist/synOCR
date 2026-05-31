@@ -435,21 +435,9 @@ done
 
         # shellcheck disable=SC2181
         if [ $? = 0 ] && [ "${loglevel}" != 0 ]; then
-            {
-            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
-            echo "  ● ---------------------------------- ●"
-            echo "  ● |    ==> END OF FUNCTIONS <==    | ●"
-            echo "  ● ---------------------------------- ●"
-            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
-            } >> "${LOGFILE}"
+            { log_section_end "END OF FUNCTIONS"; } >> "${LOGFILE}"
         elif [ $? != 0 ] && [ "${loglevel}" != 0 ]; then
-            {
-            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
-            echo "  ● ---------------------------------- ●"
-            echo "  ● |    ==> EXIT WITH ERROR! <==    | ●"
-            echo "  ● ---------------------------------- ●"
-            echo "  ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●"
-            } >> "${LOGFILE}"
+            { log_section_end "EXIT WITH ERROR!"; } >> "${LOGFILE}"
 
             echo "${lang_synOCR_start_errorexit}"
             echo "${lang_synOCR_start_loginfo}: ${LOGFILE}"

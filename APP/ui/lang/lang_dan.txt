@@ -523,7 +523,7 @@ lang_main_permissions_failed1="synOCR har endnu ikke de nødvendige tilladelser!
 lang_main_permissions_failed2="Opret venligst en opgave i opgaveplanlæggeren med følgende script (som bruger root)"
 lang_main_permissions_failed3="opgaven skal udføres mindst én gang"
 lang_main_progress_current_file="Aktuel fil:"
-lang_main_progress_files="I alt:<x id='done'/>  af<x id='total'/>  filer"
+lang_main_progress_files="I alt: <x id='done'/> fra <x id='total'/> filer"
 lang_main_progress_step_cleanup="Rydde op"
 lang_main_progress_step_delay="Ventetid (scanner)"
 lang_main_progress_step_docker_update="Opdater Docker-billedet"

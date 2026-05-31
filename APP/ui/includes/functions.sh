@@ -928,3 +928,284 @@ language() {
         source "lang/lang_${lang}.txt"
     fi
 }
+
+
+# ---------------------------------------------------------------------------
+# synOCR logging API (loglevel: 0=off, 1=normal, 2=debug)
+# ---------------------------------------------------------------------------
+_LOG_WIDTH=80
+_LOG_LABEL_WIDTH=26
+_LOG_INDENT="    "
+_LOG_INDENT_DETAIL="        "
+_LOG_INDENT_DEEP="            "
+
+_synocr_log_ge1() {
+    (( ${loglevel:-0} >= 1 ))
+}
+
+_synocr_log_ge2() {
+    (( ${loglevel:-0} >= 2 ))
+}
+
+_log_strip_leading() {
+    local message="$1"
+    message="${message#"${message%%[![:space:]]*}"}"
+    while [[ "${message}" == ➜* ]]; do
+        message="${message#➜}"
+        message="${message#"${message%%[![:space:]]*}"}"
+    done
+    printf '%s' "${message}"
+}
+
+_synocr_sec_to_time() {
+    local seconds=$1
+    local sign=""
+    if [[ ${seconds:0:1} == "-" ]]; then
+        seconds=${seconds:1}
+        sign="-"
+    fi
+    local hours=$(( seconds / 3600 ))
+    local minutes=$(( (seconds % 3600) / 60 ))
+    seconds=$(( seconds % 60 ))
+    printf "%s%02d:%02d:%02d" "${sign}" "${hours}" "${minutes}" "${seconds}"
+}
+
+log_blank() {
+    _synocr_log_ge1 || return 0
+    echo
+}
+
+log_section() {
+    local title="$1"
+    _synocr_log_ge1 || return 0
+    printf "\n"
+    printf '%*s\n' "${_LOG_WIDTH}" '' | tr ' ' '='
+    printf ' %s\n' "${title}"
+    printf '%*s\n' "${_LOG_WIDTH}" '' | tr ' ' '='
+    printf "\n"
+}
+
+log_subsection() {
+    local title="$1"
+    local width
+    local dashes
+
+    _synocr_log_ge1 || return 0
+
+    title="${title#"${title%%[![:space:]]*}"}"
+    title="${title%"${title##*[![:space:]]}"}"
+    title="${title%:}"
+    title="${title%"${title##*[![:space:]]}"}"
+
+    width=$(( ${#title} + 4 ))
+    if [ "${width}" -gt 60 ]; then
+        width=60
+    elif [ "${width}" -lt 20 ]; then
+        width=20
+    fi
+
+    dashes=$(printf '%*s' "${width}" '' | tr ' ' '-')
+
+    printf "\n"
+    printf "  %s\n" "${dashes}"
+    printf "  %s\n" "${title}"
+    printf "  %s\n\n" "${dashes}"
+}
+
+log_kv() {
+    local label="$1"
+    local value="$2"
+    _synocr_log_ge1 || return 0
+    printf "%-${_LOG_LABEL_WIDTH}s %s\n" "${label}:" "${value}"
+}
+
+log_continue() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "                          %s\n" "${message}"
+}
+
+log_item() {
+    local message="$(_log_strip_leading "$1")"
+    _synocr_log_ge1 || return 0
+    printf "%s➜ %s\n" "${_LOG_INDENT}" "${message}"
+}
+
+log_item_n() {
+    local message="$(_log_strip_leading "$1")"
+    _synocr_log_ge1 || return 0
+    printf "%s➜ %s" "${_LOG_INDENT}" "${message}"
+}
+
+log_detail() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s%s\n" "${_LOG_INDENT_DETAIL}" "${message}"
+}
+
+log_detail_deep() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s%s\n" "${_LOG_INDENT_DEEP}" "${message}"
+}
+
+log_item_deep() {
+    local message="$(_log_strip_leading "$1")"
+    _synocr_log_ge1 || return 0
+    printf "%s➜ %s\n" "${_LOG_INDENT_DEEP}" "${message}"
+}
+
+log_item_deep_n() {
+    local message="$(_log_strip_leading "$1")"
+    _synocr_log_ge1 || return 0
+    printf "%s➜ %s" "${_LOG_INDENT_DEEP}" "${message}"
+}
+
+log_note() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s%s\n" "${_LOG_INDENT}" "${message}"
+}
+
+log_note_n() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s%s" "${_LOG_INDENT}" "${message}"
+}
+
+log_note_deep() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s%s\n" "${_LOG_INDENT_DEEP}" "${message}"
+}
+
+log_debug() {
+    local message="$1"
+    _synocr_log_ge2 || return 0
+    printf "%s%s\n" "${_LOG_INDENT_DETAIL}" "${message}"
+}
+
+log_warn() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "WARN  %s\n" "${message}" >&2
+}
+
+log_error() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "ERROR %s\n" "${message}" >&2
+}
+
+log_runtime() {
+    local seconds="$1"
+    _synocr_log_ge2 || return 0
+    printf "\n%s[runtime up to now:    %s]\n\n" "${_LOG_INDENT}" "$(_synocr_sec_to_time "${seconds}")"
+}
+
+log_file() {
+    local name="$1"
+    local index="$2"
+    local total="$3"
+    _synocr_log_ge1 || return 0
+    if [ -n "${index}" ] && [ -n "${total}" ]; then
+        log_section "CURRENT FILE: ${name} (${index}/${total})"
+    else
+        log_section "CURRENT FILE: ${name}"
+    fi
+}
+
+log_block() {
+    local line
+    local prefix="${1:-${_LOG_INDENT_DETAIL}  }"
+    _synocr_log_ge1 || return 0
+    while IFS= read -r line; do
+        if [ -n "${line}" ]; then
+            printf "%s%s\n" "${prefix}" "${line}"
+        else
+            echo
+        fi
+    done
+}
+
+log_section_end() {
+    local title="$1"
+    _synocr_log_ge1 || return 0
+    log_section "${title}"
+}
+
+
+# YAML tag rule hierarchy (used in tag_search only)
+log_rule() {
+    local name="$1"
+    _synocr_log_ge1 || return 0
+    printf "%ssearch by tag rule: \"%s\" ➜  \n" "${_LOG_INDENT}" "${name}"
+}
+
+log_rule_field() {
+    local label="$1"
+    local value="$2"
+    _synocr_log_ge1 || return 0
+    printf "%s  ➜ %-18s %s\n" "${_LOG_INDENT}" "${label}:" "${value}"
+}
+
+log_rule_field_l2() {
+    local label="$1"
+    local value="$2"
+    _synocr_log_ge2 || return 0
+    printf "%s  ➜ %-18s %s\n" "${_LOG_INDENT}" "${label}:" "${value}"
+}
+
+log_rule_note() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s          %s\n" "${_LOG_INDENT}" "${message}"
+}
+
+log_rule_sub() {
+    _synocr_log_ge2 || return 0
+    printf "%s      [Subrule]:\n" "${_LOG_INDENT}"
+}
+
+log_rule_sub_note() {
+    local message="$1"
+    _synocr_log_ge2 || return 0
+    printf "%s          %s\n" "${_LOG_INDENT}" "${message}"
+}
+
+log_rule_sub_search() {
+    local searchstring="$1"
+    _synocr_log_ge2 || return 0
+    printf "%s      >>> search for:      %s\n" "${_LOG_INDENT}" "${searchstring}"
+}
+
+log_rule_sub_field() {
+    local label="$1"
+    local value="$2"
+    _synocr_log_ge2 || return 0
+    printf "%s          %-18s %s\n" "${_LOG_INDENT}" "${label}:" "${value}"
+}
+
+log_rule_sub_match() {
+    local message="$1"
+    _synocr_log_ge2 || return 0
+    printf "%s          ➜ %s\n" "${_LOG_INDENT}" "${message}"
+}
+
+log_rule_result() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s          %s\n" "${_LOG_INDENT}" "${message}"
+}
+
+log_rule_action() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s              ➜ %s\n" "${_LOG_INDENT}" "${message}"
+}
+
+log_rule_action_n() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s              ➜ %s" "${_LOG_INDENT}" "${message}"
+}

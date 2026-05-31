@@ -523,7 +523,7 @@ lang_main_permissions_failed1="synOCR ne dispose pas encore des autorisations n�
 lang_main_permissions_failed2="Veuillez créer une tâche dans le planificateur de tâches avec le script suivant (en tant qu'utilisateur root)"
 lang_main_permissions_failed3="la tâche doit être exécutée au moins une fois"
 lang_main_progress_current_file="Fichier actuel :"
-lang_main_progress_files="Total :<x id='done'/>  sur<x id='total'/>  fichiers"
+lang_main_progress_files="Total : <x id='done'/> de <x id='total'/> fichiers"
 lang_main_progress_step_cleanup="Ranger"
 lang_main_progress_step_delay="Temps d'attente (scanner)"
 lang_main_progress_step_docker_update="Mettre à jour l'image Docker"

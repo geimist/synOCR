@@ -521,6 +521,7 @@ translate() {
                             --data-urlencode "text=${value}" \
                             --data-urlencode "source_lang=${masterDeeplShortName}" \
                             --data-urlencode "tag_handling=xml" \
+                            --data-urlencode "ignore_tags=x" \
                             --data-urlencode "target_lang=${targetDeeplShortName}" \
                             "${DeepL_api_base_url}/v2/translate" 2>"${_sdeepl_err}"
                     )

@@ -523,7 +523,7 @@ lang_main_permissions_failed1="synOCR har ännu inte de nödvändiga behörighet
 lang_main_permissions_failed2="Skapa en uppgift i uppgiftsplaneraren med följande skript (som användare root)"
 lang_main_permissions_failed3="Uppgiften måste utföras minst en gång."
 lang_main_progress_current_file="Aktuell fil:"
-lang_main_progress_files="Totalt:<x id='done'/>  av<x id='total'/>  filer"
+lang_main_progress_files="Totalt: <x id='done'/> av <x id='total'/> filer"
 lang_main_progress_step_cleanup="Städa"
 lang_main_progress_step_delay="Väntetid (skanner)"
 lang_main_progress_step_docker_update="Uppdatera Docker-bilden"

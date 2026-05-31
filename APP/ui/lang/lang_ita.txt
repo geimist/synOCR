@@ -523,7 +523,7 @@ lang_main_permissions_failed1="synOCR non dispone ancora dei permessi necessari!
 lang_main_permissions_failed2="Creare un'attività nel task planner con il seguente script (come utente root)"
 lang_main_permissions_failed3="il compito deve essere eseguito almeno una volta"
 lang_main_progress_current_file="File corrente:"
-lang_main_progress_files="Totale:<x id='done'/>  di<x id='total'/>  file"
+lang_main_progress_files="Totale: <x id='done'/> file da <x id='total'/>"
 lang_main_progress_step_cleanup="Riordinare"
 lang_main_progress_step_delay="Tempo di attesa (scanner)"
 lang_main_progress_step_docker_update="Aggiornare l'immagine Docker"

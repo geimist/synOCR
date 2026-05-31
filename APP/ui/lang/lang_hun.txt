@@ -523,7 +523,7 @@ lang_main_permissions_failed1="A synOCR még nem rendelkezik a szükséges jogos
 lang_main_permissions_failed2="Hozzon létre egy feladatot a feladattervezőben a következő szkript segítségével (root felhasználóként)"
 lang_main_permissions_failed3="a feladatot legalább egyszer végre kell hajtani"
 lang_main_progress_current_file="Aktuális fájl:"
-lang_main_progress_files="Összesen:<x id='done'/>  fájlból<x id='total'/>"
+lang_main_progress_files="Összesen: <x id='done'/> az <x id='total'/> fájlokból"
 lang_main_progress_step_cleanup="Takarítás"
 lang_main_progress_step_delay="Várakozási idő (szkenner)"
 lang_main_progress_step_docker_update="A Docker-kép frissítése"
