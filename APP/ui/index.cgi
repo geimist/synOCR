@@ -12,13 +12,6 @@
 # Initiate system
 # ---------------------------------------------------------------------
     machinetyp=$(uname --machine)
-    if [ "${machinetyp}" = "x86_64" ]; then
-        PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin
-        include_synowebapi=synowebapi_x86_64
-    elif [ "${machinetyp}" = "aarch64" ]; then
-        PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/syno/bin:/usr/syno/sbin:/usr/local/bin:/opt/usr/bin:/usr/syno/synoman/webman/3rdparty/synOCR/bin_aarch64
-        include_synowebapi=synowebapi_aarch64
-    fi
 
     app_name="synOCR"
     app_title="synOCR"

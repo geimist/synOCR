@@ -345,7 +345,7 @@ exit 1
     done
 
     build_version=$(grep version "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}')
-    if [[ $(grep beta "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}') == yes ]]; then
+    if [[ $(grep '^beta=' "$build_tmp/$PKG/INFO" | awk -F '"' '{print $2}') == yes ]]; then
         beta_status="_BETA"
         mv -f "$build_tmp/$PKG/CHANGELOG_CURRENT_BETA" "$build_tmp/$PKG/CHANGELOG"
         rm -f "$build_tmp/$PKG/CHANGELOG_CURRENT_RELEASE"
