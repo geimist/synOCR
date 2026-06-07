@@ -24,12 +24,19 @@ monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
 
 umask 0011   # so that creaded files can also be edited by other users / http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_003.htm
 
+# Read working directory and change into it:
+    APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
+    export SYNOCR_APP_HOME="${APPDIR}"
+    cd "${APPDIR}" || exit 1
+
+    source "./includes/functions.sh"
+
 # create list (array need for tee) with all active log folders:
 # --------------------------------------------------------------
 log_dir_list=()
 while read -r value ; do
     [ -d "${value%/*}" ] && log_dir_list+=( "${value}" ) #&& chmod 766 "$value"
-done <<<"$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
+done <<<"$(synocr_sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
 
 
 inotify_process_id () {
@@ -70,7 +77,7 @@ for i in "$@" ; do
                 if [ "${process_count}" -eq 0 ]; then
                     echo "Does not run - start monitoring ..." | tee -a "${log_dir_list[@]}"
                     # Update monitored folders
-                    sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite \
+                    synocr_sqlite \
                       "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}"
 
                     /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start
@@ -119,12 +126,6 @@ for i in "$@" ; do
     esac
 done
 
-
-# Read working directory and change into it:
-    APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
-    cd "${APPDIR}" || exit 1
-
-    source "./includes/functions.sh"
 
 # Load language variables:
     language
@@ -183,10 +184,10 @@ done
     fi
 
     DBPATH="${APPDIR}/etc/synOCR.sqlite"
-    checkmon=$(sqlite3 "${DBPATH}" "SELECT value_1 FROM system WHERE key='checkmon';")
-    global_pagecount=$(sqlite3 "${DBPATH}" "SELECT value_1 FROM system WHERE key='global_pagecount';")
-    global_ocrcount=$(sqlite3 "${DBPATH}" "SELECT value_1 FROM system WHERE key='global_ocrcount';")
-    UUID=$(sqlite3 "${DBPATH}" "SELECT value_1 FROM system WHERE key='UUID';")
+    checkmon=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='checkmon';")
+    global_pagecount=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_pagecount';")
+    global_ocrcount=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount';")
+    UUID=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='UUID';")
 
 # is an instance of synOCR already running?
     synOCR_pid=$( /bin/pidof synOCR.sh )
@@ -256,7 +257,7 @@ done
             changeLogUrl=$(echo "${server_info}" | jq -r .dsm.dsm"${dsm_major}"."${release_channel}".changeLogUrl )
 
             if grep -qE '^[0-9.]+$' <<< "${online_version}"; then
-                sqlite3 "${DBPATH}"  "BEGIN;
+                synocr_sqlite "BEGIN;
                                                 UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon';
                                                 INSERT INTO system (key, value_1) SELECT 'online_version', '${online_version}' WHERE NOT EXISTS (SELECT 1 FROM system WHERE key='online_version');
                                                 UPDATE system SET value_1='${online_version}' WHERE key='online_version';
@@ -280,12 +281,16 @@ done
         fi
     }
     check_update &
+    check_update_pid=$!
 
     # GUI progress: begin or extend session (overlapping runs must not reset counters)
     SYNOCR_PROGRESS_TOTAL=$(synocr_count_input_files)
     SYNOCR_PROGRESS_STARTED_AT=$(date +%s)
     export SYNOCR_PROGRESS_TOTAL SYNOCR_PROGRESS_STARTED_AT
     synocr_status_begin_run "${SYNOCR_PROGRESS_TOTAL}"
+
+    # Avoid concurrent SQLite writes while profiles are loaded and synOCR.sh starts.
+    wait "${check_update_pid}"
 
 # load configuration:
     sSQL="SELECT 
@@ -446,7 +451,7 @@ done
             echo "${lang_synOCR_start_errorexit}"
             exit_status=ERROR
         fi
-    done <<< "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")"
+    done <<< "$(synocr_sqlite -separator $'\t' "${sSQL}")"
 
     # Drop status only when no worker is active (avoid clearing during overlapping runs)
     synocr_status_clear_if_idle

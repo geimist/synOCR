@@ -22,7 +22,7 @@ new_profile ()
 # In this function a new profile record is written to the DB
 # Call: new_profile "profile name"
 # --------------------------------------------------------------
-    sqlite3 "${dbPath}" "INSERT INTO config ( profile ) VALUES ( '$1' )" >/dev/null
+    synocr_sqlite "INSERT INTO config ( profile ) VALUES ( '$1' )" >/dev/null
 }
 
 
@@ -269,7 +269,7 @@ chmod 755 "${SAMPLECONFIGFILE}"
 # Write path to new configfile in DB:
     echo "➜ Write path to the new configfile in DB"
     sSQLupdate="UPDATE config SET taglist='${SAMPLECONFIGFILE}' WHERE profile_ID='${profile_ID}' "
-    sqlite3 "${dbPath}" "${sSQLupdate}"
+    synocr_sqlite "${sSQLupdate}"
 
     return 0
 }
@@ -409,10 +409,10 @@ if [[ "${page}" == "edit-del_profile-query" ]] || [[ "${page}" == "edit-del_prof
                     </div>'
 
                 elif [[ "${page}" == "edit-del_profile" ]]; then
-                    sqlite3 "${dbPath}" "DELETE FROM config WHERE profile_ID='${profile_ID}';"
+                    synocr_sqlite "DELETE FROM config WHERE profile_ID='${profile_ID}';"
 
                     # make the first profile of the DB active next (otherwise a profile name with empty data would be displayed)
-                    getprofile=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
+                    getprofile=$(synocr_sqlite -separator $'\t' "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
                     # getprofile (write to $var without GUI):
                     encode_value="${getprofile}"
                     decode_value=$(urldecode "${encode_value}")
@@ -422,7 +422,7 @@ if [[ "${page}" == "edit-del_profile-query" ]] || [[ "${page}" == "edit-del_prof
 
                     echo '
                     <div class="modal-body text-center">'
-                        if [ "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='${profile_ID}' ")" = "0" ] ; then
+                        if [ "$(synocr_sqlite -separator $'\t' "SELECT count(profile_ID) FROM config WHERE profile_ID='${profile_ID}' ")" = "0" ] ; then
                             echo '
                             <p>
                                 '"${lang_edit_delfin1}"' <strong>'"${profile}"'</strong> '"${lang_edit_delfin2}"'
@@ -493,8 +493,8 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
                     <div class="modal-body text-center">'
                         if [ -n "${new_profile_value}" ] ; then
                             sSQL="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
-                            if [ "$(sqlite3 "${dbPath}" "${sSQL}")" = 0 ] ; then
-                                sqlite3 "${dbPath}" "INSERT INTO config 
+                            if [ "$(synocr_sqlite "${sSQL}")" = 0 ] ; then
+                                synocr_sqlite "INSERT INTO config 
                                     ( 
                                         profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, backup_clean_orphaned, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
                                     ) 
@@ -505,13 +505,13 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
 
                                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
 
-                                if [ "$(sqlite3 "${dbPath}" "${sSQL2}")" = "1" ] ; then
+                                if [ "$(synocr_sqlite "${sSQL2}")" = "1" ] ; then
                                     echo '
                                     <p>
                                         '"${lang_edit_profname}"' <strong>'"${profile}"'</strong> '"${lang_edit_dup2}"' <strong>'"${new_profile_value}"'</strong> '"${lang_edit_dup3}"'.
                                     </p>'
                                     # profile ID (write to $var without GUI)
-                                    getprofile=$(sqlite3 -separator $'\t' "${dbPath}" "SELECT profile_ID FROM config WHERE profile='${new_profile_value}'" | awk -F'\t' '{print $1}')
+                                    getprofile=$(synocr_sqlite -separator $'\t' "SELECT profile_ID FROM config WHERE profile='${new_profile_value}'" | awk -F'\t' '{print $1}')
                                     "${set_var}" "${var}" "profile_ID" "$(urldecode "${getprofile}")"
                                     "${set_var}" "${var}" "encode_profile_ID" "${getprofile}"
                                     "${set_var}" "${var}" "getprofile" "${getprofile}"
@@ -594,16 +594,16 @@ if [[ "${page}" == "edit-new_profile-query" ]] || [[ "${page}" == "edit-new_prof
                     <div class="modal-body text-center">'
                         if [ -n "${new_profile_value}" ] ; then
                             sSQL="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
-                            if [ "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")" = 0 ] ; then
+                            if [ "$(synocr_sqlite -separator $'\t' "${sSQL}")" = 0 ] ; then
                                 new_profile "${new_profile_value}"
 
-                                if [ "$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")" = 1 ] ; then
+                                if [ "$(synocr_sqlite -separator $'\t' "${sSQL}")" = 1 ] ; then
                                     echo '
                                     <p>
                                         '"${lang_edit_new2}"' <strong>'"${new_profile_value}"'</strong> '"${lang_edit_new3}"'.
                                     </p>'
                                     # profile ID (write to $var without GUI)
-                                    getprofile=$(sqlite3 -separator $'\t' "${dbPath}" "SELECT profile_ID FROM config WHERE profile='${new_profile_value}'" | awk -F'\t' '{print $1}')
+                                    getprofile=$(synocr_sqlite -separator $'\t' "SELECT profile_ID FROM config WHERE profile='${new_profile_value}'" | awk -F'\t' '{print $1}')
                                     "${set_var}" "${var}" "profile_ID" "$(urldecode "${getprofile}")"
                                     "${set_var}" "${var}" "encode_profile_ID" "${getprofile}"
                                     "${set_var}" "${var}" "getprofile" "${getprofile}"
@@ -663,7 +663,7 @@ if [[ "${page}" == "edit-restore-query" ]] || [[ "${page}" == "edit-restore" ]];
                 else
                     restore_profile_id="${getprofile}"
                 fi
-                INPUTDIR=$(sqlite3 -separator $'\t' "${dbPath}" "SELECT INPUTDIR FROM config WHERE profile_ID='${restore_profile_id}' LIMIT 1;" | awk -F'\t' '{print $1}')
+                INPUTDIR=$(synocr_sqlite -separator $'\t' "SELECT INPUTDIR FROM config WHERE profile_ID='${restore_profile_id}' LIMIT 1;" | awk -F'\t' '{print $1}')
                 restore_source_db="${INPUTDIR%/}/synOCR.sqlite"
 
                 if [[ "${page}" == "edit-restore-query" ]]; then
@@ -698,7 +698,7 @@ if [[ "${page}" == "edit-restore-query" ]] || [[ "${page}" == "edit-restore" ]];
                 elif [[ "${page}" == "edit-restore" ]]; then
                     restoreDatabaseFromInputDir
                     # Persist restore result and show it as alert on page=edit after redirect
-                    restore_edit_profile=$(sqlite3 "${dbPath}" "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" 2>/dev/null)
+                    restore_edit_profile=$(synocr_sqlite "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" 2>/dev/null)
                     [ -z "${restore_edit_profile}" ] && restore_edit_profile="1"
 
                     restore_notice=$(echo "${restore_message}" | sed -e 's/<[^>]*>//g' -e 's/[[:space:]]\+/ /g')
@@ -742,7 +742,7 @@ if [[ "${page}" == "edit-save" ]]; then
                 </div>
                 <div class="modal-body text-center">'
 
-                sqlite3 "${dbPath}" "
+                synocr_sqlite "
                             UPDATE 
                                 config 
                             SET 
@@ -798,7 +798,7 @@ if [[ "${page}" == "edit-save" ]]; then
                                 profile_ID='${profile_ID}';"
 
                 # write global change to table system:
-                sqlite3 "${dbPath}" "
+                synocr_sqlite "
                             UPDATE 
                                 system 
                             SET 
@@ -860,7 +860,7 @@ if [[ "${page}" == "edit" ]]; then
                 profile_ID='${getprofile}' "
     fi
 
-    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")
+    sqlerg=$(synocr_sqlite -separator $'\t' "${sSQL}")
 
     # Separate record fields:
         profile_ID=$(echo "${sqlerg}" | awk -F'\t' '{print $1}')
@@ -915,10 +915,10 @@ if [[ "${page}" == "edit" ]]; then
         [ -z "${backup_clean_orphaned}" ] && backup_clean_orphaned=false
 
     # read global values:
-        inotify_delay=$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='inotify_delay' ")
-        dockerimageupdate=$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
-        backup_orphan_last_check=$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='backup_orphan_check_${profile_ID}';")
-        backup_orphan_last_count=$(sqlite3 "${dbPath}" "SELECT value_2 FROM system WHERE key='backup_orphan_check_${profile_ID}';")
+        inotify_delay=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='inotify_delay' ")
+        dockerimageupdate=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
+        backup_orphan_last_check=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='backup_orphan_check_${profile_ID}';")
+        backup_orphan_last_count=$(synocr_sqlite "SELECT value_2 FROM system WHERE key='backup_orphan_check_${profile_ID}';")
         [ -z "${backup_orphan_last_count}" ] && backup_orphan_last_count=0
 
     # -> Headline
@@ -952,7 +952,7 @@ if [[ "${page}" == "edit" ]]; then
         fi
 
     # Profile selection:
-    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT profile_ID, profile FROM config;" )
+    sqlerg=$(synocr_sqlite -separator $'\t' "SELECT profile_ID, profile FROM config;" )
 
     echo '
     <p>&nbsp;</p>

@@ -3,6 +3,50 @@
 # shellcheck disable=SC1090,SC1091
 #,SC2001,SC2009,SC2181
 
+synocr_sqlite() {
+    local busy_timeout="${SYNOCR_SQLITE_BUSY_TIMEOUT:-5000}"
+    local db sql
+    local -a sqlite_opts=()
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -separator)
+                sqlite_opts+=( "$1" )
+                shift
+                [ $# -gt 0 ] && sqlite_opts+=( "$1" )
+                shift
+                ;;
+            --)
+                shift
+                break
+                ;;
+            -*)
+                sqlite_opts+=( "$1" )
+                shift
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    if [ $# -lt 1 ]; then
+        echo "synocr_sqlite: missing SQL argument" >&2
+        return 2
+    fi
+
+    if [ $# -eq 1 ]; then
+        db="$(synocr_app_home)/etc/synOCR.sqlite"
+        sql="$1"
+    else
+        db="$1"
+        shift
+        sql="$*"
+    fi
+
+    sqlite3 -cmd ".timeout ${busy_timeout}" "${sqlite_opts[@]}" "${db}" "${sql}"
+}
+
 synogroupmoduser() {
     # example:
     # synogroupmoduser add administrators synOCR
@@ -388,7 +432,7 @@ synocr_count_input_files() {
         img2pdf_flag=$(echo "${entry}" | awk -F'\t' '{print $3}')
         count=$(synocr_count_input_files_for_profile "${inputdir}" "${searchpraefix}" "${img2pdf_flag}")
         total=$((total + count))
-    done <<< "$(sqlite3 -separator $'\t' "$(synocr_app_home)/etc/synOCR.sqlite" "SELECT INPUTDIR, SearchPraefix, img2pdf FROM config WHERE active='1' " 2>/dev/null)"
+    done <<< "$(synocr_sqlite -separator $'\t' "SELECT INPUTDIR, SearchPraefix, img2pdf FROM config WHERE active='1' " 2>/dev/null)"
 
     printf '%s' "${total}"
 }
@@ -446,22 +490,18 @@ synocr_status_clear_if_idle() {
     if [ "$(synocr_count_input_files)" -gt 0 ]; then
         return 0
     fi
+    synocr_status_complete_file_progress
     synocr_status_clear
 }
 
 # Start or extend a GUI progress session (handles overlapping synOCR-start.sh runs).
 synocr_status_begin_run() {
     local count_at_start="$1"
-    local status_file peak=0
 
     [ "${count_at_start:-0}" -gt 0 ] 2>/dev/null || return 0
 
-    status_file="$(synocr_status_file_path)"
-    if [ -s "${status_file}" ]; then
-        peak=$(jq -r '.files_peak // 0' "${status_file}" 2>/dev/null)
-    fi
-
-    if synocr_is_process_running || [ "${peak:-0}" -gt 0 ]; then
+    # Only extend while a worker holds the lock (true overlap). peak>0 alone matched stale done snapshots.
+    if synocr_is_process_running; then
         synocr_status_write state running
         synocr_status_write_monotonic_int files_baseline "${count_at_start}"
         synocr_status_write_monotonic_int files_peak "${count_at_start}"
@@ -469,6 +509,7 @@ synocr_status_begin_run() {
         return 0
     fi
 
+    synocr_status_clear
     synocr_status_write \
         state running \
         started_at "$(date +%s)" \
@@ -485,6 +526,21 @@ synocr_status_increment_files_completed() {
         cur=$(jq -r '.files_completed // 0' "${status_file}" 2>/dev/null)
     fi
     synocr_status_write files_completed "$((cur + 1))"
+}
+
+# Ensure per-file progress shows all steps done (step_index may lag behind step_total in status file).
+synocr_status_complete_file_progress() {
+    local status_file step_total cur_index
+    status_file="$(synocr_status_file_path)"
+    [ -s "${status_file}" ] || return 0
+    step_total=$(jq -r '.step_total // 0' "${status_file}" 2>/dev/null)
+    cur_index=$(jq -r '.step_index // 0' "${status_file}" 2>/dev/null)
+    [ "${step_total:-0}" -gt 0 ] || return 0
+    [ "${cur_index:-0}" -ge "${step_total}" ] && return 0
+    synocr_status_write \
+        state running \
+        step_id cleanup \
+        step_index "${step_total}"
 }
 
 synocr_is_process_running() {
@@ -518,7 +574,7 @@ synocr_needs_dockerimage_update() {
     check_date=$(date +%Y-%m-%d)
     if echo "${dockercontainer:-}" | grep -qE "latest$" \
         && [ "${dockerimageupdate:-0}" = 1 ] \
-        && [[ ! $(sqlite3 ./etc/synOCR.sqlite "SELECT date_checked FROM dockerupdate WHERE image='${dockercontainer}' " 2>/dev/null) = "${check_date}" ]]; then
+        && [[ ! $(synocr_sqlite "SELECT date_checked FROM dockerupdate WHERE image='${dockercontainer}' " 2>/dev/null) = "${check_date}" ]]; then
         return 0
     fi
     return 1
@@ -646,7 +702,9 @@ synocr_status_update_step() {
     local idx
 
     idx=$(synocr_step_index_for "${step_id}")
-    [ "${idx}" -eq 0 ] && return 0
+    if [ "${idx}" -eq 0 ]; then
+        return 0
+    fi
 
     if [ -n "${file_name}" ]; then
         synocr_status_write \
@@ -768,16 +826,20 @@ synocr_progress_compute() {
     if [ -s "${status_file}" ]; then
         json_base=$(<"${status_file}")
         synocr_pg_state=$(echo "${json_base}" | jq -r '.state // "idle"')
-        synocr_pg_step_id=$(echo "${json_base}" | jq -r '.step_id // ""')
-        synocr_pg_step_index=$(echo "${json_base}" | jq -r '.step_index // 0')
-        synocr_pg_step_total=$(echo "${json_base}" | jq -r '.step_total // 0')
-        synocr_pg_file=$(echo "${json_base}" | jq -r '.file // ""')
-        synocr_pg_profile=$(echo "${json_base}" | jq -r '.profile // ""')
-        files_baseline_raw=$(echo "${json_base}" | jq -r '.files_baseline // 0')
-        files_peak_raw=$(echo "${json_base}" | jq -r '.files_peak // 0')
-        files_total_raw=$(echo "${json_base}" | jq -r '.files_total // 0')
-        if echo "${json_base}" | jq -e 'has("files_completed")' >/dev/null 2>&1; then
-            files_completed_raw=$(echo "${json_base}" | jq -r '.files_completed')
+
+        # Ignore stale completed snapshots when idle (should be cleared; guard for race windows).
+        if [ "${synocr_pg_state}" != "done" ] || [ "${synocr_pg_running}" -eq 1 ]; then
+            synocr_pg_step_id=$(echo "${json_base}" | jq -r '.step_id // ""')
+            synocr_pg_step_index=$(echo "${json_base}" | jq -r '.step_index // 0')
+            synocr_pg_step_total=$(echo "${json_base}" | jq -r '.step_total // 0')
+            synocr_pg_file=$(echo "${json_base}" | jq -r '.file // ""')
+            synocr_pg_profile=$(echo "${json_base}" | jq -r '.profile // ""')
+            files_baseline_raw=$(echo "${json_base}" | jq -r '.files_baseline // 0')
+            files_peak_raw=$(echo "${json_base}" | jq -r '.files_peak // 0')
+            files_total_raw=$(echo "${json_base}" | jq -r '.files_total // 0')
+            if echo "${json_base}" | jq -e 'has("files_completed")' >/dev/null 2>&1; then
+                files_completed_raw=$(echo "${json_base}" | jq -r '.files_completed')
+            fi
         fi
     fi
 

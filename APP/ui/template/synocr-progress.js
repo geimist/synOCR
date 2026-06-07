@@ -10,6 +10,8 @@
     var pollMs = 2500;
     var timer = null;
     var wasRunning = false;
+    var lastKnownStepTotal = 0;
+    var lastKnownStepIndex = 0;
     /** @type {"hidden"|"running"|"doneHold"|"fading"} */
     var progressPhase = "hidden";
     var holdTimer = null;
@@ -178,6 +180,21 @@
         setBarPercent(el.filesBar, 100, false);
         setBarPercent(el.fileBar, 100, false);
 
+        if (el.stepFractionEl) {
+            var stepTotal = Math.max(
+                data.step_total || 0,
+                lastKnownStepTotal || 0,
+                data.step_index || 0,
+                lastKnownStepIndex || 0
+            );
+            if (stepTotal > 0) {
+                el.stepFractionEl.textContent = formatStepFraction(stepTotal, stepTotal);
+            }
+        }
+        if (el.stepLabelEl) {
+            el.stepLabelEl.textContent = cfg.doneStepText || cfg.allDoneText || data.step_label || "-";
+        }
+
         if (el.filesLabel) {
             if (cfg.allDoneText) {
                 el.filesLabel.textContent = cfg.allDoneText;
@@ -271,6 +288,13 @@
         var pf = data.percent_files || 0;
         var pfile = data.percent_file || 0;
 
+        if (data.step_total && data.step_total > 0) {
+            lastKnownStepTotal = data.step_total;
+        }
+        if (data.step_index && data.step_index > 0) {
+            lastKnownStepIndex = data.step_index;
+        }
+
         setBarPercent(el.filesBar, pf, true);
         setBarPercent(el.fileBar, pfile, true);
 
@@ -331,6 +355,19 @@
                 cancelCompletionAndShowRunning(cfg, data);
                 return;
             }
+            if ((data.files_done || 0) === 0 && (data.step_index || 0) <= 1) {
+                lastKnownStepIndex = data.step_index || 0;
+                if (data.step_total && data.step_total > 0) {
+                    lastKnownStepTotal = data.step_total;
+                }
+            } else {
+                if (data.step_total && data.step_total > 0) {
+                    lastKnownStepTotal = data.step_total;
+                }
+                if (data.step_index && data.step_index > 0) {
+                    lastKnownStepIndex = data.step_index;
+                }
+            }
             progressPhase = "running";
             wasRunning = true;
             box.style.display = "block";
@@ -345,6 +382,12 @@
 
         if (wasRunning && progressPhase === "running") {
             wasRunning = false;
+            if (!data.step_total && lastKnownStepTotal > 0) {
+                data = Object.assign({}, data, {
+                    step_total: lastKnownStepTotal,
+                    step_index: lastKnownStepTotal
+                });
+            }
             startDoneHold(cfg, data);
             return;
         }

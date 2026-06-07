@@ -11,12 +11,17 @@
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
 inotify_process_id=$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}')
 
+APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
+export SYNOCR_APP_HOME="${APPDIR}"
+cd "${APPDIR}" || exit 1
+source "./includes/functions.sh"
+
 # create list (array need for tee) with all active log folders:
 # --------------------------------------------------------------
 LOG_DIR_LIST=()
 while read -r value ; do
     [ -d "${value%/*}" ] && LOG_DIR_LIST+=( "$value" )
-done <<< "$(sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
+done <<< "$(synocr_sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
 
 if [ ! "$(which inotifywait)" ]; then
     echo "ERROR: inotify-tools are not installed" | tee -a "${LOG_DIR_LIST[@]}"
@@ -35,7 +40,7 @@ inotify_start()
         dir="$(echo "${value}" | awk -F'\t' '{print $1}')"
         profilename="$(echo "${value}" | awk -F'\t' '{print $2}')"
         [ ! -d "${dir}" ] && echo "ERROR @ profile ${profilename}: inotify-tools cannot be started because \"${dir}\" is not a valid folder! " | tee -a "${LOG_DIR_LIST[@]}" && return
-    done <<< "$(sqlite3 -separator $'\t' /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )" 
+    done <<< "$(synocr_sqlite -separator $'\t' "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )" 
 
     nohup inotifywait --fromfile "${monitored_folders}" -e moved_to -e close_write --monitor 2>&1 | 
         while read -r line ; do 

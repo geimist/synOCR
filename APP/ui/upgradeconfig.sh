@@ -18,7 +18,9 @@ uuid=$(uuidgen)
 # Read working directory and change into it:
 # ---------------------------------------------------------------------
     APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
+    export SYNOCR_APP_HOME="${APPDIR}"
     cd "${APPDIR}" || exit 1
+    source "./includes/functions.sh"
 
     sqlite3_installed_version=$(sqlite3 --version | awk '{print $1}')
 
@@ -36,7 +38,7 @@ uuid=$(uuidgen)
     # Call: new_profile "profile name"
     # --------------------------------------------------------------
         # shellcheck disable=2034
-        sqliteinfo=$(sqlite3 "${dbPath}" "INSERT INTO config ( profile ) VALUES ( '$1' ); COMMIT;")
+        sqliteinfo=$(synocr_sqlite "INSERT INTO config ( profile ) VALUES ( '$1' ); COMMIT;")
     }
 
     lift_db ()
@@ -44,11 +46,11 @@ uuid=$(uuidgen)
     # this function lift DB version
     # Call: lift_db "old Version" "new Version"
     # --------------------------------------------------------------
-        sqlite3 "${dbPath}" "UPDATE system 
+        synocr_sqlite "UPDATE system 
                                        SET value_1='$2' 
                                        WHERE key='db_version'; 
                                        COMMIT;"
-        sqlite3 "${dbPath}" "UPDATE system 
+        synocr_sqlite "UPDATE system 
                                        SET value_1=(datetime('now','localtime')) 
                                        WHERE key='timestamp'; 
                                        COMMIT;"
@@ -63,7 +65,7 @@ uuid=$(uuidgen)
 
         # table config:
         # ---------------------------------------------------------------------
-        sqlite3 "${dbPath}" "CREATE TABLE \"config\" 
+        synocr_sqlite "CREATE TABLE \"config\" 
                     (
                         \"profile_ID\" INTEGER PRIMARY KEY ,
                         \"timestamp\" timestamp NOT NULL DEFAULT (CURRENT_TIMESTAMP) ,
@@ -124,7 +126,7 @@ uuid=$(uuidgen)
 
         # table system:
         # ---------------------------------------------------------------------
-        sqlite3 "${dbPath}" "CREATE TABLE \"system\" 
+        synocr_sqlite "CREATE TABLE \"system\" 
                     (
                         \"rowid\" INTEGER PRIMARY KEY ,
                         \"key\" VARCHAR ,
@@ -137,22 +139,22 @@ uuid=$(uuidgen)
 
         # write default data:
         # ---------------------------------------------------------------------
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('db_version', '12');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('global_ocrcount', '0');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('online_version', '');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('UUID', '${uuid}');"
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('inotify_delay', 0);"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('db_version', '12');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('global_ocrcount', '0');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('online_version', '');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('UUID', '${uuid}');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('inotify_delay', 0);"
 
         wait $!
 
         # table dockerupdate / Docker-Image-Update - check date:
         # ---------------------------------------------------------------------
-        sqlite3 "${dbPath}" "CREATE TABLE \"dockerupdate\" 
+        synocr_sqlite "CREATE TABLE \"dockerupdate\" 
                     (
                         \"rowid\" INTEGER PRIMARY KEY ,
                         \"image\" varchar,
@@ -164,7 +166,7 @@ uuid=$(uuidgen)
 
         # table backup_dirs:
         # ---------------------------------------------------------------------
-        sqlite3 "${dbPath}" "BEGIN;
+        synocr_sqlite "BEGIN;
                     CREATE TABLE \"backup_dirs\" 
                     (
                         \"backup_dir_ID\" INTEGER PRIMARY KEY ,
@@ -176,7 +178,7 @@ uuid=$(uuidgen)
 
         # table backup_files:
         # ---------------------------------------------------------------------
-        sqlite3 "${dbPath}" "BEGIN;
+        synocr_sqlite "BEGIN;
                     CREATE TABLE \"backup_files\" 
                     (
                         \"backup_file_ID\" INTEGER PRIMARY KEY ,
@@ -194,11 +196,11 @@ uuid=$(uuidgen)
 
         # Create / migrate profile:
         # ---------------------------------------------------------------------
-        if [ "$(sqlite3 "${dbPath}" "SELECT count(*) FROM config;")" -eq 0 ] ; then
+        if [ "$(synocr_sqlite "SELECT count(*) FROM config;")" -eq 0 ] ; then
             if [ -f "./etc/Konfiguration.txt" ]; then
                 # Migration from text-based to DB-based configuration
                 source "./etc/Konfiguration.txt"
-                sqlite3 "${dbPath}" "INSERT INTO config 
+                synocr_sqlite "INSERT INTO config 
                     ( 
                         profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, 
                         moveTaggedFiles, NameSyntax, ocropt, dockercontainer, PBTOKEN, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel 
@@ -222,19 +224,19 @@ uuid=$(uuidgen)
     fi
 
 
-if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | grep -q DB_Version ; then
+if synocr_sqlite "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | grep -q DB_Version ; then
 # DB-Update von v1 auf v2:
 # ----------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 1 ] ; then
+    if [ "$(synocr_sqlite "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 1 ] ; then
             # filedate at OCR:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            ADD COLUMN \"filedate\" varchar DEFAULT ('ocr'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q filedate ; then
+            if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q filedate ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (filedate)
                   Log:   ${sqlite3log}"
@@ -243,13 +245,13 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
             # tag indicator:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            ADD COLUMN \"tagsymbol\" varchar DEFAULT ('#');
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q tagsymbol ; then
+            if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q tagsymbol ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (tagsymbol)
                   Log:   ${sqlite3log}"
@@ -258,18 +260,18 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
             # checkmon
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE system 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE system 
                                            ADD COLUMN \"checkmon\" varchar; 
                                            COMMIT;")
             wait $!
 
-            sqlite3 "${dbPath}" "UPDATE system 
+            synocr_sqlite "UPDATE system 
                                            SET checkmon='$(get_key_value ./etc/counter checkmon)' 
                                            WHERE rowid=1;
                                            COMMIT;"
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q checkmon ; then
+            if ! synocr_sqlite "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q checkmon ; then
                 log="${log}
                 ➜ ERROR: the DB column could not be created (checkmon)
                   Log:   ${sqlite3log}"
@@ -280,7 +282,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
         if [[ "${error}" == 0 ]]; then
             # lift DB version:
-            sqlite3 "${dbPath}" "UPDATE system 
+            synocr_sqlite "UPDATE system 
                                            SET DB_Version='2', timestamp=(datetime('now','localtime')) 
                                            WHERE rowid=1;"
             log="${log} 
@@ -291,16 +293,16 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
 # DB-Update von v2 auf v3:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 2 ] ; then
+    if [ "$(synocr_sqlite "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 2 ] ; then
             # Docker-Image-Update - no (0) or yes (1):
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE system 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE system 
                                            ADD COLUMN \"dockerimageupdate\" varchar DEFAULT ('1'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q dockerimageupdate ; then
+            if ! synocr_sqlite "PRAGMA table_info(system)" | awk -F'|' '{print $2}' | grep -q dockerimageupdate ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (dockerimageupdate)
                   Log:   ${sqlite3log}"
@@ -309,7 +311,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
             # Docker-Image-Update - check date:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "${dbPath}" "CREATE TABLE \"dockerupdate\" 
+            sqlite3log=$(synocr_sqlite "CREATE TABLE \"dockerupdate\" 
                                             (
                                                 \"rowid\" INTEGER PRIMARY KEY ,
                                                 \"image\" varchar,
@@ -319,7 +321,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             wait $!
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(dockerupdate)" | awk -F'|' '{print $2}' | grep -q image ; then
+            if ! synocr_sqlite "PRAGMA table_info(dockerupdate)" | awk -F'|' '{print $2}' | grep -q image ; then
                 log="${log} 
                 ➜ ERROR: the DB table could not be created (dockerupdate)
                   Log:   ${sqlite3log}"
@@ -328,7 +330,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
         if [[ "${error}" == 0 ]]; then
             # lift DB version:
-            sqlite3 "${dbPath}" "UPDATE system 
+            synocr_sqlite "UPDATE system 
                                            SET DB_Version='3', timestamp=(datetime('now','localtime')) 
                                            WHERE rowid=1;"
             log="${log}
@@ -339,16 +341,16 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
 # DB-Update von v3 auf v4:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 3 ] ; then
+    if [ "$(synocr_sqlite "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 3 ] ; then
             # documentSplitPattern:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            ADD COLUMN \"documentSplitPattern\" varchar DEFAULT ('SYNOCR-SEPARATOR-SHEET'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q documentSplitPattern ; then
+            if ! synocr_sqlite "PRAGMA table_info(config)" | awk -F'|' '{print $2}' | grep -q documentSplitPattern ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (documentSplitPattern)
                   Log:   ${sqlite3log}"
@@ -357,13 +359,13 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
             # ignoredDate:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            ADD COLUMN \"ignoredDate\" varchar DEFAULT ('2021-02-29;2020-11-31'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q ignoredDate ; then
+            if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q ignoredDate ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (ignoredDate)
                   Log:   ${sqlite3log}"
@@ -372,7 +374,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
         if [[ "${error}" == 0 ]]; then
             # lift DB version:
-            sqlite3 "${dbPath}" "UPDATE system 
+            synocr_sqlite "UPDATE system 
                                            SET DB_Version='4', timestamp=(datetime('now','localtime')) 
                                            WHERE rowid=1;"
             log="${log}
@@ -384,28 +386,28 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
 # DB-Update von v4 auf v5:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 4 ] ; then
+    if [ "$(synocr_sqlite "SELECT DB_Version FROM system WHERE rowid=1;")" -eq 4 ] ; then
             # rotate backup file configuration:
             # ---------------------------------------------------------------------
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            ADD COLUMN \"backup_max\" VARCHAR; 
                                            COMMIT;")
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_max ; then
+            if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_max ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (backup_max)
                   Log:   ${sqlite3log}"
                 error=1
             fi
 
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            ADD COLUMN \"backup_max_type\" VARCHAR DEFAULT ('files'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_max_type ; then
+            if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_max_type ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (backup_max_type)
                   Log:   ${sqlite3log}"
@@ -415,7 +417,7 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             # reorganize table system:
             # create new table:
             # ---------------------------------------------------------------------
-            sqlite3 "${dbPath}" "CREATE TABLE \"system_new\" 
+            synocr_sqlite "CREATE TABLE \"system_new\" 
                                             (
                                                 \"rowid\" INTEGER PRIMARY KEY ,
                                                 \"key\" VARCHAR ,
@@ -428,35 +430,35 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
             wait $!
 
             # read stored data:
-            sqlerg=$(sqlite3 -separator $'\t' "${dbPath}"  "SELECT timestamp, DB_Version, checkmon, dockerimageupdate 
+            sqlerg=$(synocr_sqlite -separator $'\t' "SELECT timestamp, DB_Version, checkmon, dockerimageupdate 
                                                             FROM system 
                                                             WHERE rowid=1;")
             # rewrite data:
-            sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('timestamp', '$(echo "$sqlerg" | awk -F'\t' '{print $1}')');"
-            sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('db_version', '$(echo "$sqlerg" | awk -F'\t' '{print $2}')');"
-            sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('checkmon', '$(echo "$sqlerg" | awk -F'\t' '{print $3}')');"
-            sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('dockerimageupdate', '$(echo "$sqlerg" | awk -F'\t' '{print $4}')');"
-            sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('online_version', ''); 
+            synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('timestamp', '$(echo "$sqlerg" | awk -F'\t' '{print $1}')');"
+            synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('db_version', '$(echo "$sqlerg" | awk -F'\t' '{print $2}')');"
+            synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('checkmon', '$(echo "$sqlerg" | awk -F'\t' '{print $3}')');"
+            synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('dockerimageupdate', '$(echo "$sqlerg" | awk -F'\t' '{print $4}')');"
+            synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('online_version', ''); 
                                            COMMIT;"
 
             # migrate global data from 'counter' file:
             if [ -f ./etc/counter ] ; then
-                sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '$(get_key_value ./etc/counter pagecount)');"
-                sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '$(get_key_value ./etc/counter ocrcount)');"
-                sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(get_key_value ./etc/counter startcount)');"
+                synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '$(get_key_value ./etc/counter pagecount)');"
+                synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '$(get_key_value ./etc/counter ocrcount)');"
+                synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(get_key_value ./etc/counter startcount)');"
             else
-                sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '0');"
-                sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '0');"
-                sqlite3 "${dbPath}" "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)');"
+                synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('global_pagecount', '0');"
+                synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('global_ocrcount', '0');"
+                synocr_sqlite "INSERT INTO system_new (key, value_1) VALUES ('count_start_date', '$(date +%Y-%m-%d)');"
             fi
             wait $!
 
             # check tables / reorder names:
-            if sqlite3 "${dbPath}" ".tables" | grep -q system_new ; then
-                sqlite3 "${dbPath}" "ALTER TABLE system 
+            if synocr_sqlite "SELECT name FROM sqlite_master WHERE type='table' AND name='system_new';" | grep -q system_new ; then
+                synocr_sqlite "ALTER TABLE system 
                                                RENAME TO system_archived;
                                                COMMIT;"
-                sqlite3 "${dbPath}" "ALTER TABLE system_new 
+                synocr_sqlite "ALTER TABLE system_new 
                                                RENAME TO system; 
                                                COMMIT;"
                 wait $!
@@ -464,13 +466,13 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
             # migrate profile specific data from 'counter' file to DB:
             # create new columns:
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            ADD COLUMN \"pagecount\" VARCHAR DEFAULT ('0'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q pagecount ; then
+            if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q pagecount ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (pagecount)
                   Log:   ${sqlite3log}"
@@ -478,13 +480,13 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
                 mig_count_err=1
             fi
 
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            ADD COLUMN \"ocrcount\" VARCHAR DEFAULT ('0'); 
                                            COMMIT;")
             wait $!
 
             # check:
-            if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q ocrcount ; then
+            if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q ocrcount ; then
                 log="${log} 
                 ➜ ERROR: the DB column could not be created (ocrcount)
                   Log:   ${sqlite3log}"
@@ -494,15 +496,15 @@ if sqlite3 "${dbPath}" "PRAGMA table_info(system);" | awk -F'|' '{print $2}' | g
 
             # copy date from counter file to DB:
             if [ -f ./etc/counter ] && [[ "${mig_count_err}" -eq 0 ]]; then
-                sqlerg=$(sqlite3 -separator $'\t' "${dbPath}" "SELECT profile_ID FROM config;")
+                sqlerg=$(synocr_sqlite -separator $'\t' "SELECT profile_ID FROM config;")
                 IFS=$'\012'
                 for entry in $sqlerg; do
                     IFS=$OLDIFS
                     profile_ID_DB=$(echo "$entry" | awk -F'\t' '{print $1}')
-                    sqlite3 "${dbPath}" "UPDATE config 
+                    synocr_sqlite "UPDATE config 
                                                    SET pagecount='$(get_key_value ./etc/counter pagecount_ID"${profile_ID_DB}" )' 
                                                    WHERE profile_ID='$profile_ID_DB';"
-                    sqlite3 "${dbPath}" "UPDATE config 
+                    synocr_sqlite "UPDATE config 
                                                    SET ocrcount='$(get_key_value ./etc/counter ocrcount_ID"${profile_ID_DB}" )' 
                                                    WHERE profile_ID='$profile_ID_DB';"
                 done
@@ -520,16 +522,16 @@ fi
 
 # DB-update from v5 to v6:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='db_version';")" -eq 5 ] ; then
+    if [ "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 5 ] ; then
         # search_nearest_date:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"search_nearest_date\" VARCHAR DEFAULT ('firstfound'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q search_nearest_date ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q search_nearest_date ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (search_nearest_date)
               Log:   ${sqlite3log}"
@@ -538,13 +540,13 @@ fi
 
         # date_search_method:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"date_search_method\" VARCHAR DEFAULT ('python'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q date_search_method ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q date_search_method ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (date_search_method)
               Log:   ${sqlite3log}"
@@ -553,13 +555,13 @@ fi
 
         # clean_up_spaces:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"clean_up_spaces\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q clean_up_spaces ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q clean_up_spaces ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (clean_up_spaces)
               Log:   ${sqlite3log}"
@@ -576,17 +578,17 @@ fi
 
 # DB-update from v6 to v7:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='db_version';")" -eq 6 ] ; then
+    if [ "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 6 ] ; then
 
         # should convert images to pdf?:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"img2pdf\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q img2pdf ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q img2pdf ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (img2pdf)
               Log:   ${sqlite3log}"
@@ -603,17 +605,17 @@ fi
 
 # DB-update from v7 to v8:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='db_version';")" -eq 7 ] ; then
+    if [ "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 7 ] ; then
 
         # DateSearchMinYear:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"DateSearchMinYear\" VARCHAR DEFAULT ('0'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q DateSearchMinYear ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q DateSearchMinYear ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (DateSearchMinYear)
               Log:   ${sqlite3log}"
@@ -622,13 +624,13 @@ fi
 
         # DateSearchMaxYear: 
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"DateSearchMaxYear\" VARCHAR DEFAULT ('0'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q DateSearchMaxYear ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q DateSearchMaxYear ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (DateSearchMaxYear)
               Log:   ${sqlite3log}"
@@ -637,13 +639,13 @@ fi
 
         # splitpage handling: 
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"splitpagehandling\" VARCHAR DEFAULT ('discard'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q splitpagehandling ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q splitpagehandling ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (splitpagehandling)
               Log:   ${sqlite3log}"
@@ -660,44 +662,44 @@ fi
 
 # DB-update from v8 to v9:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='db_version';")" -eq 8 ] ; then
+    if [ "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 8 ] ; then
 
         # apprise - rename column PBTOKEN to apprise_call for apprise library:
         # ---------------------------------------------------------------------
         if [[ "$(printf "%s\n" "3.25.0" "${sqlite3_installed_version}" | sort -V | head -n1)" == "3.25.0" ]]; then
             # column renaming is supported
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            RENAME COLUMN \"PBTOKEN\" TO \"apprise_call\"; 
                                            COMMIT;")
             wait $!
         else
             # column renaming is not supported
-            sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+            sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                            ADD COLUMN \"apprise_call\" VARCHAR; 
                                            COMMIT;")
             wait $!
         fi
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q apprise_call ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q apprise_call ; then
             log="${log} 
             ➜ ERROR: the DB column could not be renamed (PBTOKEN to apprise_call)
               Log:   ${sqlite3log}"
             error=1
         else
             # delete old PushBullet token:
-            sqlite3 "${dbPath}" "UPDATE config SET apprise_call = NULL; COMMIT;"
+            synocr_sqlite "UPDATE config SET apprise_call = NULL; COMMIT;"
         fi
 
         # apprise - notification language:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"notify_lang\" VARCHAR DEFAULT ('enu'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q notify_lang ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q notify_lang ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (notify_lang)
               Log:   ${sqlite3log}"
@@ -706,13 +708,13 @@ fi
 
         # apprise use attachment:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"apprise_attachment\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q apprise_attachment ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q apprise_attachment ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (apprise_attachment)
               Log:   ${sqlite3log}"
@@ -721,13 +723,13 @@ fi
 
         # blank page detection - on/off:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_switch\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_switch ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_switch ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_switch)
               Log:   ${sqlite3log}"
@@ -736,13 +738,13 @@ fi
 
         # blank page detection - threshold_bw:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_threshold_bw\" VARCHAR DEFAULT ('150'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_bw ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_bw ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_threshold_bw)
               Log:   ${sqlite3log}"
@@ -751,13 +753,13 @@ fi
 
         # blank page detection - threshold_black_pxl:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_threshold_black_pxl\" VARCHAR DEFAULT ('10'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_black_pxl ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_threshold_black_pxl ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_threshold_black_pxl)
               Log:   ${sqlite3log}"
@@ -774,17 +776,17 @@ fi
 
 # DB-update from v9 to v10:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='db_version';")" -eq 9 ] ; then
+    if [ "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 9 ] ; then
 
         # blank_page_detection_mainThreshold:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_mainThreshold\" VARCHAR DEFAULT ('-50'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_mainThreshold ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_mainThreshold ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_mainThreshold)
               Log:   ${sqlite3log}"
@@ -793,13 +795,13 @@ fi
 
         # blank_page_detection_widthCropping:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_widthCropping\" VARCHAR DEFAULT ('0.10'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_widthCropping ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_widthCropping ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_widthCropping)
               Log:   ${sqlite3log}"
@@ -808,13 +810,13 @@ fi
 
         # blank_page_detection_hightCropping:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_hightCropping\" VARCHAR DEFAULT ('0.05'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_hightCropping ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_hightCropping ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_hightCropping)
               Log:   ${sqlite3log}"
@@ -823,13 +825,13 @@ fi
 
         # blank_page_detection_interferenceMaxFilter:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_interferenceMaxFilter\" VARCHAR DEFAULT ('1'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMaxFilter ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMaxFilter ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_interferenceMaxFilter)
               Log:   ${sqlite3log}"
@@ -838,13 +840,13 @@ fi
 
         # blank_page_detection_interferenceMinFilter:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_interferenceMinFilter\" VARCHAR DEFAULT ('3'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMinFilter ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_interferenceMinFilter ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_interferenceMinFilter)
               Log:   ${sqlite3log}"
@@ -853,13 +855,13 @@ fi
 
         # blank_page_detection_black_pixel_ratio:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_black_pixel_ratio\" VARCHAR DEFAULT ('0.005'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_black_pixel_ratio ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_black_pixel_ratio ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_black_pixel_ratio)
               Log:   ${sqlite3log}"
@@ -876,17 +878,17 @@ fi
 
 # DB-update from v9 to v10:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='db_version';")" -eq 10 ] ; then
+    if [ "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 10 ] ; then
 
         # blank_page_detection_ignoreText:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"blank_page_detection_ignoreText\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_ignoreText ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q blank_page_detection_ignoreText ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (blank_page_detection_ignoreText)
               Log:   ${sqlite3log}"
@@ -895,13 +897,13 @@ fi
 
         # adjustColorBWthreshold:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"adjustColorBWthreshold\" VARCHAR DEFAULT ('0'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorBWthreshold ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorBWthreshold ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (adjustColorBWthreshold)
               Log:   ${sqlite3log}"
@@ -910,13 +912,13 @@ fi
 
         # adjustColorDPI:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"adjustColorDPI\" VARCHAR DEFAULT ('0'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorDPI ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorDPI ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (adjustColorDPI)
               Log:   ${sqlite3log}"
@@ -925,13 +927,13 @@ fi
 
         # adjustColorContrast:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"adjustColorContrast\" VARCHAR DEFAULT ('1.0'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorContrast ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorContrast ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (adjustColorContrast)
               Log:   ${sqlite3log}"
@@ -940,13 +942,13 @@ fi
 
         # adjustColorSharpness:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"adjustColorSharpness\" VARCHAR DEFAULT ('1.0'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorSharpness ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q adjustColorSharpness ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (adjustColorSharpness)
               Log:   ${sqlite3log}"
@@ -963,11 +965,11 @@ fi
 
 # DB-update from v11 to v12:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT value_1 FROM system WHERE key='db_version';")" -eq 11 ] ; then
+    if [ "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 11 ] ; then
 
         # backup_dirs:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "BEGIN;
+        sqlite3log=$(synocr_sqlite "BEGIN;
                     CREATE TABLE IF NOT EXISTS \"backup_dirs\" 
                     (
                         \"backup_dir_ID\" INTEGER PRIMARY KEY ,
@@ -977,7 +979,7 @@ fi
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(backup_dirs);" | awk -F'|' '{print $2}' | grep -q backup_dir ; then
+        if ! synocr_sqlite "PRAGMA table_info(backup_dirs);" | awk -F'|' '{print $2}' | grep -q backup_dir ; then
             log="${log} 
             ➜ ERROR: the DB table could not be created (backup_dirs)
               Log:   ${sqlite3log}"
@@ -986,7 +988,7 @@ fi
 
         # backup_files:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "BEGIN;
+        sqlite3log=$(synocr_sqlite "BEGIN;
                     CREATE TABLE IF NOT EXISTS \"backup_files\" 
                     (
                         \"backup_file_ID\" INTEGER PRIMARY KEY ,
@@ -1002,7 +1004,7 @@ fi
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(backup_files);" | awk -F'|' '{print $2}' | grep -q processing_timestamp ; then
+        if ! synocr_sqlite "PRAGMA table_info(backup_files);" | awk -F'|' '{print $2}' | grep -q processing_timestamp ; then
             log="${log} 
             ➜ ERROR: the DB table could not be created (backup_files)
               Log:   ${sqlite3log}"
@@ -1011,13 +1013,13 @@ fi
 
         # backup_clean_orphaned:
         # ---------------------------------------------------------------------
-        sqlite3log=$(sqlite3 "${dbPath}" "ALTER TABLE config 
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
                                        ADD COLUMN \"backup_clean_orphaned\" VARCHAR DEFAULT ('false'); 
                                        COMMIT;")
         wait $!
 
         # check:
-        if ! sqlite3 "${dbPath}" "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_clean_orphaned ; then
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q backup_clean_orphaned ; then
             log="${log} 
             ➜ ERROR: the DB column could not be created (backup_clean_orphaned)
               Log:   ${sqlite3log}"
@@ -1035,17 +1037,22 @@ fi
 # insert inotify_delay:
 # ---------------------------------------------------------------------
     # Check whether the entry exists
-    count=$(sqlite3 "${dbPath}" "SELECT COUNT(*) FROM system WHERE key = 'inotify_delay';")
+    count=$(synocr_sqlite "SELECT COUNT(*) FROM system WHERE key = 'inotify_delay';")
 
     # If not available: Create entry
     if [ "${count}" -eq 0 ]; then
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('inotify_delay', 0);"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('inotify_delay', 0);"
     fi
 
 # check UUID:
 # ---------------------------------------------------------------------
-    if [ "$(sqlite3 "${dbPath}" "SELECT EXISTS(SELECT 1 FROM system WHERE key = 'UUID');")" -eq 0 ]; then
-        sqlite3 "${dbPath}" "INSERT INTO system (key, value_1) VALUES ('UUID', '${uuid}');"
+    uuid_current=$(synocr_sqlite "SELECT COALESCE(value_1, '') FROM system WHERE key='UUID' LIMIT 1;")
+    if [ -z "${uuid_current}" ]; then
+        if [ "$(synocr_sqlite "SELECT EXISTS(SELECT 1 FROM system WHERE key = 'UUID');")" -eq 0 ]; then
+            synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('UUID', '${uuid}');"
+        else
+            synocr_sqlite "UPDATE system SET value_1='${uuid}' WHERE key='UUID';"
+        fi
     fi
 
 # adjust permissions:

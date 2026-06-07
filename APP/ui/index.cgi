@@ -16,6 +16,7 @@
     app_name="synOCR"
     app_title="synOCR"
     app_home=$(echo /volume*/@appstore/${app_name}/ui)
+    export SYNOCR_APP_HOME="${app_home}"
     app_link=$(echo /webman/3rdparty/${app_name})
     [ ! -d "${app_home}" ] && exit
 
@@ -116,11 +117,15 @@
     fi
 
     # Analyze incoming GET requests and process them into key="$value" variable
+    _synocr_page_from_loop=""
     for i in "$@"; do
         IFS="${backupIFS}"
         variable=${i%%=*}
         encode_value=${i##*=}
         decode_value=$(urldecode "${encode_value}")
+        if [ "${variable}" = "page" ]; then
+            _synocr_page_from_loop="${decode_value}"
+        fi
         "${set_var}" "${var}" "${variable}" "${decode_value}"
         "${set_var}" "${var}" "encode_${variable}" "${encode_value}"
     done
@@ -129,10 +134,16 @@
         source "${var}"
     fi
 
-    synocr_request_page="${page}"
-    mainpage=${page%%-*}
+    # Route from QUERY_STRING directly — shared /tmp/synOCR_var.txt races with concurrent polls.
+    if [ -n "${_synocr_page_from_loop}" ]; then
+        synocr_request_page="${_synocr_page_from_loop}"
+        page="${_synocr_page_from_loop}"
+    else
+        synocr_request_page="${page:-}"
+    fi
+    mainpage=${synocr_request_page%%-*}
 
-    if [ -z "${page}" ]; then
+    if [ -z "${synocr_request_page}" ]; then
         #[ -f "${var}" ] && rm "${var}"
         mainpage="main"
     fi
@@ -142,12 +153,28 @@
     # Live progress JSON for synocr-progress.js (no HTML shell)
     if [ "${synocr_request_page}" = "main-status" ]; then
         cd "${app_home}" || exit 1
-        export SYNOCR_APP_HOME="${app_home}"
         echo "Content-type: application/json"
         echo
         if ! synocr_render_main_status_json; then
             echo '{"state":"error","running":false,"files_remaining":0,"files_total":0,"files_done":0,"percent_files":0,"percent_file":0,"file":"","profile":"","step_id":"","step_label":"","step_index":0,"step_total":0}'
         fi
+        exit 0
+    fi
+
+    # Monitoring start/stop: sync work on -run pages, then HTTP redirect (before HTML shell).
+    if [ "${synocr_request_page}" = "main-run-synocr-monitoring-run" ] || [ "${synocr_request_page}" = "main-stop-synocr-monitoring-run" ]; then
+        cd "${app_home}" || exit 1
+        _synocr_start_sh="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
+        [ -x "${app_home}/synOCR-start.sh" ] && _synocr_start_sh="${app_home}/synOCR-start.sh"
+        if [ "${synocr_request_page}" = "main-run-synocr-monitoring-run" ]; then
+            "${_synocr_start_sh}" start >/dev/null 2>&1
+        else
+            "${_synocr_start_sh}" stop >/dev/null 2>&1
+        fi
+        echo "Status: 302 Found"
+        echo "Location: index.cgi?page=main"
+        echo "Content-type: text/html"
+        echo
         exit 0
     fi
 

@@ -11,6 +11,7 @@
     # read out and change into the working directory:
     # ---------------------------------------------------------------------
     APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
+    export SYNOCR_APP_HOME="${APPDIR}"
     cd "${APPDIR}" || exit 1
 
     source ./includes/functions.sh
@@ -137,7 +138,7 @@
         WHERE 
             profile_ID='${workprofile}' "
 
-    sqlerg=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "${sSQL}")
+    sqlerg=$(synocr_sqlite -separator $'\t' "${sSQL}")
 
     profile_ID=$(echo "${sqlerg}" | awk -F'\t' '{print $1}')
     profile=$(echo "${sqlerg}" | awk -F'\t' '{print $3}')
@@ -194,13 +195,13 @@
     adjustColorBWabsoluteThreshold=96 # optional GUI candidate: keeps very dark filled areas black in BW mode (0 disables)
 
 # read global values:
-    dockerimageupdate=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
-    count_start_date=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")
-    global_pagecount=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")
-    global_ocrcount=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")
-    online_version=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='online_version'")
+    dockerimageupdate=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='dockerimageupdate' ")
+    count_start_date=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")
+    global_pagecount=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")
+    global_ocrcount=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")
+    online_version=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='online_version'")
     # Delay in seconds
-    delay=$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='inotify_delay'" )
+    delay=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='inotify_delay'" )
 
 # Preset variables for correct calculation in the loop:
     global_pagecount_new="${global_pagecount}"
@@ -250,8 +251,8 @@
     else
         log_kv "monitor is running?" "no"
     fi
-    log_kv "DB-version" "$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
-    log_kv "system-ID" "$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='UUID'")"
+    log_kv "DB-version" "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version'")"
+    log_kv "system-ID" "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='UUID'")"
     log_kv "used image (created)" "${dockercontainer} ($(docker inspect -f '{{ .Created }}' "${dockercontainer}" 2>/dev/null | awk -F. '{print $1}'))"
     log_kv "ContainerManager" "$(synopkg version ContainerManager)"
     log_kv "docker version" "$(docker --version)"
@@ -505,10 +506,10 @@ update_dockerimage()
             log_purge="nothing to do ..."
         fi
 
-        if [ -z "$(sqlite3 "./etc/synOCR.sqlite"  "SELECT * FROM dockerupdate WHERE image='${dockercontainer}'")" ]; then
-            sqlite3 "./etc/synOCR.sqlite" "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '${dockercontainer}', '${check_date}' )"
+        if [ -z "$(synocr_sqlite  "SELECT * FROM dockerupdate WHERE image='${dockercontainer}'")" ]; then
+            synocr_sqlite "INSERT INTO dockerupdate ( image, date_checked ) VALUES  ( '${dockercontainer}', '${check_date}' )"
         else
-            sqlite3 "./etc/synOCR.sqlite" "UPDATE dockerupdate SET date_checked='${check_date}' WHERE image='${dockercontainer}' "
+            synocr_sqlite "UPDATE dockerupdate SET date_checked='${check_date}' WHERE image='${dockercontainer}' "
         fi
 
         if echo "${updatelog}" | grep -q "Image is up to date"; then
@@ -2084,8 +2085,8 @@ register_backup_file()
         return
     fi
 
-    if ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_dirs LIMIT 1;" >/dev/null 2>&1 \
-       || ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_files LIMIT 1;" >/dev/null 2>&1; then
+    if ! synocr_sqlite "SELECT 1 FROM backup_dirs LIMIT 1;" >/dev/null 2>&1 \
+       || ! synocr_sqlite "SELECT 1 FROM backup_files LIMIT 1;" >/dev/null 2>&1; then
         log_item "backup DB entry skipped (backup tables missing)"
         return
     fi
@@ -2093,7 +2094,7 @@ register_backup_file()
     backup_dir_sql=$(sql_escape "${backup_dir_path}")
     backup_filename_sql=$(sql_escape "${backup_filename}")
 
-    sqlite3log=$(sqlite3 ./etc/synOCR.sqlite "BEGIN;
+    sqlite3log=$(synocr_sqlite "BEGIN;
         INSERT OR IGNORE INTO backup_dirs (backup_dir) VALUES ('${backup_dir_sql}');
         DELETE FROM backup_files
             WHERE backup_dir_ID=(SELECT backup_dir_ID FROM backup_dirs WHERE backup_dir='${backup_dir_sql}')
@@ -2136,13 +2137,13 @@ purge_backup_db_entries()
             [ -n "${rm_output}" ] && echo "${rm_output}" | log_block
 
             if [ "${rm_status}" -eq 0 ]; then
-                sqlite3 ./etc/synOCR.sqlite "DELETE FROM backup_files WHERE backup_file_ID='${backup_file_ID}';"
+                synocr_sqlite "DELETE FROM backup_files WHERE backup_file_ID='${backup_file_ID}';"
             else
                 log_item "backup file could not be removed, DB entry kept: ${backup_file_path}"
             fi
         elif [ -d "${backup_file_dir}" ]; then
             log_item "backup file already missing, remove DB entry: ${backup_file_path}"
-            sqlite3 ./etc/synOCR.sqlite "DELETE FROM backup_files WHERE backup_file_ID='${backup_file_ID}';"
+            synocr_sqlite "DELETE FROM backup_files WHERE backup_file_ID='${backup_file_ID}';"
         else
             log_item "backup path not available, DB entry kept: ${backup_file_path}"
         fi
@@ -2161,12 +2162,12 @@ check_orphaned_backup_entries()
     local last_check_date orphan_entries orphan_checked=0 orphan_count=0 orphan_deleted=0
     local backup_file_ID backup_file_path orphan_id_batch batch_size=500 id_count_in_batch
 
-    if ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_dirs LIMIT 1;" >/dev/null 2>&1 \
-       || ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_files LIMIT 1;" >/dev/null 2>&1; then
+    if ! synocr_sqlite "SELECT 1 FROM backup_dirs LIMIT 1;" >/dev/null 2>&1 \
+       || ! synocr_sqlite "SELECT 1 FROM backup_files LIMIT 1;" >/dev/null 2>&1; then
         return
     fi
 
-    last_check_date=$(sqlite3 ./etc/synOCR.sqlite "SELECT substr(value_1,1,10) FROM system WHERE key='${orphan_system_key}';")
+    last_check_date=$(synocr_sqlite "SELECT substr(value_1,1,10) FROM system WHERE key='${orphan_system_key}';")
     if [ "${last_check_date}" = "$(date +%F)" ]; then
         log_debug "orphaned backup check skipped (already done today)"
         return
@@ -2174,7 +2175,7 @@ check_orphaned_backup_entries()
 
     log_subsection "check orphaned backup DB entries ..."
 
-    orphan_entries=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT
+    orphan_entries=$(synocr_sqlite -separator $'\t' "SELECT
             bf.backup_file_ID,
             bd.backup_dir || bf.filename
         FROM backup_files bf
@@ -2201,7 +2202,7 @@ check_orphaned_backup_entries()
                 id_count_in_batch=$(( id_count_in_batch + 1 ))
 
                 if [ "${id_count_in_batch}" -ge "${batch_size}" ]; then
-                    sqlite3 ./etc/synOCR.sqlite "DELETE FROM backup_files WHERE backup_file_ID IN (${orphan_id_batch});"
+                    synocr_sqlite "DELETE FROM backup_files WHERE backup_file_ID IN (${orphan_id_batch});"
                     orphan_deleted=$(( orphan_deleted + id_count_in_batch ))
                     orphan_id_batch=""
                     id_count_in_batch=0
@@ -2211,15 +2212,15 @@ check_orphaned_backup_entries()
     done <<< "${orphan_entries}"
 
     if [ "${backup_clean_orphaned}" = true ] && [ -n "${orphan_id_batch}" ]; then
-        sqlite3 ./etc/synOCR.sqlite "DELETE FROM backup_files WHERE backup_file_ID IN (${orphan_id_batch});"
+        synocr_sqlite "DELETE FROM backup_files WHERE backup_file_ID IN (${orphan_id_batch});"
         orphan_deleted=$(( orphan_deleted + id_count_in_batch ))
     fi
 
-    if [ "$(sqlite3 ./etc/synOCR.sqlite "SELECT COUNT(*) FROM system WHERE key='${orphan_system_key}';")" -eq 0 ]; then
-        sqlite3 ./etc/synOCR.sqlite "INSERT INTO system (key, value_1, value_2)
+    if [ "$(synocr_sqlite "SELECT COUNT(*) FROM system WHERE key='${orphan_system_key}';")" -eq 0 ]; then
+        synocr_sqlite "INSERT INTO system (key, value_1, value_2)
             VALUES ('${orphan_system_key}', datetime('now','localtime'), '${orphan_count}');"
     else
-        sqlite3 ./etc/synOCR.sqlite "UPDATE system
+        synocr_sqlite "UPDATE system
             SET value_1=datetime('now','localtime'), value_2='${orphan_count}'
             WHERE key='${orphan_system_key}';"
     fi
@@ -2250,8 +2251,8 @@ purge_backup()
 
     log_subsection "purge backup files ..."
 
-    if ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_dirs LIMIT 1;" >/dev/null 2>&1 \
-       || ! sqlite3 ./etc/synOCR.sqlite "SELECT 1 FROM backup_files LIMIT 1;" >/dev/null 2>&1; then
+    if ! synocr_sqlite "SELECT 1 FROM backup_dirs LIMIT 1;" >/dev/null 2>&1 \
+       || ! synocr_sqlite "SELECT 1 FROM backup_files LIMIT 1;" >/dev/null 2>&1; then
         log_item "backup rotation skipped (backup tables missing)"
         return
     fi
@@ -2271,12 +2272,12 @@ purge_backup()
 # delete surplus backup files:
 # ---------------------------------------------------------------------
     if [[ "${backup_max_type}" == days ]]; then
-        count2del=$(sqlite3 ./etc/synOCR.sqlite "SELECT COUNT(*)
+        count2del=$(synocr_sqlite "SELECT COUNT(*)
             FROM backup_files bf
             WHERE bf.profile_ID='${profile_ID}'
               AND ${source_file_type4sql}
               AND datetime(bf.processing_timestamp) < datetime('now','localtime','-${backup_max} days');")
-        backup_files2del=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT
+        backup_files2del=$(synocr_sqlite -separator $'\t' "SELECT
                 bf.backup_file_ID,
                 bd.backup_dir || bf.filename
             FROM backup_files bf
@@ -2288,7 +2289,7 @@ purge_backup()
         log_item "delete ${count2del} backup files ( > ${backup_max} days)"
         purge_backup_db_entries <<< "${backup_files2del}"
     else
-        backup_file_count=$(sqlite3 ./etc/synOCR.sqlite "SELECT COUNT(*)
+        backup_file_count=$(synocr_sqlite "SELECT COUNT(*)
             FROM backup_files bf
             WHERE bf.profile_ID='${profile_ID}'
               AND ${source_file_type4sql};")
@@ -2297,7 +2298,7 @@ purge_backup()
         log_item "delete ${count2del} backup files ( > ${backup_max} files)"
 
         if [ "${count2del}" -gt 0 ]; then
-            backup_files2del=$(sqlite3 -separator $'\t' ./etc/synOCR.sqlite "SELECT
+            backup_files2del=$(synocr_sqlite -separator $'\t' "SELECT
                     bf.backup_file_ID,
                     bd.backup_dir || bf.filename
                 FROM backup_files bf
@@ -2594,6 +2595,7 @@ while read -r input1 ; do
     synocr_status_file_pipeline_start "${filename}"
     date_start_file=$(date +%s)
     was_splitted=0
+    split_output_count=0
     split_error=0
     process_error=1 # is set to 0 in the file_processing_log() function when the target file is successfully created
 
@@ -2926,6 +2928,7 @@ while read -r input1 ; do
                     copy_attributes "${input1}" "${output}"
                     log_item "move the split file to: ${output}"
                     was_splitted=1
+                    split_output_count=$((split_output_count + 1))
                 else
                     log_item "! ! ! ERROR with splitting file"
                     split_error=1
@@ -2944,6 +2947,19 @@ while read -r input1 ; do
 
     if [ "${was_splitted}" = 0 ] || [ "${split_error}" = 1 ]; then
         mv "${outputtmp}" "${work_tmp_main}"
+    fi
+
+    # Keep the GUI total aligned with split output files.
+    if [ "${was_splitted}" = 1 ] && [ "${split_error}" = 0 ] && [ "${split_output_count}" -gt 1 ]; then
+        additional_files=$((split_output_count - 1))
+        status_file="$(synocr_status_file_path)"
+        current_progress_total=0
+        if [ -s "${status_file}" ]; then
+            current_progress_total=$(jq -r '.files_total // 0' "${status_file}" 2>/dev/null)
+        fi
+        current_progress_total=${current_progress_total:-0}
+        synocr_status_write_monotonic_int files_total "$((current_progress_total + additional_files))"
+        log_item "GUI progress total increased by ${additional_files} split output file(s)."
     fi
 
     log_runtime $(( $(date +%s) - date_start_file ))
@@ -3212,11 +3228,17 @@ while read -r input ; do
 # ---------------------------------------------------------------------
     log_subsection "Stats"
 
-    sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${global_pagecount_new}' WHERE key='global_pagecount'"
-    sqlite3 "./etc/synOCR.sqlite" "UPDATE system SET value_1='${global_ocrcount_new}' WHERE key='global_ocrcount'"
-
-    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET pagecount='${pagecount_profile_new}' WHERE profile_ID='${profile_ID}'"
-    sqlite3 "./etc/synOCR.sqlite" "UPDATE config SET ocrcount='${ocrcount_profile_new}' WHERE profile_ID='${profile_ID}'"
+    stats_sqlite3log=$(synocr_sqlite "BEGIN;
+        UPDATE system SET value_1='${global_pagecount_new}' WHERE key='global_pagecount';
+        UPDATE system SET value_1='${global_ocrcount_new}' WHERE key='global_ocrcount';
+        UPDATE config SET pagecount='${pagecount_profile_new}' WHERE profile_ID='${profile_ID}';
+        UPDATE config SET ocrcount='${ocrcount_profile_new}' WHERE profile_ID='${profile_ID}';
+        COMMIT;" 2>&1)
+    stats_sqlite3rc=$?
+    if [ "${stats_sqlite3rc}" != 0 ]; then
+        log_item "statistics DB update failed:"
+        echo "${stats_sqlite3log}" | log_block
+    fi
 
     log_detail "runtime last file: $(sec_to_time $(( $(date +%s) - date_start_file )))"
     log_detail "pagecount last file: ${pagecount_latest}"
@@ -3227,6 +3249,7 @@ while read -r input ; do
 
     synocr_status_increment_files_completed
     synocr_status_update_step cleanup "${filename}"
+    synocr_status_complete_file_progress
 
 # delete temporary working directory:
 # ---------------------------------------------------------------------

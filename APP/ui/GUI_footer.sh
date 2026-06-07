@@ -10,7 +10,7 @@
 if [[ "${mainpage}" == edit ]]; then
     restore_profile_id="${getprofile:-${profile_ID}}"
     [ -z "${restore_profile_id}" ] && restore_profile_id="1"
-    restore_inputdir=$(sqlite3 "./etc/synOCR.sqlite" "SELECT INPUTDIR FROM config WHERE profile_ID='${restore_profile_id}' LIMIT 1;" 2>/dev/null)
+    restore_inputdir=$(synocr_sqlite "SELECT INPUTDIR FROM config WHERE profile_ID='${restore_profile_id}' LIMIT 1;" 2>/dev/null)
     restore_inputdb="${restore_inputdir%/}/synOCR.sqlite"
 
     if [ -f "${restore_inputdb}" ]; then

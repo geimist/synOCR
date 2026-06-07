@@ -56,11 +56,12 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
         --arg iconIdle "images/status_green@geimist.svg" \
         --arg iconBusy "images/sanduhr_blue@geimist.svg" \
         --arg allDoneText "${lang_main_alldone}" \
+        --arg doneStepText "${lang_main_progress_step_cleanup:-${lang_main_alldone}}" \
         --arg profileLabel "${lang_edit_profname}" \
         --argjson pollMs 2500 \
         --argjson doneHoldMs 5000 \
         --argjson doneFadeMs 800 \
-        '{statusUrl:$statusUrl,filesTpl:$filesTpl,iconIdle:$iconIdle,iconBusy:$iconBusy,allDoneText:$allDoneText,profileLabel:$profileLabel,pollMs:$pollMs,doneHoldMs:$doneHoldMs,doneFadeMs:$doneFadeMs}' 2>/dev/null) || synocr_progress_config_json=""
+        '{statusUrl:$statusUrl,filesTpl:$filesTpl,iconIdle:$iconIdle,iconBusy:$iconBusy,allDoneText:$allDoneText,doneStepText:$doneStepText,profileLabel:$profileLabel,pollMs:$pollMs,doneHoldMs:$doneHoldMs,doneFadeMs:$doneFadeMs}' 2>/dev/null) || synocr_progress_config_json=""
 
 # manual synOCR start:
 # ---------------------------------------------------------------------
@@ -69,26 +70,26 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
         echo '<meta http-equiv="refresh" content="0; URL=index.cgi?page=main">'
     fi
 
-# manual synOCR start monitoring:
+# manual synOCR start/stop monitoring: wait page with spinner, then -run page in index.cgi
 # ---------------------------------------------------------------------
-    if [[ "${synocr_request_page}" == "main-run-synocr-monitoring" ]]; then
-        /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start >/dev/null 2>&1 &
-
+    if [[ "${synocr_request_page}" == "main-run-synocr-monitoring" ]] || [[ "${synocr_request_page}" == "main-stop-synocr-monitoring" ]]; then
+        _synocr_mon_run_page="${synocr_request_page}-run"
+        if [[ "${synocr_request_page}" == "main-stop-synocr-monitoring" ]]; then
+            _synocr_mon_wait_text="${lang_main_button_stop_monitoring} …"
+        elif [ -n "$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}' | head -n1)" ]; then
+            _synocr_mon_wait_text="${lang_main_button_restart_monitoring} …"
+        else
+            _synocr_mon_wait_text="${lang_main_button_start_monitoring} …"
+        fi
         echo '
-        <div class="Content_1Col_full" style="font-size: 0.8rem; color: #808080;">'"${lang_main_reload_manualy}"' ...
-            <meta http-equiv="refresh" content="0; URL=index.cgi?page=main">
-        </div>'
-    fi
-
-# manual synOCR stop monitoring:
-# ---------------------------------------------------------------------
-    if [[ "${synocr_request_page}" == "main-stop-synocr-monitoring" ]]; then
-        /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh stop >/dev/null 2>&1 &
-       
-        echo '
-        <div class="Content_1Col_full" style="font-size: 0.8rem; color: #808080;">'"${lang_main_reload_manualy}"' ...
-            <meta http-equiv="refresh" content="0; URL=index.cgi?page=main">
-        </div>'
+    <h2 class="synocr-text-blue mt-3">synOCR '"${lang_page1}"'</h2>
+    <div class="Content_1Col_full text-center">
+        <p class="mt-4 mb-3 px-2" style="font-size: 0.95rem;">'"${_synocr_mon_wait_text}"'</p>
+        <div class="mb-4"><img src="images/status_loading.gif" width="32" height="32" alt="" role="presentation"></div>
+        <p class="text-muted small mb-3"><a href="index.cgi?page='"${_synocr_mon_run_page}"'">'"${lang_main_update_repo_feed_wait_fallback_link}"'</a></p>
+        <noscript><p class="small"><a href="index.cgi?page='"${_synocr_mon_run_page}"'">'"${lang_main_update_repo_feed_wait_fallback_link}"'</a></p></noscript>
+        <script>setTimeout(function(){ window.location.replace("index.cgi?page='"${_synocr_mon_run_page}"'"); }, 150);</script>
+    </div>'
     fi
 
 # Force synOCR exit:
@@ -202,7 +203,7 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
 
         # check if the list of watched folders is still up to date:
         monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
-        sqlite3 /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
+        synocr_sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}_tmp"
 
         if [ "$(cat "${monitored_folders}" 2>/dev/null)" != "$(cat "${monitored_folders}_tmp")" ]; then
             if [ "${dsm_major}" -ge 7 ] && [ "$monitoring_user" = root ]; then
@@ -371,7 +372,7 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
         dir="$(echo "${value}" | awk -F'\t' '{print $1}')"
         profilename="$(echo "${value}" | awk -F'\t' '{print $2}')"
         [ ! -d "${dir}" ] && invalid_input_dir="${invalid_input_dir}${profilename} ${dir}<br>"
-    done <<< "$(sqlite3 -separator $'\t' /usr/syno/synoman/webman/3rdparty/synOCR/etc/synOCR.sqlite "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )" 
+    done <<< "$(synocr_sqlite -separator $'\t' "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )" 
 
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
     if [ "${dsm_major}" -eq 6 ] || { grep "^administrators" /etc/group | grep -q synOCR && grep "^docker" /etc/group | grep -q synOCR ; } ; then
@@ -454,8 +455,8 @@ echo '
                 <td id="synocr-open-files-value" class="synocr-text-red">'"${count_input_file}"'</td>
             </tr>
             <tr>
-                <td class="synocr-text-blue">'"${lang_main_totalsince}"' '"$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")"' (PDF / '"${lang_main_pages}"'):</td>
-                <td class="synocr-text-green">'"$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")"' / '"$(sqlite3 ./etc/synOCR.sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")"'</td>
+                <td class="synocr-text-blue">'"${lang_main_totalsince}"' '"$(synocr_sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")"' (PDF / '"${lang_main_pages}"'):</td>
+                <td class="synocr-text-green">'"$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")"' / '"$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")"'</td>
             </tr>
         </tbody>
     </table>
