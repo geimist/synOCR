@@ -16,19 +16,6 @@
 
     source ./includes/functions.sh
 
-    set -E -o functrace     # for function failure()
-
-    # shellcheck disable=SC2317  # Don't warn about "unreachable commands" in this function
-    failure()
-    {
-    # this function show error line
-    # --------------------------------------------------------------
-        # https://unix.stackexchange.com/questions/462156/how-do-i-find-the-line-number-in-bash-when-an-error-occured
-        local lineno="${1}"
-        local msg="${2}"
-        log_error "at line ${lineno}: ${msg}"
-    }
-
     cleanup_lockfile() {
         if [ -d "${LOCKFILE}" ]; then
             rm -rf "${LOCKFILE}"
@@ -43,8 +30,17 @@
         cleanup_lockfile
     }
 
-    trap 'failure ${LINENO} "${BASH_COMMAND}"' ERR
-    trap 'synocr_exit_cleanup' EXIT INT TERM
+    synocr_on_exit() {
+        local ec=$?
+        if (( ec != 0 )) && [[ -z "${_SYNOCR_ABORT_LOGGED:-}" ]]; then
+            log_error_at "synOCR aborted with exit code ${ec}"
+        fi
+        synocr_exit_cleanup
+    }
+
+    trap synocr_on_exit EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
 
 
     echo "    -----------------------------------"
@@ -80,16 +76,14 @@
         if [ -d "${LOCKFILE}" ]; then
             lock_pid=$(cat "${LOCKFILE}/pid" 2>/dev/null)
             if [ -n "${lock_pid}" ] && kill -0 "${lock_pid}" 2>/dev/null; then
-                echo "synOCR is already running (PID: ${lock_pid})"
-                exit 1
+                synocr_fail_fatal "synOCR is already running (PID: ${lock_pid})"
             else
                 echo "Removing stale lock file"
                 rm -rf "${LOCKFILE}"
-                mkdir "${LOCKFILE}" || exit 1
+                mkdir "${LOCKFILE}" || synocr_fail_fatal "Failed to recreate lock file"
             fi
         else
-            echo "Failed to create lock file"
-            exit 1
+            synocr_fail_fatal "Failed to create lock file"
         fi
     fi
 
@@ -451,8 +445,7 @@
     if [ -d "${INPUTDIR}" ] ; then
         log_kv "Source directory" "${INPUTDIR}"
     else
-        log_error "Source directory invalid or not set!"
-        exit 1
+        synocr_fail_fatal "Source directory invalid or not set: ${INPUTDIR}"
     fi
 
     OUTPUTDIR="${OUTPUTDIR%/}/"
@@ -464,8 +457,7 @@
         backup=true
     elif echo "${BACKUPDIR}" | grep -q "/volume" ; then
         if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${BACKUPDIR}" | awk -F/ '{print $3}')" ; then
-            log_error "BackUP folder not mounted    ➜    EXIT SCRIPT!"
-            exit 1
+            synocr_fail_fatal "BackUP folder not mounted: ${BACKUPDIR}"
         fi
         mkdir -p "${BACKUPDIR}"
         log_kv "BackUp directory was created" "[${BACKUPDIR}]"
@@ -652,19 +644,19 @@ elif [ -f "${taglist}" ]; then
 
         if [ "${python_check}" = "ok" ]; then
             log_debug "check and convert yaml 2 json with python"
-            tag_rule_content=$( python3 -c 'import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin.read()), indent=2, sort_keys=False))' < "${taglisttmp}")
-            if [ $? != 0 ]; then
-                log_error "YAML-check failed!"
+            tag_rule_content=$( python3 -c 'import sys, yaml, json; print(json.dumps(yaml.safe_load(sys.stdin.read()), indent=2, sort_keys=False))' < "${taglisttmp}" 2>&1)
+            rc=$?
+            if [ "${rc}" -ne 0 ]; then
+                log_command_error "YAML parse failed (python3) for rule file [${taglist}]" "${rc}" "${tag_rule_content}"
                 return 1  # file not further processable
                 # ToDo: cancel run to preserve PDF source file / possibly move to Errorfiles? (rather not)
             fi
         else
             log_debug "check and convert yaml 2 json with yq_bin"
             yamlcheck=$(yq_bin v "${taglist}" 2>&1)
-            if [ $? != 0 ]; then
-                log_error "YAML-check failed!"
-                log_error "Message:"
-                echo "${yamlcheck}" | log_block
+            rc=$?
+            if [ "${rc}" -ne 0 ]; then
+                log_command_error "YAML validate failed (yq_bin) for rule file [${taglist}]" "${rc}" "${yamlcheck}"
                 return 1  # file not further processable
                 # ToDo: cancel run to preserve PDF source file / possibly move to Errorfiles? (rather not)
             fi
@@ -1178,7 +1170,7 @@ yaml_validate()
         while read -r line ; do
             value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
             if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
-               log_item "syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of condition must be only \"all\" OR \"any\" OR \"none\"]"
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'condition' — expected all, any, or none"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^condition:")"
     fi
@@ -1188,7 +1180,7 @@ yaml_validate()
         while read -r line ; do
             value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
             if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-               log_item "syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of isRegEx must be only \"true\" OR \"false\"]"
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'isRegEx' — expected true or false"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^isRegEx:")"
     fi
@@ -1198,7 +1190,7 @@ yaml_validate()
         while read -r line ; do
             value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
             if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(content|filename)$' > /dev/null  2>&1 ; then
-               log_item "syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of source must be only \"content\" OR \"filename\"]"
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'source' — expected content or filename"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^source:")"
     fi
@@ -1208,7 +1200,7 @@ yaml_validate()
         while read -r line ; do
             value="$(echo "${line}" | awk -F: '{print $3}' | sed 's/^ *//;s/ *$//' | tr -cd '[:alnum:][:blank:]')"
             if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' > /dev/null  2>&1 ; then
-               log_item "syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of searchtype must be only \"is\" OR \"is not\" OR \"contains\" OR \"does not contain\" OR \"starts with\" OR \"does not starts with\" OR \"ends with\" OR \"does not ends with\" OR \"matches\" OR \"does not match\"]"
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'searchtype' — expected is, is not, contains, does not contain, starts with, does not starts with, ends with, does not ends with, matches, or does not match"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wnE "^searchtyp:|^searchtype:")"
     fi
@@ -1218,7 +1210,7 @@ yaml_validate()
         while read -r line ; do
             value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
             if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-               log_item "syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of casesensitive must be only \"true\" OR \"false\"]"
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'casesensitive' — expected true or false"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^casesensitive:")"
     fi
@@ -1228,7 +1220,7 @@ yaml_validate()
         while read -r line ; do
             value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
             if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-               log_item "syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of multilineregex must be only \"true\" OR \"false\"]"
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'multilineregex' — expected true or false"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^multilineregex:")"
     fi
@@ -1249,7 +1241,7 @@ yaml_validate()
         while read -r line ; do
             value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
             if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
-               log_item "syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [value of apprise_attachment must be only \"true\" OR \"false\"]"
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'apprise_attachment' — expected true or false"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^apprise_attachment:")"
     fi
@@ -1259,7 +1251,7 @@ yaml_validate()
         while read -r line ; do
             value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
             if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(chs|cht|csy|dan|enu|fre|ger|hun|ita|jpn|krn|nld|nor|plk|ptb|ptg|rus|spn|sve|tha|trk)$' > /dev/null  2>&1 ; then
-               log_item "syntax error in row $(echo "${line}" | awk -F: '{print $1}') (wrong value: >${value}<) [notify_lang must be only one of this values \"chs\" \"cht\" \"csy\" \"dan\" \"enu\" \"fre\" \"ger\" \"hun\" \"ita\" \"jpn\" \"krn\" \"nld\" \"nor\" \"plk\" \"ptb\" \"ptg\" \"rus\" \"spn\" \"sve\" \"tha\" \"trk\"]"
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'notify_lang' — expected one of chs, cht, csy, dan, enu, fre, ger, hun, ita, jpn, krn, nld, nor, plk, ptb, ptg, rus, spn, sve, tha, trk"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^notify_lang:")"
     fi
@@ -1304,8 +1296,7 @@ if [ "${machinetyp}" = aarch64 ]; then
     if [ "${latest_py_version}" != "3.8" ]; then
         echo "Python 3.9 or higher found: ${latest_py_version}"
     else
-        log_error "No suitable Python version (>=3.9) found. Please install at least Python 3.9"
-        exit 1
+        synocr_fail_fatal "No suitable Python version (>=3.9) found on ${machinetyp}. Please install at least Python 3.9"
     fi
 else
     python_path="$(which python3)"
@@ -1321,7 +1312,7 @@ if [ -d "${python3_env}" ]; then
     py_version=$("${python_path}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))")
     # Compare the version with the highest version so far
     if [[ "${env_version}" != "${py_version}" ]]; then
-        log_warn "the virtual Python environment does not match the selected interpreter and is therefore deleted"
+        log_warn_at "virtual Python environment does not match selected interpreter (${env_version} != ${py_version}) — deleting ${python3_env}"
         rm -r "${python3_env}"
     fi
 fi
@@ -1331,8 +1322,8 @@ fi
     log_debug "  Check Python:"
     if [ -z "${python_path}" ]; then
 ##    if [ ! "$(which python3)" ]; then
-        log_item "  (Python3 is not installed / use fallback search with regex"
-        log_item "  for more precise search results Python3 is required)"
+        log_error_at "Python3 not installed — fallback to regex date search"
+        log_item "  for more precise search results Python3 is required"
         python_check=failed
         return 1
     else
@@ -1355,7 +1346,7 @@ fi
                 if python3 -m pip --version > /dev/null  2>&1 ; then
                     echo "ok"
                 else
-                    echo "failed ! ! ! (please install Python3 pip manually)"
+                    log_error_at "pip install failed for ${python_path} — please install Python3 pip manually"
                     log_item "  install log:"
                     echo "${tmp_log1}" | log_block "${_LOG_INDENT}  "
                     echo "${tmp_log2}" | log_block "${_LOG_INDENT}  "
@@ -1398,7 +1389,7 @@ fi
                     if grep -qi "${moduleName}" <<<"$(python3 -m pip list 2>/dev/null)" ; then
                         echo "ok"
                     else
-                        echo "failed ! ! ! (please install ${module} manually)"
+                        log_error_at "Python module '${module}' install failed — please install manually"
                         log_item "  install log:" && echo "${tmp_log1}" | log_block "${_LOG_INDENT}  "
                         python_check=failed
                         return 1
@@ -1522,6 +1513,16 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
             fi
     
         # check century:
+            if ! synocr_is_integer "${date_yy}"; then
+                log_error_at "invalid year value for date comparison: expected integer, got [${date_yy}] (source: OCR text, format ${format})"
+                log_detail "invalid format"
+                continue
+            fi
+            if ! synocr_is_integer "${date_dd}" || ! synocr_is_integer "${date_mm}"; then
+                log_error_at "invalid day/month value for date comparison: day=[${date_dd}] month=[${date_mm}] (source: OCR text, format ${format})"
+                log_detail "invalid format"
+                continue
+            fi
             if [ "$(echo -n "${date_yy}" | wc -m)" -eq 2 ]; then
                 if [ "${date_yy}" -gt "$(date +%y)" ]; then
                     date_yy="$(($(date +%C) - 1))${date_yy}"
@@ -1757,9 +1758,11 @@ rename()
                                             -inputFile "${outputtmp}" \
                                             -metaData "{$py_meta}"  \
                                             -outputFile "${outputtmpMeta}"
+            handlePdf_rc=$?
+            meta_size=$(stat -c %s "${outputtmpMeta}" 2>/dev/null || echo 0)
 
-            if [ $? != 0 ] || [ "$(stat -c %s "${outputtmpMeta}")" -eq 0 ] || [ ! -f "${outputtmpMeta}" ];then
-                log_item "  ⚠️ ERROR with writing metadata ... "
+            if [ "${handlePdf_rc}" -ne 0 ] || [ "${meta_size}" -eq 0 ] || [ ! -f "${outputtmpMeta}" ]; then
+                log_error_at "handlePdf.py metadata failed (exit ${handlePdf_rc}) for ${outputtmp}"
             else
                 mv "${outputtmpMeta}" "${outputtmp}"
             fi
@@ -1770,7 +1773,7 @@ rename()
             echo -n "(exiftool ok) "
             exiftool -overwrite_original -time:all="${date_yy}:${date_mm}:${date_dd} 00:00:00" -sep ", " -Keywords="$( echo "${renameTag}" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g" )" "${outputtmp}"
         else
-            echo "FAILED! - exiftool not found / Python-check failed or enablePyMetaData was set to false manualy! Please install it when you need it and when you want to insert metadata"
+            log_error_at "exiftool not found — Python-check failed or enablePyMetaData disabled; metadata not written"
         fi
 
         log_runtime $(( $(date +%s) - date_start_file ))
@@ -1895,11 +1898,12 @@ rename()
                     else
                         commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
                     fi
+                    commandlog_rc=$?
 
                     # check: - creating hard link don't fails / - target file is valid (not empty)
-                    if [ $? != 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
+                    if [ "${commandlog_rc}" -ne 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
                         log_item "  ${commandlog}"
-                        log_item "  Creating a hard link failed! A file copy is used."
+                        log_warn_at "hard link failed for ${output}, using file copy"
                         if _synocr_log_ge2; then
                             log_debug "list of mounted volumes:"
                             df -h --output=source,target | log_block "${_LOG_INDENT}      "
@@ -1969,10 +1973,11 @@ rename()
                 else
                     commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
                 fi
+                commandlog_rc=$?
                 # check: - creating hard link don't fails / - target file is valid (not empty)
-                if [ $? != 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
+                if [ "${commandlog_rc}" -ne 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
                     log_item "  ${commandlog}"
-                    log_item "  Creating a hard link failed! A file copy is used."
+                    log_warn_at "hard link failed for ${output}, using file copy"
                     if _synocr_log_ge2; then
                         log_debug "list of mounted volumes:"
                         df -h --output=source,target | log_block "${_LOG_INDENT}      "
@@ -2107,9 +2112,10 @@ register_backup_file()
                 datetime('now','localtime')
             );
         COMMIT;" 2>&1)
+    sqlite3rc=$?
 
-    if [ $? != 0 ]; then
-        log_item "backup DB entry failed:"
+    if [ "${sqlite3rc}" -ne 0 ]; then
+        log_error_at "backup DB insert failed for ${backup_filename}"
         echo "${sqlite3log}" | log_block
     elif _synocr_log_ge2; then
         log_debug "backup DB entry created: ${backup_file_path}"
@@ -2244,8 +2250,8 @@ purge_backup()
         return
     fi
 
-    if ! [[ "${backup_max}" =~ ^[0-9]+$ ]]; then
-        log_subsection "purge backup skipped (invalid backup_max: ${backup_max})"
+    if ! synocr_is_integer "${backup_max}"; then
+        log_warn_at "purge backup skipped — invalid backup_max: expected integer, got [${backup_max}]"
         return
     fi
 
@@ -2513,14 +2519,14 @@ while read -r input ; do
             if mv "${input}" "${output}"; then
                 register_backup_file "${output}"
             else
-                log_item "backup source file failed: ${input}"
+                log_error_at "backup copy failed: ${input}"
             fi
         else
             log_item "delete source file (${filename})"
             rm -f "${input}"
         fi
     else
-        log_item "ERROR with ${output}"
+        log_error_at "img2pdf failed — target empty or missing: ${output}"
     fi
 
 done <<<"${files}"
@@ -2658,7 +2664,8 @@ while read -r input1 ; do
             log_item "PDF successfully adjust color"
             adjustColorSuccess=true
         else
-            log_error "adjust color failed or no valid target PDF file was created. (exit code: ${exit_code})"
+            log_error_at "color_adjustment.py failed (exit ${exit_code}) for ${input1}"
+            [ -n "${adjustColorLOG}" ] && printf '%s\n' "${adjustColorLOG}" | log_block "${_LOG_INDENT_DETAIL}  "
         fi
         log_debug "adjustColorLOG: $adjustColorLOG"
         unset exit_code
@@ -2684,7 +2691,7 @@ while read -r input1 ; do
     # defective source files are moved to ERROR including LOG:
     # ---------------------------------------------------------------------
     if [ ! -f "${outputtmp}" ] || [ "$(stat -c %s "${outputtmp}" 2>/dev/null)" -eq 0 ]; then
-        log_item "failed! (target file is empty or not available)"
+        log_error_at "OCR target empty or missing: ${outputtmp}"
         rm "${outputtmp}"
         if echo "${dockerlog}" | grep -iq ERROR ;then
             if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
@@ -2741,7 +2748,7 @@ while read -r input1 ; do
             log_item "$((pagePreCount - pagePostCount)) (blank pages) out of ${pagePreCount} pages removed."
             log_blank
         else
-            log_error "No valid target PDF file found or file does not exist."
+            log_error_at "blank page detection failed — no valid target PDF after scanrep for ${outputtmp}"
             log_blank
         fi
         log_runtime $(( $(date +%s) - date_start_file ))
@@ -2775,7 +2782,7 @@ while read -r input1 ; do
                 done
             fi
         else
-            log_item "! ! ! error at counting PDF pages"
+            log_error_at "invalid page count for split handling: expected integer, got [${pageCount}] (tool: py_page_count)"
         fi
 
     # split document:
@@ -2930,7 +2937,7 @@ while read -r input1 ; do
                     was_splitted=1
                     split_output_count=$((split_output_count + 1))
                 else
-                    log_item "! ! ! ERROR with splitting file"
+                    log_error_at "split failed — output file missing: ${splitted_file} (pages ${startPage}-${endPage})"
                     split_error=1
                 fi
             done <<<"$(sort <<<"${splitJob}")"
@@ -2978,11 +2985,11 @@ while read -r input1 ; do
             log_item "backup source file to: ${output}"
             register_backup_file "${output}"
         else
-            log_item "backup source file failed: ${input1}"
+            log_error_at "backup copy failed: ${input1}"
         fi
     elif [ "${process_error}" -eq 1 ]; then
         # target file is not valid / source files are moved to ERRORFILES including LOG:
-        log_item "failed! (process_error flag is 1)"
+        log_error_at "processing failed (process_error=1) for ${input1}"
         if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
             log_item "                  ERROR-Directory [${INPUTDIR}ERRORFILES] will be created!"
             mkdir "${INPUTDIR}ERRORFILES"
@@ -3087,7 +3094,10 @@ while read -r input ; do
         log_debug "(pages counted with exiftool)"
     fi
 
-    [ -z "${pagecount_latest}" ] && pagecount_latest=0 && log_item "! ! ! ERROR - with pdfinfo / exiftool / pypdf - \$pagecount was set to 0"
+    if [ -z "${pagecount_latest}" ]; then
+        pagecount_latest=0
+        log_error_at "page count failed — pdfinfo/exiftool/pypdf returned no value for ${output}"
+    fi
 
     global_pagecount_new="$((global_pagecount_new+pagecount_latest))"
     global_ocrcount_new="$((global_ocrcount_new+1))"
@@ -3204,11 +3214,12 @@ while read -r input ; do
             apprise_LOG=$(apprise --interpret-escapes -vv -t 'synOCR' -b "${lang_notify_file_job_successful}\n\r${file_notify}" "${apprise_call}")
         fi
 
-        if [ "$?" -eq 0 ] ; then
+        apprise_rc=$?
+        if [ "${apprise_rc}" -eq 0 ]; then
             log_item "  APPRISE-LOG:"
             echo "${apprise_LOG}" | log_block "${_LOG_INDENT}  "
-        elif [ "$?" -ne 0 ] || [ "${loglevel}" = 2 ]; then # for log level 1 only error output
-            log_item_n "APPRISE-Error: "
+        elif [ "${apprise_rc}" -ne 0 ] || [ "${loglevel}" = 2 ]; then # for log level 1 only error output
+            log_error_at "Apprise notification failed (exit ${apprise_rc})"
             echo "${apprise_LOG}" | log_block "${_LOG_INDENT}  "
         fi
     else
@@ -3236,7 +3247,7 @@ while read -r input ; do
         COMMIT;" 2>&1)
     stats_sqlite3rc=$?
     if [ "${stats_sqlite3rc}" != 0 ]; then
-        log_item "statistics DB update failed:"
+        log_error_at "statistics DB update failed (exit ${stats_sqlite3rc})"
         echo "${stats_sqlite3log}" | log_block
     fi
 
@@ -3285,13 +3296,14 @@ done <<<"${files_step2}"
     fi
 
     prepare_python_log=$(prepare_python)
-    if [ "$?" -eq 0 ]; then
+    prepare_python_rc=$?
+    if [ "${prepare_python_rc}" -eq 0 ]; then
         [ -n "${prepare_python_log}" ] && echo "${prepare_python_log}"
         log_item "prepare_python: OK"
         source "${python3_env}/bin/activate"
     else
         [ -n "${prepare_python_log}" ] && echo "${prepare_python_log}"
-        log_error "prepare_python: ! ! ! ERROR ! ! !"
+        synocr_fail_fatal "prepare_python failed (exit ${prepare_python_rc})"
     fi
 
     synocr_build_step_list

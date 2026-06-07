@@ -6,6 +6,7 @@ known issues / limitations:
   IMPROVEMENT:
  - [GUI]    Detailverbesserungen der Progressbardarstellung
  - [shell]  Überarbeitung / Härtung der DB-Zugriffe
+ - [shell]  überarbeitetes Errorlogging
 
 1.5.99.8 [2026-05-31] 
   IMPROVEMENT:

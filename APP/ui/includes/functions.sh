@@ -160,8 +160,7 @@ synogroupmoddocker() {
             synogroupmoduser add docker synOCR
             echo "OK"
         else
-            echo "FAILED to create docker group!" >&2
-            exit 1
+            synocr_fail_fatal "Failed to create docker group"
         fi
     else
         # Check permissions
@@ -1009,6 +1008,82 @@ _synocr_log_ge2() {
     (( ${loglevel:-0} >= 2 ))
 }
 
+# Logging conventions:
+# - synocr_fail_fatal: abort entire script (log + exit)
+# - log_error_at: per-file or recoverable error (log + return 1)
+# - log_command_error: external command failed (rc + output)
+# - log_warn_at: fallback, non-fatal issue
+# - Config/YAML invalid values: include config line + allowed values
+
+_log_call_site_prefix() {
+    local depth="${1:-2}"
+    local src_idx="${depth}"
+    local func_idx="${depth}"
+    local line_idx=$(( depth - 1 ))
+    local file func line
+
+    file="${BASH_SOURCE[${src_idx}]:-unknown}"
+    file="${file##*/}"
+    func="${FUNCNAME[${func_idx}]:-main}"
+    line="${BASH_LINENO[${line_idx}]:-0}"
+    printf '[%s:%s:%s]' "${file}" "${func}" "${line}"
+}
+
+_log_error_message() {
+    local message="$1"
+    local prefix
+
+    prefix="$(_log_call_site_prefix 3)"
+    if [ -n "${_SYNOCR_CTX_FILE:-}" ]; then
+        log_error "${prefix} [file: ${_SYNOCR_CTX_FILE}] ${message}"
+    else
+        log_error "${prefix} ${message}"
+    fi
+}
+
+log_error_at() {
+    local message="$1"
+    _log_error_message "${message}"
+}
+
+log_warn_at() {
+    local message="$1"
+    local prefix
+
+    _synocr_log_ge1 || return 0
+    prefix="$(_log_call_site_prefix 2)"
+    if [ -n "${_SYNOCR_CTX_FILE:-}" ]; then
+        printf "WARN  %s [file: %s] %s\n" "${prefix}" "${_SYNOCR_CTX_FILE}" "${message}" >&2
+    else
+        printf "WARN  %s %s\n" "${prefix}" "${message}" >&2
+    fi
+}
+
+log_command_error() {
+    local description="$1"
+    local rc="$2"
+    local output="${3:-}"
+
+    _log_error_message "${description} (exit ${rc})"
+    if [ -n "${output}" ]; then
+        printf '%s\n' "${output}" | log_block "${_LOG_INDENT_DETAIL}  "
+    fi
+}
+
+synocr_fail_fatal() {
+    local message="$1"
+    local exit_code="${2:-1}"
+
+    _SYNOCR_ABORT_LOGGED=1
+    export _SYNOCR_ABORT_LOGGED
+    _log_error_message "${message}"
+    exit "${exit_code}"
+}
+
+synocr_is_integer() {
+    [[ "${1}" =~ ^-?[0-9]+$ ]]
+}
+
 _log_strip_leading() {
     local message="$1"
     message="${message#"${message%%[![:space:]]*}"}"
@@ -1169,6 +1244,8 @@ log_file() {
     local name="$1"
     local index="$2"
     local total="$3"
+    _SYNOCR_CTX_FILE="${name}"
+    export _SYNOCR_CTX_FILE
     _synocr_log_ge1 || return 0
     if [ -n "${index}" ] && [ -n "${total}" ]; then
         log_section "CURRENT FILE: ${name} (${index}/${total})"
