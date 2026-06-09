@@ -96,15 +96,33 @@ exit 1
     # $1 = file, $2 = key, $3 = value
     # scripts/lang/* are sourced by /bin/sh on DSM; values may contain spaces, quotes, etc.
     # Use bash printf %q so the assignment line is safe for POSIX sh when sourced.
+    if [ -z "$3" ]; then
+        echo "build_spk: empty value for key '${2}' (file: ${1})" >&2
+        return 1
+    fi
     grep -v "^$2=" "$1" > "$1.synosetkeyvalue.tmp" && mv "$1.synosetkeyvalue.tmp" "$1"
     printf '%s=%q\n' "$2" "$3" >> "$1"
     }
 
     get_key_value() {
     # this function is a workaround replacement of synology DSM binary get_key_value
-    # $1 = file
-    # $2 = key
-    cat "$1" | grep "^$2" | sed -e 's~^'$2'=~~;s~^"~~g;s~"$~~g'   
+    # $1 = file, $2 = key
+    local file="$1" key="$2" line value
+
+    [ -f "$file" ] || {
+        echo "build_spk: language file not found: ${file}" >&2
+        return 1
+    }
+
+    line=$(grep -m1 "^${key}=" "$file") || {
+        echo "build_spk: missing key '${key}' in ${file}" >&2
+        return 1
+    }
+
+    value=${line#${key}=}
+    value=${value#\"}
+    value=${value%\"}
+    printf '%s' "$value"
     }
 
 # preparation:
@@ -117,7 +135,8 @@ exit 1
         # https://unix.stackexchange.com/questions/462156/how-do-i-find-the-line-number-in-bash-when-an-error-occured
         local lineno=$1
         local msg=$2
-        echo "ERROR at line $lineno: $msg"
+        echo "ERROR at line ${lineno}: ${msg}" >&2
+        exit 1
     }
     trap 'failure ${LINENO} "$BASH_COMMAND"' ERR
     

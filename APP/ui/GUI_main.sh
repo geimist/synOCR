@@ -368,11 +368,12 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
 
 # validate input directories:
     invalid_input_dir=""
-    while read -r value ; do
-        dir="$(echo "${value}" | awk -F'\t' '{print $1}')"
-        profilename="$(echo "${value}" | awk -F'\t' '{print $2}')"
+    active_dirs_json=$(synocr_sqlite -json "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null)
+    while IFS= read -r row; do
+        dir=$(synocr_jq_row_field "${row}" INPUTDIR)
+        profilename=$(synocr_jq_row_field "${row}" profile)
         [ ! -d "${dir}" ] && invalid_input_dir="${invalid_input_dir}${profilename} ${dir}<br>"
-    done <<< "$(synocr_sqlite -separator $'\t' "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )" 
+    done < <(synocr_jq_rows "${active_dirs_json}") 
 
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
     if [ "${dsm_major}" -eq 6 ] || { grep "^administrators" /etc/group | grep -q synOCR && grep "^docker" /etc/group | grep -q synOCR ; } ; then

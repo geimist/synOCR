@@ -117,74 +117,13 @@
 
 # load configuration:
 # ---------------------------------------------------------------------
-    sSQL="SELECT 
-            profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix,
-            delSearchPraefix, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call,
-            dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate, 
-            backup_max, backup_max_type, pagecount, ocrcount, search_nearest_date, date_search_method, clean_up_spaces, 
-            img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, apprise_attachment, notify_lang, 
-            blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, 
-            blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, 
-            blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, 
-            adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness, backup_clean_orphaned
-        FROM 
-            config 
-        WHERE 
-            profile_ID='${workprofile}' "
+    config_json=$(synocr_config_json_by_id "${workprofile}")
+    synocr_jq_load_row "${config_json}" 0
 
-    sqlerg=$(synocr_sqlite -separator $'\t' "${sSQL}")
-
-    profile_ID=$(echo "${sqlerg}" | awk -F'\t' '{print $1}')
-    profile=$(echo "${sqlerg}" | awk -F'\t' '{print $3}')
-    INPUTDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $4}')
-    OUTPUTDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $5}')
-    BACKUPDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $6}')
-    LOGDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $7}')
-    LOGmax=$(echo "${sqlerg}" | awk -F'\t' '{print $8}')
-    SearchPraefix=$(echo "${sqlerg}" | awk -F'\t' '{print $9}')
-    delSearchPraefix=$(echo "${sqlerg}" | awk -F'\t' '{print $10}')
-    taglist=$(echo "${sqlerg}" | awk -F'\t' '{print $11}')
-    searchAll=$(echo "${sqlerg}" | awk -F'\t' '{print $12}')
-    moveTaggedFiles=$(echo "${sqlerg}" | awk -F'\t' '{print $13}')
-    NameSyntax=$(echo "${sqlerg}" | awk -F'\t' '{print $14}')
-    ocropt=$(echo "${sqlerg}" | awk -F'\t' '{print $15}')
-    dockercontainer=$(echo "${sqlerg}" | awk -F'\t' '{print $16}')
-    apprise_call=$(echo "${sqlerg}" | awk -F'\t' '{print $17}')
-    dsmtextnotify=$(echo "${sqlerg}" | awk -F'\t' '{print $18}')
-    MessageTo=$(echo "${sqlerg}" | awk -F'\t' '{print $19}')
     [ -z "${MessageTo}" ] || [ "${MessageTo}" == "-" ] && MessageTo="@administrators" # group administrators (default)
-    dsmbeepnotify=$(echo "${sqlerg}" | awk -F'\t' '{print $20}')
-    loglevel=$(echo "${sqlerg}" | awk -F'\t' '{print $21}')
-    filedate=$(echo "${sqlerg}" | awk -F'\t' '{print $22}')
-    tagsymbol=$(echo "${sqlerg}" | awk -F'\t' '{print $23}')
-    documentSplitPattern=$(echo "${sqlerg}" | awk -F'\t' '{print $24}')
-    ignoredDate=$(echo "${sqlerg}" | awk -F'\t' '{print $25}' | sed -e 's/2021-02-29//g;s/2020-11-31//g;s/^ *//g') # remove (invalid) example dates
-    backup_max=$(echo "${sqlerg}" | awk -F'\t' '{print $26}')
-    backup_max_type=$(echo "${sqlerg}" | awk -F'\t' '{print $27}')
-    pagecount_profile=$(echo "${sqlerg}" | awk -F'\t' '{print $28}')
-    ocrcount_profile=$(echo "${sqlerg}" | awk -F'\t' '{print $29}')
-    search_nearest_date=$(echo "${sqlerg}" | awk -F'\t' '{print $30}')
-    date_search_method=$(echo "${sqlerg}" | awk -F'\t' '{print $31}')
-    clean_up_spaces=$(echo "${sqlerg}" | awk -F'\t' '{print $32}')
-    img2pdf=$(echo "${sqlerg}" | awk -F'\t' '{print $33}')
-    DateSearchMinYear=$(echo "${sqlerg}" | awk -F'\t' '{print $34}')
-    DateSearchMaxYear=$(echo "${sqlerg}" | awk -F'\t' '{print $35}')
-    splitpagehandling=$(echo "${sqlerg}" | awk -F'\t' '{print $36}')
-    apprise_attachment=$(echo "${sqlerg}" | awk -F'\t' '{print $37}')
-    notify_lang=$(echo "${sqlerg}" | awk -F'\t' '{print $38}')
-    blank_page_detection_switch=$(echo "${sqlerg}" | awk -F'\t' '{print $39}')
-    blank_page_detection_mainThreshold=$(echo "${sqlerg}" | awk -F'\t' '{print $40}')
-    blank_page_detection_widthCropping=$(echo "${sqlerg}" | awk -F'\t' '{print $41}')
-    blank_page_detection_hightCropping=$(echo "${sqlerg}" | awk -F'\t' '{print $42}')
-    blank_page_detection_interferenceMaxFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $43}')
-    blank_page_detection_interferenceMinFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $44}')
-    blank_page_detection_black_pixel_ratio=$(echo "${sqlerg}" | awk -F'\t' '{print $45}')
-    blank_page_detection_ignoreText=$(echo "${sqlerg}" | awk -F'\t' '{print $46}')
-    adjustColorBWthreshold=$(echo "${sqlerg}" | awk -F'\t' '{print $47}')
-    adjustColorDPI=$(echo "${sqlerg}" | awk -F'\t' '{print $48}')
-    adjustColorContrast=$(echo "${sqlerg}" | awk -F'\t' '{print $49}')
-    adjustColorSharpness=$(echo "${sqlerg}" | awk -F'\t' '{print $50}')
-    backup_clean_orphaned=$(echo "${sqlerg}" | awk -F'\t' '{print $51}')
+    ignoredDate=$(echo "${ignoredDate}" | sed -e 's/2021-02-29//g;s/2020-11-31//g;s/^ *//g') # remove (invalid) example dates
+    pagecount_profile="${pagecount}"
+    ocrcount_profile="${ocrcount}"
     [ -z "${backup_clean_orphaned}" ] && backup_clean_orphaned=false
     adjustColorBWabsoluteThreshold=96 # optional GUI candidate: keeps very dark filled areas black in BW mode (0 disables)
 
@@ -2130,9 +2069,12 @@ purge_backup_db_entries()
 # This function deletes backup files selected from the DB and cleans up DB entries       #
 #########################################################################################
 
-    local backup_file_ID backup_file_path backup_file_dir rm_output rm_status
+    local entries_json="$1"
+    local row backup_file_ID backup_file_path backup_file_dir rm_output rm_status
 
-    while IFS=$'\t' read -r backup_file_ID backup_file_path ; do
+    while IFS= read -r row; do
+        backup_file_ID=$(synocr_jq_row_field "${row}" backup_file_ID)
+        backup_file_path=$(synocr_jq_row_field "${row}" backup_file_path)
         [ -z "${backup_file_ID}" ] && continue
 
         backup_file_dir="${backup_file_path%/*}"
@@ -2153,7 +2095,7 @@ purge_backup_db_entries()
         else
             log_item "backup path not available, DB entry kept: ${backup_file_path}"
         fi
-    done
+    done < <(synocr_jq_rows "${entries_json}")
 
 }
 
@@ -2181,9 +2123,9 @@ check_orphaned_backup_entries()
 
     log_subsection "check orphaned backup DB entries ..."
 
-    orphan_entries=$(synocr_sqlite -separator $'\t' "SELECT
-            bf.backup_file_ID,
-            bd.backup_dir || bf.filename
+    orphan_entries=$(synocr_sqlite -json "SELECT
+            bf.backup_file_ID AS backup_file_ID,
+            (bd.backup_dir || bf.filename) AS backup_file_path
         FROM backup_files bf
         JOIN backup_dirs bd ON bf.backup_dir_ID=bd.backup_dir_ID
         WHERE bf.profile_ID='${profile_ID}'
@@ -2192,7 +2134,9 @@ check_orphaned_backup_entries()
     orphan_id_batch=""
     id_count_in_batch=0
 
-    while IFS=$'\t' read -r backup_file_ID backup_file_path ; do
+    while IFS= read -r row; do
+        backup_file_ID=$(synocr_jq_row_field "${row}" backup_file_ID)
+        backup_file_path=$(synocr_jq_row_field "${row}" backup_file_path)
         [ -z "${backup_file_ID}" ] && continue
         orphan_checked=$(( orphan_checked + 1 ))
 
@@ -2215,7 +2159,7 @@ check_orphaned_backup_entries()
                 fi
             fi
         fi
-    done <<< "${orphan_entries}"
+    done < <(synocr_jq_rows "${orphan_entries}")
 
     if [ "${backup_clean_orphaned}" = true ] && [ -n "${orphan_id_batch}" ]; then
         synocr_sqlite "DELETE FROM backup_files WHERE backup_file_ID IN (${orphan_id_batch});"
@@ -2283,9 +2227,9 @@ purge_backup()
             WHERE bf.profile_ID='${profile_ID}'
               AND ${source_file_type4sql}
               AND datetime(bf.processing_timestamp) < datetime('now','localtime','-${backup_max} days');")
-        backup_files2del=$(synocr_sqlite -separator $'\t' "SELECT
-                bf.backup_file_ID,
-                bd.backup_dir || bf.filename
+        backup_files2del=$(synocr_sqlite -json "SELECT
+                bf.backup_file_ID AS backup_file_ID,
+                (bd.backup_dir || bf.filename) AS backup_file_path
             FROM backup_files bf
             JOIN backup_dirs bd ON bf.backup_dir_ID=bd.backup_dir_ID
             WHERE bf.profile_ID='${profile_ID}'
@@ -2293,7 +2237,7 @@ purge_backup()
               AND datetime(bf.processing_timestamp) < datetime('now','localtime','-${backup_max} days')
             ORDER BY datetime(bf.processing_timestamp), bf.backup_file_ID;")
         log_item "delete ${count2del} backup files ( > ${backup_max} days)"
-        purge_backup_db_entries <<< "${backup_files2del}"
+        purge_backup_db_entries "${backup_files2del}"
     else
         backup_file_count=$(synocr_sqlite "SELECT COUNT(*)
             FROM backup_files bf
@@ -2304,16 +2248,16 @@ purge_backup()
         log_item "delete ${count2del} backup files ( > ${backup_max} files)"
 
         if [ "${count2del}" -gt 0 ]; then
-            backup_files2del=$(synocr_sqlite -separator $'\t' "SELECT
-                    bf.backup_file_ID,
-                    bd.backup_dir || bf.filename
+            backup_files2del=$(synocr_sqlite -json "SELECT
+                    bf.backup_file_ID AS backup_file_ID,
+                    (bd.backup_dir || bf.filename) AS backup_file_path
                 FROM backup_files bf
                 JOIN backup_dirs bd ON bf.backup_dir_ID=bd.backup_dir_ID
                 WHERE bf.profile_ID='${profile_ID}'
                   AND ${source_file_type4sql}
                 ORDER BY datetime(bf.processing_timestamp), bf.backup_file_ID
                 LIMIT ${count2del};")
-            purge_backup_db_entries <<< "${backup_files2del}"
+            purge_backup_db_entries "${backup_files2del}"
         fi
     fi
 

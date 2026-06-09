@@ -1063,11 +1063,11 @@ echo "${log}"
 
 exit 0
 
-# ToDo-List bei DB-Upgrade:
-# ➜ upgradeconfig.sh:   das initiales DB-Createstatement anpassen (inkl. DB-Version)
-# ➜ edit.sh:            Parameter in 'Profil duplizieren' anpassen (bei Änderungen an Tabelle config)
-# ➜ edit.sh:            Parameter in 'Datensatz in DB schreiben' anpassen
-# ➜ edit.sh:            "$page" == "edit" Profil einlesen anpassen
-# ➜ edit.sh:            GUI Element ggf. einfügen / anpassen
-# ➜ synOCR.sh:          DB-Einlesen anpassen
+# ToDo-List bei DB-Upgrade (neue Spalte in Tabelle config):
+# ➜ upgradeconfig.sh:      CREATE TABLE + Migrationsblock + db_version erhöhen
+# ➜ includes/functions.sh: synocr_config_columns() ergänzen (zentrales Profil-Einlesen per JSON)
+# ➜ GUI_edit.sh:           INSERT bei 'Profil duplizieren' (edit-dup-profile)
+# ➜ GUI_edit.sh:           UPDATE bei 'edit-save' (Datensatz speichern)
+# ➜ GUI_edit.sh:           GUI-Element / Formularfeld ggf. einfügen oder anpassen
+# ➜ synOCR.sh:             nur bei bedarf (z. B. Post-Processing, Aliase wie pagecount_profile)
 

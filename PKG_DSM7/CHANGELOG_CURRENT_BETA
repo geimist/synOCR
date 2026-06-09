@@ -2,7 +2,7 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.5.99.9 [2026-xx-xx] 
+1.5.99.9 [2026-06-09] 
   IMPROVEMENT:
  - [GUI]    Detailverbesserungen der Progressbardarstellung
  - [shell]  Überarbeitung / Härtung der DB-Zugriffe

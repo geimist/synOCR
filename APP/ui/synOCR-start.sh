@@ -258,11 +258,11 @@ done
 
             if grep -qE '^[0-9.]+$' <<< "${online_version}"; then
                 synocr_sqlite "BEGIN;
-                                                UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon';
-                                                INSERT INTO system (key, value_1) SELECT 'online_version', '${online_version}' WHERE NOT EXISTS (SELECT 1 FROM system WHERE key='online_version');
-                                                UPDATE system SET value_1='${online_version}' WHERE key='online_version';
-                                                COMMIT;";
-                                                wait $!
+                                UPDATE system SET value_1='$(date +%m)' WHERE key='checkmon';
+                                INSERT INTO system (key, value_1) SELECT 'online_version', '${online_version}' WHERE NOT EXISTS (SELECT 1 FROM system WHERE key='online_version');
+                                UPDATE system SET value_1='${online_version}' WHERE key='online_version';
+                                COMMIT;";
+                                wait $!
             fi
 
             highest_version=$(printf "%s\n%s" "${online_version}" "${local_version}" | sort -V | tail -n1)
@@ -309,16 +309,17 @@ done
         ORDER BY 
             profile COLLATE NOCASE ASC;"
 
-    while read -r entry; do
-        profile_ID=$(echo "${entry}" | awk -F'\t' '{print $1}')
-        INPUTDIR=$(echo "${entry}" | awk -F'\t' '{print $2}')
+    active_profiles_json=$(synocr_sqlite -json "${sSQL}")
+    while IFS= read -r row; do
+        profile_ID=$(synocr_jq_row_field "${row}" profile_ID)
+        INPUTDIR=$(synocr_jq_row_field "${row}" INPUTDIR)
         INPUTDIR="${INPUTDIR%/}/"
-        OUTPUTDIR=$(echo "${entry}" | awk -F'\t' '{print $3}')
-        LOGDIR=$(echo "${entry}" | awk -F'\t' '{print $4}')
-        SearchPraefix=$(echo "${entry}" | awk -F'\t' '{print $5}')
-        loglevel=$(echo "${entry}" | awk -F'\t' '{print $6}')
-        profile=$(echo "${entry}" | awk -F'\t' '{print $7}')
-        img2pdf=$(echo "${entry}" | awk -F'\t' '{print $8}')
+        OUTPUTDIR=$(synocr_jq_row_field "${row}" OUTPUTDIR)
+        LOGDIR=$(synocr_jq_row_field "${row}" LOGDIR)
+        SearchPraefix=$(synocr_jq_row_field "${row}" SearchPraefix)
+        loglevel=$(synocr_jq_row_field "${row}" loglevel)
+        profile=$(synocr_jq_row_field "${row}" profile)
+        img2pdf=$(synocr_jq_row_field "${row}" img2pdf)
 
     # is the source directory present and is the path valid?
         if [ ! -d "${INPUTDIR}" ] || ! echo "${INPUTDIR}" | grep -q "/volume" ; then
@@ -451,7 +452,7 @@ done
             echo "${lang_synOCR_start_errorexit}"
             exit_status=ERROR
         fi
-    done <<< "$(synocr_sqlite -separator $'\t' "${sSQL}")"
+    done < <(synocr_jq_rows "${active_profiles_json}")
 
     # Drop status only when no worker is active (avoid clearing during overlapping runs)
     synocr_status_clear_if_idle

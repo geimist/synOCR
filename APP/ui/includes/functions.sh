@@ -5,11 +5,19 @@
 
 synocr_sqlite() {
     local busy_timeout="${SYNOCR_SQLITE_BUSY_TIMEOUT:-5000}"
-    local db sql
+    local db sql json_mode=0
     local -a sqlite_opts=()
 
     while [ $# -gt 0 ]; do
         case "$1" in
+            -json)
+                json_mode=1
+                shift
+                ;;
+            -jsonlines)
+                json_mode=2
+                shift
+                ;;
             -separator)
                 sqlite_opts+=( "$1" )
                 shift
@@ -44,7 +52,93 @@ synocr_sqlite() {
         sql="$*"
     fi
 
-    sqlite3 -cmd ".timeout ${busy_timeout}" "${sqlite_opts[@]}" "${db}" "${sql}"
+    if [ "${json_mode}" -eq 1 ]; then
+        sqlite3 -cmd ".timeout ${busy_timeout}" -json "${db}" "${sql}"
+    elif [ "${json_mode}" -eq 2 ]; then
+        # Portable jsonlines: sqlite3 -json + jq (native -jsonlines is not on all DSM sqlite3 builds).
+        synocr_jq_rows "$(sqlite3 -cmd ".timeout ${busy_timeout}" -json "${db}" "${sql}")"
+    else
+        sqlite3 -cmd ".timeout ${busy_timeout}" "${sqlite_opts[@]}" "${db}" "${sql}"
+    fi
+}
+
+# Read one field from a sqlite3 -json array result (first row by default).
+synocr_jq_field() {
+    local json="${1:-}"
+    local field="$2"
+    local idx="${3:-0}"
+
+    [ -n "${json}" ] || return 0
+    jq -r ".[${idx}].${field} // empty" <<< "${json}"
+}
+
+# Read one field from a single JSON object (one row from synocr_jq_rows).
+synocr_jq_row_field() {
+    local row="${1:-}"
+    local field="$2"
+
+    [ -n "${row}" ] || return 0
+    jq -r ".${field} // empty" <<< "${row}"
+}
+
+# Emit one compact JSON object per result row (for while-read loops).
+synocr_jq_rows() {
+    local json="${1:-}"
+
+    [ -n "${json}" ] || return 0
+    jq -c '.[]' <<< "${json}"
+}
+
+# Load all columns of one row into same-named shell variables.
+synocr_jq_load_row() {
+    local json="${1:-}"
+    local idx="${2:-0}"
+    local assignment
+
+    [ -n "${json}" ] || return 1
+    jq -e ".[${idx}]" >/dev/null 2>&1 <<< "${json}" || return 1
+    while IFS= read -r assignment; do
+        [[ -n "${assignment}" ]] || continue
+        eval "${assignment}"
+    done < <(jq -r ".[${idx}] | to_entries[] | \"\(.key)=\((.value // \"\") | @sh)\"" <<< "${json}")
+}
+
+# Scalar helper: one aliased column via sqlite3 -json.
+synocr_sqlite_json_field() {
+    local sql="$1"
+    local field="$2"
+
+    synocr_jq_field "$(synocr_sqlite -json "${sql}")" "${field}"
+}
+
+# Column list aligned with config table schema (upgradeconfig.sh). Keep in sync when adding columns.
+synocr_config_columns() {
+    cat <<'EOF'
+profile_ID, timestamp, profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix,
+taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang,
+dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate,
+backup_max, backup_max_type, backup_clean_orphaned, pagecount, ocrcount, search_nearest_date, date_search_method,
+clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling,
+blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping,
+blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter,
+blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText,
+adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
+EOF
+}
+
+synocr_config_json_by_id() {
+    local profile_id="$1"
+    local columns where_clause
+
+    columns=$(synocr_config_columns)
+    columns=$(echo "${columns}" | tr '\n' ' ' | sed 's/  */ /g;s/^ //;s/ $//')
+    if [ -z "${profile_id}" ]; then
+        where_clause="profile_ID='1'"
+    else
+        where_clause="profile_ID='${profile_id}'"
+    fi
+
+    synocr_sqlite -json "SELECT ${columns} FROM config WHERE ${where_clause}"
 }
 
 synogroupmoduser() {
@@ -423,15 +517,19 @@ synocr_count_input_files_for_profile() {
 }
 
 synocr_count_input_files() {
-    local total=0 entry inputdir searchpraefix img2pdf_flag count
+    local total=0 row inputdir searchpraefix img2pdf_flag count profiles_json
 
-    while read -r entry ; do
-        inputdir=$(echo "${entry}" | awk -F'\t' '{print $1}')
-        searchpraefix=$(echo "${entry}" | awk -F'\t' '{print $2}')
-        img2pdf_flag=$(echo "${entry}" | awk -F'\t' '{print $3}')
+    profiles_json=$(synocr_sqlite -json "SELECT INPUTDIR, SearchPraefix, img2pdf FROM config WHERE active='1'" 2>/dev/null) || {
+        printf '%s' 0
+        return 0
+    }
+    while IFS= read -r row; do
+        inputdir=$(synocr_jq_row_field "${row}" INPUTDIR)
+        searchpraefix=$(synocr_jq_row_field "${row}" SearchPraefix)
+        img2pdf_flag=$(synocr_jq_row_field "${row}" img2pdf)
         count=$(synocr_count_input_files_for_profile "${inputdir}" "${searchpraefix}" "${img2pdf_flag}")
         total=$((total + count))
-    done <<< "$(synocr_sqlite -separator $'\t' "SELECT INPUTDIR, SearchPraefix, img2pdf FROM config WHERE active='1' " 2>/dev/null)"
+    done < <(synocr_jq_rows "${profiles_json}")
 
     printf '%s' "${total}"
 }

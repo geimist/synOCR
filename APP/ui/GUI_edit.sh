@@ -412,7 +412,7 @@ if [[ "${page}" == "edit-del_profile-query" ]] || [[ "${page}" == "edit-del_prof
                     synocr_sqlite "DELETE FROM config WHERE profile_ID='${profile_ID}';"
 
                     # make the first profile of the DB active next (otherwise a profile name with empty data would be displayed)
-                    getprofile=$(synocr_sqlite -separator $'\t' "SELECT profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" | awk -F'\t' '{print $1}')
+                    getprofile=$(synocr_sqlite_json_field "SELECT profile_ID AS profile_ID FROM config ORDER BY profile_ID ASC LIMIT 1" profile_ID)
                     # getprofile (write to $var without GUI):
                     encode_value="${getprofile}"
                     decode_value=$(urldecode "${encode_value}")
@@ -422,7 +422,7 @@ if [[ "${page}" == "edit-del_profile-query" ]] || [[ "${page}" == "edit-del_prof
 
                     echo '
                     <div class="modal-body text-center">'
-                        if [ "$(synocr_sqlite -separator $'\t' "SELECT count(profile_ID) FROM config WHERE profile_ID='${profile_ID}' ")" = "0" ] ; then
+                        if [ "$(synocr_sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='${profile_ID}' ")" = "0" ] ; then
                             echo '
                             <p>
                                 '"${lang_edit_delfin1}"' <strong>'"${profile}"'</strong> '"${lang_edit_delfin2}"'
@@ -511,7 +511,7 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
                                         '"${lang_edit_profname}"' <strong>'"${profile}"'</strong> '"${lang_edit_dup2}"' <strong>'"${new_profile_value}"'</strong> '"${lang_edit_dup3}"'.
                                     </p>'
                                     # profile ID (write to $var without GUI)
-                                    getprofile=$(synocr_sqlite -separator $'\t' "SELECT profile_ID FROM config WHERE profile='${new_profile_value}'" | awk -F'\t' '{print $1}')
+                                    getprofile=$(synocr_sqlite_json_field "SELECT profile_ID AS profile_ID FROM config WHERE profile='${new_profile_value}'" profile_ID)
                                     "${set_var}" "${var}" "profile_ID" "$(urldecode "${getprofile}")"
                                     "${set_var}" "${var}" "encode_profile_ID" "${getprofile}"
                                     "${set_var}" "${var}" "getprofile" "${getprofile}"
@@ -594,16 +594,16 @@ if [[ "${page}" == "edit-new_profile-query" ]] || [[ "${page}" == "edit-new_prof
                     <div class="modal-body text-center">'
                         if [ -n "${new_profile_value}" ] ; then
                             sSQL="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
-                            if [ "$(synocr_sqlite -separator $'\t' "${sSQL}")" = 0 ] ; then
+                            if [ "$(synocr_sqlite "${sSQL}")" = 0 ] ; then
                                 new_profile "${new_profile_value}"
 
-                                if [ "$(synocr_sqlite -separator $'\t' "${sSQL}")" = 1 ] ; then
+                                if [ "$(synocr_sqlite "${sSQL}")" = 1 ] ; then
                                     echo '
                                     <p>
                                         '"${lang_edit_new2}"' <strong>'"${new_profile_value}"'</strong> '"${lang_edit_new3}"'.
                                     </p>'
                                     # profile ID (write to $var without GUI)
-                                    getprofile=$(synocr_sqlite -separator $'\t' "SELECT profile_ID FROM config WHERE profile='${new_profile_value}'" | awk -F'\t' '{print $1}')
+                                    getprofile=$(synocr_sqlite_json_field "SELECT profile_ID AS profile_ID FROM config WHERE profile='${new_profile_value}'" profile_ID)
                                     "${set_var}" "${var}" "profile_ID" "$(urldecode "${getprofile}")"
                                     "${set_var}" "${var}" "encode_profile_ID" "${getprofile}"
                                     "${set_var}" "${var}" "getprofile" "${getprofile}"
@@ -663,7 +663,7 @@ if [[ "${page}" == "edit-restore-query" ]] || [[ "${page}" == "edit-restore" ]];
                 else
                     restore_profile_id="${getprofile}"
                 fi
-                INPUTDIR=$(synocr_sqlite -separator $'\t' "SELECT INPUTDIR FROM config WHERE profile_ID='${restore_profile_id}' LIMIT 1;" | awk -F'\t' '{print $1}')
+                INPUTDIR=$(synocr_sqlite_json_field "SELECT INPUTDIR AS INPUTDIR FROM config WHERE profile_ID='${restore_profile_id}' LIMIT 1" INPUTDIR)
                 restore_source_db="${INPUTDIR%/}/synOCR.sqlite"
 
                 if [[ "${page}" == "edit-restore-query" ]]; then
@@ -834,85 +834,9 @@ fi
 if [[ "${page}" == "edit" ]]; then
 
     # Read file contents for variable utilization
-    if [ -z "${getprofile}" ] ; then
-        sSQL="SELECT 
-                profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
-                NameSyntax, ocropt, dockercontainer, apprise_call, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, 
-                apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, 
-                blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, 
-                adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness, backup_clean_orphaned
-            FROM 
-                config 
-            WHERE 
-                profile_ID='1' "
-    else
-        sSQL="SELECT 
-                profile_ID, timestamp, profile, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, taglist, searchAll, moveTaggedFiles, 
-                NameSyntax, ocropt, dockercontainer, apprise_call, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, active, filedate, tagsymbol, documentSplitPattern, 
-                ignoredDate, backup_max, backup_max_type, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, 
-                apprise_attachment, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, 
-                blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, 
-                adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness, backup_clean_orphaned
-            FROM 
-                config 
-            WHERE 
-                profile_ID='${getprofile}' "
-    fi
-
-    sqlerg=$(synocr_sqlite -separator $'\t' "${sSQL}")
-
-    # Separate record fields:
-        profile_ID=$(echo "${sqlerg}" | awk -F'\t' '{print $1}')
-        profile=$(echo "${sqlerg}" | awk -F'\t' '{print $3}')
-        INPUTDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $4}')
-        OUTPUTDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $5}')
-        BACKUPDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $6}')
-        LOGDIR=$(echo "${sqlerg}" | awk -F'\t' '{print $7}')
-        LOGmax=$(echo "${sqlerg}" | awk -F'\t' '{print $8}')
-        SearchPraefix=$(echo "${sqlerg}" | awk -F'\t' '{print $9}')
-        delSearchPraefix=$(echo "${sqlerg}" | awk -F'\t' '{print $10}')
-        taglist=$(echo "${sqlerg}" | awk -F'\t' '{print $11}')
-        searchAll=$(echo "${sqlerg}" | awk -F'\t' '{print $12}')
-        moveTaggedFiles=$(echo "${sqlerg}" | awk -F'\t' '{print $13}')
-        NameSyntax=$(echo "${sqlerg}" | awk -F'\t' '{print $14}')
-        ocropt=$(echo "${sqlerg}" | awk -F'\t' '{print $15}')
-        dockercontainer=$(echo "${sqlerg}" | awk -F'\t' '{print $16}')
-        apprise_call=$(echo "${sqlerg}" | awk -F'\t' '{print $17}')
-        notify_lang=$(echo "${sqlerg}" | awk -F'\t' '{print $18}')
-        dsmtextnotify=$(echo "${sqlerg}" | awk -F'\t' '{print $19}')
-        MessageTo=$(echo "${sqlerg}" | awk -F'\t' '{print $20}')
-        dsmbeepnotify=$(echo "${sqlerg}" | awk -F'\t' '{print $21}')
-        loglevel=$(echo "${sqlerg}" | awk -F'\t' '{print $22}')
-        active=$(echo "${sqlerg}" | awk -F'\t' '{print $23}')
-        filedate=$(echo "${sqlerg}" | awk -F'\t' '{print $24}')
-        tagsymbol=$(echo "${sqlerg}" | awk -F'\t' '{print $25}')
-        documentSplitPattern=$(echo "${sqlerg}" | awk -F'\t' '{print $26}')
-        ignoredDate=$(echo "${sqlerg}" | awk -F'\t' '{print $27}')
-        backup_max=$(echo "${sqlerg}" | awk -F'\t' '{print $28}')
-        backup_max_type=$(echo "${sqlerg}" | awk -F'\t' '{print $29}')
-        search_nearest_date=$(echo "${sqlerg}" | awk -F'\t' '{print $30}')
-        date_search_method=$(echo "${sqlerg}" | awk -F'\t' '{print $31}')
-        clean_up_spaces=$(echo "${sqlerg}" | awk -F'\t' '{print $32}')
-        img2pdf=$(echo "${sqlerg}" | awk -F'\t' '{print $33}')
-        DateSearchMinYear=$(echo "${sqlerg}" | awk -F'\t' '{print $34}')
-        DateSearchMaxYear=$(echo "${sqlerg}" | awk -F'\t' '{print $35}')
-        splitpagehandling=$(echo "${sqlerg}" | awk -F'\t' '{print $36}')
-        apprise_attachment=$(echo "${sqlerg}" | awk -F'\t' '{print $37}')
-        blank_page_detection_switch=$(echo "${sqlerg}" | awk -F'\t' '{print $38}')
-        blank_page_detection_mainThreshold=$(echo "${sqlerg}" | awk -F'\t' '{print $39}')
-        blank_page_detection_widthCropping=$(echo "${sqlerg}" | awk -F'\t' '{print $40}')
-        blank_page_detection_hightCropping=$(echo "${sqlerg}" | awk -F'\t' '{print $41}')
-        blank_page_detection_interferenceMaxFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $42}')
-        blank_page_detection_interferenceMinFilter=$(echo "${sqlerg}" | awk -F'\t' '{print $43}')
-        blank_page_detection_black_pixel_ratio=$(echo "${sqlerg}" | awk -F'\t' '{print $44}')
-        blank_page_detection_ignoreText=$(echo "${sqlerg}" | awk -F'\t' '{print $45}')
-        adjustColorBWthreshold=$(echo "${sqlerg}" | awk -F'\t' '{print $46}')
-        adjustColorDPI=$(echo "${sqlerg}" | awk -F'\t' '{print $47}')
-        adjustColorContrast=$(echo "${sqlerg}" | awk -F'\t' '{print $48}')
-        adjustColorSharpness=$(echo "${sqlerg}" | awk -F'\t' '{print $49}')
-        backup_clean_orphaned=$(echo "${sqlerg}" | awk -F'\t' '{print $50}')
-        [ -z "${backup_clean_orphaned}" ] && backup_clean_orphaned=false
+    config_json=$(synocr_config_json_by_id "${getprofile}")
+    synocr_jq_load_row "${config_json}" 0
+    [ -z "${backup_clean_orphaned}" ] && backup_clean_orphaned=false
 
     # read global values:
         inotify_delay=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='inotify_delay' ")
@@ -952,7 +876,7 @@ if [[ "${page}" == "edit" ]]; then
         fi
 
     # Profile selection:
-    sqlerg=$(synocr_sqlite -separator $'\t' "SELECT profile_ID, profile FROM config;" )
+    profiles_json=$(synocr_sqlite -json "SELECT profile_ID, profile FROM config ORDER BY profile_ID;")
 
     echo '
     <p>&nbsp;</p>
@@ -964,16 +888,16 @@ if [[ "${page}" == "edit" ]]; then
             <select name="getprofile" id="getprofile" class="form-select form-select-sm" onchange="handleProfileSelectionChange(this)">
                 '
 
-                while read -r entry; do
-                    profile_ID_DB=$(echo "${entry}" | awk -F'\t' '{print $1}')
-                    profile_DB=$(echo "${entry}" | awk -F'\t' '{print $2}')
+                while IFS= read -r row; do
+                    profile_ID_DB=$(synocr_jq_row_field "${row}" profile_ID)
+                    profile_DB=$(synocr_jq_row_field "${row}" profile)
 
                     if [[ "${profile_ID}" == "${profile_ID_DB}" ]]; then
                         echo '<option value='"${profile_ID_DB}"' selected>'"${profile_DB}"'</option>'
                     else
                         echo '<option value='"${profile_ID_DB}"'>'"${profile_DB}"'</option>'
                     fi
-                done <<< "${sqlerg}"
+                done < <(synocr_jq_rows "${profiles_json}")
 
                 echo '
             </select>
