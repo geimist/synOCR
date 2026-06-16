@@ -2,62 +2,34 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.5.99.9 [2026-06-09] 
-  IMPROVEMENT:
- - [GUI]    Detailverbesserungen der Progressbardarstellung
- - [shell]  Überarbeitung / Härtung der DB-Zugriffe
- - [shell]  überarbeitetes Errorlogging
-
-1.5.99.8 [2026-05-31] 
-  IMPROVEMENT:
- - [GUI]    Detailverbesserungen der Progressbardarstellung
- - [shell]  Überarbeitung des Loggings und Logfilelayouts
-
-1.5.99.7 [2026-05-24] 
+1.6.0 [2026-06-16]
+  ⚠️ Version 1.5 is the last version for DSM 6.x
+  
   IMPLEMENTATIONS:
- - [shell]  Es wird jetzt ein Verzeichnis Backup-Dateien in der DB geführt. 
-            Das gewährleistet eine saubere Rotation auch bei älteren Dateien oder wenn die Systemzeit des Scanners falsch ist. (issue #79)
-            In der GUI kann der User definieren, wie mit verwaisten Einträgen verfahren werden soll.
-            ⚠️ Bestehende Backupdateien fallen durch dieses Update aus der Rotation und müssen ggf. selbst gelöscht werden.
+ - [GUI]    🔥 A graphical folder picker has been implemented so that folder paths can be selected directly.
+            Target folders can be created automatically in the folder picker.
+ - [GUI]    "title" can now be set in metadata (GUI ➜ OCR options: --title my title).
+            All rename parameters can also be set as variables.
+ - [GUI]    Option to manually restore the configuration database.
+ - [GUI]    NameSyntax editor improved: placeholders can now be conveniently inserted as chips via drag & drop.
+ - [GUI]    The overview page now features a real-time progress indicator.
+ - [GUI]    Package server for convenient updates can now be added automatically to Package Center via a button.
+ - [shell]  Backup files are now tracked in the database.
+            This ensures clean rotation even for older files or when the scanner's system time is incorrect. (issue #79)
+            In the GUI, the user can define how to handle orphaned entries.
+            ⚠️ Existing backup files will fall out of rotation with this update and may need to be deleted manually.
+ 
   IMPROVEMENT:
- - [GUI]    Im Folder Picker können jetzt Zielordner automatisch erstellt werden und weitere Detailverbesserungen (extra für DaveR 😉)
- - [GUI]    Auf der Übersichtsseite gibt es jetzt eine Echzeitfortschrittsanzeige (extra für DaveR 😉)
+ - [GUI]    Hints and instructions for setting up the package server if it has not already been configured in DSM.
+ - [GUI]    Immediate display of path validation.
+ - [GUI]    Warning about unsaved changes.
+ - [shell]  OCR-optimized black and white conversion.
+ - [shell]  Delay optimization for the case when the scanner clock is ahead (#82 thanks to @tacarrie).
+ - [shell]  Revision of logging, log file layouts and error logging.
+ - [shell]  Revision / hardening of database access.
+ - [pkg]    preinst/preupgrade: Early check for Python ≥ 3.9 on aarch64.
 
-1.5.99.6 [2026-05-14] 
-  IMPLEMENTATIONS:
- - [GUI]    NameSyntax-Editor verbessert: Platzhalter können jetzt als Chips komfortabel per Drag&Drop eingefügt werden.
-  IMPROVEMENT:
- - [GUI]    Paketserver kann nur über einen Button automatisch hinzugefügt werden
- - [shell]  OCR-optimierte schwarzweiß-Konvertierung
- - [shell]  delay-Optimierung für den Fall, dass die Uhr des Scanners vor geht (#82 thanks to @tacarrie)
- - [pkg]    preinst/preupgrade: Frühe Prüfung auf Python ≥ 3.9 für aarch64
   BUGFIXES:
- - [shell]  Kompatibilität zu aarch64 wiederhergestellt
- - [pkg]    build_spk: scripts/lang-Zeilen mit printf %q erzeugen, damit Meldungen nach . …/lang/* zuverlässig gesetzt werden und im Paketzentrum erscheinen
-
-1.5.99.4 [2026-05-02] 
-  IMPLEMENTATIONS:
- - [GUI]    Option zur manuellen Wiederherstellung der Konfigurationsdatenbank
-  IMPROVEMENT:
- - [GUI]    Hinweise und Anweisungen zur Einrichtung des Paket-Servers, sofern dieser nicht bereits in DSM konfiguriert wurde
- - [GUI]    Sofortanzeige der Pfadvalidierung
- - [GUI]    Warnung wegen nicht gespeicherter Änderungen
-
-1.5.99.3 [2026-04-28] 
-  BUGFIXES:
- - [shell]  Die Python-Laufzeitumgebung konnte nicht erstellt werden
- - [YAML]   Tag-Namen, die das Zeichen „&“ enthielten, führten zu einer fehlerhaften Benennung
-
-1.5.99.2 [2026-04-28] 
-  IMPLEMENTATIONS:
- - [GUI]    🔥 Es wurde eine grafische Ordnerauswahl (Folder Picker) implementiert, damit Ordnerpfade direkt ausgewählt werden können
-  BUGFIXES:
- - [shell]  Die Farbanpassung konnte nicht vollständig deaktiviert werden
-
-1.5.99.1 [2025-06-26]
-  IMPLEMENTATIONS:
- - [GUI]    "title" kann jetzt in Metadaten gesetzt werden (GUI ➜ OCR-Optionen: --title my title). Es können auch alle Umbenennungsparameter als Variablen gesetzt werden.
-  BUGFIXES:
- - [shell]  fixing some minor bugs
-
-
+ - [shell]  Compatibility with aarch64 restored.
+ - [shell]  Minor bug fixes.
+ - [YAML]   Tag names containing the character „&" led to incorrect naming.
