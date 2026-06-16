@@ -526,6 +526,7 @@ lang_main_permissions_failed2="Maak een taak aan in de taakplanner met het volge
 lang_main_permissions_failed3="de taak moet ten minste eenmaal worden uitgevoerd"
 lang_main_progress_current_file="Huidig bestand:"
 lang_main_progress_files="Totaal: <x id='done'/> van <x id='total'/> bestanden"
+lang_main_progress_step="Stap:"
 lang_main_progress_step_cleanup="Opruimen"
 lang_main_progress_step_delay="Wachttijd (scanner)"
 lang_main_progress_step_docker_update="Docker-image bijwerken"

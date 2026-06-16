@@ -526,6 +526,7 @@ lang_main_permissions_failed2="Bitte erstelle im Aufgabenplaner eine Aufgabe mit
 lang_main_permissions_failed3="die Aufgabe muss mindestens einmal ausgeführt werden"
 lang_main_progress_current_file="Aktuelle Datei:"
 lang_main_progress_files="Gesamt: <x id='done'/> von <x id='total'/> Dateien"
+lang_main_progress_step="Schritt:"
 lang_main_progress_step_cleanup="Aufräumen"
 lang_main_progress_step_delay="Wartezeit (Scanner)"
 lang_main_progress_step_docker_update="Dockerimage aktualisieren"

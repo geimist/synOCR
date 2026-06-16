@@ -526,6 +526,7 @@ lang_main_permissions_failed2="Пожалуйста, создайте задач
 lang_main_permissions_failed3="задание должно быть выполнено хотя бы один раз"
 lang_main_progress_current_file="Текущий файл:"
 lang_main_progress_files="Всего: <x id='done'/> из <x id='total'/> файлов"
+lang_main_progress_step="Шаг:"
 lang_main_progress_step_cleanup="Уборка"
 lang_main_progress_step_delay="Время ожидания (сканер)"
 lang_main_progress_step_docker_update="Обновить образ Docker"

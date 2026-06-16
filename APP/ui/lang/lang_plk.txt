@@ -526,6 +526,7 @@ lang_main_permissions_failed2="Proszę utworzyć zadanie w planerze zadań za po
 lang_main_permissions_failed3="zadanie musi być wykonane co najmniej raz"
 lang_main_progress_current_file="Aktualny plik:"
 lang_main_progress_files="Łącznie: <x id='done'/> z <x id='total'/> plików"
+lang_main_progress_step="Krok:"
 lang_main_progress_step_cleanup="Sprzątanie"
 lang_main_progress_step_delay="Czas oczekiwania (skaner)"
 lang_main_progress_step_docker_update="Zaktualizuj obraz Docker"

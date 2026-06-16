@@ -526,6 +526,7 @@ lang_main_permissions_failed2="Por favor, cree una tarea en el planificador de t
 lang_main_permissions_failed3="la tarea debe realizarse al menos una vez"
 lang_main_progress_current_file="Archivo actual:"
 lang_main_progress_files="Total: <x id='done'/> de <x id='total'/> archivos"
+lang_main_progress_step="Paso:"
 lang_main_progress_step_cleanup="Ordenar"
 lang_main_progress_step_delay="Tiempo de espera (escáner)"
 lang_main_progress_step_docker_update="Actualizar la imagen de Docker"

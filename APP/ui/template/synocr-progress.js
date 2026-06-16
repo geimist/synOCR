@@ -315,7 +315,7 @@
         }
         if (el.profileLine && el.profileValue) {
             if (data.profile) {
-                el.profileLine.style.display = "block";
+                el.profileLine.style.removeProperty("display");
                 el.profileValue.textContent = data.profile;
             } else {
                 el.profileLine.style.display = "none";

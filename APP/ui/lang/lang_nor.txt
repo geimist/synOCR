@@ -526,6 +526,7 @@ lang_main_permissions_failed2="Opprett en oppgave i oppgaveplanleggeren med føl
 lang_main_permissions_failed3="oppgaven må utføres minst én gang"
 lang_main_progress_current_file="Gjeldende fil:"
 lang_main_progress_files="Totalt: <x id='done'/> av <x id='total'/> filer"
+lang_main_progress_step="Trinn:"
 lang_main_progress_step_cleanup="Rydding"
 lang_main_progress_step_delay="Ventetid (skanner)"
 lang_main_progress_step_docker_update="Oppdater Docker-bildet"

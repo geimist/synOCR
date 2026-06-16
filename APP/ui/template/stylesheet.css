@@ -299,10 +299,23 @@ a.btn.btn-secondary:hover {
     transform-origin: 50% 50%;
 }
 
-#synocr-progress-step-fraction {
-    display: inline-block;
-    min-width: 3.5rem;
-    margin-right: 0.25rem;
+.synocr-progress-details {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr;
+    column-gap: 0.25rem;
+    align-items: baseline;
+}
+
+.synocr-progress-detail-row {
+    display: contents;
+}
+
+.synocr-progress-details > .progress {
+    grid-column: 1 / -1;
+}
+
+.synocr-progress-detail-label {
+    white-space: nowrap;
 }
 
 /* NameSyntax chip editor (GUI edit) */

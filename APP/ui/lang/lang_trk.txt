@@ -526,6 +526,7 @@ lang_main_permissions_failed2="Lütfen aşağıdaki komut dosyasıyla görev pla
 lang_main_permissions_failed3="görev en az bir kez gerçekleştirilmelidir"
 lang_main_progress_current_file="Geçerli dosya:"
 lang_main_progress_files="Toplam: <x id='total'/> adet  dosyası"
+lang_main_progress_step="Adım:"
 lang_main_progress_step_cleanup="Temizlik"
 lang_main_progress_step_delay="Bekleme süresi (tarayıcı)"
 lang_main_progress_step_docker_update="Docker görüntüsünü güncelle"

@@ -379,7 +379,7 @@
 
 # Check or create and adjust directories:
 # ---------------------------------------------------------------------
-    # Adjust variable correction for older Konfiguration.txt and slash:
+    # Adjust variable correction for older "Konfiguration.txt" and slash:
     INPUTDIR="${INPUTDIR%/}/"
     if [ -d "${INPUTDIR}" ] ; then
         log_kv "Source directory" "${INPUTDIR}"
@@ -506,7 +506,7 @@ file_processing_log()
         2)  # Target-Log replace unsuccessful warning with target file
             [[ -s "${file}" ]] && process_error=0
 
-            # Logging nur bei aktiviertem Loglevel
+            # Log only when log level is enabled
             if (( ${loglevel:-0} == 1 || ${loglevel:-0} == 2 )); then
                 if [[ -s "${log_file}" ]]; then
                     last_line=$(tail -n 1 "${log_file}")
@@ -972,7 +972,7 @@ if [ "${type_of_rule}" = advanced ]; then
 
     done
 
-    # meta_keyword_list: unique / without tagsymbol / separated with komma and space >, <:
+    # meta_keyword_list: unique / without tagsymbol / separated with comma and space >, <:
     meta_keyword_list=$(echo "${renameTag}" | tr ' ' '\n' | awk '!x[$0]++' | sed -e "s/^%20//g;s/^${tagsymbol}//g" | tr '\n' ' ' | sed -e "s/ /, /g;s/%20/ /g;s/, $//g" | sed -e "s/, $//g")
     # ranameTag: unique / spaces masked with %20:
     renameTag=$(echo "${renameTag}" | tr ' ' '\n' | awk '!x[$0]++' | tr '\n' ' ' | sed -e "s/ //g" )
@@ -1032,7 +1032,7 @@ else
         i=$((i + 1))
     done
 
-    # meta_keyword_list: without tagsymbol / separated with komma and space >, <:
+    # meta_keyword_list: without tagsymbol / separated with comma and space >, <:
     meta_keyword_list=$(echo "${renameTag}" | sed -e "s/^${tagsymbol}//g;s/${tagsymbol}/, /g;s/%20/ /g")
 fi
 
@@ -1803,7 +1803,7 @@ rename()
                 fi
             else
                 # if path is not absolute, then remove special characters
-                # tagdir=$(echo ${tagdir} | sed 's%\/\|\\\|\:\|\?%_%g' ) # gefiltert wird: \ / : ?
+                # tagdir=$(echo ${tagdir} | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
                 subOUTPUTDIR="${OUTPUTDIR%/}/${tagdir%/}/"
                 if [ -d "${subOUTPUTDIR}" ] ;then
                     echo "OK [subfolder target dir]"
@@ -2270,12 +2270,12 @@ py_page_count()
 # This function receives a PDF file path and give back number of pages                  #
 #########################################################################################
 
-# Ab Version 1.19.0 (März 2022) wurde die PEP8-konforme Schreibweise eingeführt:
+# As of version 1.19.0 (March 2022), PEP8-compliant naming was introduced:
     python3 -c "import sys, os, fitz; \
                 path = os.path.abspath(sys.argv[1]); \
                 print(fitz.open(path).page_count)" "$1"
 
-# Die Version 1.18.6 verwendet die alte CamelCase-Notation:
+# Version 1.18.6 used the old CamelCase notation:
 #    python3 -c "import sys, os, fitz; \
 #                path = os.path.abspath(sys.argv[1]); \
 #                doc = fitz.open(path); \
@@ -2352,7 +2352,7 @@ prepare_target_path()
     local target_filename="$2"
     local base ext source_counter=0
 
-    # Quelldateinamen parsen
+    # Parse source filename
     if [[ "$target_filename" =~ ^(.*)\ \(([0-9]+)\)\.([^.]*)$ ]]; then
         base="${BASH_REMATCH[1]}"
         source_counter="${BASH_REMATCH[2]}"
@@ -2365,18 +2365,18 @@ prepare_target_path()
         ext=""
     fi
 
-    # Prüfen, ob der Quellzähler direkt verwendet werden kann
+    # Check whether the source counter can be used directly
     if ((source_counter > 0)); then
         local source_counter_file="${target_dir_path}${base} (${source_counter}).${ext}"
         if [ ! -f "$source_counter_file" ]; then
             output="$source_counter_file"
-            log_item "Verwende Quellzähler: ${source_counter}"
+            log_item "Using source counter: ${source_counter}"
             log_blank
             return
         fi
     fi
 
-    # Existierende Zähler sammeln (inkl. Basisdatei)
+    # Collect existing counters (including the base file)
     local existing_counters=()
     [ -f "${target_dir_path}${base}.${ext}" ] && existing_counters+=(0)
     while IFS= read -r -d '' file; do
@@ -2385,30 +2385,30 @@ prepare_target_path()
         fi
     done < <(find "${target_dir_path}" -maxdepth 1 -type f -name "${base} (*).${ext}" -print0 2>/dev/null)
 
-    # Keine Dateien vorhanden ➜ Basisname verwenden
+    # No files found ➜ Use base name
     if [ ${#existing_counters[@]} -eq 0 ]; then
         output="${target_dir_path}${base}.${ext}"
         return
     fi
 
-    # Höchsten Zähler ermitteln
+    # Determine the highest counter
     local existing_max=0
     for n in "${existing_counters[@]}"; do
         ((n > existing_max)) && existing_max=$n
     done
 
-    # Startzähler festlegen
+    # Set the starting counter
     local start_counter=$((existing_max + 1))
 
-    # Nächsten verfügbaren Zähler finden
+    # Find the next available counter
     local counter=$start_counter
     while [ -f "${target_dir_path}${base} (${counter}).${ext}" ]; do
         counter=$((counter + 1))
     done
 
-    # Ausgabepfad immer mit Zähler setzen, wenn Dateien existieren
+    # Always set the output path with a counter if files exist
     output="${target_dir_path}${base} (${counter}).${ext}"
-    log_item "Neuer Zähler: (${counter})"
+    log_item "New counter: (${counter})"
     log_blank
 
 }
@@ -2537,7 +2537,8 @@ while read -r input1 ; do
     mkdir -p "${work_tmp_step1}"
 
     log_blank
-    filename="${input1##*/}"
+    source_filename="${input1##*/}"
+    filename="${source_filename}"
     title="${filename%.*}"
     keep_hash_input="${input1}"
     log_file "${filename}" "${file_index}" "${file_total}"
@@ -2555,12 +2556,12 @@ while read -r input1 ; do
 
 # adjust color
 # ---------------------------------------------------------------------
-    # Array für zusätzliche Argumente initialisieren
+    # Initialize array for additional arguments
     args=()
     adjustColor=false
     unset adjustColorSuccess
 
-    # --threshold nur hinzufügen, wenn adjustColorBWthreshold nicht leer ist
+    # Add --threshold only when adjustColorBWthreshold is not empty
     if [ "${adjustColorBWthreshold}" != "0" ]; then
         args+=(--threshold "${adjustColorBWthreshold}")
         if [ "${adjustColorBWabsoluteThreshold}" != "0" ]; then
@@ -2569,7 +2570,7 @@ while read -r input1 ; do
         adjustColor=true
     fi
 
-    # --dpi nur hinzufügen, wenn adjustColorDPI nicht leer ist
+    # Add --dpi only when adjustColorDPI is not empty
     if [ "${adjustColorDPI}" != "0" ]; then
         # 0, 72, 75, 100, 150, 200, 300, 400, 450, 600
         args+=(--dpi "$adjustColorDPI")
@@ -2582,7 +2583,7 @@ while read -r input1 ; do
         adjustColor=true
     fi
 
-    # --sharpness nur hinzufügen, wenn nicht 1 und nicht 1.0
+    # Add --sharpness only when not 1 and not 1.0
     if [ "${adjustColorSharpness}" != "1" ] && [ "${adjustColorSharpness}" != "1.0" ]; then
         args+=(--sharpness "${adjustColorSharpness}")
         adjustColor=true
@@ -2924,7 +2925,7 @@ while read -r input1 ; do
     log_subsection "handle source file:"
 
     if [ "${backup}" = true ] && [ "${process_error}" -eq 0 ]; then
-        prepare_target_path "${BACKUPDIR}" "${filename}"
+        prepare_target_path "${BACKUPDIR}" "${source_filename}"
         if mv "${input1}" "${output}"; then
             log_item "backup source file to: ${output}"
             register_backup_file "${output}"

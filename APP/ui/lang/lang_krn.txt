@@ -526,6 +526,7 @@ lang_main_permissions_failed2="작업 플래너에서 다음 스크립트를 사
 lang_main_permissions_failed3="작업을 한 번 이상 수행해야 합니다."
 lang_main_progress_current_file="현재 파일:"
 lang_main_progress_files="총 <x id='total'/>개의 파일 중 <x id='done'/>개"
+lang_main_progress_step="단계:"
 lang_main_progress_step_cleanup="정리하기"
 lang_main_progress_step_delay="대기 시간 (스캐너)"
 lang_main_progress_step_docker_update="Docker 이미지 업데이트"

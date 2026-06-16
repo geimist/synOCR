@@ -431,23 +431,28 @@ echo '
                 <circle class="synocr-progress-done-ring__arc" cx="10" cy="10" r="8" fill="none"></circle>
             </svg>
         </div>
-        <div class="small text-muted mb-1">
-            <span class="synocr-text-blue">'"${lang_main_progress_current_file}"'</span>
-            <span id="synocr-progress-file-name">'"${_pg_display_file}"'</span>
+        <div class="synocr-progress-details small text-muted">
+            <div class="synocr-progress-detail-row mb-1">
+                <span class="synocr-progress-detail-label synocr-text-blue">'"${lang_main_progress_current_file}"'</span>
+                <span class="synocr-progress-detail-value" id="synocr-progress-file-name">'"${_pg_display_file}"'</span>
+            </div>
+            <div class="progress mb-2" style="height: 1.25rem;">
+                <div id="synocr-progress-files-bar" class="'"${_pg_files_bar_class}"'" role="progressbar" style="width: '"${synocr_pg_percent_files:-0}"'%;" aria-valuenow="'"${synocr_pg_percent_files:-0}"'" aria-valuemin="0" aria-valuemax="100">'"${synocr_pg_percent_files:-0}"'%</div>
+            </div>
+            <div class="synocr-progress-detail-row mb-1">
+                <span class="synocr-progress-detail-label synocr-text-blue">'"${lang_main_progress_step}"'</span>
+                <span class="synocr-progress-detail-value">
+                    <span id="synocr-progress-step-fraction">'"${_pg_step_fraction}"'</span><span id="synocr-progress-step-label">'"${_pg_display_step}"'</span>
+                </span>
+            </div>
+            <div class="progress mb-1" style="height: 1.25rem;">
+                <div id="synocr-progress-file-bar" class="'"${_pg_file_bar_class}"'" role="progressbar" style="width: '"${synocr_pg_percent_file:-0}"'%;" aria-valuenow="'"${synocr_pg_percent_file:-0}"'" aria-valuemin="0" aria-valuemax="100">'"${synocr_pg_percent_file:-0}"'%</div>
+            </div>
+            <div id="synocr-progress-profile" class="synocr-progress-detail-row mb-0" style="'"${_pg_profile_style}"'">
+                <span class="synocr-progress-detail-label synocr-text-blue">'"${lang_edit_profname}"':</span>
+                <span class="synocr-progress-detail-value" id="synocr-progress-profile-value">'"${_pg_profile_text}"'</span>
+            </div>
         </div>
-        <div class="progress mb-2" style="height: 1.25rem;">
-            <div id="synocr-progress-files-bar" class="'"${_pg_files_bar_class}"'" role="progressbar" style="width: '"${synocr_pg_percent_files:-0}"'%;" aria-valuenow="'"${synocr_pg_percent_files:-0}"'" aria-valuemin="0" aria-valuemax="100">'"${synocr_pg_percent_files:-0}"'%</div>
-        </div>
-        <div class="small text-muted mb-1">
-            <span id="synocr-progress-step-fraction">'"${_pg_step_fraction}"'</span><span id="synocr-progress-step-label">'"${_pg_display_step}"'</span>
-        </div>
-        <div class="progress mb-1" style="height: 1.25rem;">
-            <div id="synocr-progress-file-bar" class="'"${_pg_file_bar_class}"'" role="progressbar" style="width: '"${synocr_pg_percent_file:-0}"'%;" aria-valuenow="'"${synocr_pg_percent_file:-0}"'" aria-valuemin="0" aria-valuemax="100">'"${synocr_pg_percent_file:-0}"'%</div>
-        </div>
-        <p id="synocr-progress-profile" class="small text-muted mb-0" style="'"${_pg_profile_style}"'">
-            <span class="synocr-text-blue">'"${lang_edit_profname}"':</span>
-            <span id="synocr-progress-profile-value">'"${_pg_profile_text}"'</span>
-        </p>
     </div>
     <table class="table table-borderless mb-0" style="width: 70%;">
         <tbody>
