@@ -1,36 +1,68 @@
-Release Notes
-
-! ! ! ATTENTION ! ! ! 
-This version only supports DSM7
-DSM6.x version you can found here: https://git.geimist.eu/geimist/synOCR/src/branch/master/PKG_DSM6/CHANGELOG
-
 known issues / limitations:
  -  The check whether a selected folder (OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.6.0 [2026-06-16]
+  ⚠️ Version 1.5 is the last version for DSM 6.x
+  
+  IMPLEMENTATIONS:
+ - [GUI]    🔥 A graphical folder picker has been implemented so that folder paths can be selected directly.
+            Target folders can be created automatically in the folder picker.
+ - [GUI]    "title" can now be set in metadata (GUI ➜ OCR options: --title my title).
+            All rename parameters can also be set as variables.
+ - [GUI]    Option to manually restore the configuration database.
+ - [GUI]    NameSyntax editor improved: placeholders can now be conveniently inserted as chips via drag & drop.
+ - [GUI]    The overview page now features a real-time progress indicator.
+ - [GUI]    Package server for convenient updates can now be added automatically to Package Center via a button.
+ - [shell]  Backup files are now tracked in the database.
+            This ensures clean rotation even for older files or when the scanner's system time is incorrect. (issue #79)
+            In the GUI, the user can define how to handle orphaned entries.
+            ⚠️ Existing backup files will fall out of rotation with this update and may need to be deleted manually.
+ 
+  IMPROVEMENT:
+ - [GUI]    Hints and instructions for setting up the package server if it has not already been configured in DSM.
+ - [GUI]    Immediate display of path validation.
+ - [GUI]    Warning about unsaved changes.
+ - [shell]  OCR-optimized black and white conversion.
+ - [shell]  Delay optimization for the case when the scanner clock is ahead (#82 thanks to @tacarrie).
+ - [shell]  Revision of logging, log file layouts and error logging.
+ - [shell]  Revision / hardening of database access.
+ - [pkg]    preinst/preupgrade: Early check for Python ≥ 3.9 on aarch64.
+
+  BUGFIXES:
+ - [shell]  Compatibility with aarch64 restored.
+ - [shell]  Minor bug fixes.
+ - [YAML]   Tag names containing the character „&" led to incorrect naming.
+
+
 1.5.2 [2025-12-23]
   BUGFIXES:
  - [shell]  fix incompatibility of inotify >= v4
+
 
 1.5.1 [2025-09-29]
   IMPROVEMENT:
  - [shell]  introduces a function to calculate Docker --shm-size based on system memory for optimized Synology performance. 
  - [shell]  updates the OCRmyPDF function to use volume mounts instead of piping input/output
  - [shell]  improves file path handling and logging for target files and search files
+
   BUGFIXES:
  - [shell]  color adjustment could not be completely deactivated
  - [shell]  fixed bug related to the YAML variable §dirname_RegEx
  - [shell]  the Python module dependency that was preventing successful installation has been updated
  - [shell]  date with single-digit month not recognized
 
+
 1.5.0 [2025-03-28]
     ⚠️ known issues / limitations: Devices with an ARM64 / aarch64 CPU are not supported with this release due to Python incompatibility❗️ 
+
   IMPLEMENTATIONS:
  - [GUI]    🔥 Color adjustments can now be used to configure the contrast, the sharpness and a black and white mode (1-bit).
  - [GUI]    🔥 Blank page detection and removal has been implemented.
  - [shell]  If logging is activated, the file "file_processing.log" is now kept in the log folder for a quick overview of the target files
  - [GUI]    A slider can be used to set a processing delay of 0-120 seconds (compatibility of folder monitoring with incompatible scanners such as CANON)
  - [GUI]    The source file remains unchanged via the OCR parameter --keep_hash, but can still be classified and renamed (issue #59)
+
   IMPROVEMENT:
  - [GUI]    the save dialog in the GUI now runs much faster
  - [shell]  improved protection of the source file in the event of an error
@@ -53,6 +85,7 @@ known issues / limitations:
             - optimize search for short dates (jun., Apr......)
             - bugfix regex with whitespace after Month
             - add some logging
+
   BUGFIXES:
  - [shell]  issue with the delay in combination with folder monitoring
  - [shell]  the counting of pages was changed from PyPDF to pymupdf to catch an error with EOF
@@ -67,39 +100,48 @@ known issues / limitations:
  - [SHELL]  fix error message "warning: ./synOCR.sh: line 780: command substitution: ignored null byte in input"
  - [shell]  fixing some minor bugs
  
+
  1.4.5 [2023-09-25]
   BUGFIXES:
  - [SHELL] Fixed a bug that could block the start of monitoring
  - [SHELL] Fixed a bug that could not update the DB @DSM6
  
+
 1.4.4 [2023-08-31]
   BUGFIXES:
  - [SHELL] Search range for the date in the past was not calculated correctly
  - [SHELL] if an (encrypted) destination folder has not yet been mounted, the program run is now terminated.
  
+
 1.4.3 [2023-08-08]
   BUGFIXES:
  - [SHELL] a missing slash in the source path partly blocked a correct program run
+
   IMPROVEMENT:
  - [GUI] In the update note not only the newest but also the installed version is displayed
  - [SHELL] apply shellcheck for functions.sh
  
+
 1.4.2 [2023-07-26]
   BUGFIXES:
  - [SHELL] fix build python environment at aarch64 (additionally Python 3.9 required)
+
   IMPROVEMENT:
  - [SHELL] remove trailing spaces and tabs in YAML rules to improve compatibility
  - [SHELL] improve error handling of python date search
  - [SHELL] improve logging 
  - [SHELL] improve YAML validation
  
+
 1.4.1 [2023-07-07]
   BUGFIXES:
  - [SHELL] disable python environment backup due to an update error
  - [SHELL] minor bugfixes
+
   IMPROVEMENT:
  - [SHELL] Bump apprise library to 1.4.5
  
+
 1.4.0 [2023-07-04]
   BUGFIXES:
  - [SHELL] if the path to the log file contained a hash, the date search via Python failed
@@ -110,6 +152,7 @@ known issues / limitations:
  - [GUI] fixed syntax error that caused a navigation error in the GUI
  - [SHELL] if two separation pages follow each other, this was result in an empty PDF file (thx @DeeKay1)
  - [GUI] synOCR starts at DSM7.2 only in a new window (iFrame support - thx @Tommes)
+
   IMPROVEMENT:
  - [SHELL] splitting: change from pypdf to pikepdf because pypdf breaks the PDF/A attribute (thx @Gthorsten)
  - [SHELL] write metadata: change from pypdf to pikepdf because pypdf breaks the PDF/A attribute (thx @Gthorsten)
@@ -129,6 +172,7 @@ known issues / limitations:
  - [SHELL] update find_dates.py to version 1.0.4 (thx @GThorsten)
  - [SHELL] no temporary data is stored in the destination folder now
  - improved logging when monitoring cannot be started because a source folder is invalid
+
   IMPLEMENTATIONS:
  - 🔥 inclusion of APPRISE library to support many notification services (native PushBullet support has been removed)
    apprise_call (apprise service) apprise_attachment (true/false) notify_lang (DSM lang code) can be additionally defined and overwrite in every YAML rule
@@ -138,24 +182,29 @@ known issues / limitations:
  - [GUI] support for follow machine translated languages (by DeepL)
     - Korean
     - Norwegian
- 
+
+
  1.3.3 [2023-04-23]
   BUGFIXES:
  - Renaming parameters used as tag name components in YAML rules were not written as metadata
  - fix wrong version in 1.3.2
 
+
 1.3.1 [2023-02-23]
   BUGFIXES:
  - Fixed syntax error that caused a navigation error in the GUI
+
 
 1.3.0 [2022-11-01]
   BUGFIXES:
  -  counting of log and backup files to be deleted was not correct under certain situations
  -  catching an error message if there are no docker images to be cleaned up
+
   IMPROVEMENT:
  -  YAML rules: if the value for condition not set - fallback to any
  -  Notification in the log when rule-based destination folders are found, but a conflicting setting is set in the GUI
  -  Profiles are now processed in alphabetical order (by profile name)
+
   IMPLEMENTATIONS:
  -  🔥 Input folder monitoring included (need installed inotify-tools from here: https://synocommunity.com/package/inotify-tools)
     - a pulsing status icon in the gui indicates an active monitoring

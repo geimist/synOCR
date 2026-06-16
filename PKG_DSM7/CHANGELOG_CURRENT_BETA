@@ -2,62 +2,14 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.5.99.9 [2026-06-09] 
-  IMPROVEMENT:
- - [GUI]    Detailverbesserungen der Progressbardarstellung
- - [shell]  Überarbeitung / Härtung der DB-Zugriffe
- - [shell]  überarbeitetes Errorlogging
-
-1.5.99.8 [2026-05-31] 
-  IMPROVEMENT:
- - [GUI]    Detailverbesserungen der Progressbardarstellung
- - [shell]  Überarbeitung des Loggings und Logfilelayouts
-
-1.5.99.7 [2026-05-24] 
+1.6.99.1 [2026-xx-xx]
+  
   IMPLEMENTATIONS:
- - [shell]  Es wird jetzt ein Verzeichnis Backup-Dateien in der DB geführt. 
-            Das gewährleistet eine saubere Rotation auch bei älteren Dateien oder wenn die Systemzeit des Scanners falsch ist. (issue #79)
-            In der GUI kann der User definieren, wie mit verwaisten Einträgen verfahren werden soll.
-            ⚠️ Bestehende Backupdateien fallen durch dieses Update aus der Rotation und müssen ggf. selbst gelöscht werden.
+ - [GUI]    …
+ - [shell]  …
+ 
   IMPROVEMENT:
- - [GUI]    Im Folder Picker können jetzt Zielordner automatisch erstellt werden und weitere Detailverbesserungen (extra für DaveR 😉)
- - [GUI]    Auf der Übersichtsseite gibt es jetzt eine Echzeitfortschrittsanzeige (extra für DaveR 😉)
+ - [GUI]    …
 
-1.5.99.6 [2026-05-14] 
-  IMPLEMENTATIONS:
- - [GUI]    NameSyntax-Editor verbessert: Platzhalter können jetzt als Chips komfortabel per Drag&Drop eingefügt werden.
-  IMPROVEMENT:
- - [GUI]    Paketserver kann nur über einen Button automatisch hinzugefügt werden
- - [shell]  OCR-optimierte schwarzweiß-Konvertierung
- - [shell]  delay-Optimierung für den Fall, dass die Uhr des Scanners vor geht (#82 thanks to @tacarrie)
- - [pkg]    preinst/preupgrade: Frühe Prüfung auf Python ≥ 3.9 für aarch64
   BUGFIXES:
- - [shell]  Kompatibilität zu aarch64 wiederhergestellt
- - [pkg]    build_spk: scripts/lang-Zeilen mit printf %q erzeugen, damit Meldungen nach . …/lang/* zuverlässig gesetzt werden und im Paketzentrum erscheinen
-
-1.5.99.4 [2026-05-02] 
-  IMPLEMENTATIONS:
- - [GUI]    Option zur manuellen Wiederherstellung der Konfigurationsdatenbank
-  IMPROVEMENT:
- - [GUI]    Hinweise und Anweisungen zur Einrichtung des Paket-Servers, sofern dieser nicht bereits in DSM konfiguriert wurde
- - [GUI]    Sofortanzeige der Pfadvalidierung
- - [GUI]    Warnung wegen nicht gespeicherter Änderungen
-
-1.5.99.3 [2026-04-28] 
-  BUGFIXES:
- - [shell]  Die Python-Laufzeitumgebung konnte nicht erstellt werden
- - [YAML]   Tag-Namen, die das Zeichen „&“ enthielten, führten zu einer fehlerhaften Benennung
-
-1.5.99.2 [2026-04-28] 
-  IMPLEMENTATIONS:
- - [GUI]    🔥 Es wurde eine grafische Ordnerauswahl (Folder Picker) implementiert, damit Ordnerpfade direkt ausgewählt werden können
-  BUGFIXES:
- - [shell]  Die Farbanpassung konnte nicht vollständig deaktiviert werden
-
-1.5.99.1 [2025-06-26]
-  IMPLEMENTATIONS:
- - [GUI]    "title" kann jetzt in Metadaten gesetzt werden (GUI ➜ OCR-Optionen: --title my title). Es können auch alle Umbenennungsparameter als Variablen gesetzt werden.
-  BUGFIXES:
- - [shell]  fixing some minor bugs
-
-
+ - [YAML]   …
