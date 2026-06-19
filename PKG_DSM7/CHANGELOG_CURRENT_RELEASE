@@ -2,6 +2,12 @@ known issues / limitations:
  -  The check whether a selected folder (OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.6.1 [2026-06-19]
+
+  BUGFIXES:
+ - [shell]  adaption for OCRmyPDF rootless Images (>= OCRmyPDF v17.7.0)
+
+
 1.6.0 [2026-06-16]
   ⚠️ Version 1.5 is the last version for DSM 6.x
   

@@ -531,17 +531,29 @@ OCRmyPDF()
         OCRinput="${input1}"
     fi
 
+    # Docker-local copy only (source file handling: backup, --keep_hash, etc. stays on OCRinput/input1).
+    # Shared-folder ACLs and missing supplementary groups inside the container block direct mounts.
+    ocr_docker_input="${work_tmp_step1%/}/docker_input.pdf"
+    if ! cp -f "${OCRinput}" "${ocr_docker_input}"; then
+        log_error_at "Docker OCR input copy failed: ${OCRinput} -> ${ocr_docker_input}"
+        return 1
+    fi
+    chmod a+rw "${ocr_docker_input}"
+    chmod a+rwx "${outputtmp%/*}"
+
     run_and_log() {
         log_debug "$*"
         "$@"
     }
 
+    # Match container UID/GID to synOCR.sh so /output is writable (OCRmyPDF 17+ runs as non-root).
     run_and_log docker run \
         --rm \
         --name synOCR \
+        --user "$(id -u):$(id -g)" \
         --network none \
         --shm-size="${shm_size}" \
-        -v "${OCRinput}:/input.pdf" \
+        -v "${ocr_docker_input}:/input.pdf" \
         -v "${outputtmp%/*}:/output" \
         "${dockercontainer}" \
         "${ocropt_arr[@]}" \
