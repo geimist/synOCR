@@ -19,41 +19,41 @@
   "dsm": {
     "dsm6": {
       "beta": {
-        "releaseDate": "2025-12-23T14:32:38.000Z",
-        "version": "1.5.2",
+        "releaseDate": "2026-06-19T16:09:52.000Z",
+        "version": "1.5.3",
         "size": "",
         "checksum": "",
         "file": "",
-        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.5.2/synOCR_DSM6_v1.5.2.spk",
+        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.5.3/synOCR_DSM6_v1.5.3.spk",
         "changeLogUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/PKG_DSM6/CHANGELOG_CURRENT_RELEASE"
       },
       "release": {
-        "releaseDate": "2025-12-23T14:32:38.000Z",
-        "version": "1.5.2",
+        "releaseDate": "2026-06-19T16:09:52.000Z",
+        "version": "1.5.3",
         "size": "",
         "checksum": "",
         "file": "",
-        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.5.2/synOCR_DSM6_v1.5.2.spk",
+        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.5.3/synOCR_DSM6_v1.5.3.spk",
         "changeLogUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/PKG_DSM6/CHANGELOG_CURRENT_RELEASE"
       }
     },
     "dsm7": {
       "beta": {
-        "releaseDate": "2026-06-16T14:25:52.000Z",
-        "version": "1.6.0",
+        "releaseDate": "2026-06-19T16:09:52.000Z",
+        "version": "1.6.1",
         "size": "",
         "checksum": "",
         "file": "",
-        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.6.0/synOCR_v1.6.0.spk",
+        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.6.1/synOCR_v1.6.1.spk",
         "changeLogUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/PKG_DSM7/CHANGELOG_CURRENT_BETA"
       },
       "release": {
-        "releaseDate": "2026-06-16T14:25:52.000Z",
-        "version": "1.6.0",
+        "releaseDate": "2026-06-19T16:09:52.000Z",
+        "version": "1.6.1",
         "size": "",
         "checksum": "",
         "file": "",
-        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.6.0/synOCR_v1.6.0.spk",
+        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.6.1/synOCR_v1.6.1.spk",
         "changeLogUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/PKG_DSM7/CHANGELOG_CURRENT_RELEASE"
       }
     }
