@@ -345,6 +345,20 @@
     maxYear=$( validate_date_range "${DateSearchMaxYear}" "+" )
     log_kv "date range in future" "${DateSearchMaxYear} [absolute: ${maxYear}]"
 
+    # Extract the OCR language code passed to Tesseract via -l (e.g. "deu+eng").
+    # It is forwarded to find_dates.py as a locale hint for international date parsing.
+    # ocropt_arr is already built above, so we reuse its parsed -l/value pairs.
+    # Note: only the spaced form "-l deu+eng" (as suggested by the GUI) is matched;
+    # the compact form "-ldeu" is not recognized.
+    ocr_lang_raw=""
+    for ((i=0; i<${#ocropt_arr[@]}; i++)); do
+        if [ "${ocropt_arr[$i]}" = "-l" ] && [ $((i+1)) -lt ${#ocropt_arr[@]} ]; then
+            ocr_lang_raw="${ocropt_arr[$((i+1))]}"
+            break
+        fi
+    done
+    log_kv "OCR language hint" "${ocr_lang_raw}"
+
     log_debug "PATH-Variable: ${PATH}"
     if docker --version 2>/dev/null | grep -q "version"  ; then
         log_kv "Docker test" "OK"
@@ -1400,7 +1414,7 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
             arg_searchnearest="-searchnearest=off"
         fi
 
-        log_debug "call find_dates.py: -fileWithTextFindings \"${searchfile}\"  \"${arg_searchnearest}\" -dateBlackList \"${ignoredDate}\" -dbg_file \"${current_logfile}\" -dbg_lvl \"${loglevel}\" -minYear \"${minYear}\" -maxYear \"${maxYear}\""
+        log_debug "call find_dates.py: -fileWithTextFindings \"${searchfile}\"  \"${arg_searchnearest}\" -dateBlackList \"${ignoredDate}\" -dbg_file \"${current_logfile}\" -dbg_lvl \"${loglevel}\" -minYear \"${minYear}\" -maxYear \"${maxYear}\" -lang \"${ocr_lang_raw}\""
 
         founddatestr=$( python3 ./includes/find_dates.py -fileWithTextFindings "${searchfile}" \
                                                             "${arg_searchnearest}" \
@@ -1408,7 +1422,8 @@ format=$1   # for regex search: 1 = dd[./-]mm[./-](yy|yyyy)
                                                             -dbg_file "${current_logfile}" \
                                                             -dbg_lvl "${loglevel}" \
                                                             -minYear "${minYear}" \
-                                                            -maxYear "${maxYear}" 2>&1)
+                                                            -maxYear "${maxYear}" \
+                                                            -lang "${ocr_lang_raw}" 2>&1)
 
         if _synocr_log_ge2; then
             log_debug "find_dates.py result:"
