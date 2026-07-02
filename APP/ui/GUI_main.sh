@@ -419,11 +419,23 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
         fi
     fi
 
-# Status / statistics (progress while running; open-file count only when queued and idle)
+# Status / statistics (stats table first; progress below while running)
 echo '
 <div id="synocr-status-stats" class="mb-3">
     <p class="synocr-text-blue mb-2"><strong>'"${lang_main_statshead}"'</strong></p>
-    <div id="synocr-progress" class="mb-2" style="'"${_synocr_progress_style}"'">
+    <table class="table table-borderless mb-0" style="width: 70%;">
+        <tbody>
+            <tr id="synocr-open-files-row" style="'"${_synocr_open_files_row_style}"'">
+                <td class="synocr-text-blue">'"${lang_main_openfilecount}"':</td>
+                <td id="synocr-open-files-value" class="synocr-text-red">'"${count_input_file}"'</td>
+            </tr>
+            <tr>
+                <td class="synocr-text-blue">'"${lang_main_totalsince}"' '"$(synocr_sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")"' (PDF / '"${lang_main_pages}"'):</td>
+                <td id="synocr-global-stats-value" class="synocr-text-green">'"$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")"' / '"$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")"'</td>
+            </tr>
+        </tbody>
+    </table>
+    <div id="synocr-progress" style="'"${_synocr_progress_style}"'">
         <div class="d-flex align-items-center justify-content-between mb-1 synocr-progress-files-header">
             <label class="small text-muted mb-0" id="synocr-progress-files-label">'"${_pg_files_label}"'</label>
             <svg id="synocr-progress-done-ring" class="synocr-progress-done-ring" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
@@ -454,18 +466,6 @@ echo '
             </div>
         </div>
     </div>
-    <table class="table table-borderless mb-0" style="width: 70%;">
-        <tbody>
-            <tr id="synocr-open-files-row" style="'"${_synocr_open_files_row_style}"'">
-                <td class="synocr-text-blue">'"${lang_main_openfilecount}"':</td>
-                <td id="synocr-open-files-value" class="synocr-text-red">'"${count_input_file}"'</td>
-            </tr>
-            <tr>
-                <td class="synocr-text-blue">'"${lang_main_totalsince}"' '"$(synocr_sqlite "SELECT value_1 FROM system WHERE key='count_start_date'")"' (PDF / '"${lang_main_pages}"'):</td>
-                <td class="synocr-text-green">'"$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'")"' / '"$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'")"'</td>
-            </tr>
-        </tbody>
-    </table>
 </div>'
 
 

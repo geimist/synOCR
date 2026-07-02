@@ -988,7 +988,14 @@ synocr_progress_compute() {
 
 # JSON API for index.cgi?page=main-status (jQuery polling).
 synocr_render_main_status_json() {
+    local _global_ocr _global_pages
+
     synocr_progress_compute
+
+    _global_ocr=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_ocrcount'" 2>/dev/null)
+    _global_pages=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'" 2>/dev/null)
+    _global_ocr=${_global_ocr:-0}
+    _global_pages=${_global_pages:-0}
 
     jq -n \
         --arg state "${synocr_pg_state}" \
@@ -1004,6 +1011,8 @@ synocr_render_main_status_json() {
         --arg step_label "${synocr_pg_step_label}" \
         --argjson step_index "${synocr_pg_step_index}" \
         --argjson step_total "${synocr_pg_step_total}" \
+        --argjson global_ocrcount "${_global_ocr}" \
+        --argjson global_pagecount "${_global_pages}" \
         '{
             state: $state,
             running: ($running == 1),
@@ -1017,7 +1026,9 @@ synocr_render_main_status_json() {
             step_id: $step_id,
             step_label: $step_label,
             step_index: $step_index,
-            step_total: $step_total
+            step_total: $step_total,
+            global_ocrcount: $global_ocrcount,
+            global_pagecount: $global_pagecount
         }'
 }
 

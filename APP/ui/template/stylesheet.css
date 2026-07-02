@@ -260,8 +260,9 @@ a.btn.btn-secondary:hover {
     }
 }
 
-/* Main page progress: completion hold + fade-out */
+/* Main page progress: completion hold + fade-out (below stats table) */
 #synocr-progress {
+    margin-top: 0.5rem;
     opacity: 1;
     transition: opacity 0.5s ease;
 }

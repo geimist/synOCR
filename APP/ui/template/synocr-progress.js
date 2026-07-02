@@ -1,7 +1,8 @@
 /*
  * Main page live UI: polls index.cgi?page=main-status (see #synocr-progress-config).
  * Loaded outside the <form> after bootstrap — DSM often blocks inline scripts in forms.
- * Updates: progress bars (while running), status icon, open-file row (queued and idle).
+ * Updates: progress bars (while running), status icon, open-file row (queued and idle),
+ * global PDF/page totals (synocr-global-stats-value).
  * After run ends: hold at 100% (doneHoldMs), subtle ring countdown, then fade-out (doneFadeMs).
  */
 (function () {
@@ -17,6 +18,7 @@
     var holdTimer = null;
     var fadeTimer = null;
     var fadeListener = null;
+    var lastStatusData = null;
 
     var RING_RADIUS = 8;
     var RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -139,6 +141,7 @@
         resetProgressVisualState(box);
         box.style.display = "none";
         progressPhase = "hidden";
+        updateGlobalStats(lastStatusData);
     }
 
     function startRingCountdown(cfg, ring) {
@@ -323,6 +326,14 @@
         }
     }
 
+    function updateGlobalStats(data) {
+        var el = document.getElementById("synocr-global-stats-value");
+        if (!el || !data || data.global_ocrcount == null || data.global_pagecount == null) {
+            return;
+        }
+        el.textContent = String(data.global_ocrcount) + " / " + String(data.global_pagecount);
+    }
+
     /** Green check when idle and no input files; hourglass while running or files queued. */
     function updateMainStatus(cfg, data) {
         var busy = isWorkPending(data);
@@ -401,7 +412,9 @@
 
     function applyStatus(cfg, data) {
         data = data || {};
+        lastStatusData = data;
         updateMainStatus(cfg, data);
+        updateGlobalStats(data);
         updateProgressBars(cfg, data);
     }
 
