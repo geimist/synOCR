@@ -4,3 +4,4 @@ build_spk.sh
 @eaDir/*
 .cursor/*
 *.zip
+APP/ui/_gsdata_/*
