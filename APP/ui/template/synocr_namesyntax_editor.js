@@ -1,69 +1,32 @@
 /**
- * synOCR — NameSyntax chip editor (contenteditable + hidden canonical §-string)
+ * synOCR — chip editor (contenteditable + hidden canonical §-string)
+ *
+ * Public API:
+ *   var ed = synocrChipEditor.create({
+ *     visual:   <HTMLElement contenteditable>,  // required
+ *     hidden:   <HTMLInputElement>,             // required (holds canonical §-string)
+ *     palette:  <HTMLElement|null>,             // draggable chip source with [data-token]
+ *     tokenMap: { '§docr': 'Tag', ... },        // token -> label (drives chip rendering)
+ *     onChange: function(canonicalString){}     // optional, fires on every value change
+ *   });
+ *   ed.setValue('§yocr4/§dirname_RegEx/');      // re-parse a §-string into chips
+ *   ed.getValue();                               // serialize current visual to §-string
+ *   ed.insertText('/volume1/Ablage/');           // insert literal text at caret
+ *   ed.destroy();                                // detach all listeners + drop indicator
+ *
+ * Legacy auto-init: if #NameSyntax-hidden / #NameSyntax-visual / #NameSyntax-palette
+ * exist on DOMContentLoaded, an editor is instantiated automatically (used by GUI_edit.sh).
  */
 (function () {
     'use strict';
 
-    var TOKEN_MAP_ID = 'synocr-name-syntax-token-map';
-    var HIDDEN_ID = 'NameSyntax-hidden';
-    var VISUAL_ID = 'NameSyntax-visual';
-    var PALETTE_ID = 'NameSyntax-palette';
     var CHIP_CLASS = 'synocr-namesyntax-chip';
+    var LEGACY_TOKEN_MAP_ID = 'synocr-name-syntax-token-map';
+    var LEGACY_HIDDEN_ID = 'NameSyntax-hidden';
+    var LEGACY_VISUAL_ID = 'NameSyntax-visual';
+    var LEGACY_PALETTE_ID = 'NameSyntax-palette';
 
-    function buildMapFromPalette() {
-        var m = {};
-        var pal = document.getElementById(PALETTE_ID);
-        if (!pal) {
-            return m;
-        }
-        var items = pal.querySelectorAll('[data-token]');
-        var i;
-        for (i = 0; i < items.length; i++) {
-            var el = items[i];
-            var tok = el.getAttribute('data-token');
-            if (tok) {
-                m[tok] = (el.textContent || '').trim();
-            }
-        }
-        return m;
-    }
-
-    function tryParseJsonTokenMap() {
-        var el = document.getElementById(TOKEN_MAP_ID);
-        if (!el) {
-            return {};
-        }
-        try {
-            var raw = el.textContent.trim();
-            if (!raw) {
-                return {};
-            }
-            if (el.getAttribute('data-encoding') === 'base64') {
-                raw = atob(raw);
-            }
-            return JSON.parse(raw);
-        } catch (e) {
-            return {};
-        }
-    }
-
-    function getTokenMap() {
-        var fromJson = tryParseJsonTokenMap();
-        var fromPal = buildMapFromPalette();
-        var merged = {};
-        var k;
-        for (k in fromJson) {
-            if (Object.prototype.hasOwnProperty.call(fromJson, k)) {
-                merged[k] = fromJson[k];
-            }
-        }
-        for (k in fromPal) {
-            if (Object.prototype.hasOwnProperty.call(fromPal, k)) {
-                merged[k] = fromPal[k];
-            }
-        }
-        return merged;
-    }
+    // ---- pure helpers ------------------------------------------------------
 
     function sortedTokens(map) {
         return Object.keys(map).sort(function (a, b) {
@@ -145,41 +108,6 @@
         return out;
     }
 
-    function syncHidden(visual, hidden) {
-        var next = serializeVisual(visual);
-        if (hidden.value === next) {
-            return;
-        }
-        hidden.value = next;
-        // GUI_edit "unsaved changes" wires input/change only on real inputs; programmatic value sets do not fire.
-        // Bubble so the same listeners as other fields mark the edit page dirty.
-        hidden.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-
-    function insertChipAtCaret(visual, hidden, token, map) {
-        var label = map[token] || token;
-        var chip = makeChip(token, label);
-        var sel = window.getSelection();
-        if (!sel.rangeCount) {
-            visual.appendChild(chip);
-            syncHidden(visual, hidden);
-            return;
-        }
-        var range = sel.getRangeAt(0);
-        if (!visual.contains(range.commonAncestorContainer)) {
-            range.selectNodeContents(visual);
-            range.collapse(false);
-        }
-        range.deleteContents();
-        range.insertNode(chip);
-        range.setStartAfter(chip);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        syncHidden(visual, hidden);
-    }
-
-    /** Range at mouse position inside the editor (Chrome/WebKit + Firefox). */
     function rangeFromClientInVisual(visual, clientX, clientY) {
         var r = null;
         if (document.caretRangeFromPoint) {
@@ -198,7 +126,6 @@
         return r;
     }
 
-    /** Walk up from a node; return the chip element if the caret is inside a chip (not the visual root). */
     function findContainingChip(fromNode, visual) {
         var n = fromNode;
         if (n && n.nodeType === Node.TEXT_NODE) {
@@ -213,10 +140,6 @@
         return null;
     }
 
-    /**
-     * Never insert into/inside a chip (that would break the flat §-model). Snap to gap before/after the chip.
-     * dragChip: optional chip being moved (for edge cases when the range lands on the same node).
-     */
     function normalizeDropRange(visual, range, clientX, dragChip) {
         if (!range) {
             return null;
@@ -235,40 +158,6 @@
         }
         r2.collapse(true);
         return r2;
-    }
-
-    function insertChipAtRange(visual, hidden, token, map, range) {
-        if (!range) {
-            insertChipAtCaret(visual, hidden, token, map);
-            return;
-        }
-        var label = map[token] || token;
-        var chip = makeChip(token, label);
-        range.deleteContents();
-        range.insertNode(chip);
-        range.setStartAfter(chip);
-        range.collapse(true);
-        var sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        visual.focus();
-        syncHidden(visual, hidden);
-    }
-
-    /** Move an existing chip DOM node to a collapsed range (no duplicate). */
-    function moveChipToRange(chip, visual, hidden, range) {
-        if (!chip || !range || !visual.contains(range.commonAncestorContainer)) {
-            return;
-        }
-        range.deleteContents();
-        range.insertNode(chip);
-        range.setStartAfter(chip);
-        range.collapse(true);
-        var sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        visual.focus();
-        syncHidden(visual, hidden);
     }
 
     function positionDropIndicator(indicator, wrap, visual, clientX, clientY, dragChip) {
@@ -302,19 +191,97 @@
         }
     }
 
-    function init() {
-        var map = getTokenMap();
-        var sorted = sortedTokens(map);
-        var hidden = document.getElementById(HIDDEN_ID);
-        var visual = document.getElementById(VISUAL_ID);
+    function dataTransferHasPlain(dt) {
+        if (!dt || !dt.types) {
+            return false;
+        }
+        var i;
+        for (i = 0; i < dt.types.length; i++) {
+            if (dt.types[i] === 'text/plain') {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        if (!hidden || !visual) {
-            return;
+    // ---- legacy token-map resolution (GUI_edit.sh) -------------------------
+
+    function buildMapFromPalette(pal) {
+        var m = {};
+        if (!pal) {
+            return m;
+        }
+        var items = pal.querySelectorAll('[data-token]');
+        var i;
+        for (i = 0; i < items.length; i++) {
+            var el = items[i];
+            var tok = el.getAttribute('data-token');
+            if (tok) {
+                m[tok] = (el.textContent || '').trim();
+            }
+        }
+        return m;
+    }
+
+    function tryParseJsonTokenMap() {
+        var el = document.getElementById(LEGACY_TOKEN_MAP_ID);
+        if (!el) {
+            return {};
+        }
+        try {
+            var raw = el.textContent.trim();
+            if (!raw) {
+                return {};
+            }
+            if (el.getAttribute('data-encoding') === 'base64') {
+                raw = atob(raw);
+            }
+            return JSON.parse(raw);
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function legacyTokenMap(pal) {
+        var fromJson = tryParseJsonTokenMap();
+        var fromPal = buildMapFromPalette(pal);
+        var merged = {};
+        var k;
+        for (k in fromJson) {
+            if (Object.prototype.hasOwnProperty.call(fromJson, k)) {
+                merged[k] = fromJson[k];
+            }
+        }
+        for (k in fromPal) {
+            if (Object.prototype.hasOwnProperty.call(fromPal, k)) {
+                merged[k] = fromPal[k];
+            }
+        }
+        return merged;
+    }
+
+    // ---- factory -----------------------------------------------------------
+
+    function create(opts) {
+        opts = opts || {};
+        var visual = opts.visual;
+        var hidden = opts.hidden;
+        var palette = opts.palette || null;
+        var tokenMap = opts.tokenMap || {};
+        var onChange = opts.onChange || null;
+
+        if (!visual || !hidden) {
+            return null;
         }
 
-        var raw = hidden.value || '';
-        visual.innerHTML = '';
-        visual.appendChild(parseToFragment(raw, map, sorted));
+        var map = tokenMap;
+        var sorted = sortedTokens(map);
+        var listeners = [];
+
+        function on(target, type, fn, useCapture) {
+            target.addEventListener(type, fn, useCapture || false);
+            listeners.push({ target: target, type: type, fn: fn, useCapture: useCapture || false });
+        }
 
         var wrap = visual.parentElement;
         var dropIndicator = document.createElement('div');
@@ -329,35 +296,91 @@
             dropIndicator.style.display = 'none';
         }
 
-        function dataTransferHasPlain(dt) {
-            if (!dt || !dt.types) {
-                return false;
+        function syncHidden() {
+            var next = serializeVisual(visual);
+            if (hidden.value === next) {
+                return;
             }
-            var i;
-            for (i = 0; i < dt.types.length; i++) {
-                if (dt.types[i] === 'text/plain') {
-                    return true;
-                }
+            hidden.value = next;
+            // GUI_edit "unsaved changes" wires input/change only on real inputs;
+            // programmatic value sets do not fire. Bubble so the same listeners
+            // as other fields mark the edit page dirty.
+            hidden.dispatchEvent(new Event('input', { bubbles: true }));
+            if (onChange) {
+                onChange(next);
             }
-            return false;
         }
 
-        document.addEventListener('dragend', hideDropIndicator, true);
+        function insertChipAtCaret(token) {
+            var label = map[token] || token;
+            var chip = makeChip(token, label);
+            var sel = window.getSelection();
+            if (!sel.rangeCount) {
+                visual.appendChild(chip);
+                syncHidden();
+                return;
+            }
+            var range = sel.getRangeAt(0);
+            if (!visual.contains(range.commonAncestorContainer)) {
+                range.selectNodeContents(visual);
+                range.collapse(false);
+            }
+            range.deleteContents();
+            range.insertNode(chip);
+            range.setStartAfter(chip);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            syncHidden();
+        }
+
+        function insertChipAtRange(token, range) {
+            if (!range) {
+                insertChipAtCaret(token);
+                return;
+            }
+            var label = map[token] || token;
+            var chip = makeChip(token, label);
+            range.deleteContents();
+            range.insertNode(chip);
+            range.setStartAfter(chip);
+            range.collapse(true);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            visual.focus();
+            syncHidden();
+        }
+
+        function moveChipToRange(chip, range) {
+            if (!chip || !range || !visual.contains(range.commonAncestorContainer)) {
+                return;
+            }
+            range.deleteContents();
+            range.insertNode(chip);
+            range.setStartAfter(chip);
+            range.collapse(true);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            visual.focus();
+            syncHidden();
+        }
+
+        // initial render from the hidden input's current value
+        visual.innerHTML = '';
+        visual.appendChild(parseToFragment(hidden.value || '', map, sorted));
 
         var debounceTimer;
         function scheduleSync() {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function () {
-                syncHidden(visual, hidden);
-            }, 0);
+            debounceTimer = setTimeout(syncHidden, 0);
         }
 
-        visual.addEventListener('input', scheduleSync);
-        visual.addEventListener('blur', function () {
-            syncHidden(visual, hidden);
-        });
+        on(visual, 'input', scheduleSync);
+        on(visual, 'blur', syncHidden);
 
-        visual.addEventListener('paste', function (e) {
+        on(visual, 'paste', function (e) {
             e.preventDefault();
             var text = e.clipboardData.getData('text/plain');
             if (!text) {
@@ -376,17 +399,15 @@
             range.collapse(false);
             sel.removeAllRanges();
             sel.addRange(range);
-            syncHidden(visual, hidden);
+            syncHidden();
         });
 
         var form = visual.closest('form');
         if (form) {
-            form.addEventListener('submit', function () {
-                syncHidden(visual, hidden);
-            });
+            on(form, 'submit', syncHidden);
         }
 
-        visual.addEventListener('keydown', function (e) {
+        on(visual, 'keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 return;
@@ -417,7 +438,7 @@
                     if (prev && prev.classList && prev.classList.contains(CHIP_CLASS)) {
                         e.preventDefault();
                         prev.remove();
-                        syncHidden(visual, hidden);
+                        syncHidden();
                     }
                     return;
                 }
@@ -426,7 +447,7 @@
                     if (before && before.classList && before.classList.contains(CHIP_CLASS)) {
                         e.preventDefault();
                         before.remove();
-                        syncHidden(visual, hidden);
+                        syncHidden();
                     }
                 }
             }
@@ -440,7 +461,7 @@
                     if (next && next.classList && next.classList.contains(CHIP_CLASS)) {
                         e.preventDefault();
                         next.remove();
-                        syncHidden(visual, hidden);
+                        syncHidden();
                     }
                     return;
                 }
@@ -449,13 +470,13 @@
                     if (after && after.classList && after.classList.contains(CHIP_CLASS)) {
                         e.preventDefault();
                         after.remove();
-                        syncHidden(visual, hidden);
+                        syncHidden();
                     }
                 }
             }
         });
 
-        visual.addEventListener('dragstart', function (e) {
+        on(visual, 'dragstart', function (e) {
             var chip = e.target.closest('.' + CHIP_CLASS);
             if (!chip || !visual.contains(chip)) {
                 return;
@@ -465,7 +486,7 @@
             e.dataTransfer.effectAllowed = 'move';
         });
 
-        visual.addEventListener('dragover', function (e) {
+        on(visual, 'dragover', function (e) {
             if (!wrap || !dataTransferHasPlain(e.dataTransfer)) {
                 return;
             }
@@ -474,7 +495,7 @@
             positionDropIndicator(dropIndicator, wrap, visual, e.clientX, e.clientY, internalDragChip);
         });
 
-        visual.addEventListener('drop', function (e) {
+        on(visual, 'drop', function (e) {
             e.preventDefault();
             hideDropIndicator();
             var token = (e.dataTransfer.getData('text/plain') || '').trim();
@@ -484,54 +505,129 @@
             if (internalDragChip && visual.contains(internalDragChip) && token) {
                 if (!range) {
                     visual.appendChild(internalDragChip);
-                    syncHidden(visual, hidden);
+                    syncHidden();
                 } else {
-                    moveChipToRange(internalDragChip, visual, hidden, range);
+                    moveChipToRange(internalDragChip, range);
                 }
                 internalDragChip = null;
                 return;
             }
 
             if (token && map[token]) {
-                insertChipAtRange(visual, hidden, token, map, range);
+                insertChipAtRange(token, range);
             }
             internalDragChip = null;
         });
 
-        visual.addEventListener('dragend', function () {
+        on(visual, 'dragend', function () {
             internalDragChip = null;
             hideDropIndicator();
         });
 
-        var pal = document.getElementById(PALETTE_ID);
-        if (pal) {
-            pal.addEventListener('dragstart', function (e) {
+        on(document, 'dragend', hideDropIndicator, true);
+
+        if (palette) {
+            on(palette, 'dragstart', function (e) {
                 var t = e.target.closest('[data-token]');
-                if (!t || !pal.contains(t)) {
+                if (!t || !palette.contains(t)) {
                     return;
                 }
                 internalDragChip = null;
                 e.dataTransfer.setData('text/plain', t.getAttribute('data-token') || '');
                 e.dataTransfer.effectAllowed = 'copy';
             });
-            pal.addEventListener('click', function (e) {
+            on(palette, 'click', function (e) {
                 var t = e.target.closest('[data-token]');
-                if (!t || !pal.contains(t)) {
+                if (!t || !palette.contains(t)) {
                     return;
                 }
                 e.preventDefault();
                 var tok = (t.getAttribute('data-token') || '').trim();
                 if (tok && map[tok]) {
                     ensureCaretInVisual(visual);
-                    insertChipAtCaret(visual, hidden, tok, map);
+                    insertChipAtCaret(tok);
                 }
             });
         }
+
+        function setValue(s) {
+            visual.innerHTML = '';
+            visual.appendChild(parseToFragment(s || '', map, sorted));
+            hidden.value = s || '';
+            if (onChange) {
+                onChange(hidden.value);
+            }
+        }
+
+        function getValue() {
+            return serializeVisual(visual);
+        }
+
+        function insertText(text) {
+            if (!text) {
+                return;
+            }
+            var sel = window.getSelection();
+            if (!sel.rangeCount) {
+                visual.appendChild(document.createTextNode(text));
+                syncHidden();
+                return;
+            }
+            var range = sel.getRangeAt(0);
+            if (!visual.contains(range.commonAncestorContainer)) {
+                range.selectNodeContents(visual);
+                range.collapse(false);
+            }
+            range.deleteContents();
+            range.insertNode(document.createTextNode(text));
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            syncHidden();
+        }
+
+        function destroy() {
+            var i;
+            for (i = 0; i < listeners.length; i++) {
+                var l = listeners[i];
+                l.target.removeEventListener(l.type, l.fn, l.useCapture);
+            }
+            listeners = [];
+            if (dropIndicator.parentNode) {
+                dropIndicator.parentNode.removeChild(dropIndicator);
+            }
+        }
+
+        return {
+            setValue: setValue,
+            getValue: getValue,
+            insertText: insertText,
+            destroy: destroy
+        };
+    }
+
+    // ---- legacy auto-init (GUI_edit.sh) ------------------------------------
+
+    function legacyInit() {
+        var hidden = document.getElementById(LEGACY_HIDDEN_ID);
+        var visual = document.getElementById(LEGACY_VISUAL_ID);
+        var palette = document.getElementById(LEGACY_PALETTE_ID);
+        if (!hidden || !visual) {
+            return;
+        }
+        create({
+            visual: visual,
+            hidden: hidden,
+            palette: palette,
+            tokenMap: legacyTokenMap(palette)
+        });
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', legacyInit);
     } else {
-        init();
+        legacyInit();
     }
+
+    window.synocrChipEditor = { create: create };
 }());

@@ -62,6 +62,160 @@ synocr_sqlite() {
     fi
 }
 
+# Escape a value for safe use inside a single-quoted SQLite string literal.
+# Doubles single quotes (standard SQL escaping); the caller wraps the output in '...'.
+# Used for JSON blobs and free-text (name, description, postscript, RegEx, paths).
+sql_escape() {
+    local s="${1-}"
+    printf '%s' "${s//\'/\'\'}"
+}
+
+# rules_validate_json <json>
+# Hard, storage-agnostic validator for a ruleset JSON blob (wrapped
+# {"rules":...,"groups":...} or legacy flat). Prints localized error messages
+# (lang_rules_val_*) to stdout — one per line — and returns 1 if any error was
+# found, 0 otherwise. Used by the GUI save/import paths to prevent persisting
+# invalid rules. Self-contained: only jq + bash, no logging side effects.
+rules_validate_json() {
+    local json="${1-}"
+    local _rules_json _groups_json _known _out="" _chunk
+    local _idx _rname _cond _prio _act _res _field _ref _rtype _ss _st _src _gname _gcond
+
+    # substitute %1/%2/%3 in a lang string
+    _rules_fmt() {
+        local s="$1" a="${2-}" b="${3-}" c="${4-}"
+        s="${s//\%1/${a}}"
+        s="${s//\%2/${b}}"
+        s="${s//\%3/${c}}"
+        printf '%s' "${s}"
+    }
+    # append a non-empty chunk to _out with newline separation
+    _rules_add() {
+        [ -z "$1" ] && return
+        if [ -n "${_out}" ]; then _out="${_out}"$'\n'"$1"; else _out="$1"; fi
+    }
+
+    # 1) JSON parseable?
+    if ! printf '%s' "${json}" | jq -e . >/dev/null 2>&1; then
+        printf '%s\n' "${lang_rules_val_json_parse:-JSON parse error}"
+        return 1
+    fi
+
+    # 2) normalize wrapped vs. legacy flat
+    if printf '%s' "${json}" | jq -e 'has("rules") and (.rules | type == "object")' >/dev/null 2>&1; then
+        _rules_json=$(printf '%s' "${json}" | jq -c '.rules')
+        _groups_json=$(printf '%s' "${json}" | jq -c '.groups // {}')
+    else
+        _rules_json=$(printf '%s' "${json}" | jq -c '.')
+        _groups_json='{}'
+    fi
+    if ! printf '%s' "${_rules_json}" | jq -e 'type == "object"' >/dev/null 2>&1; then
+        printf '%s\n' "${lang_rules_val_json_parse:-rules not an object}"
+        return 1
+    fi
+    _known=$(printf '%s' "${_rules_json}" | jq -r 'keys[]')
+
+    # 3) rule-level: empty name / condition / priority / on_match / dirname_multilineregex
+    _chunk=$(printf '%s' "${_rules_json}" | jq -r '
+        [to_entries[]] | to_entries[] | .key as $i0 | .value.key as $k | .value.value as $v
+        | "\($i0+1)\t\($k)\t\($v.condition // "any")\t\($v.priority // 100)\t\($v.on_match.action // "-")\t\($v.on_match.result // "-")\t\($v.dirname_multilineregex // "-")"
+    ' 2>/dev/null | while IFS=$'\t' read -r _idx _rname _cond _prio _act _res _dml; do
+        if [ -z "${_rname}" ] || [ "${_rname}" = "null" ]; then
+            printf '%s\n' "$(_rules_fmt "${lang_rules_val_rule_no_name}" "${_idx}" "")"
+            continue
+        fi
+        if [ -n "${_cond}" ] && [ "${_cond}" != "null" ] && ! printf '%s' "${_cond}" | grep -Eiw '^(all|any|none)$' >/dev/null 2>&1; then
+            printf '%s\n' "$(_rules_fmt "${lang_rules_val_rule_condition}" "${_rname}" "${_cond}")"
+        fi
+        if [ -n "${_prio}" ] && [ "${_prio}" != "null" ] && [ "${_prio}" != "100" ] && ! printf '%s' "${_prio}" | grep -Eq '^-?[0-9]+$' >/dev/null 2>&1; then
+            printf '%s\n' "$(_rules_fmt "${lang_rules_val_rule_priority}" "${_rname}" "${_prio}")"
+        fi
+        if [ -n "${_act}" ] && [ "${_act}" != "null" ] && [ "${_act}" != "-" ] && ! printf '%s' "${_act}" | grep -Eiw '^(continue|break)$' >/dev/null 2>&1; then
+            printf '%s\n' "$(_rules_fmt "${lang_rules_val_rule_on_match_action}" "${_rname}" "${_act}")"
+        fi
+        if [ -n "${_res}" ] && [ "${_res}" != "null" ] && [ "${_res}" != "-" ] && ! printf '%s' "${_res}" | grep -Eiw '^(merge|replace|exclusive)$' >/dev/null 2>&1; then
+            printf '%s\n' "$(_rules_fmt "${lang_rules_val_rule_on_match_result}" "${_rname}" "${_res}")"
+        fi
+        if [ -n "${_dml}" ] && [ "${_dml}" != "null" ] && [ "${_dml}" != "-" ] && ! printf '%s' "${_dml}" | grep -Eiw '^(true|false)$' >/dev/null 2>&1; then
+            printf '%s\n' "$(_rules_fmt "${lang_rules_val_rule_dirname_multiline}" "${_rname}" "${_dml}")"
+        fi
+    done)
+    _rules_add "${_chunk}"
+
+    # 4) requires / excludes: type must be array or string (or null)
+    _chunk=$(printf '%s' "${_rules_json}" | jq -r '
+        to_entries[] | .key as $k | .value as $v
+        | if ($v.requires != null) and ($v.requires | type | IN("array","string") | not) then "\($k)\trequires\t\($v.requires | type)"
+          elif ($v.excludes != null) and ($v.excludes | type | IN("array","string") | not) then "\($k)\texcludes\t\($v.excludes | type)"
+          else empty end
+    ' 2>/dev/null | while IFS=$'\t' read -r _rname _field _rtype; do
+        printf '%s\n' "$(_rules_fmt "${lang_rules_val_field_type}" "${_rname}" "${_field}" "${_rtype}")"
+    done)
+    _rules_add "${_chunk}"
+
+    # 5) requires / excludes: references must be known rules
+    _chunk=$(printf '%s' "${_rules_json}" | jq -r '
+        def as_list: if . == null then [] elif type == "string" then [.] elif type == "array" then . else [] end;
+        to_entries[] | .key as $k
+        | (($k) + "\t" + "requires" + "\t" + ((.value.requires | as_list)[]? | tostring)),
+          (($k) + "\t" + "excludes" + "\t" + ((.value.excludes | as_list)[]? | tostring))
+    ' 2>/dev/null | while IFS=$'\t' read -r _rname _field _ref; do
+        [ -z "${_ref}" ] && continue
+        if ! printf '%s\n' "${_known}" | grep -qxF "${_ref}"; then
+            if [ "${_field}" = "requires" ]; then
+                printf '%s\n' "$(_rules_fmt "${lang_rules_val_requires_unknown}" "${_rname}" "${_ref}")"
+            else
+                printf '%s\n' "$(_rules_fmt "${lang_rules_val_excludes_unknown}" "${_rname}" "${_ref}")"
+            fi
+        fi
+    done)
+    _rules_add "${_chunk}"
+
+    # 6) subrules: searchstring non-empty, searchtyp + source valid
+    # Note: bash `read` with IFS=$'\t' collapses consecutive tabs (empty searchstring),
+    # so field extraction uses awk which preserves empty columns.
+    _chunk=$(printf '%s' "${_rules_json}" | jq -r '
+        def st: (.searchtyp // .searchtype // "contains") | tostring | ascii_downcase;
+        def src: (.source // "content") | tostring | ascii_downcase;
+        to_entries[] | .key as $k | (.value.subrules // []) | .[]?
+        | "\($k)\t\(.searchstring // "")\t\(. | st)\t\(. | src)"
+    ' 2>/dev/null | while IFS= read -r _line; do
+        [ -z "${_line}" ] && continue
+        _rname=$(printf '%s' "${_line}" | awk -F'\t' '{print $1}')
+        _ss=$(printf '%s' "${_line}" | awk -F'\t' '{print $2}')
+        _st=$(printf '%s' "${_line}" | awk -F'\t' '{print $3}')
+        _src=$(printf '%s' "${_line}" | awk -F'\t' '{print $4}')
+        if [ -z "${_ss}" ] || [ "${_ss}" = "null" ]; then
+            printf '%s\n' "$(_rules_fmt "${lang_rules_val_subrule_empty}" "${_rname}" "")"
+        fi
+        if [ -n "${_st}" ] && [ "${_st}" != "null" ] && ! printf '%s' "${_st}" | grep -Eiw '^(is|is not|contains|does not contain|starts with|does not starts with|ends with|does not ends with|matches|does not match)$' >/dev/null 2>&1; then
+            printf '%s\n' "$(_rules_fmt "${lang_rules_val_subrule_searchtyp}" "${_rname}" "${_st}")"
+        fi
+        if [ -n "${_src}" ] && [ "${_src}" != "null" ] && ! printf '%s' "${_src}" | grep -Eiw '^(content|filename)$' >/dev/null 2>&1; then
+            printf '%s\n' "$(_rules_fmt "${lang_rules_val_subrule_source}" "${_rname}" "${_src}")"
+        fi
+    done)
+    _rules_add "${_chunk}"
+
+    # 7) group-level: condition (only for wrapped format with groups)
+    if [ "${_groups_json}" != "{}" ]; then
+        _chunk=$(printf '%s' "${_groups_json}" | jq -r '
+            to_entries[] | "\(.key)\t\(.value.condition // "first_match")"
+        ' 2>/dev/null | while IFS=$'\t' read -r _gname _gcond; do
+            if [ -n "${_gcond}" ] && [ "${_gcond}" != "null" ] && ! printf '%s' "${_gcond}" | grep -Eiw '^(all|any|first_match)$' >/dev/null 2>&1; then
+                printf '%s\n' "$(_rules_fmt "${lang_rules_val_group_condition}" "${_gname}" "${_gcond}")"
+            fi
+        done)
+        _rules_add "${_chunk}"
+    fi
+
+    if [ -n "${_out}" ]; then
+        printf '%s\n' "${_out}"
+        return 1
+    fi
+    return 0
+}
+
 # Read one field from a sqlite3 -json array result (first row by default).
 synocr_jq_field() {
     local json="${1:-}"
@@ -115,7 +269,7 @@ synocr_sqlite_json_field() {
 synocr_config_columns() {
     cat <<'EOF'
 profile_ID, timestamp, profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix,
-taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang,
+taglist, ruleset_id, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang,
 dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, documentSplitPattern, ignoredDate,
 backup_max, backup_max_type, backup_clean_orphaned, pagecount, ocrcount, search_nearest_date, date_search_method,
 clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling,
@@ -1456,4 +1610,43 @@ log_rule_action_n() {
     local message="$1"
     _synocr_log_ge1 || return 0
     printf "%s              ➜ %s" "${_LOG_INDENT}" "${message}"
+}
+
+# Pass 2 rule engine logging (filter + action phases in tag_search)
+log_rule_pass2() {
+    local name="$1"
+    local priority="$2"
+    _synocr_log_ge1 || return 0
+    printf "%spass 2 rule \"%s\" (priority %s) ➜\n" "${_LOG_INDENT}" "${name}" "${priority}"
+}
+
+log_rule_pass2_verdict() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s  ➜ %s\n" "${_LOG_INDENT}" "${message}"
+}
+
+log_rule_pass2_detail() {
+    local message="$1"
+    _synocr_log_ge2 || return 0
+    printf "%s          ➜ %s\n" "${_LOG_INDENT}" "${message}"
+}
+
+# Pass 2 action lines — same depth as Pass 1 subrule match (one level under verdict)
+log_rule_pass2_action() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s          ➜ %s\n" "${_LOG_INDENT}" "${message}"
+}
+
+log_rule_pass2_action_n() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s          ➜ %s" "${_LOG_INDENT}" "${message}"
+}
+
+log_rule_pass2_summary() {
+    local message="$1"
+    _synocr_log_ge1 || return 0
+    printf "%s%s\n" "${_LOG_INDENT}" "${message}"
 }

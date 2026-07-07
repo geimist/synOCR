@@ -5,14 +5,17 @@ known issues / limitations:
 1.6.99.1 [2026-xx-xx]
   
   IMPLEMENTATIONS:
- - [GUI]    …
- - [shell]  …
+ - [GUI]    🔥 Regeledtitor implementiert
+            Alte YAML-Regeln können zur schnellen weiterverarbeitung importiert werden
+ - [YAML]   🔥 Regeln können nun in Beziehung zueinander gebracht werden
+ - [YAML]   MultiLine Regex jetzt auch für den Zielpfad möglich
  
   IMPROVEMENT:
  - [GUI]    Statistik auf der Übersichtsseite wird live aktualisiert
  - [shell]  Internationale Datumsformate: synOCR erkennt nun Datumsangaben in verschiedenen Länderformaten zuverlässiger. 
             ➜ Die im Profil eingestellte OCR-Sprache wird automatisch als Hinweis herangezogen, um mehrdeutige Schreibweisen (z. B. 02.07.2026 vs. 07/02/2026) korrekt zuzuordnen.
             Robustere Erkennung von OCR-Fehlern: Typische Lesefehler bei Ziffern (O<>0, l<>1, A<>4, …) und bei Trennzeichen (".<>,", "-<>–") werden automatisch korrigiert
+ - [shell]  Die virtuelle Pythonumgebung wird bei einem Update jetzt migriert und muss nich jedes mal neu erstellt werden.
 
   BUGFIXES:
  - [YAML]   …

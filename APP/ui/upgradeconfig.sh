@@ -118,7 +118,8 @@ uuid=$(uuidgen)
                         \"adjustColorBWthreshold\" VARCHAR DEFAULT ('0') ,
                         \"adjustColorDPI\" VARCHAR DEFAULT ('0') ,
                         \"adjustColorContrast\" VARCHAR DEFAULT ('1.0') ,
-                        \"adjustColorSharpness\" VARCHAR DEFAULT ('1.0')
+                        \"adjustColorSharpness\" VARCHAR DEFAULT ('1.0') ,
+                        \"ruleset_id\" INTEGER
                     );
                     COMMIT;"
 
@@ -140,7 +141,7 @@ uuid=$(uuidgen)
         # write default data:
         # ---------------------------------------------------------------------
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
-        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('db_version', '12');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('db_version', '13');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0');"
@@ -190,6 +191,25 @@ uuid=$(uuidgen)
                     );
                     CREATE INDEX \"idx_backup_files_profile_timestamp\" ON \"backup_files\" (\"profile_ID\", \"processing_timestamp\");
                     CREATE INDEX \"idx_backup_files_backup_dir_ID\" ON \"backup_files\" (\"backup_dir_ID\");
+                    COMMIT;"
+
+        wait $!
+
+        # table ruleset (WebGUI-managed rule sets, stored as JSON blobs):
+        # ---------------------------------------------------------------------
+        synocr_sqlite "BEGIN;
+                    CREATE TABLE \"ruleset\"
+                    (
+                        \"id\" INTEGER PRIMARY KEY ,
+                        \"name\" VARCHAR NOT NULL UNIQUE ,
+                        \"description\" VARCHAR ,
+                        \"rules_json\" TEXT NOT NULL DEFAULT ('{}') ,
+                        \"groups_json\" TEXT NOT NULL DEFAULT ('{}') ,
+                        \"rule_count\" INTEGER DEFAULT (0) ,
+                        \"created_at\" timestamp NOT NULL DEFAULT (datetime('now','localtime')) ,
+                        \"updated_at\" timestamp NOT NULL DEFAULT (datetime('now','localtime'))
+                    );
+                    CREATE UNIQUE INDEX \"idx_ruleset_name\" ON \"ruleset\" (\"name\");
                     COMMIT;"
 
         wait $!
@@ -1029,6 +1049,59 @@ fi
         if [[ "${error}" == 0 ]]; then
             # lift DB version:
             lift_db 11 12
+        fi
+        error=0
+    fi
+
+
+# DB-update from v12 to v13:
+# ---------------------------------------------------------------------
+    if [ "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 12 ] ; then
+
+        # ruleset table (WebGUI-managed rule sets, stored as JSON blobs):
+        # ---------------------------------------------------------------------
+        sqlite3log=$(synocr_sqlite "BEGIN;
+                    CREATE TABLE IF NOT EXISTS \"ruleset\"
+                    (
+                        \"id\" INTEGER PRIMARY KEY ,
+                        \"name\" VARCHAR NOT NULL UNIQUE ,
+                        \"description\" VARCHAR ,
+                        \"rules_json\" TEXT NOT NULL DEFAULT ('{}') ,
+                        \"groups_json\" TEXT NOT NULL DEFAULT ('{}') ,
+                        \"rule_count\" INTEGER DEFAULT (0) ,
+                        \"created_at\" timestamp NOT NULL DEFAULT (datetime('now','localtime')) ,
+                        \"updated_at\" timestamp NOT NULL DEFAULT (datetime('now','localtime'))
+                    );
+                    CREATE UNIQUE INDEX IF NOT EXISTS \"idx_ruleset_name\" ON \"ruleset\" (\"name\");
+                    COMMIT;")
+        wait $!
+
+        # check:
+        if ! synocr_sqlite "PRAGMA table_info(ruleset);" | awk -F'|' '{print $2}' | grep -q rules_json ; then
+            log="${log} 
+            ➜ ERROR: the DB table could not be created (ruleset)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        # config.ruleset_id (links a profile to a ruleset; nullable):
+        # ---------------------------------------------------------------------
+        sqlite3log=$(synocr_sqlite "ALTER TABLE config 
+                                       ADD COLUMN \"ruleset_id\" INTEGER; 
+                                       COMMIT;")
+        wait $!
+
+        # check:
+        if ! synocr_sqlite "PRAGMA table_info(config);" | awk -F'|' '{print $2}' | grep -q ruleset_id ; then
+            log="${log} 
+            ➜ ERROR: the DB column could not be created (ruleset_id)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        if [[ "${error}" == 0 ]]; then
+            # lift DB version:
+            lift_db 12 13
         fi
         error=0
     fi

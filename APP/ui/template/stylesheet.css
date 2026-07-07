@@ -2,6 +2,17 @@
 
 html {
     font-size: 0.9rem;
+    overflow-x: hidden;
+}
+
+body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+article {
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 #system_msg {
@@ -103,6 +114,48 @@ a.btn.btn-secondary:link,
 a.btn.btn-secondary:visited,
 a.btn.btn-secondary:hover {
     color: #fff !important;
+}
+
+a.btn.btn-outline-secondary,
+a.btn.btn-outline-secondary:link,
+a.btn.btn-outline-secondary:visited,
+a.btn.btn-outline-secondary:hover {
+    color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+a.btn.btn-outline-danger,
+a.btn.btn-outline-danger:link,
+a.btn.btn-outline-danger:visited {
+    color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    background-color: transparent !important;
+}
+
+a.btn.btn-outline-danger:hover,
+a.btn.btn-outline-danger:focus {
+    color: #fff !important;
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+/* synOCR blue outline button (matches filled #0086E5 primary actions) */
+.synocr-btn-outline-blue,
+a.btn.synocr-btn-outline-blue,
+a.btn.synocr-btn-outline-blue:link,
+a.btn.synocr-btn-outline-blue:visited {
+    color: #0086E5 !important;
+    border-color: #0086E5 !important;
+    background-color: transparent !important;
+}
+
+.synocr-btn-outline-blue:hover,
+.synocr-btn-outline-blue:focus,
+a.btn.synocr-btn-outline-blue:hover,
+a.btn.synocr-btn-outline-blue:focus {
+    color: #fff !important;
+    background-color: #0086E5 !important;
+    border-color: #0086E5 !important;
 }
 
 /* Globale Switch-Farben (Rot=inaktiv, Grün=aktiv) */
@@ -221,13 +274,42 @@ a.btn.btn-secondary:hover {
 }
 
 /* Keep left navigation visible while right content scrolls */
-.synocr-layout {
-    height: calc(100vh - 1.5rem);
+.container-fluid.synocr-page {
+    overflow-x: clip;
+    max-width: 100%;
 }
 
-.synocr-nav-col,
-.synocr-content-col {
+.synocr-layout {
+    height: calc(100vh - 1.5rem);
+    flex-wrap: nowrap;
+    --bs-gutter-x: 0;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 100%;
+}
+
+.synocr-nav-col {
+    flex: 0 0 auto;
+    width: 12.5rem;
     height: 100%;
+    padding-right: 0.35rem;
+    max-width: 100%;
+}
+
+.synocr-content-col {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    height: 100%;
+    padding-left: 0.35rem;
+    overflow: hidden;
+}
+
+.synocr-nav-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: calc(100vh - 2rem);
 }
 
 .synocr-nav-list {
@@ -235,13 +317,62 @@ a.btn.btn-secondary:hover {
     top: 0.5rem;
     max-height: calc(100vh - 2rem);
     overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.synocr-nav-list .synocr-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.synocr-nav-icon {
+    flex-shrink: 0;
+}
+
+.synocr-nav-toggle {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    margin-top: 0.5rem;
+    padding: 0.15rem 0.35rem;
+    color: #0086E5;
+    text-decoration: none;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.synocr-nav-toggle:hover,
+.synocr-nav-toggle:focus {
+    color: #006bb8;
+}
+
+.synocr-layout--nav-collapsed .synocr-nav-col {
+    width: 3.25rem;
+}
+
+.synocr-layout--nav-collapsed .synocr-nav-label {
+    display: none;
+}
+
+.synocr-layout--nav-collapsed .synocr-nav-list .synocr-nav-link {
+    justify-content: center;
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
+}
+
+.synocr-layout--nav-collapsed .synocr-nav-toggle {
+    align-self: center;
 }
 
 .synocr-content-scroll {
     height: 100%;
     max-height: calc(100vh - 2rem);
+    overflow-x: hidden;
     overflow-y: auto;
-    padding-right: 0.25rem;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 @media (max-width: 767.98px) {
@@ -253,10 +384,35 @@ a.btn.btn-secondary:hover {
         max-height: none;
     }
 
+    .synocr-layout {
+        flex-wrap: wrap;
+    }
+
+    .synocr-nav-col,
+    .synocr-layout--nav-collapsed .synocr-nav-col {
+        width: 100%;
+    }
+
+    .synocr-nav-inner {
+        min-height: 0;
+    }
+
     .synocr-nav-list {
         position: static;
         max-height: none;
         overflow-y: visible;
+    }
+
+    .synocr-nav-toggle {
+        display: none;
+    }
+
+    .synocr-layout--nav-collapsed .synocr-nav-label {
+        display: inline;
+    }
+
+    .synocr-layout--nav-collapsed .synocr-nav-list .synocr-nav-link {
+        justify-content: flex-start;
     }
 }
 
@@ -415,4 +571,278 @@ a.btn.btn-secondary:hover {
     margin: 0 0.12em;
     vertical-align: baseline;
     font-weight: 500;
+}
+
+/* target-folder builder modal (GUI_rules) */
+#synocr-targetfolder-modal .input-group > .synocr-namesyntax-editor-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+#synocr-targetfolder-modal .input-group .synocr-namesyntax-editor {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+#synocr-tf-preview {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+#synocr-tf-preview-mode {
+    font-style: italic;
+}
+
+#synocr-tn-visual {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* gear button inside inline builder fields on rule card */
+.synocr-rule-tip-label[title] {
+    cursor: help;
+}
+.synocr-rule-targetfolder-wrap {
+    position: relative;
+}
+.synocr-rule-targetfolder-input {
+    padding-right: 2rem;
+}
+.synocr-rule-targetfolder-gear {
+    position: absolute;
+    right: 0.15rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.125rem 0.35rem;
+    line-height: 1;
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 1rem;
+    z-index: 2;
+}
+.synocr-rule-targetfolder-gear:hover,
+.synocr-rule-targetfolder-gear:focus {
+    color: #0086E5;
+    text-decoration: none;
+}
+
+/* Rule editor (GUI_rules) */
+.synocr-rule-card {
+    position: relative;
+    background-color: #F2FAFF;
+    border: 1px solid #d7dfe8;
+    border-radius: 0.375rem;
+}
+
+.synocr-rule-remove {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1;
+    line-height: 1;
+    padding: 0.1rem 0.45rem;
+}
+
+.synocr-rule-layout {
+    display: grid;
+    grid-template-columns: 1.25rem minmax(0, 1fr);
+    gap: 0.5rem;
+    align-items: start;
+}
+
+.synocr-rule-body {
+    min-width: 0;
+    padding-right: 2rem;
+}
+
+.synocr-rule-primary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.synocr-rule-field label {
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.synocr-rule-field .form-control,
+.synocr-rule-field .form-select {
+    width: 100%;
+}
+
+@media (max-width: 576px) {
+    .synocr-rule-primary {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Ruleset editor: name + description on one line, inputs 50/50 */
+.synocr-ruleset-meta {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.35rem 0.75rem;
+    column-gap: 1rem;
+}
+.synocr-ruleset-meta label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+.synocr-ruleset-meta .form-control {
+    width: 100%;
+    min-width: 0;
+}
+
+.synocr-rule-card .form-control,
+.synocr-rule-card .form-select {
+    background-color: #fff;
+}
+
+/* User-entered text in inputs (not selects, not placeholders) */
+.synocr-rule-card .form-control {
+    color: #0069a8;
+}
+
+.synocr-rule-card .form-control::placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+.synocr-rule-card.dragover {
+    outline: 2px dashed #0086E5;
+}
+
+.synocr-rule-drag-handle {
+    cursor: grab;
+    font-size: 1.1rem;
+    color: #6c757d;
+    user-select: none;
+    padding-top: 0.15rem;
+    line-height: 1;
+}
+
+.synocr-rule-details-footer {
+    border-color: #d7dfe8 !important;
+}
+
+.synocr-rule-reflist {
+    max-height: 120px;
+    overflow: auto;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: #eef4fa;
+    border: 1px solid #c5d8ec;
+    border-radius: 0.375rem;
+}
+
+.synocr-rule-reflist .form-check {
+    margin-bottom: 0.2rem;
+}
+
+.synocr-rule-reflist .form-check:last-child {
+    margin-bottom: 0;
+}
+
+.synocr-rule-details-toggle {
+    color: #0086E5;
+    font-weight: 500;
+}
+
+.synocr-rule-details-toggle:hover {
+    color: #006bb8;
+}
+
+.synocr-rules-error-msg {
+    color: #BD0010;
+    white-space: pre-line;
+    text-align: center;
+}
+
+.synocr-btn-add {
+    color: #28a745;
+    border: 1px solid #28a745;
+    background-color: transparent;
+}
+
+.synocr-btn-add:hover,
+.synocr-btn-add:focus {
+    color: #fff;
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.synocr-btn-add-filled {
+    color: #fff;
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.synocr-btn-add-filled:hover,
+.synocr-btn-add-filled:focus {
+    color: #fff;
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.synocr-subrule-row {
+    display: flex;
+    gap: 0.35rem;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.synocr-subrule-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.synocr-subrule-fields {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.synocr-subrule-search {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.synocr-subrule-typ,
+.synocr-subrule-source {
+    flex: 0 0 10rem;
+    width: 10rem;
+}
+
+.synocr-subrule-row .form-select,
+.synocr-subrule-row .form-control {
+    width: 100%;
+    min-width: 0;
+}
+
+.synocr-subrule-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 1rem;
+    align-items: center;
+}
+
+.synocr-subrule-flags .form-check-label {
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.synocr-subrule-delete-wrap {
+    flex: 0 0 2rem;
+    padding-top: 0.1rem;
+    text-align: center;
+}
+
+.synocr-subrule-delete {
+    min-width: 2rem;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
 }

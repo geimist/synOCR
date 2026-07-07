@@ -105,6 +105,12 @@ sql_escape() {
     printf "%s" "$1" | sed "s/'/''/g"
 }
 
+# DeepL tag_handling=xml: bare & (z. B. Drag&Drop) ist kein gültiges XML → HTTP 400.
+# Bestehende Entities (&quot; &amp; …) bleiben unverändert.
+deepl_prepare_xml_text() {
+    printf '%s' "$1" | perl -pe 's/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/&amp;/g'
+}
+
 sec_to_time () {
 # this function converts a second value to hh:mm:ss
 # call: sec_to_time "string"
@@ -506,29 +512,43 @@ translate() {
                 last_curl_msg=""
                 last_api_hint=""
 
+                deepl_text=$(deepl_prepare_xml_text "${value}")
+
                 for ((i=0; i<=max_retries; i++)); do
                     _sdeepl_err=$(
                         mktemp "${TMPDIR:-/tmp}/synocr_deepl_err.XXXXXX" 2>/dev/null ||
                             echo "${TMPDIR:-/tmp}/synocr_deepl_err.$$.$i.log"
                     )
+                    _sdeepl_body=$(
+                        mktemp "${TMPDIR:-/tmp}/synocr_deepl_body.XXXXXX" 2>/dev/null ||
+                            echo "${TMPDIR:-/tmp}/synocr_deepl_body.$$.$i.log"
+                    )
                     : >"${_sdeepl_err}"
-                    response=$(
-                        curl -fsS \
+                    http_code=$(
+                        curl -sS \
                             --connect-timeout "${DeepL_curl_connect_timeout}" \
                             --max-time "${DeepL_curl_max_time}" \
+                            -o "${_sdeepl_body}" \
+                            -w "%{http_code}" \
                             -H "Authorization: DeepL-Auth-Key ${DeepLapiKey}" \
                             -H "Content-Type: application/x-www-form-urlencoded" \
-                            --data-urlencode "text=${value}" \
+                            --data-urlencode "text=${deepl_text}" \
                             --data-urlencode "source_lang=${masterDeeplShortName}" \
                             --data-urlencode "tag_handling=xml" \
                             --data-urlencode "ignore_tags=x" \
                             --data-urlencode "target_lang=${targetDeeplShortName}" \
                             "${DeepL_api_base_url}/v2/translate" 2>"${_sdeepl_err}"
                     )
-                    curl_rc=$?
+                    response=$(cat "${_sdeepl_body}" 2>/dev/null)
+                    if [[ "${http_code}" =~ ^2 ]]; then
+                        curl_rc=0
+                    else
+                        curl_rc=56
+                        printf "curl: (%s) The requested URL returned error: %s \n" "${curl_rc}" "${http_code}" >>"${_sdeepl_err}"
+                    fi
                     last_curl_rc=${curl_rc}
                     last_curl_msg=$(tr '\n' ' ' <"${_sdeepl_err}" | head -c 500)
-                    rm -f "${_sdeepl_err}"
+                    rm -f "${_sdeepl_err}" "${_sdeepl_body}"
 
                     if [[ ${curl_rc} -eq 0 && -n "${response}" ]]; then
                         transValue=$(jq -r '(.translations // []) | .[].text // empty' <<<"${response}")
@@ -579,9 +599,7 @@ translate() {
                 [ "${requestTime}" -gt 10 ] && printf "%s" "  lange DeepL Antwortzeit [${requestTime} Sekunden] | Ergebnis: ${transValue}"
 
                 # separiere den Sprachstring und maskierte single quotes:
-                # shellcheck disable=SC2001
-                transValue="$(echo "${transValue}" | sed -e "s/'/''/g")" 
-###                transValue="${transValue//\'/\'\'}" 
+                transValue="${transValue//\'/''}"
 
                 # setzte Kennzeichnung auf automatisch übersetzt:
                 if [ "${machinetranslateID}" -eq "${varID}" ]; then

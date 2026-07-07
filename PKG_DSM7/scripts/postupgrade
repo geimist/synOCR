@@ -16,11 +16,7 @@
 # DSM WebGUI folder
 # /usr/syno/synoman/webman/3rdparty/[Package Name] -> /var/packages/[Package Name]/target
 #WEBGUI_FOLDER="/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}"
-if [ -d "${SYNOPKG_PKGDEST}/etc" ]; then
-    WEBGUI_FOLDER="${SYNOPKG_PKGDEST}"
-elif [ -d "${SYNOPKG_PKGDEST}/ui/etc" ]; then
-    WEBGUI_FOLDER="${SYNOPKG_PKGDEST}/ui"
-fi
+# WEBGUI_FOLDER set by synocr_resolve_app_root() below
 
 # Soft link
 # /var/packages/[Package Name]/target -> /volume1/@appstore/[Package Name]
@@ -30,26 +26,129 @@ PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
 # -------------------------------------------------------------------------------------
 TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 
+# App root: directory containing upgradeconfig.sh (must NOT require etc/ to exist — fresh install has no etc yet).
+synocr_resolve_app_root() {
+    if [ -f "${SYNOPKG_PKGDEST}/upgradeconfig.sh" ]; then
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}"
+    elif [ -f "${SYNOPKG_PKGDEST}/ui/upgradeconfig.sh" ]; then
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}/ui"
+    elif [ -d "${SYNOPKG_PKGDEST}/etc" ]; then
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}"
+    elif [ -d "${SYNOPKG_PKGDEST}/ui/etc" ]; then
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}/ui"
+    else
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}"
+    fi
+}
+
+synocr_relocate_to_path() {
+    _src="$1"
+    _dest="$2"
+    if [ ! -d "${_src}" ]; then
+        return 1
+    fi
+    mkdir -p "$(dirname "${_dest}")"
+    [ -e "${_dest}" ] && rm -rf "${_dest}"
+    if mv "${_src}" "${_dest}" 2>/dev/null; then
+        return 0
+    fi
+    if cp -a "${_src}" "${_dest}" 2>/dev/null; then
+        rm -rf "${_src}"
+        return 0
+    fi
+    return 1
+}
+
+synocr_relocate_dir_into() {
+    _src="$1"
+    _dest_parent="$2"
+    _base=$(basename "${_src}")
+    synocr_relocate_to_path "${_src}" "${_dest_parent}/${_base}"
+}
+
+# Move venv from legacy wrong levels into WEBGUI_FOLDER/python3_env.
+synocr_fixup_python_env_level() {
+    _canonical="$(synocr_python_env_dest)"
+    _pkg_root_venv="${SYNOPKG_PKGDEST}/python3_env"
+    if [ "${_pkg_root_venv}" != "${_canonical}" ] && [ -d "${_pkg_root_venv}" ] && synocr_is_venv_dir "${_pkg_root_venv}" && [ ! -d "${_canonical}" ]; then
+        echo "${TIMESTAMP} - python3_env misplaced at ${_pkg_root_venv} (package root), moving to ${_canonical}" >> /tmp/${SYNOPKG_PKGNAME}.history
+        synocr_relocate_to_path "${_pkg_root_venv}" "${_canonical}"
+    fi
+    _parent_venv="$(dirname "${SYNOPKG_PKGDEST}")/python3_env"
+    if [ -d "${_parent_venv}" ] && synocr_is_venv_dir "${_parent_venv}" && [ ! -d "${_canonical}" ]; then
+        echo "${TIMESTAMP} - python3_env misplaced at ${_parent_venv} (@appstore level), moving to ${_canonical}" >> /tmp/${SYNOPKG_PKGNAME}.history
+        synocr_relocate_to_path "${_parent_venv}" "${_canonical}"
+    fi
+}
+
+synocr_python_env_dest() {
+    printf '%s/python3_env' "${WEBGUI_FOLDER}"
+}
+
+synocr_is_venv_dir() {
+    [ -d "$1" ] && [ -f "$1/pyvenv.cfg" ] && [ -d "$1/bin" ]
+}
+
+synocr_venv_has_interpreter() {
+    _p="$1"
+    [ -x "${_p}/bin/python3" ] && return 0
+    [ -x "${_p}/bin/python" ] && return 0
+    for _py in "${_p}"/bin/python3.*; do
+        [ -x "${_py}" ] && return 0
+    done
+    return 1
+}
+synocr_resolve_app_root
+
 # Action...
 # -------------------------------------------------------------------------------------
 # restore config & python environment:
 if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}" ]; then
     # restore config:
-#   cp -rf ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc/* ${WEBGUI_FOLDER}/etc
-    mv ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc ${WEBGUI_FOLDER}/
-    chmod -R 755 ${WEBGUI_FOLDER}/etc
-    echo "${TIMESTAMP} - Restore the SQLite database from ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc to ${WEBGUI_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
+    if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" ]; then
+        [ -e "${WEBGUI_FOLDER}/etc" ] && rm -rf "${WEBGUI_FOLDER}/etc"
+        mv "${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" "${WEBGUI_FOLDER}/"
+        chmod -R 755 "${WEBGUI_FOLDER}/etc"
+        echo "${TIMESTAMP} - Restore the SQLite database from ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc to ${WEBGUI_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
 
-    echo "restored source files:"  >> /tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc  >> /tmp/${SYNOPKG_PKGNAME}.history
+        echo "restored target files:"  >> /tmp/${SYNOPKG_PKGNAME}.history
+        ls -la "${WEBGUI_FOLDER}/etc"  >> /tmp/${SYNOPKG_PKGNAME}.history
+    else
+        echo "${TIMESTAMP} - Restore etc skipped: no backup at ${SYNOPKG_TEMP_UPGRADE_FOLDER}/etc" >>/tmp/${SYNOPKG_PKGNAME}.history
+    fi
 
-    echo "restored target files:"  >> /tmp/${SYNOPKG_PKGNAME}.history
-    ls -la ${WEBGUI_FOLDER}/etc  >> /tmp/${SYNOPKG_PKGNAME}.history
-
-    # restore python3_env:
-# disabled in v1.4.1 due to an update error:
-#    mv ${SYNOPKG_TEMP_UPGRADE_FOLDER}/python3_env ${WEBGUI_FOLDER}/
-#    chmod -R 755 ${WEBGUI_FOLDER}/python3_env
+    # restore python3_env (migrated; repaired on next run by prepare_python):
+    PYTHON_ENV="$(synocr_python_env_dest)"
+    echo "${TIMESTAMP} - postupgrade python3_env restore (canonical=$(synocr_python_env_dest)):" >> /tmp/${SYNOPKG_PKGNAME}.history
+    ls -la "${SYNOPKG_TEMP_UPGRADE_FOLDER}/" >> /tmp/${SYNOPKG_PKGNAME}.history 2>&1
+    if [ -d "${SYNOPKG_TEMP_UPGRADE_FOLDER}/python3_env" ]; then
+        if synocr_relocate_to_path "${SYNOPKG_TEMP_UPGRADE_FOLDER}/python3_env" "$(synocr_python_env_dest)"; then
+            PYTHON_ENV="$(synocr_python_env_dest)"
+            if ! synocr_is_venv_dir "${PYTHON_ENV}" || ! synocr_venv_has_interpreter "${PYTHON_ENV}"; then
+                echo "${TIMESTAMP} - migrated python3_env invalid — removed (will be rebuilt on next run)" >> /tmp/${SYNOPKG_PKGNAME}.history
+                ls -la "${PYTHON_ENV}/bin" >> /tmp/${SYNOPKG_PKGNAME}.history 2>&1
+                rm -rf "${PYTHON_ENV}"
+            else
+                chmod -R 755 "${PYTHON_ENV}" 2>/dev/null
+                _pkg_owner=$(stat -c '%U' "${WEBGUI_FOLDER}/etc" 2>/dev/null)
+                _pkg_group=$(stat -c '%G' "${WEBGUI_FOLDER}/etc" 2>/dev/null)
+                [ -z "${_pkg_owner}" ] && _pkg_owner="synOCR"
+                [ -z "${_pkg_group}" ] && _pkg_group="administrators"
+                chown -R "${_pkg_owner}:${_pkg_group}" "${PYTHON_ENV}" 2>/dev/null
+                echo "${TIMESTAMP} - Restore python3_env from ${SYNOPKG_TEMP_UPGRADE_FOLDER}/python3_env to ${PYTHON_ENV}" >> /tmp/${SYNOPKG_PKGNAME}.history
+            fi
+        else
+            echo "${TIMESTAMP} - Restore python3_env failed (mv/cp) — vEnv will be rebuilt on next run" >> /tmp/${SYNOPKG_PKGNAME}.history
+        fi
+    else
+        echo "${TIMESTAMP} - Restore python3_env skipped: no backup in ${SYNOPKG_TEMP_UPGRADE_FOLDER}" >> /tmp/${SYNOPKG_PKGNAME}.history
+    fi
+    synocr_fixup_python_env_level
+    PYTHON_ENV="$(synocr_python_env_dest)"
+    if synocr_is_venv_dir "${PYTHON_ENV}"; then
+        echo "${TIMESTAMP} - python3_env final path: ${PYTHON_ENV}" >> /tmp/${SYNOPKG_PKGNAME}.history
+        ls -la "${PYTHON_ENV}" >> /tmp/${SYNOPKG_PKGNAME}.history 2>&1
+    fi
 
     # DB upgrade:
     echo "${TIMESTAMP} - Add new variables to configuration file (upgradeconfig.sh)" >> /tmp/${SYNOPKG_PKGNAME}.history

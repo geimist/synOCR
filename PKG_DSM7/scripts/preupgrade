@@ -16,11 +16,7 @@
 # DSM WebGUI folder
 # /usr/syno/synoman/webman/3rdparty/[Package Name] -> /var/packages/[Package Name]/target
 #WEBGUI_FOLDER="/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}"
-if [ -d "${SYNOPKG_PKGDEST}/etc" ]; then
-    WEBGUI_FOLDER="${SYNOPKG_PKGDEST}"
-elif [ -d "${SYNOPKG_PKGDEST}/ui/etc" ]; then
-    WEBGUI_FOLDER="${SYNOPKG_PKGDEST}/ui"
-fi
+# WEBGUI_FOLDER set by synocr_resolve_app_root() below
 
 # Soft link
 # /var/packages/[Package Name]/target -> /volume1/@appstore/[Package Name]
@@ -30,6 +26,110 @@ PACKAGE_FOLDER="/var/packages/${SYNOPKG_PKGNAME}/target/ui"
 TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 # -------------------------------------------------------------------------------------
 
+# App root: directory containing upgradeconfig.sh (must NOT require etc/ to exist — postupgrade runs on fresh tree).
+synocr_resolve_app_root() {
+    if [ -f "${SYNOPKG_PKGDEST}/upgradeconfig.sh" ]; then
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}"
+    elif [ -f "${SYNOPKG_PKGDEST}/ui/upgradeconfig.sh" ]; then
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}/ui"
+    elif [ -d "${SYNOPKG_PKGDEST}/etc" ]; then
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}"
+    elif [ -d "${SYNOPKG_PKGDEST}/ui/etc" ]; then
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}/ui"
+    else
+        WEBGUI_FOLDER="${SYNOPKG_PKGDEST}"
+    fi
+}
+
+# Canonical venv path: alongside app scripts (WEBGUI_FOLDER = .../ui on DSM7).
+synocr_python_env_dest() {
+    printf '%s/python3_env' "${WEBGUI_FOLDER}"
+}
+
+# venv directory: pyvenv.cfg + bin/ (do not require bin/python3 — DSM may only expose bin/python).
+synocr_is_venv_dir() {
+    [ -d "$1" ] && [ -f "$1/pyvenv.cfg" ] && [ -d "$1/bin" ]
+}
+
+synocr_venv_has_interpreter() {
+    _p="$1"
+    [ -x "${_p}/bin/python3" ] && return 0
+    [ -x "${_p}/bin/python" ] && return 0
+    for _py in "${_p}"/bin/python3.*; do
+        [ -x "${_py}" ] && return 0
+    done
+    return 1
+}
+
+synocr_find_python_env() {
+    _candidate=""
+    for _candidate in \
+        "$(synocr_python_env_dest)" \
+        "${SYNOPKG_PKGDEST}/python3_env" \
+        "$(dirname "${SYNOPKG_PKGDEST}")/python3_env" \
+        "/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}/python3_env" \
+        "/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}/ui/python3_env"
+    do
+        if synocr_is_venv_dir "${_candidate}"; then
+            printf '%s' "${_candidate}"
+            return 0
+        fi
+    done
+    return 1
+}
+
+synocr_log_python_env_probe() {
+    _candidate=""
+    echo "${TIMESTAMP} - python3_env probe (venv-migrate-v5):" >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "  SYNOPKG_PKGDEST=${SYNOPKG_PKGDEST}" >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "  WEBGUI_FOLDER=${WEBGUI_FOLDER}" >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "  canonical=$(synocr_python_env_dest)" >> /tmp/${SYNOPKG_PKGNAME}.history
+    echo "  SYNOPKG_TEMP_UPGRADE_FOLDER=${SYNOPKG_TEMP_UPGRADE_FOLDER}" >> /tmp/${SYNOPKG_PKGNAME}.history
+    for _candidate in \
+        "$(synocr_python_env_dest)" \
+        "${SYNOPKG_PKGDEST}/python3_env" \
+        "$(dirname "${SYNOPKG_PKGDEST}")/python3_env" \
+        "/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}/python3_env" \
+        "/usr/syno/synoman/webman/3rdparty/${SYNOPKG_PKGNAME}/ui/python3_env"
+    do
+        if synocr_is_venv_dir "${_candidate}"; then
+            echo "  FOUND venv: ${_candidate}" >> /tmp/${SYNOPKG_PKGNAME}.history
+            ls -la "${_candidate}" >> /tmp/${SYNOPKG_PKGNAME}.history 2>&1
+            ls -la "${_candidate}/bin" >> /tmp/${SYNOPKG_PKGNAME}.history 2>&1
+        else
+            echo "  missing: ${_candidate}" >> /tmp/${SYNOPKG_PKGNAME}.history
+        fi
+    done
+    df -h "${SYNOPKG_TEMP_UPGRADE_FOLDER}" >> /tmp/${SYNOPKG_PKGNAME}.history 2>&1
+}
+
+# Move/copy directory to an explicit destination path (avoids mv-into-parent nesting).
+synocr_relocate_to_path() {
+    _src="$1"
+    _dest="$2"
+    if [ ! -d "${_src}" ]; then
+        return 1
+    fi
+    mkdir -p "$(dirname "${_dest}")"
+    [ -e "${_dest}" ] && rm -rf "${_dest}"
+    if mv "${_src}" "${_dest}" 2>/dev/null; then
+        return 0
+    fi
+    if cp -a "${_src}" "${_dest}" 2>/dev/null; then
+        rm -rf "${_src}"
+        return 0
+    fi
+    return 1
+}
+
+# mv within same volume; cp -a fallback when @tmp and @appstore differ.
+synocr_relocate_dir_into() {
+    _src="$1"
+    _dest_parent="$2"
+    _base=$(basename "${_src}")
+    synocr_relocate_to_path "${_src}" "${_dest_parent}/${_base}"
+}
+synocr_resolve_app_root
 
 # Action...
 # -------------------------------------------------------------------------------------
@@ -87,11 +187,18 @@ else
 fi
 
 # backup python environment:
-# disabled in v1.4.1 due to an update error
-#if [ -d "${WEBGUI_FOLDER}/python3_env" ]; then
-#    mv ${WEBGUI_FOLDER}/python3_env ${SYNOPKG_TEMP_UPGRADE_FOLDER}/
-#    echo ''${TIMESTAMP}' - Backup python3_env from '${WEBGUI_FOLDER}'/python3_env to '${SYNOPKG_TEMP_UPGRADE_FOLDER}'/python3_env' >> /tmp/${SYNOPKG_PKGNAME}.history
-#fi
+synocr_log_python_env_probe
+PYTHON_ENV=""
+PYTHON_ENV=$(synocr_find_python_env) || PYTHON_ENV=""
+if [ -n "${PYTHON_ENV}" ]; then
+    if synocr_relocate_to_path "${PYTHON_ENV}" "${SYNOPKG_TEMP_UPGRADE_FOLDER}/python3_env"; then
+        echo "${TIMESTAMP} - Backup python3_env from ${PYTHON_ENV} to ${SYNOPKG_TEMP_UPGRADE_FOLDER}/python3_env" >> /tmp/${SYNOPKG_PKGNAME}.history
+    else
+        echo "${TIMESTAMP} - Backup python3_env failed (mv/cp) from ${PYTHON_ENV} — vEnv will be rebuilt on next run" >> /tmp/${SYNOPKG_PKGNAME}.history
+    fi
+else
+    echo "${TIMESTAMP} - Backup python3_env skipped: not found (canonical: $(synocr_python_env_dest))" >> /tmp/${SYNOPKG_PKGNAME}.history
+fi
 
 # upgrade notices (timer, backup rotation) for Package Center:
 pkg_upgrade_notice=""

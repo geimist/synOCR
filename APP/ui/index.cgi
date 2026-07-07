@@ -26,8 +26,12 @@
         "${app_home}/template/stylesheet.css" \
         "${app_home}/template/bootstrap/css/bootstrap.min.css" \
         "${app_home}/template/jquery/jquery-3.7.1.min.js" \
-        "${app_home}/template/bootstrap/js/bootstrap.min.js" \
-        "${app_home}/template/synocr-progress.js"
+        "${app_home}/template/bootstrap/js/bootstrap.bundle.min.js" \
+        "${app_home}/template/synocr-progress.js" \
+        "${app_home}/template/synocr-rules-editor.js" \
+        "${app_home}/template/synocr-folderpicker.js" \
+        "${app_home}/template/synocr_namesyntax_editor.js" \
+        "${app_home}/template/synocr-nav.js"
     do
         [ -f "${_synocr_f}" ] || continue
         _synocr_m=$(stat -c %Y "${_synocr_f}" 2>/dev/null)
@@ -40,8 +44,12 @@
     synocr_bootstrap_css_href="template/bootstrap/css/bootstrap.min.css${synocr_asset_q}"
     synocr_stylesheet_href="template/stylesheet.css${synocr_asset_q}"
     synocr_jq_src="template/jquery/jquery-3.7.1.min.js${synocr_asset_q}"
-    synocr_bootstrap_js_src="template/bootstrap/js/bootstrap.min.js${synocr_asset_q}"
+    synocr_bootstrap_js_src="template/bootstrap/js/bootstrap.bundle.min.js${synocr_asset_q}"
     synocr_progress_js_src="template/synocr-progress.js${synocr_asset_q}"
+    synocr_rules_editor_js_src="template/synocr-rules-editor.js${synocr_asset_q}"
+    synocr_folderpicker_js_src="template/synocr-folderpicker.js${synocr_asset_q}"
+    synocr_namesyntax_editor_js_src="template/synocr_namesyntax_editor.js${synocr_asset_q}"
+    synocr_nav_js_src="template/synocr-nav.js${synocr_asset_q}"
     unset _synocr_f _synocr_m
 
 # Evaluate app authentication
@@ -178,6 +186,16 @@
         exit 0
     fi
 
+    # Rules API: JSON endpoints (POST) — must run before the HTML shell is emitted.
+    if [ "${synocr_request_page}" = "rules-save-json" ]; then
+        cd "${app_home}" || exit 1
+        [ -f "${app_home}/includes/rules_api.sh" ] && source "${app_home}/includes/rules_api.sh"
+        echo "Content-type: application/json"
+        echo
+        rules_api_save_json
+        exit 0
+    fi
+
 
 # Layout - Open basic framework incl. navigation -
 # ----------------------------------------------------------
@@ -206,28 +224,30 @@ echo '
 <header></header>
     <article>
         <!-- container -->
-        <div class="container-fluid">
-            <div class="row mt-2 synocr-layout">'
+        <div class="container-fluid synocr-page">
+            <div class="row mt-2 g-0 synocr-layout">
+            <script>(function(){try{var r=document.currentScript.parentElement;if(window.localStorage.getItem("synocr_nav_collapsed")==="true")r.classList.add("synocr-layout--nav-collapsed");}catch(e){}})();</script>'
 
                 # Left column - Navigation
                 # ------------------------------------------------------
                 echo '
-                <div class="col-3 pr-1 border-end border-light border-5 synocr-nav-col">
+                <div class="col-auto border-end border-light border-5 synocr-nav-col">
+                    <div class="synocr-nav-inner">
                     <ul class="nav nav-pills flex-column synocr-nav-list">'
 
                         # Startpage
                         if [[ "${mainpage}" == "main" ]]; then
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=main">
-                                    <img class="svg me-3" src="images/home_white@geimist.svg" height="25" width="25"/>'"${lang_page1}"'
+                                <a class="nav-link active synocr-nav-link" style="background-color: #0086E5;" href="index.cgi?page=main" title="'"${lang_page1}"'">
+                                    <img class="svg synocr-nav-icon" src="images/home_white@geimist.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page1}"'</span>
                                 </a>
                             </li>'
                         else
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link text-secondary" href="index.cgi?page=main">
-                                    <img class="svg me-3" src="images/home_grey3@geimist.svg" height="25" width="25"/>'"${lang_page1}"'
+                                <a class="nav-link text-secondary synocr-nav-link" href="index.cgi?page=main" title="'"${lang_page1}"'">
+                                    <img class="svg synocr-nav-icon" src="images/home_grey3@geimist.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page1}"'</span>
                                 </a>
                             </li>'
                         fi
@@ -236,15 +256,32 @@ echo '
                         if [[ "${mainpage}" == "edit" ]]; then
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=edit">
-                                    <img class="svg me-3" src="images/settings_white@geimist.svg" height="25" width="25"/>'"${lang_page2}"'
+                                <a class="nav-link active synocr-nav-link" style="background-color: #0086E5;" href="index.cgi?page=edit" title="'"${lang_page2}"'">
+                                    <img class="svg synocr-nav-icon" src="images/settings_white@geimist.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page2}"'</span>
                                 </a>
                             </li>'
                         else
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link text-secondary" href="index.cgi?page=edit">
-                                    <img class="svg me-3" src="images/settings_grey3@geimist.svg" height="25" width="25"/>'"${lang_page2}"'
+                                <a class="nav-link text-secondary synocr-nav-link" href="index.cgi?page=edit" title="'"${lang_page2}"'">
+                                    <img class="svg synocr-nav-icon" src="images/settings_grey3@geimist.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page2}"'</span>
+                                </a>
+                            </li>'
+                        fi
+
+                        # Rule editor
+                        if [[ "${mainpage}" == "rules" ]]; then
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link active synocr-nav-link" style="background-color: #0086E5;" href="index.cgi?page=rules" title="'"${lang_page5}"'">
+                                    <img class="svg synocr-nav-icon" src="images/flowchart_white.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page5}"'</span>
+                                </a>
+                            </li>'
+                        else
+                            echo '
+                            <li class="nav-item">
+                                <a class="nav-link text-secondary synocr-nav-link" href="index.cgi?page=rules" title="'"${lang_page5}"'">
+                                    <img class="svg synocr-nav-icon" src="images/flowchart_grey.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page5}"'</span>
                                 </a>
                             </li>'
                         fi
@@ -253,26 +290,32 @@ echo '
                         if [[ "${mainpage}" == "help" ]]; then
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link active" style="background-color: #0086E5;" href="index.cgi?page=help">
-                                    <img class="svg me-3" src="images/help_white@geimist.svg" height="25" width="25"/>'"${lang_page4}"'
+                                <a class="nav-link active synocr-nav-link" style="background-color: #0086E5;" href="index.cgi?page=help" title="'"${lang_page4}"'">
+                                    <img class="svg synocr-nav-icon" src="images/help_white@geimist.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page4}"'</span>
                                 </a>
                             </li>'
                         else
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link text-secondary" href="index.cgi?page=help">
-                                    <img class="svg me-3" src="images/help_grey3@geimist.svg" height="25" width="25"/>'"${lang_page4}"'
+                                <a class="nav-link text-secondary synocr-nav-link" href="index.cgi?page=help" title="'"${lang_page4}"'">
+                                    <img class="svg synocr-nav-icon" src="images/help_grey3@geimist.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page4}"'</span>
                                 </a>
                             </li>'
                         fi
                         echo '
                     </ul>
+                    <button type="button" class="btn btn-link btn-sm synocr-nav-toggle" id="synocr-nav-toggle"
+                        aria-expanded="true" aria-label="'"${lang_nav_collapse}"'" title="'"${lang_nav_collapse}"'"
+                        data-label-collapse="'"${lang_nav_collapse}"'" data-label-expand="'"${lang_nav_expand}"'">
+                        <span class="synocr-nav-toggle-icon" aria-hidden="true">«</span>
+                    </button>
+                    </div>
                 </div><!-- col -->'
 
                 # Right column
                 # ------------------------------------------------------
                 echo '
-                <div class="col-9 pl-1 synocr-content-col">
+                <div class="col synocr-content-col">
                     <form action="index.cgi" method="get" autocomplete="on" class="synocr-content-scroll">'
 
                         # Dynamic page reloading
@@ -300,12 +343,23 @@ echo '
     </article>
 
     <!-- Include bootstrap JavaScript 5.3.2 -->
-    <script src="'${synocr_bootstrap_js_src}'"></script>'
+    <script src="'${synocr_bootstrap_js_src}'"></script>
+    <script src="'${synocr_nav_js_src}'"></script>'
 # Main page: live progress script after bootstrap, outside the form
 if [ "${mainpage}" = "main" ] && [ -n "${synocr_progress_config_json:-}" ]; then
     echo '
     <script type="application/json" id="synocr-progress-config">'"${synocr_progress_config_json}"'</script>
     <script src="'"${synocr_progress_js_src}"'"></script>'
+fi
+if [[ "${synocr_request_page}" == rules-edit-* ]]; then
+    echo '
+    <script src="'"${synocr_rules_editor_js_src}"'"></script>
+    <script src="'"${synocr_folderpicker_js_src}"'"></script>
+    <script src="'"${synocr_namesyntax_editor_js_src}"'"></script>'
+fi
+if [[ "${synocr_request_page}" == rules-import-* ]]; then
+    echo '
+    <script src="'"${synocr_folderpicker_js_src}"'"></script>'
 fi
 echo '
 

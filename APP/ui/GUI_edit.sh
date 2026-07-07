@@ -105,8 +105,8 @@ samplefilecontent="    #########################################################
     #           - ${lang_edit_yamlsample_15} >dirname_RegEx: RegEx< (${lang_edit_yamlsample_16b})
     #           - ${lang_edit_yamlsample_17d} >§dirname_RegEx<
     #           - ${lang_edit_yamlsample_18} (>dirgname_RegEx:<)
-    #       > \"dirname_multiline_RegEx:\"
-    #           - ${lang_edit_yamlsample_15} >dirname_multiline_RegEx: VALUE<  (${lang_edit_yamlsample_16})
+    #       > \"dirname_multilineregex:\"
+    #           - ${lang_edit_yamlsample_15} >dirname_multilineregex: VALUE<  (${lang_edit_yamlsample_16})
     #           - ${lang_edit_yamlsample_36} \"true\" / \"false\"
     #             ${lang_edit_yamlsample_39} (\"false\")
     #       > \"condition:\"
@@ -192,7 +192,7 @@ echo "
 #    tagname_multiline_RegEx: false
 #    targetfolder: \"/<path>/§dirname_RegEx\"
 #    dirname_RegEx: \"HUK[[:digit:]]{2}\"
-#    dirname_multiline_RegEx: false
+#    dirname_multilineregex: false
 #    multilineregex: false
 #    postscript: 
 #    apprise_call: 
@@ -494,13 +494,15 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
                         if [ -n "${new_profile_value}" ] ; then
                             sSQL="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
                             if [ "$(synocr_sqlite "${sSQL}")" = 0 ] ; then
-                                synocr_sqlite "INSERT INTO config 
-                                    ( 
-                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, backup_clean_orphaned, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness
-                                    ) 
-                                        VALUES 
-                                    ( 
-                                        '${new_profile_value}', '${active}', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${documentSplitPattern}', '${taglist}', '${searchAll}', '${moveTaggedFiles}', '${NameSyntax}', '${ocropt//\'/\'\'}', '${dockercontainer}', '${apprise_call}', '${apprise_attachment}', '${notify_lang}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}', '${filedate}', '${tagsymbol}', '${ignoredDate}', '${backup_max}', '${backup_max_type}', '${backup_clean_orphaned}', '${search_nearest_date}', '${date_search_method}', '${clean_up_spaces}', '${img2pdf}', '${DateSearchMinYear}', '${DateSearchMaxYear}', '${splitpagehandling}', '${blank_page_detection_switch}', '${blank_page_detection_mainThreshold}', '${blank_page_detection_widthCropping}', '${blank_page_detection_hightCropping}', '${blank_page_detection_interferenceMaxFilter}', '${blank_page_detection_interferenceMinFilter}', '${blank_page_detection_black_pixel_ratio}', '${blank_page_detection_ignoreText}', '${adjustColorBWthreshold}', '${adjustColorDPI}', '${adjustColorContrast}', '${adjustColorSharpness}'
+                                _rs_val="NULL"
+                                [ -n "${ruleset_id:-}" ] && [ "${ruleset_id}" != "0" ] && _rs_val="'${ruleset_id}'"
+                                synocr_sqlite "INSERT INTO config
+                                    (
+                                        profile, active, INPUTDIR, OUTPUTDIR, BACKUPDIR, LOGDIR, LOGmax, SearchPraefix, delSearchPraefix, documentSplitPattern, taglist, searchAll, moveTaggedFiles, NameSyntax, ocropt, dockercontainer, apprise_call, apprise_attachment, notify_lang, dsmtextnotify, MessageTo, dsmbeepnotify, loglevel, filedate, tagsymbol, ignoredDate, backup_max, backup_max_type, backup_clean_orphaned, search_nearest_date, date_search_method, clean_up_spaces, img2pdf, DateSearchMinYear, DateSearchMaxYear, splitpagehandling, blank_page_detection_switch, blank_page_detection_mainThreshold, blank_page_detection_widthCropping, blank_page_detection_hightCropping, blank_page_detection_interferenceMaxFilter, blank_page_detection_interferenceMinFilter, blank_page_detection_black_pixel_ratio, blank_page_detection_ignoreText, adjustColorBWthreshold, adjustColorDPI, adjustColorContrast, adjustColorSharpness, ruleset_id
+                                    )
+                                        VALUES
+                                    (
+                                        '${new_profile_value}', '${active}', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${documentSplitPattern}', '${taglist}', '${searchAll}', '${moveTaggedFiles}', '${NameSyntax}', '${ocropt//\'/\'\'}', '${dockercontainer}', '${apprise_call}', '${apprise_attachment}', '${notify_lang}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}', '${filedate}', '${tagsymbol}', '${ignoredDate}', '${backup_max}', '${backup_max_type}', '${backup_clean_orphaned}', '${search_nearest_date}', '${date_search_method}', '${clean_up_spaces}', '${img2pdf}', '${DateSearchMinYear}', '${DateSearchMaxYear}', '${splitpagehandling}', '${blank_page_detection_switch}', '${blank_page_detection_mainThreshold}', '${blank_page_detection_widthCropping}', '${blank_page_detection_hightCropping}', '${blank_page_detection_interferenceMaxFilter}', '${blank_page_detection_interferenceMinFilter}', '${blank_page_detection_black_pixel_ratio}', '${blank_page_detection_ignoreText}', '${adjustColorBWthreshold}', '${adjustColorDPI}', '${adjustColorContrast}', '${adjustColorSharpness}', ${_rs_val}
                                     )"
 
                                 sSQL2="SELECT count(profile_ID) FROM config WHERE profile='${new_profile_value}' "
@@ -742,10 +744,12 @@ if [[ "${page}" == "edit-save" ]]; then
                 </div>
                 <div class="modal-body text-center">'
 
+                _rs_val="NULL"
+                [ -n "${ruleset_id:-}" ] && [ "${ruleset_id}" != "0" ] && _rs_val="'${ruleset_id}'"
                 synocr_sqlite "
-                            UPDATE 
-                                config 
-                            SET 
+                            UPDATE
+                                config
+                            SET
                                 profile='${profile}', 
                                 active='${active}', 
                                 INPUTDIR='${INPUTDIR}', 
@@ -793,8 +797,9 @@ if [[ "${page}" == "edit-save" ]]; then
                                 adjustColorBWthreshold='${adjustColorBWthreshold}',
                                 adjustColorDPI='${adjustColorDPI}',
                                 adjustColorContrast='${adjustColorContrast}',
-                                adjustColorSharpness='${adjustColorSharpness}'
-                            WHERE 
+                                adjustColorSharpness='${adjustColorSharpness}',
+                                ruleset_id=${_rs_val}
+                            WHERE
                                 profile_ID='${profile_ID}';"
 
                 # write global change to table system:
@@ -2265,8 +2270,53 @@ if [[ "${page}" == "edit" ]]; then
 
                     echo '<hr><br>'
 
-                    # Taglist
+                    # Regelsatz (ruleset_id) — alternative zur Tag-Liste (Vorrang, wenn gesetzt)
+                    _rs_rows=$(synocr_sqlite -json "SELECT id, name FROM ruleset ORDER BY name COLLATE NOCASE;") 2>/dev/null
+                    _taglist_block_style=""
+                    if [ -n "${ruleset_id:-}" ] && [ "${ruleset_id}" != "0" ]; then
+                        _taglist_block_style=' style="display:none;"'
+                    fi
                     echo '
+                    <div class="row mb-3">
+                        <div class="col-sm-5">
+                            <label for="ruleset_id">'"${lang_edit_ruleset_label}"'</label>
+                        </div>
+                        <div class="col-sm-5">
+                            <select name="ruleset_id" id="ruleset_id" class="form-select form-select-sm" onchange="handleRulesetChange(this)">
+                                <option value="0">'"${lang_edit_ruleset_none}"'</option>'
+                    if [ -n "${_rs_rows}" ] && [ "${_rs_rows}" != "[]" ]; then
+                        while IFS=$'\t' read -r _rs_id _rs_name; do
+                            _rs_name_h=$(printf '%s' "${_rs_name}" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')
+                            if [ "${ruleset_id:-0}" = "${_rs_id}" ]; then
+                                echo '<option value="'"${_rs_id}"'" selected>'"${_rs_name_h}"'</option>'
+                            else
+                                echo '<option value="'"${_rs_id}"'">'"${_rs_name_h}"'</option>'
+                            fi
+                        done < <(printf '%s' "${_rs_rows}" | jq -r '.[] | [.id, .name] | @tsv')
+                    fi
+                    echo '                            </select>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="float-end">
+                                <a data-bs-toggle="collapse" href="#ruleset-info" role="button" aria-expanded="false" aria-controls="ruleset-info">
+                                    <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-10">
+                            <div class="collapse" id="ruleset-info">
+                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                    <span>'"${lang_edit_ruleset_hint}"'</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-2"></div>
+                    </div>'
+
+                    # Taglist (ausgeblendet, wenn ein Regelsatz gewählt ist)
+                    echo '
+                    <div id="taglistBlock"'"${_taglist_block_style}"'>
                     <div class="row mb-3">
                         <div class="col-sm-5">
                             <label for="taglist">'"${lang_edit_set2_taglist_title}"''
@@ -2335,6 +2385,7 @@ if [[ "${page}" == "edit" ]]; then
                             </div>
                         </div>
                         <div class="col-sm-2"></div>
+                    </div>
                     </div>'
 
                     # searchArea
@@ -2488,7 +2539,7 @@ if [[ "${page}" == "edit" ]]; then
                                 <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§pagecountprofile" title="§pagecountprofile">'"${lang_edit_set2_renamesyntax_chip_pagecountprofile}"'</span>
                                 <span draggable="true" class="synocr-namesyntax-palette-item" data-token="§filecountprofile" title="§filecountprofile">'"${lang_edit_set2_renamesyntax_chip_filecountprofile}"'</span>
                             </div>'
-                            echo '<script src="template/synocr_namesyntax_editor.js?v=8"></script>'
+                            echo '<script src="template/synocr_namesyntax_editor.js?v=9"></script>'
                             echo '
                         </div>
                         <div class="col-sm-2">
@@ -3415,6 +3466,16 @@ if [[ "${page}" == "edit" ]]; then
             editPageIsDirty = false;
         }
 
+        function handleRulesetChange(selectElement) {
+            var taglistBlock = document.getElementById("taglistBlock");
+            if (!taglistBlock) return;
+            if (selectElement.value !== "0") {
+                taglistBlock.style.display = "none";
+            } else {
+                taglistBlock.style.display = "block";
+            }
+        }
+
         function handleProfileSelectionChange(selectElement) {
             if (!selectElement) return;
             var selectedValue = selectElement.value;
@@ -3452,6 +3513,11 @@ if [[ "${page}" == "edit" ]]; then
             var profileSelect = document.getElementById("getprofile");
             if (profileSelect) {
                 currentProfileSelection = profileSelect.value;
+            }
+
+            var rulesetSelect = document.getElementById("ruleset_id");
+            if (rulesetSelect) {
+                handleRulesetChange(rulesetSelect);
             }
 
             var editableFields = document.querySelectorAll("input, select, textarea");

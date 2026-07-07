@@ -62,7 +62,7 @@
     # /usr/syno/bin/synosetkeyvalue "/usr/syno/synoman/webman/3rdparty/synOCR/synOCR.sh" enablePyMetaData 0
     enablePyMetaData=1
 
-    python3_env="/usr/syno/synoman/webman/3rdparty/synOCR/python3_env"
+    python3_env="${APPDIR}/python3_env"
     LOCKFILE="${APPDIR}/etc/synOCR.lock"
     python_check=ok             # will be set to failed if the test fails
     synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.9.3" "pymupdf==1.24.11" "numpy==1.19.5" ) 
@@ -577,6 +577,36 @@ OCRmyPDF()
 }
 
 
+# tag_search() — rule engine (two-pass, JSON-contract based)
+#
+# Storage seam: consume ONLY normalized JSON variables (rules_json,
+# groups_json, raw_state_json). Do NOT depend on file paths such as
+# ${taglist} or ${taglisttmp}. Today the JSON is produced from a YAML file by
+# the loader; in the future the same JSON will come from a SQLite query
+# (WebGUI-managed rules). Keeping this seam clean keeps the storage migration
+# localized to the loader.
+#
+# Two passes:
+#   Pass 1 — evaluate every rule's subrules (condition any/all/none, unchanged)
+#            and record raw_state_json {rule: {match, last_source}}.
+#            Side-effect-free; no actions here. Actionless rules are evaluated
+#            too so they can act as `requires` predicates.
+#   Pass 2 — sort surviving rules by priority (asc; key-desc tiebreaker = the
+#            legacy `sort -r` order), filter by `requires` (fail-closed) AND
+#            `excludes` (fail-open) against the FULL raw_state_json (order-
+#            independent), reload action data per rule from rules_json, apply
+#            the action block, and honor on_match.action == "break" /
+#            on_match.result == "exclusive" to stop the action loop.
+#            on_match.result: merge (default, cumulative) | replace (this rule's
+#            tag/folder wins) | exclusive (replace + break).
+#
+# Groups: `groups:` and a rule's `group:` field are read and validated, but have
+# NO runtime effect yet (reserved for a future phase). Mutual-exclusion use cases
+# are covered today via `excludes` chains + `priority`.
+#
+# Backward compatibility: legacy flat YAML (top-level keys = rules) stays valid
+# and keeps its default ordering. `rules`/`groups` are reserved only in the new
+# wrapped format.
 tag_search()
 {
 unset renameTag
@@ -586,7 +616,29 @@ unset renameCat
 # standard rules or advanced rules (YAML file)
 type_of_rule=standard
 
-if [ -z "${taglist}" ]; then
+# --- Loader: storage -> normalized JSON (rules_json / groups_json) ----------
+# Two storage backends feed the SAME engine below via `tag_rule_content`:
+#   1) DB ruleset  — when config.ruleset_id is set, the JSON blob is loaded
+#      from the `ruleset` table and wrapped into {"rules":...,"groups":...}.
+#   2) YAML file   — legacy `taglist` path (file or inline GUI list), auto-
+#      detected (legacy flat vs. wrapped `rules:`/`groups:`), validated and
+#      converted to JSON. yaml_validate is the import-time validator; the
+#      storage-agnostic yaml_validate_json doubles as the shape check.
+# The engine (auto-detect, Pass 1, Pass 2) is storage-agnostic and unchanged.
+if [ -n "${ruleset_id}" ] && [ "${ruleset_id}" != "0" ]; then
+    # DB ruleset branch — no silent fallback to taglist (would apply wrong rules).
+    log_item "source for tags is ruleset (DB) [id=${ruleset_id}]"
+    _ruleset_row=$(synocr_sqlite -json "SELECT rules_json, groups_json FROM ruleset WHERE id='${ruleset_id}'")
+    if [ -z "${_ruleset_row}" ] || [ "${_ruleset_row}" = "[]" ]; then
+        log_error_at "ruleset id ${ruleset_id} not found in DB — aborting (no fallback to taglist)"
+        return 1
+    fi
+    if ! tag_rule_content=$(printf '%s' "${_ruleset_row}" | jq -c '.[0] | {rules: ((.rules_json // "{}") | fromjson), groups: ((.groups_json // "{}") | fromjson)}' 2>/dev/null); then
+        log_error_at "ruleset id ${ruleset_id}: stored JSON could not be parsed — aborting (no fallback to taglist)"
+        return 1
+    fi
+    type_of_rule=advanced
+elif [ -z "${taglist}" ]; then
     log_item "no tags defined"
     return
 elif [ -f "${taglist}" ]; then
@@ -628,6 +680,10 @@ elif [ -f "${taglist}" ]; then
             tag_rule_content=$(yq_bin read "${taglisttmp}" -jP 2>&1)
             echo "${tag_rule_content}" > "${LOGDIR}${taglist}.yq_bin.json"
         fi
+
+        # Structured validation of the parsed JSON (new cross-rule fields).
+        # Storage-agnostic: operates on tag_rule_content, not on a file path.
+        yaml_validate_json
     else
         log_item "source for tags is file [${taglist}]"
         sed -i $'s/\r$//' "${taglist}"                    # convert DOS to Unix
@@ -638,32 +694,64 @@ else
 fi
 
 if [ "${type_of_rule}" = advanced ]; then
-# process complex tag rules:
-    for tagrule in $(echo "${tag_rule_content}" | jq -r ". | to_entries | .[] | .key" | sort -r); do
+# process complex tag rules (two-pass engine, see header above):
+
+    # --- Auto-Detect top-level structure ----------------------------------------
+    # Wrapped (.rules is an object whose values are all objects) -> rules_json=.rules,
+    # groups_json=.groups. Legacy flat -> rules_json=<top-level>, groups_json={}.
+    # The "all values are objects" guard prevents a legacy rule literally named
+    # `rules` (whose value is a single rule object) from being misdetected as the
+    # wrapped block, preserving backward compatibility.
+    # NOTE: groups_json is loaded for validation only; it has no runtime effect
+    # in this phase. A rule's `group:` field is likewise ignored by the engine.
+    if echo "${tag_rule_content}" | jq -e 'has("rules") and (.rules | type == "object") and (all(.rules[]; type == "object"))' >/dev/null 2>&1; then
+        rules_json=$(echo "${tag_rule_content}" | jq -c '.rules')
+        groups_json=$(echo "${tag_rule_content}" | jq -c '.groups // {}')
+        rule_format="wrapped"
+    else
+        rules_json=$(echo "${tag_rule_content}" | jq -c '.')
+        groups_json='{}'
+        rule_format="legacy"
+    fi
+
+    # --- ordered rules by priority (asc; key-desc tiebreaker = legacy sort -r) -
+    ordered_rules_json=$(jq -n -c --argjson rules "${rules_json}" '
+        $rules
+        | to_entries
+        | sort_by(.key)
+        | reverse
+        | sort_by((.value.priority // 100))
+    ')
+
+    # === Pass 1: subrule evaluation -> raw_state_json ==========================
+    log_subsection "Pass 1: subrule match detection"
+    # Iterate rules (priority-sorted for readable logs; correctness is order-
+    # independent). For each rule run the existing subrule grep/condition logic
+    # and store its raw match. No actions here. Actionless rules are evaluated
+    # too (needed as `requires` predicates). Record last_search_source so Pass 2
+    # can reproduce the legacy VARsearchfile behavior for RegEx actions.
+    raw_state_json='{}'
+    while read -r tagrule; do
+        [ -z "${tagrule}" ] && continue
         found=0
+        last_search_source="content"
 
         log_rule "${tagrule}"
 
-        condition=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.condition" | tr '[:upper:]' '[:lower:]')
+        condition=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '.[$k].condition' | tr '[:upper:]' '[:lower:]')
         if [ "${condition}" = null ] ; then
             log_rule_note "[value for condition must not be empty - fallback to any]"
             condition=any
         fi
 
-        searchtag=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.tagname" | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
-        targetfolder=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.targetfolder" )
-        tagname_RegEx=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.tagname_RegEx" )
-        dirname_RegEx=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.dirname_RegEx" )
-        tagname_multiline_RegEx=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.multilineregex" )
-        VARapprise_call=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.apprise_call" )
-        VARapprise_attachment=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.apprise_attachment" )
-        VARnotify_lang=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.notify_lang" )
-        postscript=$(echo "${tag_rule_content}" | jq -r ".${tagrule}.postscript" )
-
-        if [[ "${searchtag}" = null ]] && [[ "${targetfolder}" = null ]] && [[ "${postscript}" = null ]] ; then
-            log_rule_note "[no actions defined - continue]"
-            continue
-        fi
+        # Rule-level fields are read here for logging only; Pass 2 re-reads the
+        # action fields fresh from rules_json (never reuses Pass 1 variables).
+        searchtag=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '.[$k].tagname' | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
+        targetfolder=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '.[$k].targetfolder' )
+        tagname_RegEx=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '.[$k].tagname_RegEx' )
+        dirname_RegEx=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '.[$k].dirname_RegEx' )
+        tagname_multiline_RegEx=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '.[$k].multilineregex' )
+        dirname_multiline_RegEx=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '.[$k].dirname_multilineregex' )
 
         if [[ "${targetfolder}" = null ]]; then
             targetfolder=""
@@ -688,16 +776,18 @@ if [ "${type_of_rule}" = advanced ]; then
         if [[ "${dirname_RegEx}" != null ]] ; then
             log_rule_field "RegEx for dir" "${dirname_RegEx}"
             if [ "${dirname_multiline_RegEx}" = null ] ; then
-                log_rule_field_l2 "multilineregex" "[value for multilineregex is empty - \"false\" is used]"
+                log_rule_field_l2 "dirname_multilineregex" "[value for dirname_multilineregex is empty - \"false\" is used]"
                 dirname_multiline_RegEx=false
             else
-                log_rule_field "multilineregex" "${dirname_multiline_RegEx}"
+                log_rule_field "dirname_multilineregex" "${dirname_multiline_RegEx}"
             fi
         fi
 
         log_rule_sub
+        # Subrule matching — condition any/all/none logic unchanged; the result
+        # feeds raw_state_json instead of triggering actions directly.
         # execute subrules:
-        for subtagrule in $(echo "${tag_rule_content}" | jq -c ".${tagrule}.subrules[] | @base64 ") ; do
+        for subtagrule in $(echo "${rules_json}" | jq -c --arg k "${tagrule}" '(.[$k].subrules // [])[] | @base64 ') ; do
             grepresult=0
             sub_jq_value="${subtagrule}"  # universal parameter name for function sub_jq
 
@@ -759,6 +849,7 @@ if [ "${type_of_rule}" = advanced ]; then
             else
                 VARsearchfile="${searchfilename}"
             fi
+            last_search_source="${VARsource}"
 
             log_rule_sub_search "${VARsearchstring}"
             log_rule_sub_field "isRegEx" "${VARisRegEx}"
@@ -906,81 +997,284 @@ if [ "${type_of_rule}" = advanced ]; then
     done
 
         if [ "${found}" -eq 1 ] ; then
-            log_rule_result ">>> Rule is satisfied"
+            log_rule_result ">>> raw match (Pass 1 only)"
+        else
+            log_rule_result ">>> no raw match (Pass 1 only)"
+        fi
 
-            # ---------------------------------------------------------------------
-            # modify (global) settings with yaml rules:
-            # apprise_call
-            if [[ "${VARapprise_call}" != null ]] ; then
-                apprise_call="${VARapprise_call} ${apprise_call}"
-                log_rule_action "add apprise_call ${VARapprise_call}"
-            fi
+        # record raw match + last search source for Pass 2 (JSON state, no assoc arrays)
+        raw_state_json=$(jq -n -c \
+            --arg k "${tagrule}" \
+            --argjson m "${found:-0}" \
+            --arg s "${last_search_source}" \
+            --argjson acc "${raw_state_json}" \
+            '$acc | .[$k] = {match: $m, last_source: $s}')
 
-            # apprise_attachment
-            if [[ "${VARapprise_attachment}" != null ]] ; then
-                apprise_attachment="${VARapprise_attachment}"
-                log_rule_action "set apprise_attachment to ${VARapprise_attachment}"
-            fi
+        printf "\n"
 
-            # notify_lang
-            if [[ "${VARnotify_lang}" != null ]] ; then
-                notify_lang="${VARnotify_lang}"
-                log_rule_action "set notify_lang to ${VARnotify_lang}"
-            fi
+    done <<< "$(echo "${ordered_rules_json}" | jq -r '.[].key')"
 
-            # ---------------------------------------------------------------------
-            # store user defined (YAML) post scripts as alias in an array:
-            if [[ "${postscript}" != null ]] ; then
-                aliasname="postscript_${tagrule}_$(date +%N)"
-                postscriptarray+=( "${aliasname}" )
-                # shellcheck disable=SC2139  # Don't warn about "expands when defined, not when used"
-                alias "${aliasname}"="${postscript}"
-                log_rule_action "activate post script: ${postscript}"
-            fi
-            # ---------------------------------------------------------------------
-            # tagname_RegEx
-            if [[ "${tagname_RegEx}" != null ]] ; then
-                log_rule_action_n "search RegEx for tag ➜ "
-                # treat the file as one huge string (Parameter -z):
-                if [ "${tagname_multiline_RegEx}" = true ] ;then
-                    grep_opt="z"
-                else
-                    grep_opt=""
+    # === Pass 2: priority sort + requires/excludes filter -> surviving_rules_json
+    pass2_filtered=0
+    pass2_applied=0
+    pass2_break_stopped=0
+    pass2_break_rule=""
+    pass2_apply_candidates=0
+
+    log_subsection "Pass 2: action selection and apply"
+
+    # --- Pass 2 filter log: skipped rules only (bash loop — portable on all jq) -
+    while read -r p2_rule; do
+        [ -z "${p2_rule}" ] && continue
+        p2_prio=$(echo "${rules_json}" | jq -r --arg k "${p2_rule}" '.[$k].priority // 100' 2>/dev/null)
+        p2_match=$(echo "${raw_state_json}" | jq -r --arg k "${p2_rule}" '.[$k].match // 0' 2>/dev/null)
+        p2_skip_reason=""
+        p2_skip_ref=""
+
+        if [ "${p2_match}" != "1" ] ; then
+            p2_skip_reason="subrules_not_matched"
+        else
+            p2_skip_ref=$(echo "${rules_json}" | jq -r --arg k "${p2_rule}" --argjson raw "${raw_state_json}" '
+                def as_rule_list:
+                    if . == null then [] elif type == "string" then [.]
+                    elif type == "array" then . else [] end;
+                (.[$k].requires | as_rule_list) | map(select(($raw[.].match // 0) != 1)) | .[0] // empty
+            ' 2>/dev/null)
+            if [ -n "${p2_skip_ref}" ] ; then
+                p2_skip_reason="requires_not_satisfied"
+            else
+                p2_skip_ref=$(echo "${rules_json}" | jq -r --arg k "${p2_rule}" --argjson raw "${raw_state_json}" '
+                    def as_rule_list:
+                        if . == null then [] elif type == "string" then [.]
+                        elif type == "array" then . else [] end;
+                    (.[$k].excludes | as_rule_list) | map(select(($raw[.].match // 0) == 1)) | .[0] // empty
+                ' 2>/dev/null)
+                if [ -n "${p2_skip_ref}" ] ; then
+                    p2_skip_reason="excludes_matched"
                 fi
-
-                tagname_RegEx_result=$( grep -oP${grep_opt} "${tagname_RegEx}" "${VARsearchfile}" | tr -d '\0' | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
-                if [ -n "${tagname_RegEx_result}" ] ; then
-                    if echo "${searchtag}" | grep -q "§tagname_RegEx" ; then
-                        searchtag="${searchtag//§tagname_RegEx/${tagname_RegEx_result}}"
-                    else
-                        searchtag="${tagname_RegEx_result}"
-                    fi
-                    printf "%s\n\n" "${searchtag}"
-                else
-                    printf "%s\n\n" "RegEx not found (fallback to ${searchtag})"
-                fi
             fi
-            # ---------------------------------------------------------------------
-            # dirname_RegEx
-            if [[ "${dirname_RegEx}" != null ]] ; then
-                log_rule_action_n "search RegEx for dir ➜ "
-                # treat the file as one huge string (Parameter -z):
-                if [ "${dirname_multiline_RegEx}" = true ] ;then
-                    grep_opt="z"
+        fi
+
+        if [ -n "${p2_skip_reason}" ] ; then
+            pass2_filtered=$(( pass2_filtered + 1 ))
+            log_rule_pass2 "${p2_rule}" "${p2_prio}"
+            case "${p2_skip_reason}" in
+                subrules_not_matched)
+                    log_rule_pass2_verdict "skip: subrules not matched"
+                    [ "${loglevel}" = 2 ] && log_rule_pass2_detail "raw match in Pass 1: no"
+                    ;;
+                requires_not_satisfied)
+                    log_rule_pass2_verdict "skip: requires not satisfied"
+                    [ "${loglevel}" = 2 ] && log_rule_pass2_detail "unmet requires: ${p2_skip_ref}"
+                    ;;
+                excludes_matched)
+                    log_rule_pass2_verdict "skip: excludes matched"
+                    [ "${loglevel}" = 2 ] && log_rule_pass2_detail "blocking exclude: ${p2_skip_ref} (matched in Pass 1)"
+                    ;;
+            esac
+            printf "\n"
+        else
+            pass2_apply_candidates=$(( pass2_apply_candidates + 1 ))
+        fi
+    done <<< "$(echo "${ordered_rules_json}" | jq -r '.[].key' 2>/dev/null)"
+
+    # Order-independent: `requires`/`excludes` are checked against the FULL
+    # raw_state_json of all rules (filled in Pass 1), not against already-applied
+    # rules. `requires` is fail-closed (unknown ref -> 0 -> not satisfied);
+    # `excludes` is fail-open (unknown ref -> 0 -> cannot have matched -> does not
+    # block). groups/on_match.result.result-handling: groups still passive;
+    # on_match.result (merge/replace/exclusive) is handled in the action loop below.
+    surviving_rules_json=$(jq -n -c \
+        --argjson ordered "${ordered_rules_json}" \
+        --argjson raw "${raw_state_json}" '
+        def as_rule_list:
+            if . == null then []
+            elif type == "string" then [.]
+            elif type == "array" then .
+            else [] end;
+        $ordered
+        | map(select(
+            (($raw[.key].match // 0) == 1)
+            and ((.value.requires | as_rule_list) | all(. as $required | (($raw[$required].match // 0) == 1)))
+            and ((.value.excludes | as_rule_list) | all(. as $excluded | (($raw[$excluded].match // 0) == 0)))
+          ))
+    ')
+
+    # --- Pass 2 action loop -----------------------------------------------------
+    # Action fields are reloaded fresh from rules_json per rule. The action block
+    # below is the legacy block (synOCR.sh 908-995), moved here and fed with
+    # per-rule values. After applying actions, on_match.action == "break" stops
+    # the action loop (NOT the Pass 1 match detection).
+    while read -r tagrule; do
+        [ -z "${tagrule}" ] && continue
+        p2_prio=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '.[$k].priority // 100' 2>/dev/null)
+        log_rule_pass2 "${tagrule}" "${p2_prio}"
+
+        rule_json=$(echo "${rules_json}" | jq -c --arg k "${tagrule}" '.[$k]')
+        on_match_action=$(echo "${rule_json}" | jq -r '.on_match.action // empty')
+        # on_match.result: merge (default) | replace | exclusive.
+        # exclusive implies break (this rule wins and stops the action loop);
+        # replace/exclusive clear the accumulated tag/folder buffers so this
+        # rule's own tag/folder wins (per-field, only if this rule sets them).
+        on_match_result=$(echo "${rule_json}" | jq -r '.on_match.result // "merge"')
+        [ "${on_match_result}" = "exclusive" ] && on_match_action="break"
+
+        searchtag=$(echo "${rule_json}" | jq -r '.tagname' | sed 's%\/\|\\\|\:\|\?%_%g' )   # filtered: \ / : ?
+        targetfolder=$(echo "${rule_json}" | jq -r '.targetfolder' )
+        tagname_RegEx=$(echo "${rule_json}" | jq -r '.tagname_RegEx' )
+        dirname_RegEx=$(echo "${rule_json}" | jq -r '.dirname_RegEx' )
+        tagname_multiline_RegEx=$(echo "${rule_json}" | jq -r '.multilineregex' )
+        VARapprise_call=$(echo "${rule_json}" | jq -r '.apprise_call' )
+        VARapprise_attachment=$(echo "${rule_json}" | jq -r '.apprise_attachment' )
+        VARnotify_lang=$(echo "${rule_json}" | jq -r '.notify_lang' )
+        postscript=$(echo "${rule_json}" | jq -r '.postscript' )
+
+        # skip action block for rules without tag/folder/postscript (e.g. pure
+        # `requires` predicates), but still honor on_match.action == "break"
+        if [[ "${searchtag}" = null ]] && [[ "${targetfolder}" = null ]] && [[ "${postscript}" = null ]] ; then
+            log_rule_pass2_verdict "skip: predicate only (no tag/folder/postscript)"
+            [ "${loglevel}" = 2 ] && [ -n "${on_match_action}" ] && log_rule_pass2_detail "on_match.action: ${on_match_action}"
+            if [ "${on_match_action}" = "break" ] ; then
+                pass2_break_rule="${tagrule}"
+                log_rule_pass2_action "on_match.action == break -> stop action loop"
+                break
+            fi
+            continue
+        fi
+
+        log_rule_pass2_verdict "apply"
+        if [ "${loglevel}" = 2 ] ; then
+            p2_requires=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '
+                def as_rule_list:
+                    if . == null then [] elif type == "string" then [.]
+                    elif type == "array" then . else [] end;
+                (.[$k].requires | as_rule_list) | if length == 0 then "-" else join(", ") end
+            ' 2>/dev/null)
+            p2_excludes=$(echo "${rules_json}" | jq -r --arg k "${tagrule}" '
+                def as_rule_list:
+                    if . == null then [] elif type == "string" then [.]
+                    elif type == "array" then . else [] end;
+                (.[$k].excludes | as_rule_list) | if length == 0 then "-" else join(", ") end
+            ' 2>/dev/null)
+            p2_om_action=$(echo "${rule_json}" | jq -r '.on_match.action // "-"' 2>/dev/null)
+            p2_om_result=$(echo "${rule_json}" | jq -r '.on_match.result // "merge"' 2>/dev/null)
+            log_rule_pass2_detail "requires: ${p2_requires}"
+            log_rule_pass2_detail "excludes: ${p2_excludes}"
+            log_rule_pass2_detail "on_match.action: ${p2_om_action}  on_match.result: ${p2_om_result}"
+        fi
+
+        if [[ "${targetfolder}" = null ]]; then
+            targetfolder=""
+        fi
+
+        if [[ "${searchtag}" = null ]]; then
+            searchtag=""
+        fi
+
+        # reconstruct VARsearchfile from the rule's last subrule source (Pass 1),
+        # preserving the legacy behavior for tagname_RegEx / dirname_RegEx actions
+        last_src=$(echo "${raw_state_json}" | jq -r --arg k "${tagrule}" '.[$k].last_source // "content"')
+        if [ "${last_src}" = filename ] ;then
+            VARsearchfile="${searchfilename}"
+        else
+            VARsearchfile="${searchfile}"
+        fi
+
+        # dirname_multilineregex: separate field from multilineregex (tag).
+        # Default false if absent — preserves legacy behavior for existing rules.
+        dirname_multiline_RegEx=$(echo "${rule_json}" | jq -r '.dirname_multilineregex' )
+        if [ "${dirname_multiline_RegEx}" = null ] ; then
+            dirname_multiline_RegEx=false
+        fi
+        if [ "${tagname_multiline_RegEx}" = null ] ; then
+            tagname_multiline_RegEx=false
+        fi
+
+        pass2_applied=$(( pass2_applied + 1 ))
+
+        # ---------------------------------------------------------------------
+        # modify (global) settings with yaml rules:
+        # apprise_call
+        if [[ "${VARapprise_call}" != null ]] ; then
+            apprise_call="${VARapprise_call} ${apprise_call}"
+            log_rule_pass2_action "add apprise_call ${VARapprise_call}"
+        fi
+
+        # apprise_attachment
+        if [[ "${VARapprise_attachment}" != null ]] ; then
+            apprise_attachment="${VARapprise_attachment}"
+            log_rule_pass2_action "set apprise_attachment to ${VARapprise_attachment}"
+        fi
+
+        # notify_lang
+        if [[ "${VARnotify_lang}" != null ]] ; then
+            notify_lang="${VARnotify_lang}"
+            log_rule_pass2_action "set notify_lang to ${VARnotify_lang}"
+        fi
+
+        # ---------------------------------------------------------------------
+        # store user defined (YAML) post scripts as alias in an array:
+        if [[ "${postscript}" != null ]] ; then
+            aliasname="postscript_${tagrule}_$(date +%N)"
+            postscriptarray+=( "${aliasname}" )
+            # shellcheck disable=SC2139  # Don't warn about "expands when defined, not when used"
+            alias "${aliasname}"="${postscript}"
+            log_rule_pass2_action "activate post script: ${postscript}"
+        fi
+        # ---------------------------------------------------------------------
+        # tagname_RegEx
+        if [[ "${tagname_RegEx}" != null ]] ; then
+            log_rule_pass2_action_n "search RegEx for tag ➜ "
+            # treat the file as one huge string (Parameter -z). With -oPz GNU grep
+            # emits each match NUL-delimited and keeps internal newlines, so
+            # tr '\n\0' ' \n' turns internal newlines into spaces and the NUL
+            # record separator into a newline — head -n1 then yields the first
+            # complete (possibly multi-line) match instead of only its first
+            # physical line (and avoids concatenating multiple matches).
+            if [ "${tagname_multiline_RegEx}" = true ] ;then
+                tagname_RegEx_result=$( grep -oPz "${tagname_RegEx}" "${VARsearchfile}" \
+                    | tr '\n\0' ' \n' | head -n1 \
+                    | sed 's%\/\|\\\|\:\|\?%_%g' )
+            else
+                tagname_RegEx_result=$( grep -oP "${tagname_RegEx}" "${VARsearchfile}" \
+                    | tr -d '\0' | head -n1 \
+                    | sed 's%\/\|\\\|\:\|\?%_%g' )
+            fi
+            if [ -n "${tagname_RegEx_result}" ] ; then
+                if echo "${searchtag}" | grep -q "§tagname_RegEx" ; then
+                    searchtag="${searchtag//§tagname_RegEx/${tagname_RegEx_result}}"
                 else
-                    grep_opt=""
+                    searchtag="${tagname_RegEx_result}"
                 fi
+                printf "%s\n\n" "${searchtag}"
+            else
+                printf "%s\n\n" "RegEx not found (fallback to ${searchtag})"
+            fi
+        fi
+        # ---------------------------------------------------------------------
+        # dirname_RegEx
+        if [[ "${dirname_RegEx}" != null ]] ; then
+            log_rule_pass2_action_n "search RegEx for dir ➜ "
+            # treat the file as one huge string (Parameter -z); see tagname_RegEx
+            # above for why tr '\n\0' ' \n' is needed to keep multi-line matches.
+            if [ "${dirname_multiline_RegEx}" = true ] ;then
+                dirname_RegEx_result=$( grep -oPz "${dirname_RegEx}" "${VARsearchfile}" \
+                    | tr '\n\0' ' \n' | head -n1 \
+                    | sed 's%\/\|\\\|\:\|\?%_%g' )
+            else
+                dirname_RegEx_result=$( grep -oP "${dirname_RegEx}" "${VARsearchfile}" \
+                    | tr -d '\0' | head -n1 \
+                    | sed 's%\/\|\\\|\:\|\?%_%g' )
+            fi
+            if [ -n "${dirname_RegEx_result}" ] ; then
 
-                dirname_RegEx_result=$( grep -oP${grep_opt} "${dirname_RegEx}" "${VARsearchfile}" | tr -d '\0' | head -n1 | sed 's%\/\|\\\|\:\|\?%_%g' )
-                if [ -n "${dirname_RegEx_result}" ] ; then
+                # Ensure path compatibility: Replace unwanted characters with underscore
+                sanitized=$(sed 's/[^A-Za-z0-9_. -]/_/g' <<< "${dirname_RegEx_result}")
+                # Remove leading/trailing dots or hyphens
+                sanitized=${sanitized%%[.-]}
+                sanitized=${sanitized##[.-]}
 
-                    # Ensure path compatibility: Replace unwanted characters with underscore
-                    sanitized=$(sed 's/[^A-Za-z0-9_. -]/_/g' <<< "${dirname_RegEx_result}")
-                    # Remove leading/trailing dots or hyphens
-                    sanitized=${sanitized%%[.-]}
-                    sanitized=${sanitized##[.-]}
-
-                    targetfolder="${targetfolder//§dirname_RegEx/${sanitized}}"
+                targetfolder="${targetfolder//§dirname_RegEx/${sanitized}}"
                         
                     printf "%s\n\n" "${targetfolder}"
                 else
@@ -988,15 +1282,64 @@ if [ "${type_of_rule}" = advanced ]; then
                 fi
             fi
 
-            [ -n "${searchtag}" ] && renameTag="${tagsymbol}${searchtag// /%20} ${renameTag}" # with temporary space separator to finally check tags for uniqueness
-            [ -n "${targetfolder}" ] && renameCat="${targetfolder// /%20} ${renameCat}"
-        else
-            log_rule_result ">>> Rule is not satisfied"
+        # --- on_match.result: replace/exclusive clear prior tags/folders --------
+        # Per-field: only clear a buffer when THIS rule contributes that field,
+        # so a pure apprise/postscript rule with result:replace cannot silently
+        # wipe previously collected tags. apprise/notify/postscript stay cumulative.
+        if [ "${on_match_result}" = "replace" ] || [ "${on_match_result}" = "exclusive" ]; then
+            [ -n "${searchtag}" ]    && { renameTag=""; log_rule_pass2_action "on_match.result ${on_match_result} -> reset tags"; }
+            [ -n "${targetfolder}" ] && { renameCat=""; log_rule_pass2_action "on_match.result ${on_match_result} -> reset folders"; }
+        fi
+
+        [ -n "${searchtag}" ] && renameTag="${tagsymbol}${searchtag// /%20} ${renameTag}" # with temporary space separator to finally check tags for uniqueness
+        [ -n "${targetfolder}" ] && renameCat="${targetfolder// /%20} ${renameCat}"
+
+        [ -n "${searchtag}" ] && log_rule_pass2_action "add tag: ${searchtag//%20/ }"
+        [ -n "${targetfolder}" ] && log_rule_pass2_action "add folder: ${targetfolder//%20/ }"
+        pass2_tags_now=$(echo "${renameTag}" | tr ' ' '\n' | awk '!x[$0]++' | sed -e "s/^%20//g;s/^${tagsymbol}//g;s/%20/ /g" | tr '\n' ' ' | sed -e 's/ $//')
+        pass2_folders_now=$(echo "${renameCat}" | sed -e 's/%20/ /g;s/^ //;s/ $//')
+        [ -n "${pass2_tags_now}" ] && log_rule_pass2_action "tags now: ${pass2_tags_now}" || log_rule_pass2_action "tags now: (empty)"
+        [ -n "${pass2_folders_now}" ] && log_rule_pass2_action "folders now: ${pass2_folders_now}"
+        [ "${loglevel}" = 2 ] && [ -n "${on_match_result}" ] && [ "${on_match_result}" != "merge" ] && log_rule_pass2_detail "on_match.result: ${on_match_result}"
+
+        # --- on_match.action == "break" stops the Pass 2 action loop ------------
+        # `break` only halts further ACTION application; all subrules were already
+        # evaluated in Pass 1, so `requires` predicates stay consistent regardless
+        # of order. Reached here also when on_match.result == exclusive (mapped to
+        # break above). Actionless predicate rules with break are handled before
+        # the skip above.
+        if [ "${on_match_action}" = "break" ] ; then
+            pass2_break_rule="${tagrule}"
+            log_rule_pass2_action "on_match.action == break -> stop action loop"
+            break
         fi
 
         printf "\n"
 
-    done
+    done <<< "$(echo "${surviving_rules_json}" | jq -r '.[].key')"
+
+    # --- Pass 2: rules skipped because break stopped the action loop ------------
+    if [ -n "${pass2_break_rule}" ] ; then
+        while read -r p2_remain; do
+            [ -z "${p2_remain}" ] && continue
+            p2_remain_prio=$(echo "${rules_json}" | jq -r --arg k "${p2_remain}" '.[$k].priority // 100' 2>/dev/null)
+            pass2_break_stopped=$(( pass2_break_stopped + 1 ))
+            log_rule_pass2 "${p2_remain}" "${p2_remain_prio}"
+            log_rule_pass2_verdict "skip: break stopped loop"
+            [ "${loglevel}" = 2 ] && log_rule_pass2_detail "stopped after: ${pass2_break_rule}"
+            printf "\n"
+        done <<< "$(echo "${surviving_rules_json}" | jq -r --arg br "${pass2_break_rule}" '
+            . as $all
+            | ($all | map(.key) | index($br)) as $ix
+            | if $ix == null then empty else $all[$ix + 1:][] | .key end
+        ')"
+    fi
+
+    log_rule_pass2_summary "pass 2 summary: ${pass2_applied} applied, ${pass2_filtered} filtered, ${pass2_break_stopped} stopped by break"
+    if [ "${loglevel}" = 2 ] ; then
+        log_rule_pass2_detail "rule format: ${rule_format}  rules total: $(echo "${rules_json}" | jq 'length' 2>/dev/null)  eligible: ${pass2_apply_candidates}"
+    fi
+    printf "\n"
 
     # meta_keyword_list: unique / without tagsymbol / separated with comma and space >, <:
     meta_keyword_list=$(echo "${renameTag}" | tr ' ' '\n' | awk '!x[$0]++' | sed -e "s/^%20//g;s/^${tagsymbol}//g" | tr '\n' ' ' | sed -e "s/ /, /g;s/%20/ /g;s/, $//g" | sed -e "s/, $//g")
@@ -1097,6 +1440,18 @@ sub_jq()
 }
 
 
+# yaml_validate() — text-based preflight on the temporary YAML file.
+#
+# Backward compatible: legacy flat YAML (rule names as top-level keys) stays
+# fully valid and is the default. `rules:`/`groups:` are reserved only in the
+# new wrapped format (auto-detected in tag_search).
+#
+# This pass is intentionally loose about NEW cross-rule fields (priority,
+# requires, excludes, on_match, group, groups.condition). Those are validated
+# structurally by yaml_validate_json() on the parsed JSON, which is
+# storage-agnostic (works for YAML files today and SQLite rows tomorrow). The
+# text pass here only relaxes the legacy `condition` allow-list to also accept
+# `first_match` so the new wrapped/grouped format is not rejected pre-parse.
 yaml_validate()
 {
 #########################################################################################
@@ -1130,12 +1485,16 @@ yaml_validate()
 
 # check parameter validity:
 # ---------------------------------------------------------------------
-    # check, if value of condition is "all" OR "any" OR "none":
+    # check, if value of condition is "all" OR "any" OR "none" (OR "first_match"):
+    # NOTE: `first_match` is a group-level condition (see yaml_validate_json for
+    # the context-sensitive check). The text preflight accepts it here so the
+    # new wrapped/grouped format is not rejected before JSON parsing. Legacy
+    # rule-level condition remains all|any|none (enforced in yaml_validate_json).
     if grep -q '^[[:space:]]*condition' "${taglisttmp}"; then
         while read -r line ; do
             value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
-            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(all|any|none)$' > /dev/null  2>&1 ; then
-               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'condition' — expected all, any, or none"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(all|any|none|first_match)$' > /dev/null  2>&1 ; then
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'condition' — expected all, any, none, or first_match"
             fi
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^condition:")"
     fi
@@ -1190,6 +1549,16 @@ yaml_validate()
         done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^multilineregex:")"
     fi
 
+    # check, if value of dirname_multilineregex is "true" OR "false":
+    if grep -q '^[[:space:]]*dirname_multilineregex' "${taglisttmp}"; then
+        while read -r line ; do
+            value="$(echo "${line}" | awk -F: '{print $3}' | tr -cd '[:alnum:]')"
+            if [ -n "${value}" ] && ! echo "${value}" | grep -Eiw '^(true|false)$' > /dev/null  2>&1 ; then
+               log_error_at "YAML rule syntax (row $(echo "${line}" | awk -F: '{print $1}')): value '${value}' invalid for 'dirname_multilineregex' — expected true or false"
+            fi
+        done <<< "$(sed 's/^ *//;s/ *$//' "${taglisttmp}" | grep -wn "^dirname_multilineregex:")"
+    fi
+
     # check apprise_call:
     # ToDo: which regex can check this?
 #    if grep -q "apprise_call" "${taglisttmp}"; then
@@ -1223,6 +1592,131 @@ yaml_validate()
 
     echo -e
 
+}
+
+
+# yaml_validate_json() — structural validation of the parsed rule JSON.
+#
+# Storage-agnostic: operates on the global `tag_rule_content` JSON variable,
+# NOT on a file path. Today that JSON comes from YAML conversion; tomorrow it
+# will come from a SQLite query (WebGUI-managed rules). The same validator
+# therefore doubles as the import-time check for the future DB import function.
+#
+# Handles the NEW cross-rule fields the text pass cannot see context-sensitively:
+#   - rule.condition          must be all|any|none            (NOT first_match)
+#   - group.condition         may be all|any|first_match      (groups only)
+#   - priority                number (optional; default 100)
+#   - requires / excludes     array of existing rule names
+#   - on_match.action         continue | break
+#   - on_match.result         merge | replace | exclusive
+#   - group                   reference into top-level `groups`
+#
+# Backward compatibility: every new field is optional. A legacy flat YAML has
+# no `groups`, so the group checks are skipped entirely, and rules without the
+# new fields pass unchanged. Unknown `requires`/`excludes` targets are logged
+# as warnings (fail-closed at runtime: missing refs evaluate to not-matched).
+yaml_validate_json()
+{
+    # normalize: rules_json = .rules (wrapped) or . (legacy flat); groups_json
+    local rules_json groups_json
+    if echo "${tag_rule_content}" | jq -e 'has("rules") and (.rules | type == "object") and (all(.rules[]; type == "object"))' >/dev/null 2>&1; then
+        rules_json=$(echo "${tag_rule_content}" | jq -c '.rules')
+        groups_json=$(echo "${tag_rule_content}" | jq -c '.groups // {}')
+    else
+        rules_json=$(echo "${tag_rule_content}" | jq -c '.')
+        groups_json='{}'
+    fi
+
+    # known rule names (for requires/excludes/group reference checks)
+    local known_rules
+    known_rules=$(echo "${rules_json}" | jq -r 'keys[]')
+
+    # --- rule-level checks -----------------------------------------------------
+    # Use "-" placeholder for unset on_match fields (bash IFS=tab skips empty
+    # fields, which would shift merge from result into action).
+    echo "${rules_json}" | jq -r 'to_entries[] | "\(.key)\t\(.value.condition // "any")\t\(.value.priority // 100)\t\(.value.on_match.action // "-")\t\(.value.on_match.result // "-")\t\(.value.dirname_multilineregex // "-")"' 2>/dev/null | \
+    while IFS=$'\t' read -r rname rcond rprio raction rresult rdml; do
+        # condition: rules allow all|any|none only (first_match is group-only)
+        if [ -n "${rcond}" ] && [ "${rcond}" != "null" ]; then
+            if ! echo "${rcond}" | grep -Eiw '^(all|any|none)$' >/dev/null 2>&1; then
+                log_error_at "YAML rule syntax: rule '${rname}' has condition '${rcond}' — expected all, any, or none (first_match is valid for groups only)"
+            fi
+        fi
+        # priority: must be numeric if present
+        if [ -n "${rprio}" ] && [ "${rprio}" != "null" ] && [ "${rprio}" != "100" ]; then
+            if ! echo "${rprio}" | grep -Eq '^-?[0-9]+$' >/dev/null 2>&1; then
+                log_error_at "YAML rule syntax: rule '${rname}' has non-numeric priority '${rprio}' — expected an integer (smaller = higher priority)"
+            fi
+        fi
+        # on_match.action: continue (default) or break; "-" = unset (implicit continue)
+        if [ -n "${raction}" ] && [ "${raction}" != "null" ] && [ "${raction}" != "-" ]; then
+            if ! echo "${raction}" | grep -Eiw '^(continue|break)$' >/dev/null 2>&1; then
+                log_error_at "YAML rule syntax: rule '${rname}' has on_match.action '${raction}' — expected continue or break"
+            fi
+        fi
+        # on_match.result: merge (default) | replace | exclusive; "-" = unset (implicit merge)
+        if [ -n "${rresult}" ] && [ "${rresult}" != "null" ] && [ "${rresult}" != "-" ]; then
+            if ! echo "${rresult}" | grep -Eiw '^(merge|replace|exclusive)$' >/dev/null 2>&1; then
+                log_error_at "YAML rule syntax: rule '${rname}' has on_match.result '${rresult}' — expected merge, replace, or exclusive"
+            fi
+        fi
+        # dirname_multilineregex: true | false; "-" = unset (implicit false)
+        if [ -n "${rdml}" ] && [ "${rdml}" != "null" ] && [ "${rdml}" != "-" ]; then
+            if ! echo "${rdml}" | grep -Eiw '^(true|false)$' >/dev/null 2>&1; then
+                log_error_at "YAML rule syntax: rule '${rname}' has dirname_multilineregex '${rdml}' — expected true or false"
+            fi
+        fi
+    done
+
+    # --- requires / excludes: type + reference checks --------------------------
+    # Accepts array or single string (runtime normalizes string -> [string]).
+    echo "${rules_json}" | jq -r '
+        def as_rule_list:
+            if . == null then []
+            elif type == "string" then [.]
+            elif type == "array" then .
+            else empty end;
+        to_entries[]
+        | .key as $k
+        | (.value.requires) as $r
+        | (.value.excludes) as $e
+        | if $r != null and ($r | type | IN("array","string") | not) then
+            "\($k)\trequires\t\($r | type)"
+          elif $e != null and ($e | type | IN("array","string") | not) then
+            "\($k)\texcludes\t\($e | type)"
+          else empty end
+    ' 2>/dev/null | while IFS=$'\t' read -r rname field rtype; do
+        log_error_at "YAML rule syntax: rule '${rname}' has ${field} of type '${rtype}' — expected array or string"
+    done
+
+    echo "${rules_json}" | jq -r '
+        def as_rule_list:
+            if . == null then []
+            elif type == "string" then [.]
+            elif type == "array" then .
+            else [] end;
+        to_entries[]
+        | .key as $k
+        | ((.value.requires | as_rule_list)[]? | "\($k)\trequires\t\(.)"),
+          ((.value.excludes | as_rule_list)[]? | "\($k)\texcludes\t\(.)")
+    ' 2>/dev/null | while IFS=$'\t' read -r rname field ref; do
+        [ -z "${ref}" ] && continue
+        if ! echo "${known_rules}" | grep -qxF "${ref}"; then
+            log_warn_at "YAML rule syntax: rule '${rname}' references unknown rule '${ref}' in ${field} (runtime: requires fail-closed / excludes fail-open)"
+        fi
+    done
+
+    # --- group-level checks (only for the wrapped format) ---------------------
+    if [ "${groups_json}" != "{}" ]; then
+        echo "${groups_json}" | jq -r 'to_entries[] | "\(.key)\t\(.value.condition // "first_match")"' 2>/dev/null | \
+        while IFS=$'\t' read -r gname gcond; do
+            if [ -n "${gcond}" ] && [ "${gcond}" != "null" ]; then
+                if ! echo "${gcond}" | grep -Eiw '^(all|any|first_match)$' >/dev/null 2>&1; then
+                    log_error_at "YAML rule syntax: group '${gname}' has condition '${gcond}' — expected all, any, or first_match"
+                fi
+            fi
+        done
+    fi
 }
 
 

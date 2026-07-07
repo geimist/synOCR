@@ -260,7 +260,7 @@ TESS_TO_DATEPARSER = {
 # re.IGNORECASE, so the lowercase accented letters below also cover uppercase.
 _MONTH_LETTERS = "a-zA-Z\u00e0\u00e1\u00e2\u00e3\u00e4\u00e5\u00e6\u00e7\u00e8\u00e9\u00ea\u00eb\u00ec\u00ed\u00ee\u00ef\u00f0\u00f1\u00f2\u00f3\u00f4\u00f5\u00f6\u00f8\u00f9\u00fa\u00fb\u00fc\u00fd\u00fe\u00ff"
 
-# OCR digit confusables (v1.09). Tesseract sometimes misreads digits as letters.
+# OCR digit confusables (v1.08). Tesseract sometimes misreads digits as letters.
 # To recover such numeric dates, search_all_numeric_dates matches against a
 # per-line copy translated with this map (see search_all_numeric_dates). The map
 # is intentionally case-sensitive (e.g. "B"->8 but "b"->6) and kept to the
@@ -280,7 +280,7 @@ _OCR_DIGIT_CONFUSABLES = str.maketrans({
     "g": "9", "q": "9",
 })
 
-# OCR separator confusables (v1.09). Tesseract sometimes misreads the date
+# OCR separator confusables (v1.08). Tesseract sometimes misreads the date
 # separators: a dot becomes a comma ("1,7,2026") or a hyphen becomes an en/em
 # dash or a minus sign ("2026\u201307\u201315"). The numeric pass normalises
 # these to the canonical separators expected by the existing regexes (dot and
@@ -462,7 +462,7 @@ class FindDates:
         # dateparser auto-detection, which could diverge from check_year_range).
         date_obj = dateparser.parse(regex_result.group(0), settings=settings_str, languages=self.langs)
         # dateparser may return None for invalid/unparseable strings. With the
-        # v1.09 OCR-confusable normalisation producing extra numeric candidates,
+        # v1.08 OCR-confusable normalisation producing extra numeric candidates,
         # guard explicitly before touching date_obj fields (check_year_range
         # already rejects most of these, but stay safe against AttributeError).
         if date_obj is None:
@@ -541,7 +541,7 @@ class FindDates:
         #max_len = len(self.searchtextstr)
 
         regexlist = [
-            # v1.09: day slots accept a single-digit day too (trailing |[1-9], tried
+            # v1.08: day slots accept a single-digit day too (trailing |[1-9], tried
             # last so 2-digit forms keep priority), so dates like "1.7.2026" or
             # "2026-07-1" are recognised. Month slots already allowed 1-digit months
             # (DMY/MDY); YMD month stays 2-digit (ISO convention). The blacklist
@@ -593,7 +593,7 @@ class FindDates:
 
         res = None
         found_one_date = False
-        # v1.09: OCR error tolerance for numeric dates. Match against a per-line
+        # v1.08: OCR error tolerance for numeric dates. Match against a per-line
         # copy in which (a) common letter/digit confusions (O->0, l->1, A->4,
         # S->5, B->8 ...) and (b) separator confusions (comma->dot, en/em/minus
         # dashes->hyphen) are normalised, so misread numeric dates like
