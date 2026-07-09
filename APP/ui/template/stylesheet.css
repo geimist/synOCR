@@ -334,16 +334,44 @@ a.btn.synocr-btn-outline-blue:focus {
     flex: 0 0 auto;
     align-self: flex-start;
     margin-top: 0.5rem;
-    padding: 0.15rem 0.35rem;
     color: #0086E5;
-    text-decoration: none;
-    font-size: 1.1rem;
     line-height: 1;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border: 1px solid #0086E5;
+    border-radius: 0.3rem;
+    background-color: #e8f4fd;
+    cursor: pointer;
+    user-select: none;
+    padding: 0;
+}
+.synocr-nav-toggle::before {
+    content: '';
+    display: block;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(135deg);
+    margin-right: -0.1rem;
+    transition: transform 0.15s ease;
+}
+.synocr-nav-toggle[aria-expanded="false"]::before {
+    transform: rotate(-45deg);
+    margin-right: 0;
+    margin-left: -0.08rem;
 }
 
 .synocr-nav-toggle:hover,
 .synocr-nav-toggle:focus {
-    color: #006bb8;
+    color: #fff;
+    background-color: #0086E5;
+    text-decoration: none;
+    outline: none;
 }
 
 .synocr-layout--nav-collapsed .synocr-nav-col {
@@ -597,8 +625,65 @@ a.btn.synocr-btn-outline-blue:focus {
     word-break: break-word;
 }
 
+/* Custom tooltips (data-tip) — rules editor help texts */
+.synocr-tip-popup {
+    position: fixed;
+    z-index: 11050;
+    max-width: 22rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #0086E5;
+    border-radius: 0.35rem;
+    background-color: #e8f4fd;
+    color: #003d73;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.35;
+    white-space: normal;
+    text-align: left;
+    box-shadow: 0 2px 8px rgba(0, 75, 140, 0.15);
+    pointer-events: none;
+}
+.synocr-tip-popup.synocr-tip-popup-wide {
+    max-width: 28rem;
+}
+.synocr-tip-popup.synocr-tip-popup-rich {
+    padding: 0.55rem 0.7rem;
+}
+.synocr-tip-popup .synocr-tip-title {
+    font-weight: 600;
+    color: #002a52;
+    margin-bottom: 0.35rem;
+    line-height: 1.3;
+}
+.synocr-tip-popup .synocr-tip-line {
+    margin: 0 0 0.35rem;
+    line-height: 1.35;
+}
+.synocr-tip-popup .synocr-tip-line:last-child {
+    margin-bottom: 0;
+}
+.synocr-rule-tip-label[data-tip],
+label.synocr-has-tip[data-tip],
+span.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
+input.synocr-has-tip[data-tip],
+select.synocr-has-tip[data-tip],
+textarea.synocr-has-tip[data-tip],
+[data-tip-key].synocr-has-tip {
+    cursor: help;
+}
+button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
+.synocr-namesyntax-palette-item[data-tip] {
+    cursor: pointer;
+}
+.synocr-regex-seg-type[data-tip],
+.synocr-regex-seg-type[data-tip-key],
+.synocr-regex-tool[data-tip],
+.synocr-regex-tool[data-tip-key] {
+    cursor: help;
+}
+
 /* gear button inside inline builder fields on rule card */
-.synocr-rule-tip-label[title] {
+.synocr-rule-tip-label[data-tip] {
     cursor: help;
 }
 .synocr-rule-targetfolder-wrap {
@@ -612,17 +697,49 @@ a.btn.synocr-btn-outline-blue:focus {
     right: 0.15rem;
     top: 50%;
     transform: translateY(-50%);
-    padding: 0.125rem 0.35rem;
+    padding: 0.125rem 0.3rem;
     line-height: 1;
     color: #6c757d;
     text-decoration: none;
-    font-size: 1rem;
     z-index: 2;
+}
+.synocr-rule-targetfolder-gear-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+    display: block;
+    opacity: 0.7;
 }
 .synocr-rule-targetfolder-gear:hover,
 .synocr-rule-targetfolder-gear:focus {
     color: #0086E5;
+}
+
+/* folder picker button inside path fields on edit page */
+.synocr-folder-input-wrap {
+    position: relative;
+}
+.synocr-folder-input {
+    padding-right: 2rem;
+}
+.synocr-folder-picker-btn {
+    position: absolute;
+    right: 0.15rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.125rem 0.3rem;
+    line-height: 1;
+    color: #6c757d;
     text-decoration: none;
+    z-index: 2;
+}
+.synocr-folder-picker-btn:hover,
+.synocr-folder-picker-btn:focus {
+    color: #0086E5;
+    text-decoration: none;
+}
+.synocr-rule-targetfolder-gear:hover .synocr-rule-targetfolder-gear-icon,
+.synocr-rule-targetfolder-gear:focus .synocr-rule-targetfolder-gear-icon {
+    opacity: 1;
 }
 
 /* Rule editor (GUI_rules) */
@@ -631,6 +748,9 @@ a.btn.synocr-btn-outline-blue:focus {
     background-color: #F2FAFF;
     border: 1px solid #d7dfe8;
     border-radius: 0.375rem;
+    --synocr-rule-handle-w: 1.25rem;
+    --synocr-rule-toggle-w: 1.5rem;
+    --synocr-rule-rail-gap: 0.5rem;
 }
 
 .synocr-rule-remove {
@@ -643,15 +763,97 @@ a.btn.synocr-btn-outline-blue:focus {
 }
 
 .synocr-rule-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.synocr-rule-header-row {
     display: grid;
-    grid-template-columns: 1.25rem minmax(0, 1fr);
-    gap: 0.5rem;
-    align-items: start;
+    grid-template-columns: var(--synocr-rule-handle-w) var(--synocr-rule-toggle-w) minmax(0, 1fr);
+    column-gap: var(--synocr-rule-rail-gap);
+    row-gap: 0.35rem;
+    align-items: center;
+    padding-right: 2rem;
 }
 
 .synocr-rule-body {
     min-width: 0;
+    padding-left: calc(var(--synocr-rule-handle-w) + var(--synocr-rule-rail-gap) + var(--synocr-rule-toggle-w) + var(--synocr-rule-rail-gap));
     padding-right: 2rem;
+}
+
+.synocr-rule-collapse-toggle {
+    color: #0086E5;
+    line-height: 1;
+    width: var(--synocr-rule-toggle-w);
+    height: var(--synocr-rule-toggle-w);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border: 1px solid #0086E5;
+    border-radius: 0.3rem;
+    background-color: #e8f4fd;
+    cursor: pointer;
+    user-select: none;
+    padding: 0;
+    flex-shrink: 0;
+}
+.synocr-rule-collapse-toggle::before {
+    content: '';
+    display: block;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    margin-top: -0.12rem;
+    transition: transform 0.15s ease;
+}
+.synocr-rule-collapse-toggle[aria-expanded="false"]::before {
+    transform: rotate(-45deg);
+    margin-top: 0;
+    margin-left: -0.08rem;
+}
+
+.synocr-rule-collapse-toggle:hover,
+.synocr-rule-collapse-toggle:focus {
+    color: #fff;
+    background-color: #0086E5;
+    text-decoration: none;
+    outline: none;
+}
+
+.synocr-rule-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1rem;
+}
+
+.synocr-rule-secondary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.75rem;
+    padding-top: 0.75rem;
+}
+
+.synocr-rule-details-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.synocr-rule-details-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1rem;
+}
+
+.synocr-rule-card-collapsed {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
 }
 
 .synocr-rule-primary {
@@ -666,15 +868,188 @@ a.btn.synocr-btn-outline-blue:focus {
     margin-bottom: 0.2rem;
 }
 
+.synocr-rule-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+}
+
+.synocr-rule-label-row label {
+    margin-bottom: 0;
+}
+
+.synocr-apprise-services-link {
+    color: #BD0010;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.synocr-apprise-services-link:hover {
+    color: #BD0010;
+    text-decoration: underline;
+}
+
 .synocr-rule-field .form-control,
 .synocr-rule-field .form-select {
     width: 100%;
 }
 
 @media (max-width: 576px) {
+    .synocr-rule-header,
+    .synocr-rule-secondary,
+    .synocr-rule-details-row,
     .synocr-rule-primary {
         grid-template-columns: 1fr;
     }
+}
+
+@media (max-width: 767.98px) {
+    .synocr-content-scroll.synocr-rules-editor-active {
+        display: block;
+        overflow-y: auto;
+    }
+
+    .synocr-rules-editor-page,
+    .synocr-ruleset-form,
+    .synocr-ruleset-tab-area,
+    .synocr-ruleset-tab-content,
+    #synocr-rules-pane-visual.tab-pane.active.show,
+    .synocr-rules-editor-scroll {
+        display: block;
+        overflow: visible;
+        flex: none;
+        min-height: 0;
+    }
+
+    .synocr-rules-editor-page--raw .synocr-rules-editor-toolbar {
+        display: none;
+    }
+}
+
+/* Rules editor page: fixed chrome, scrollable rule list */
+.synocr-content-scroll.synocr-rules-editor-active {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.synocr-rules-editor-page {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.synocr-rules-editor-head,
+.synocr-rules-editor-hr {
+    flex-shrink: 0;
+}
+
+.synocr-rules-status {
+    color: #6c757d;
+    max-width: 14rem;
+    text-align: right;
+}
+
+.synocr-ruleset-form {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.synocr-ruleset-form .synocr-ruleset-meta,
+.synocr-ruleset-form .synocr-rules-tabs-row {
+    flex-shrink: 0;
+}
+
+.synocr-rules-tabs-row {
+    gap: 0.75rem 1rem;
+}
+
+.synocr-rules-filter-wrap {
+    flex: 0 1 22rem;
+    min-width: 10rem;
+    max-width: 22rem;
+    margin-left: auto;
+}
+
+.synocr-rules-filter-input {
+    width: 100%;
+}
+
+.synocr-rules-filter-count {
+    white-space: nowrap;
+}
+
+.synocr-rules-editor-page--raw .synocr-rules-filter-wrap {
+    display: none !important;
+}
+
+.synocr-rule-card--filter-hidden {
+    display: none !important;
+}
+
+.synocr-rules-list--filtered .synocr-rule-drag-handle {
+    cursor: not-allowed;
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.synocr-ruleset-form .synocr-ruleset-tabs-nav {
+    flex-shrink: 0;
+}
+
+.synocr-ruleset-tab-area {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.synocr-ruleset-tab-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#synocr-rules-pane-visual.tab-pane.active.show {
+    display: flex !important;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.synocr-rules-editor-toolbar {
+    flex-shrink: 0;
+}
+
+.synocr-rules-editor-page--raw .synocr-rules-editor-toolbar {
+    display: none;
+}
+
+.synocr-rules-editor-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#synocr-rules-pane-raw.tab-pane.active.show {
+    display: flex !important;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
 }
 
 /* Ruleset editor: name + description on one line, inputs 50/50 */
@@ -694,6 +1069,14 @@ a.btn.synocr-btn-outline-blue:focus {
     min-width: 0;
 }
 
+/* Rules editor: RAW-JSON textarea (height set by synocr-rules-editor.js) */
+.synocr-rules-raw-input {
+    width: 100%;
+    resize: none;
+    overflow: auto;
+    box-sizing: border-box;
+}
+
 .synocr-rule-card .form-control,
 .synocr-rule-card .form-select {
     background-color: #fff;
@@ -709,8 +1092,25 @@ a.btn.synocr-btn-outline-blue:focus {
     opacity: 1;
 }
 
+.synocr-rules-list {
+    min-height: 0.5rem;
+}
+
+.synocr-rule-drop-placeholder {
+    margin-bottom: 1rem;
+    border: 2px dashed #0086E5;
+    border-radius: 0.375rem;
+    background-color: rgba(0, 134, 229, 0.07);
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.synocr-rule-card-dragging {
+    opacity: 0.35;
+}
+
 .synocr-rule-card.dragover {
-    outline: 2px dashed #0086E5;
+    outline: none;
 }
 
 .synocr-rule-drag-handle {
@@ -718,8 +1118,23 @@ a.btn.synocr-btn-outline-blue:focus {
     font-size: 1.1rem;
     color: #6c757d;
     user-select: none;
-    padding-top: 0.15rem;
     line-height: 1;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--synocr-rule-handle-w);
+    flex-shrink: 0;
+}
+.synocr-rule-drag-handle:hover,
+.synocr-rule-drag-handle:focus {
+    color: #0086E5;
+}
+.synocr-rule-drag-handle:active {
+    cursor: grabbing;
+}
+.synocr-rule-drag-handle.synocr-has-tip[data-tip] {
+    cursor: grab;
 }
 
 .synocr-rule-details-footer {
@@ -845,4 +1260,350 @@ a.btn.synocr-btn-outline-blue:focus {
     min-width: 2rem;
     padding-left: 0.35rem;
     padding-right: 0.35rem;
+}
+
+/* RegEx-Assistent (Zauberstab) — icon inside field on the right */
+.synocr-regex-load-row {
+    row-gap: 0.35rem;
+}
+.synocr-regex-load-opts {
+    row-gap: 0.35rem;
+}
+.synocr-regex-load-title {
+    white-space: nowrap;
+}
+.synocr-regex-path {
+    max-width: 24rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.synocr-regex-src-select {
+    width: auto;
+    display: inline-block;
+    min-width: 6.5rem;
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+}
+.synocr-regex-field-wrap {
+    position: relative;
+    width: 100%;
+}
+.synocr-regex-field-wrap .synocr-regex-field-input,
+.synocr-regex-field-wrap .form-control {
+    width: 100%;
+    padding-right: 2rem;
+}
+.synocr-regex-wand {
+    position: absolute;
+    right: 0.15rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.125rem 0.3rem;
+    line-height: 1;
+    color: #6c757d;
+    text-decoration: none;
+    z-index: 2;
+}
+.synocr-regex-wand-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+    display: block;
+    opacity: 0.7;
+}
+.synocr-regex-wand:hover,
+.synocr-regex-wand:focus {
+    color: #0086E5;
+    text-decoration: none;
+}
+.synocr-regex-wand:hover .synocr-regex-wand-icon,
+.synocr-regex-wand:focus .synocr-regex-wand-icon {
+    opacity: 1;
+}
+.synocr-regex-field-wrap:not(.synocr-regex-active) .synocr-regex-wand {
+    display: none;
+}
+.synocr-regex-field-wrap:not(.synocr-regex-active) .synocr-regex-field-input,
+.synocr-regex-field-wrap:not(.synocr-regex-active) .form-control {
+    padding-right: 0.75rem;
+}
+.synocr-switch-disabled {
+    opacity: 0.55;
+}
+
+/* RegEx Assistant: near-fullscreen modal (95% viewport) */
+.synocr-regex-assistant-modal {
+    width: 95vw;
+    max-width: 95vw;
+    height: 95vh;
+    margin: 2.5vh auto;
+}
+.synocr-regex-assistant-modal .modal-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.synocr-regex-assistant-modal .modal-header,
+.synocr-regex-assistant-modal .modal-footer {
+    flex: 0 0 auto;
+}
+.synocr-regex-assistant-modal .modal-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+.synocr-regex-assistant-modal .synocr-regex-load-section {
+    flex: 0 0 auto;
+}
+.synocr-regex-assistant-modal .synocr-regex-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+/* Toolbar, segments, expert field etc. must not be crushed by the viewer */
+.synocr-regex-assistant-modal .synocr-regex-body > *:not(.synocr-regex-viewer-wrap) {
+    flex: 0 0 auto;
+}
+.synocr-regex-assistant-modal .synocr-regex-segbar {
+    max-height: min(35vh, 22rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.synocr-regex-assistant-modal .synocr-regex-expert {
+    resize: none;
+    min-height: calc(1.5em + 0.5rem + 2px);
+    max-height: 50vh;
+    overflow-y: hidden;
+    line-height: 1.5;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    color: #212529;
+    background-color: #fff;
+}
+.synocr-regex-assistant-modal .synocr-regex-explain {
+    max-height: 10rem;
+    overflow-y: auto;
+}
+.synocr-regex-assistant-modal .synocr-regex-viewer-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.synocr-regex-tool-fixed {
+    background-color: #e8f1ff;
+    border-color: #b9d4ff;
+    color: #004085;
+}
+.synocr-regex-tool-var {
+    background-color: #fff4e5;
+    border-color: #ffd9a8;
+    color: #7a4a00;
+}
+.synocr-regex-tool-class {
+    background-color: #eafbe8;
+    border-color: #b6e3b0;
+    color: #1e6b1e;
+}
+.synocr-regex-tool-alt {
+    background-color: #f3ecfb;
+    border-color: #d6c2ee;
+    color: #5a3680;
+}
+.synocr-regex-tool-anchor {
+    background-color: #eef1f4;
+    border-color: #c9d2dc;
+    color: #3a434d;
+}
+.synocr-regex-tool-context {
+    background-color: #e7f7ee;
+    border-color: #b6e3c8;
+    color: #1b6b3a;
+}
+
+.synocr-regex-viewer {
+    font-family: "Courier New", Courier, "Liberation Mono", "DejaVu Sans Mono", monospace;
+    font-size: 0.85rem;
+    height: 240px;
+    overflow: auto;
+    white-space: pre;
+    tab-size: 2;
+    user-select: text;
+    line-height: 1.45;
+    letter-spacing: 0.02em;
+}
+.synocr-regex-assistant-modal .synocr-regex-viewer {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 10rem;
+}
+.synocr-regex-viewer .synocr-sp {
+    background: repeating-linear-gradient(90deg, transparent 0 3px, #d7dfe8 3px 4px);
+    border-radius: 1px;
+}
+
+.synocr-regex-preview-row {
+    margin-top: 0.35rem;
+    min-height: 1.6rem;
+}
+.synocr-regex-match-preview {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background-color: #eafbe8;
+    border: 1px solid #b6e3b0;
+    border-radius: 0.2rem;
+    padding: 0.12rem 0.45rem;
+    font-size: 0.8rem;
+    color: #1e4d1e;
+}
+
+.synocr-regex-match {
+    background-color: #c8ecc8;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px #9ed49e inset;
+}
+
+.synocr-regex-segbar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-height: 2.2rem;
+    padding: 0.3rem;
+    background-color: #f7f9fc;
+    border: 1px dashed #d7dfe8;
+    border-radius: 0.375rem;
+}
+.synocr-regex-seg {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0.25rem 0.45rem;
+    border: 1px solid #d7dfe8;
+    background-color: #fff;
+    font-size: 0.78rem;
+    border-radius: 0.25rem;
+    flex: 0 0 auto;
+}
+.synocr-regex-seg-type {
+    font-weight: 600;
+    padding: 0 0.25rem;
+    border-radius: 0.2rem;
+    color: #fff;
+    flex: 0 0 auto;
+}
+.synocr-regex-seg-type.seg_fixed { background-color: #0086E5; }
+.synocr-regex-seg-type.seg_var    { background-color: #f0a040; }
+.synocr-regex-seg-type.seg_class  { background-color: #2ea23a; }
+.synocr-regex-seg-type.seg_alt    { background-color: #8a5cb8; }
+.synocr-regex-seg-type.seg_anchor { background-color: #6c757d; }
+.synocr-regex-seg-type.seg_context { background-color: #1b6b3a; }
+
+.synocr-regex-seg-opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    white-space: nowrap;
+    font-weight: 400;
+    flex: 0 0 auto;
+}
+.synocr-regex-seg .form-select.synocr-regex-seg-select {
+    width: auto;
+    flex: 0 0 auto;
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    font-size: 0.74rem;
+}
+.synocr-regex-seg-select-var {
+    max-width: 10.5rem;
+}
+.synocr-regex-seg-select-kind {
+    max-width: 7.5rem;
+}
+.synocr-regex-seg-select-quant {
+    min-width: 9.5rem;
+    max-width: 10.5rem;
+}
+.synocr-regex-seg-num {
+    width: 2.75rem;
+    flex: 0 0 2.75rem;
+    padding: 0 0.25rem;
+    font-size: 0.74rem;
+}
+.synocr-regex-seg-text {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #555;
+    font-size: 0.8rem;
+    margin-left: 0.15rem;
+}
+.synocr-regex-seg-rm {
+    line-height: 1;
+    padding: 0 0.35rem;
+    color: #b02a37;
+    background: transparent;
+    border: 0;
+    flex-shrink: 0;
+}
+
+.synocr-regex-seg-alt-inputs {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.synocr-regex-seg-alt-inp {
+    width: 7rem;
+    flex: 0 0 auto;
+    padding: 0.05rem 0.3rem;
+    font-size: 0.74rem;
+}
+.synocr-regex-seg-alt-add,
+.synocr-regex-seg-alt-rm {
+    line-height: 1;
+    padding: 0 0.4rem;
+    background: transparent;
+    border: 0;
+}
+.synocr-regex-seg-alt-add { color: #1e6b1e; }
+.synocr-regex-seg-alt-rm  { color: #b02a37; }
+.synocr-regex-seg-select-anchor {
+    max-width: 10.5rem;
+}
+
+.synocr-regex-explain {
+    border: 1px solid #d7dfe8;
+    border-radius: 0.25rem;
+    background-color: #f7f9fb;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: #445;
+}
+.synocr-regex-explain-list {
+    padding-left: 1.1rem;
+    margin: 0;
+}
+.synocr-regex-explain-item {
+    line-height: 1.35;
+    margin-bottom: 0.1rem;
+}
+.synocr-regex-explain-item:last-child {
+    margin-bottom: 0;
+}
+
+.synocr-regex-extracted-val {
+    background-color: #eafbe8;
+    border: 1px solid #b6e3b0;
+    border-radius: 0.2rem;
+    padding: 0.05rem 0.35rem;
 }

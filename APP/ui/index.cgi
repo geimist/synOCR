@@ -31,6 +31,7 @@
         "${app_home}/template/synocr-rules-editor.js" \
         "${app_home}/template/synocr-folderpicker.js" \
         "${app_home}/template/synocr_namesyntax_editor.js" \
+        "${app_home}/template/synocr-regex-assistant.js" \
         "${app_home}/template/synocr-nav.js"
     do
         [ -f "${_synocr_f}" ] || continue
@@ -49,6 +50,7 @@
     synocr_rules_editor_js_src="template/synocr-rules-editor.js${synocr_asset_q}"
     synocr_folderpicker_js_src="template/synocr-folderpicker.js${synocr_asset_q}"
     synocr_namesyntax_editor_js_src="template/synocr_namesyntax_editor.js${synocr_asset_q}"
+    synocr_regex_assistant_js_src="template/synocr-regex-assistant.js${synocr_asset_q}"
     synocr_nav_js_src="template/synocr-nav.js${synocr_asset_q}"
     unset _synocr_f _synocr_m
 
@@ -196,6 +198,15 @@
         exit 0
     fi
 
+    if [ "${synocr_request_page}" = "rules-regex-preview" ]; then
+        cd "${app_home}" || exit 1
+        [ -f "${app_home}/includes/rules_api.sh" ] && source "${app_home}/includes/rules_api.sh"
+        echo "Content-type: application/json"
+        echo
+        rules_api_regex_preview
+        exit 0
+    fi
+
 
 # Layout - Open basic framework incl. navigation -
 # ----------------------------------------------------------
@@ -304,10 +315,9 @@ echo '
                         fi
                         echo '
                     </ul>
-                    <button type="button" class="btn btn-link btn-sm synocr-nav-toggle" id="synocr-nav-toggle"
+                    <button type="button" class="synocr-nav-toggle" id="synocr-nav-toggle"
                         aria-expanded="true" aria-label="'"${lang_nav_collapse}"'" title="'"${lang_nav_collapse}"'"
                         data-label-collapse="'"${lang_nav_collapse}"'" data-label-expand="'"${lang_nav_expand}"'">
-                        <span class="synocr-nav-toggle-icon" aria-hidden="true">«</span>
                     </button>
                     </div>
                 </div><!-- col -->'
@@ -355,7 +365,8 @@ if [[ "${synocr_request_page}" == rules-edit-* ]]; then
     echo '
     <script src="'"${synocr_rules_editor_js_src}"'"></script>
     <script src="'"${synocr_folderpicker_js_src}"'"></script>
-    <script src="'"${synocr_namesyntax_editor_js_src}"'"></script>'
+    <script src="'"${synocr_namesyntax_editor_js_src}"'"></script>
+    <script src="'"${synocr_regex_assistant_js_src}"'"></script>'
 fi
 if [[ "${synocr_request_page}" == rules-import-* ]]; then
     echo '

@@ -183,13 +183,9 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 # Body:
 # ---------------------------------------------------------------------
 if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == "" ]]; then
-    # -> Headline
 
     echo '
-    <h2 class="synocr-text-blue mt-3">synOCR '"${lang_page1}"'</h2>'
-
-    echo '
-    <h5 class="text-center">
+    <h5 class="text-center mt-3">
         <strong class="synocr-text-red">'"${lang_main_title1}"'</strong>
     </h5>'
 

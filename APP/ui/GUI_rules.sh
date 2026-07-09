@@ -175,15 +175,11 @@ rules_import_run() {
 
 rules_list_view() {
     echo '
-    <h2 class="synocr-text-blue mt-3">'"${lang_rules_title}"'</h2>
-    <hr><br>'
-
-    echo '
-    <div class="row mb-3">
-        <div class="col-sm-12">
-            <a href="index.cgi?page=rules-new" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_rules_btn_new}"'</a>
-        </div>
-    </div>'
+    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2 synocr-rules-list-head">
+        <h2 class="synocr-text-blue mb-0">'"${lang_rules_title}"'</h2>
+        <a href="index.cgi?page=rules-new" class="btn btn-primary btn-sm flex-shrink-0" style="background-color: #0086E5;">'"${lang_rules_btn_new}"'</a>
+    </div>
+    <hr class="mt-2 mb-3">'
 
     _rows=$(synocr_sqlite -json "SELECT id, name, description, rules_json, updated_at FROM ruleset ORDER BY name COLLATE NOCASE")
 
@@ -411,9 +407,14 @@ rules_edit_view() {
         --arg tab_visual          "${lang_rules_tab_visual}" \
         --arg tab_raw             "${lang_rules_tab_raw}" \
         --arg drag_hint           "${lang_rules_drag_hint}" \
+        --arg filter_placeholder  "${lang_rules_filter_placeholder}" \
+        --arg filter_count        "${lang_rules_filter_count}" \
+        --arg filter_empty        "${lang_rules_filter_empty}" \
         --arg section_details     "${lang_rules_section_details}" \
         --arg toggle_details_show "${lang_rules_toggle_details_show}" \
         --arg toggle_details_hide "${lang_rules_toggle_details_hide}" \
+        --arg toggle_rule_expand "${lang_rules_toggle_rule_expand}" \
+        --arg toggle_rule_collapse "${lang_rules_toggle_rule_collapse}" \
         --arg save_success        "${lang_rules_save_success}" \
         --arg save_error          "${lang_rules_save_error}" \
         --arg save_error_title    "${lang_rules_save_error_title}" \
@@ -456,11 +457,142 @@ rules_edit_view() {
         --arg help_excludes       "${lang_rules_help_excludes}" \
         --arg help_postscript     "${lang_rules_help_postscript}" \
         --arg help_apprise        "${lang_rules_help_apprise}" \
+        --arg help_link           "${lang_page4}" \
         --arg help_apprise_att    "${lang_rules_help_apprise_att}" \
         --arg help_notify_lang    "${lang_rules_help_notify_lang}" \
         --arg help_dirname_regex  "${lang_rules_help_dirname_regex}" \
         --arg help_tf_preview     "${lang_rules_help_tf_preview}" \
-        '{btn_add_rule:$btn_add_rule,btn_add_subrule:$btn_add_subrule,btn_remove_rule:$btn_remove_rule,btn_remove_subrule:$btn_remove_subrule,btn_save:$btn_save,btn_cancel:$btn_cancel,rule_name:$rule_name,rule_priority:$rule_priority,rule_condition:$rule_condition,cond_any:$cond_any,cond_all:$cond_all,cond_none:$cond_none,tagname:$tagname,tagname_regex:$tagname_regex,targetfolder:$targetfolder,placeholder_targetfolder:$placeholder_targetfolder,dirname_regex:$dirname_regex,multiline:$multiline,dirname_multiline:$dirname_multiline,postscript:$postscript,apprise:$apprise,apprise_att:$apprise_att,apprise_att_true:$apprise_att_true,apprise_att_false:$apprise_att_false,notify_lang:$notify_lang,on_match_action:$on_match_action,on_match_result:$on_match_result,omatch_unset:$omatch_unset,omatch_continue:$omatch_continue,omatch_break:$omatch_break,omatch_merge:$omatch_merge,omatch_replace:$omatch_replace,omatch_exclusive:$omatch_exclusive,requires:$requires,excludes:$excludes,sub_searchstring:$sub_searchstring,sub_searchtyp:$sub_searchtyp,sub_isregex:$sub_isregex,sub_source:$sub_source,sub_casesensitive:$sub_casesensitive,sub_multiline:$sub_multiline,src_filename:$src_filename,src_content:$src_content,st_contains:$st_contains,st_not_contains:$st_not_contains,st_is:$st_is,st_is_not:$st_is_not,st_starts:$st_starts,st_not_starts:$st_not_starts,st_ends:$st_ends,st_not_ends:$st_not_ends,st_matches:$st_matches,st_not_matches:$st_not_matches,tab_visual:$tab_visual,tab_raw:$tab_raw,drag_hint:$drag_hint,section_details:$section_details,toggle_details_show:$toggle_details_show,toggle_details_hide:$toggle_details_hide,save_success:$save_success,save_error:$save_error,save_error_title:$save_error_title,save_dup_blocked:$save_dup_blocked,val_rule_dup_name:$val_rule_dup_name,raw_invalid:$raw_invalid,unsaved_warning:$unsaved_warning,tf_builder:$tf_builder,tf_pick:$tf_pick,tf_pick_title:$tf_pick_title,tf_pick_confirm:$tf_pick_confirm,tf_preview:$tf_preview,tf_mode_abs:$tf_mode_abs,tf_mode_rel:$tf_mode_rel,tf_dirhint:$tf_dirhint,tf_dirregex_help:$tf_dirregex_help,tf_chip_dirname:$tf_chip_dirname,tf_apply:$tf_apply,tn_builder:$tn_builder,tn_chip_tagname:$tn_chip_tagname,tn_dirhint:$tn_dirhint,tn_regex_help:$tn_regex_help,help_rule_name:$help_rule_name,help_rule_condition:$help_rule_condition,help_tagname:$help_tagname,help_targetfolder:$help_targetfolder,help_sub_source:$help_sub_source,help_sub_searchtyp:$help_sub_searchtyp,help_sub_searchstring:$help_sub_searchstring,help_sub_isregex:$help_sub_isregex,help_sub_casesensitive:$help_sub_casesensitive,help_sub_multiline:$help_sub_multiline,help_tagname_regex:$help_tagname_regex,help_multiline:$help_multiline,help_dirname_multiline:$help_dirname_multiline,help_rule_priority:$help_rule_priority,help_on_match_action:$help_on_match_action,help_on_match_result:$help_on_match_result,help_requires:$help_requires,help_excludes:$help_excludes,help_postscript:$help_postscript,help_apprise:$help_apprise,help_apprise_att:$help_apprise_att,help_notify_lang:$help_notify_lang,help_dirname_regex:$help_dirname_regex,help_tf_preview:$help_tf_preview}')
+        --arg regex_alt_add "${lang_rules_regex_alt_add}" \
+        --arg regex_alt_placeholder "${lang_rules_regex_alt_placeholder}" \
+        --arg regex_anchor_end "${lang_rules_regex_anchor_end}" \
+        --arg regex_anchor_start "${lang_rules_regex_anchor_start}" \
+        --arg regex_anchor_word "${lang_rules_regex_anchor_word}" \
+        --arg regex_context_after "${lang_rules_regex_context_after}" \
+        --arg regex_context_before "${lang_rules_regex_context_before}" \
+        --arg regex_context_not_after "${lang_rules_regex_context_not_after}" \
+        --arg regex_context_not_before "${lang_rules_regex_context_not_before}" \
+        --arg regex_explain_context_after "${lang_rules_regex_explain_context_after}" \
+        --arg regex_explain_context_before "${lang_rules_regex_explain_context_before}" \
+        --arg regex_explain_context_not_after "${lang_rules_regex_explain_context_not_after}" \
+        --arg regex_explain_context_not_before "${lang_rules_regex_explain_context_not_before}" \
+        --arg regex_hint_context "${lang_rules_regex_hint_context}" \
+        --arg regex_help_seg_extract_anchor_1 "${lang_rules_regex_help_seg_extract_anchor_1}" \
+        --arg regex_help_seg_extract_anchor_2 "${lang_rules_regex_help_seg_extract_anchor_2}" \
+        --arg regex_help_seg_extract_anchor_3 "${lang_rules_regex_help_seg_extract_anchor_3}" \
+        --arg regex_help_seg_extract_anchor_t "${lang_rules_regex_help_seg_extract_anchor_t}" \
+        --arg regex_help_seg_optional_1 "${lang_rules_regex_help_seg_optional_1}" \
+        --arg regex_help_seg_optional_2 "${lang_rules_regex_help_seg_optional_2}" \
+        --arg regex_help_seg_optional_3 "${lang_rules_regex_help_seg_optional_3}" \
+        --arg regex_help_seg_optional_t "${lang_rules_regex_help_seg_optional_t}" \
+        --arg regex_help_seg_wsflex_1 "${lang_rules_regex_help_seg_wsflex_1}" \
+        --arg regex_help_seg_wsflex_2 "${lang_rules_regex_help_seg_wsflex_2}" \
+        --arg regex_help_seg_wsflex_t "${lang_rules_regex_help_seg_wsflex_t}" \
+        --arg regex_help_tool_alt_1 "${lang_rules_regex_help_tool_alt_1}" \
+        --arg regex_help_tool_alt_2 "${lang_rules_regex_help_tool_alt_2}" \
+        --arg regex_help_tool_alt_3 "${lang_rules_regex_help_tool_alt_3}" \
+        --arg regex_help_tool_alt_4 "${lang_rules_regex_help_tool_alt_4}" \
+        --arg regex_help_tool_alt_t "${lang_rules_regex_help_tool_alt_t}" \
+        --arg regex_help_tool_anchor_1 "${lang_rules_regex_help_tool_anchor_1}" \
+        --arg regex_help_tool_anchor_2 "${lang_rules_regex_help_tool_anchor_2}" \
+        --arg regex_help_tool_anchor_3 "${lang_rules_regex_help_tool_anchor_3}" \
+        --arg regex_help_tool_anchor_4 "${lang_rules_regex_help_tool_anchor_4}" \
+        --arg regex_help_tool_anchor_t "${lang_rules_regex_help_tool_anchor_t}" \
+        --arg regex_help_tool_class_1 "${lang_rules_regex_help_tool_class_1}" \
+        --arg regex_help_tool_class_2 "${lang_rules_regex_help_tool_class_2}" \
+        --arg regex_help_tool_class_3 "${lang_rules_regex_help_tool_class_3}" \
+        --arg regex_help_tool_class_t "${lang_rules_regex_help_tool_class_t}" \
+        --arg regex_help_tool_context_1 "${lang_rules_regex_help_tool_context_1}" \
+        --arg regex_help_tool_context_2 "${lang_rules_regex_help_tool_context_2}" \
+        --arg regex_help_tool_context_3 "${lang_rules_regex_help_tool_context_3}" \
+        --arg regex_help_tool_context_4 "${lang_rules_regex_help_tool_context_4}" \
+        --arg regex_help_tool_context_t "${lang_rules_regex_help_tool_context_t}" \
+        --arg regex_help_tool_fixed_1 "${lang_rules_regex_help_tool_fixed_1}" \
+        --arg regex_help_tool_fixed_2 "${lang_rules_regex_help_tool_fixed_2}" \
+        --arg regex_help_tool_fixed_3 "${lang_rules_regex_help_tool_fixed_3}" \
+        --arg regex_help_tool_fixed_4 "${lang_rules_regex_help_tool_fixed_4}" \
+        --arg regex_help_tool_fixed_t "${lang_rules_regex_help_tool_fixed_t}" \
+        --arg regex_help_tool_variable_1 "${lang_rules_regex_help_tool_variable_1}" \
+        --arg regex_help_tool_variable_2 "${lang_rules_regex_help_tool_variable_2}" \
+        --arg regex_help_tool_variable_3 "${lang_rules_regex_help_tool_variable_3}" \
+        --arg regex_help_tool_variable_4 "${lang_rules_regex_help_tool_variable_4}" \
+        --arg regex_help_tool_variable_5 "${lang_rules_regex_help_tool_variable_5}" \
+        --arg regex_help_tool_variable_t "${lang_rules_regex_help_tool_variable_t}" \
+        --arg regex_seg_context "${lang_rules_regex_seg_context}" \
+        --arg regex_tool_context "${lang_rules_regex_tool_context}" \
+        --arg regex_assistant_title "${lang_rules_regex_assistant_title}" \
+        --arg regex_btn_apply "${lang_rules_regex_btn_apply}" \
+        --arg regex_btn_cancel "${lang_rules_regex_btn_cancel}" \
+        --arg regex_btn_last_doc "${lang_rules_regex_btn_last_doc}" \
+        --arg regex_btn_load "${lang_rules_regex_btn_load}" \
+        --arg regex_btn_pick_doc "${lang_rules_regex_btn_pick_doc}" \
+        --arg regex_btn_pick_confirm "${lang_rules_regex_btn_pick_confirm}" \
+        --arg regex_btn_reload "${lang_rules_regex_btn_reload}" \
+        --arg regex_btn_remove_seg "${lang_rules_regex_btn_remove_seg}" \
+        --arg regex_casesensitive "${lang_rules_regex_casesensitive}" \
+        --arg regex_class_alnum "${lang_rules_regex_class_alnum}" \
+        --arg regex_class_digits "${lang_rules_regex_class_digits}" \
+        --arg regex_class_length_fixed "${lang_rules_regex_class_length_fixed}" \
+        --arg regex_class_length_range "${lang_rules_regex_class_length_range}" \
+        --arg regex_class_letters "${lang_rules_regex_class_letters}" \
+        --arg regex_class_special "${lang_rules_regex_class_special}" \
+        --arg regex_expert_pattern "${lang_rules_regex_expert_pattern}" \
+        --arg regex_explain_alt "${lang_rules_regex_explain_alt}" \
+        --arg regex_explain_anchor_end "${lang_rules_regex_explain_anchor_end}" \
+        --arg regex_explain_anchor_start "${lang_rules_regex_explain_anchor_start}" \
+        --arg regex_explain_anchor_word "${lang_rules_regex_explain_anchor_word}" \
+        --arg regex_explain_class_alnum "${lang_rules_regex_explain_class_alnum}" \
+        --arg regex_explain_class_digits "${lang_rules_regex_explain_class_digits}" \
+        --arg regex_explain_class_fixed "${lang_rules_regex_explain_class_fixed}" \
+        --arg regex_explain_class_letters "${lang_rules_regex_explain_class_letters}" \
+        --arg regex_explain_class_plus "${lang_rules_regex_explain_class_plus}" \
+        --arg regex_explain_class_range "${lang_rules_regex_explain_class_range}" \
+        --arg regex_explain_class_special "${lang_rules_regex_explain_class_special}" \
+        --arg regex_explain_empty "${lang_rules_regex_explain_empty}" \
+        --arg regex_explain_expert_only "${lang_rules_regex_explain_expert_only}" \
+        --arg regex_explain_fixed "${lang_rules_regex_explain_fixed}" \
+        --arg regex_explain_fixed_wsflex "${lang_rules_regex_explain_fixed_wsflex}" \
+        --arg regex_explain_optional_suffix "${lang_rules_regex_explain_optional_suffix}" \
+        --arg regex_explain_title "${lang_rules_regex_explain_title}" \
+        --arg regex_explain_var_any "${lang_rules_regex_explain_var_any}" \
+        --arg regex_explain_var_greedy "${lang_rules_regex_explain_var_greedy}" \
+        --arg regex_explain_var_ws "${lang_rules_regex_explain_var_ws}" \
+        --arg regex_extract_value_label "${lang_rules_regex_extract_value_label}" \
+        --arg regex_hint_extract_lookaround "${lang_rules_regex_hint_extract_lookaround}" \
+        --arg regex_hint_no_text_layer "${lang_rules_regex_hint_no_text_layer}" \
+        --arg regex_hint_options_change_requires_reload "${lang_rules_regex_hint_options_change_requires_reload}" \
+        --arg regex_hint_tested_one_sample "${lang_rules_regex_hint_tested_one_sample}" \
+        --arg regex_load_section_title "${lang_rules_regex_load_section_title}" \
+        --arg regex_multiline "${lang_rules_regex_multiline}" \
+        --arg regex_opt_all_pages "${lang_rules_regex_opt_all_pages}" \
+        --arg regex_opt_clean_spaces "${lang_rules_regex_opt_clean_spaces}" \
+        --arg regex_opt_first_page "${lang_rules_regex_opt_first_page}" \
+        --arg regex_opt_source_content "${lang_rules_regex_opt_source_content}" \
+        --arg regex_opt_source_filename "${lang_rules_regex_opt_source_filename}" \
+        --arg regex_preview_error "${lang_rules_regex_preview_error}" \
+        --arg regex_preview_matches "${lang_rules_regex_preview_matches}" \
+        --arg regex_preview_no_match "${lang_rules_regex_preview_no_match}" \
+        --arg regex_sample_loaded "${lang_rules_regex_sample_loaded}" \
+        --arg regex_sample_loading "${lang_rules_regex_sample_loading}" \
+        --arg regex_sample_pick "${lang_rules_regex_sample_pick}" \
+        --arg regex_seg_alt "${lang_rules_regex_seg_alt}" \
+        --arg regex_seg_anchor "${lang_rules_regex_seg_anchor}" \
+        --arg regex_seg_class "${lang_rules_regex_seg_class}" \
+        --arg regex_seg_empty "${lang_rules_regex_seg_empty}" \
+        --arg regex_seg_fixed "${lang_rules_regex_seg_fixed}" \
+        --arg regex_seg_optional "${lang_rules_regex_seg_optional}" \
+        --arg regex_seg_var "${lang_rules_regex_seg_var}" \
+        --arg regex_seg_wsflex "${lang_rules_regex_seg_wsflex}" \
+        --arg regex_source_label "${lang_rules_regex_source_label}" \
+        --arg regex_tool_alt "${lang_rules_regex_tool_alt}" \
+        --arg regex_tool_anchor "${lang_rules_regex_tool_anchor}" \
+        --arg regex_tool_class "${lang_rules_regex_tool_class}" \
+        --arg regex_tool_fixed "${lang_rules_regex_tool_fixed}" \
+        --arg regex_tool_variable "${lang_rules_regex_tool_variable}" \
+        --arg regex_var_any "${lang_rules_regex_var_any}" \
+        --arg regex_var_until_anchor "${lang_rules_regex_var_until_anchor}" \
+        --arg regex_var_whitespace "${lang_rules_regex_var_whitespace}" \
+        --arg regex_wand_title "${lang_rules_regex_wand_title}" \
+        '{regex_alt_add:$regex_alt_add,regex_alt_placeholder:$regex_alt_placeholder,regex_anchor_end:$regex_anchor_end,regex_anchor_start:$regex_anchor_start,regex_anchor_word:$regex_anchor_word,regex_context_after:$regex_context_after,regex_context_before:$regex_context_before,regex_context_not_after:$regex_context_not_after,regex_context_not_before:$regex_context_not_before,regex_assistant_title:$regex_assistant_title,regex_btn_apply:$regex_btn_apply,regex_btn_cancel:$regex_btn_cancel,regex_btn_last_doc:$regex_btn_last_doc,regex_btn_load:$regex_btn_load,regex_btn_pick_doc:$regex_btn_pick_doc,regex_btn_pick_confirm:$regex_btn_pick_confirm,regex_btn_reload:$regex_btn_reload,regex_btn_remove_seg:$regex_btn_remove_seg,regex_casesensitive:$regex_casesensitive,regex_class_alnum:$regex_class_alnum,regex_class_digits:$regex_class_digits,regex_class_length_fixed:$regex_class_length_fixed,regex_class_length_range:$regex_class_length_range,regex_class_letters:$regex_class_letters,regex_class_special:$regex_class_special,regex_expert_pattern:$regex_expert_pattern,regex_explain_alt:$regex_explain_alt,regex_explain_anchor_end:$regex_explain_anchor_end,regex_explain_anchor_start:$regex_explain_anchor_start,regex_explain_anchor_word:$regex_explain_anchor_word,regex_explain_context_after:$regex_explain_context_after,regex_explain_context_before:$regex_explain_context_before,regex_explain_context_not_after:$regex_explain_context_not_after,regex_explain_context_not_before:$regex_explain_context_not_before,regex_explain_class_alnum:$regex_explain_class_alnum,regex_explain_class_digits:$regex_explain_class_digits,regex_explain_class_fixed:$regex_explain_class_fixed,regex_explain_class_letters:$regex_explain_class_letters,regex_explain_class_plus:$regex_explain_class_plus,regex_explain_class_range:$regex_explain_class_range,regex_explain_class_special:$regex_explain_class_special,regex_explain_empty:$regex_explain_empty,regex_explain_expert_only:$regex_explain_expert_only,regex_explain_fixed:$regex_explain_fixed,regex_explain_fixed_wsflex:$regex_explain_fixed_wsflex,regex_explain_optional_suffix:$regex_explain_optional_suffix,regex_explain_title:$regex_explain_title,regex_explain_var_any:$regex_explain_var_any,regex_explain_var_greedy:$regex_explain_var_greedy,regex_explain_var_ws:$regex_explain_var_ws,regex_extract_value_label:$regex_extract_value_label,regex_hint_context:$regex_hint_context,regex_help_seg_extract_anchor_1:$regex_help_seg_extract_anchor_1,regex_help_seg_extract_anchor_2:$regex_help_seg_extract_anchor_2,regex_help_seg_extract_anchor_3:$regex_help_seg_extract_anchor_3,regex_help_seg_extract_anchor_t:$regex_help_seg_extract_anchor_t,regex_help_seg_optional_1:$regex_help_seg_optional_1,regex_help_seg_optional_2:$regex_help_seg_optional_2,regex_help_seg_optional_3:$regex_help_seg_optional_3,regex_help_seg_optional_t:$regex_help_seg_optional_t,regex_help_seg_wsflex_1:$regex_help_seg_wsflex_1,regex_help_seg_wsflex_2:$regex_help_seg_wsflex_2,regex_help_seg_wsflex_t:$regex_help_seg_wsflex_t,regex_help_tool_alt_1:$regex_help_tool_alt_1,regex_help_tool_alt_2:$regex_help_tool_alt_2,regex_help_tool_alt_3:$regex_help_tool_alt_3,regex_help_tool_alt_4:$regex_help_tool_alt_4,regex_help_tool_alt_t:$regex_help_tool_alt_t,regex_help_tool_anchor_1:$regex_help_tool_anchor_1,regex_help_tool_anchor_2:$regex_help_tool_anchor_2,regex_help_tool_anchor_3:$regex_help_tool_anchor_3,regex_help_tool_anchor_4:$regex_help_tool_anchor_4,regex_help_tool_anchor_t:$regex_help_tool_anchor_t,regex_help_tool_class_1:$regex_help_tool_class_1,regex_help_tool_class_2:$regex_help_tool_class_2,regex_help_tool_class_3:$regex_help_tool_class_3,regex_help_tool_class_t:$regex_help_tool_class_t,regex_help_tool_context_1:$regex_help_tool_context_1,regex_help_tool_context_2:$regex_help_tool_context_2,regex_help_tool_context_3:$regex_help_tool_context_3,regex_help_tool_context_4:$regex_help_tool_context_4,regex_help_tool_context_t:$regex_help_tool_context_t,regex_help_tool_fixed_1:$regex_help_tool_fixed_1,regex_help_tool_fixed_2:$regex_help_tool_fixed_2,regex_help_tool_fixed_3:$regex_help_tool_fixed_3,regex_help_tool_fixed_4:$regex_help_tool_fixed_4,regex_help_tool_fixed_t:$regex_help_tool_fixed_t,regex_help_tool_variable_1:$regex_help_tool_variable_1,regex_help_tool_variable_2:$regex_help_tool_variable_2,regex_help_tool_variable_3:$regex_help_tool_variable_3,regex_help_tool_variable_4:$regex_help_tool_variable_4,regex_help_tool_variable_5:$regex_help_tool_variable_5,regex_help_tool_variable_t:$regex_help_tool_variable_t,regex_hint_extract_lookaround:$regex_hint_extract_lookaround,regex_hint_no_text_layer:$regex_hint_no_text_layer,regex_hint_options_change_requires_reload:$regex_hint_options_change_requires_reload,regex_hint_tested_one_sample:$regex_hint_tested_one_sample,regex_load_section_title:$regex_load_section_title,regex_multiline:$regex_multiline,regex_opt_all_pages:$regex_opt_all_pages,regex_opt_clean_spaces:$regex_opt_clean_spaces,regex_opt_first_page:$regex_opt_first_page,regex_opt_source_content:$regex_opt_source_content,regex_opt_source_filename:$regex_opt_source_filename,regex_preview_error:$regex_preview_error,regex_preview_matches:$regex_preview_matches,regex_preview_no_match:$regex_preview_no_match,regex_sample_loaded:$regex_sample_loaded,regex_sample_loading:$regex_sample_loading,regex_sample_pick:$regex_sample_pick,regex_seg_alt:$regex_seg_alt,regex_seg_anchor:$regex_seg_anchor,regex_seg_context:$regex_seg_context,regex_seg_class:$regex_seg_class,regex_seg_empty:$regex_seg_empty,regex_seg_fixed:$regex_seg_fixed,regex_seg_optional:$regex_seg_optional,regex_seg_var:$regex_seg_var,regex_seg_wsflex:$regex_seg_wsflex,regex_source_label:$regex_source_label,regex_tool_alt:$regex_tool_alt,regex_tool_anchor:$regex_tool_anchor,regex_tool_context:$regex_tool_context,regex_tool_class:$regex_tool_class,regex_tool_fixed:$regex_tool_fixed,regex_tool_variable:$regex_tool_variable,regex_var_any:$regex_var_any,regex_var_until_anchor:$regex_var_until_anchor,regex_var_whitespace:$regex_var_whitespace,regex_wand_title:$regex_wand_title,btn_add_rule:$btn_add_rule,btn_add_subrule:$btn_add_subrule,btn_remove_rule:$btn_remove_rule,btn_remove_subrule:$btn_remove_subrule,btn_save:$btn_save,btn_cancel:$btn_cancel,rule_name:$rule_name,rule_priority:$rule_priority,rule_condition:$rule_condition,cond_any:$cond_any,cond_all:$cond_all,cond_none:$cond_none,tagname:$tagname,tagname_regex:$tagname_regex,targetfolder:$targetfolder,placeholder_targetfolder:$placeholder_targetfolder,dirname_regex:$dirname_regex,multiline:$multiline,dirname_multiline:$dirname_multiline,postscript:$postscript,apprise:$apprise,apprise_att:$apprise_att,apprise_att_true:$apprise_att_true,apprise_att_false:$apprise_att_false,notify_lang:$notify_lang,on_match_action:$on_match_action,on_match_result:$on_match_result,omatch_unset:$omatch_unset,omatch_continue:$omatch_continue,omatch_break:$omatch_break,omatch_merge:$omatch_merge,omatch_replace:$omatch_replace,omatch_exclusive:$omatch_exclusive,requires:$requires,excludes:$excludes,sub_searchstring:$sub_searchstring,sub_searchtyp:$sub_searchtyp,sub_isregex:$sub_isregex,sub_source:$sub_source,sub_casesensitive:$sub_casesensitive,sub_multiline:$sub_multiline,src_filename:$src_filename,src_content:$src_content,st_contains:$st_contains,st_not_contains:$st_not_contains,st_is:$st_is,st_is_not:$st_is_not,st_starts:$st_starts,st_not_starts:$st_not_starts,st_ends:$st_ends,st_not_ends:$st_not_ends,st_matches:$st_matches,st_not_matches:$st_not_matches,tab_visual:$tab_visual,tab_raw:$tab_raw,filter_placeholder:$filter_placeholder,filter_count:$filter_count,filter_empty:$filter_empty,drag_hint:$drag_hint,section_details:$section_details,toggle_details_show:$toggle_details_show,toggle_details_hide:$toggle_details_hide,toggle_rule_expand:$toggle_rule_expand,toggle_rule_collapse:$toggle_rule_collapse,save_success:$save_success,save_error:$save_error,save_error_title:$save_error_title,save_dup_blocked:$save_dup_blocked,val_rule_dup_name:$val_rule_dup_name,raw_invalid:$raw_invalid,unsaved_warning:$unsaved_warning,tf_builder:$tf_builder,tf_pick:$tf_pick,tf_pick_title:$tf_pick_title,tf_pick_confirm:$tf_pick_confirm,tf_preview:$tf_preview,tf_mode_abs:$tf_mode_abs,tf_mode_rel:$tf_mode_rel,tf_dirhint:$tf_dirhint,tf_dirregex_help:$tf_dirregex_help,tf_chip_dirname:$tf_chip_dirname,tf_apply:$tf_apply,tn_builder:$tn_builder,tn_chip_tagname:$tn_chip_tagname,tn_dirhint:$tn_dirhint,tn_regex_help:$tn_regex_help,help_rule_name:$help_rule_name,help_rule_condition:$help_rule_condition,help_tagname:$help_tagname,help_targetfolder:$help_targetfolder,help_sub_source:$help_sub_source,help_sub_searchtyp:$help_sub_searchtyp,help_sub_searchstring:$help_sub_searchstring,help_sub_isregex:$help_sub_isregex,help_sub_casesensitive:$help_sub_casesensitive,help_sub_multiline:$help_sub_multiline,help_tagname_regex:$help_tagname_regex,help_multiline:$help_multiline,help_dirname_multiline:$help_dirname_multiline,help_rule_priority:$help_rule_priority,help_on_match_action:$help_on_match_action,help_on_match_result:$help_on_match_result,help_requires:$help_requires,help_excludes:$help_excludes,help_postscript:$help_postscript,help_apprise:$help_apprise,help_link:$help_link,help_apprise_att:$help_apprise_att,help_notify_lang:$help_notify_lang,help_dirname_regex:$help_dirname_regex,help_tf_preview:$help_tf_preview}')
 
     _name_val=$(rules_html_escape "${_name}")
     _desc_val=$(rules_html_escape "${_desc}")
@@ -522,23 +654,25 @@ rules_edit_view() {
         _yaml_venv_missing=false
     fi
     if [ "${_count}" -gt 0 ]; then
-        _import_btn='<span title="'"${lang_rules_import_disabled_tooltip}"'"><button type="button" class="btn btn-outline-secondary btn-sm" disabled>'"${lang_rules_btn_import}"'</button></span>'
+        _import_btn='<span class="synocr-has-tip" data-tip="'"${lang_rules_import_disabled_tooltip}"'"><button type="button" class="btn btn-outline-secondary btn-sm" disabled>'"${lang_rules_btn_import}"'</button></span>'
     else
         _import_btn='<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#popup-rules-import" id="synocr-rules-import-open">'"${lang_rules_btn_import}"'</button>'
     fi
 
     echo '
-    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+    <div class="synocr-rules-editor-page">
+    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2 synocr-rules-editor-head">
         <h2 class="synocr-text-blue mb-0">'"${lang_rules_editor_title}"'</h2>
-        <div class="synocr-rules-actionbar d-flex gap-2 flex-shrink-0">
+        <div class="synocr-rules-actionbar d-flex gap-2 flex-shrink-0 align-items-center flex-wrap justify-content-end">
             '"${_import_btn}"'
             <button type="button" class="btn btn-primary btn-sm synocr-rules-save-btn" style="background-color: #0086E5;" id="synocr-rules-save">'"${lang_rules_btn_save}"'</button>
             <a href="index.cgi?page=rules" class="btn btn-secondary btn-sm synocr-rules-leave-link">'"${lang_rules_back}"'</a>
+            <span id="synocr-rules-status" class="small synocr-rules-status"></span>
         </div>
     </div>
-    <hr class="mt-2 mb-3">
+    <hr class="mt-2 mb-3 synocr-rules-editor-hr">
 
-    <form id="synocr-ruleset-form" autocomplete="off" onsubmit="return false;">
+    <form id="synocr-ruleset-form" class="synocr-ruleset-form" autocomplete="off" onsubmit="return false;">
         <input type="hidden" name="ruleset_id" id="synocr-ruleset-id" value="'"${_id}"'">
 
         <div class="synocr-ruleset-meta mb-3">
@@ -554,29 +688,35 @@ rules_edit_view() {
         <script type="application/json" id="synocr-rules-tag-tokens">'"${_tag_tokens_json}"'</script>
         <script type="application/json" id="synocr-rules-notify-langs">'"${_notify_langs_json}"'</script>
 
-        <ul class="nav nav-tabs mb-3" id="synocr-rules-tabs" role="tablist">
-            <li class="nav-item"><a class="nav-link active" id="synocr-rules-tab-visual" data-bs-toggle="tab" href="#synocr-rules-pane-visual" role="tab">'"${lang_rules_tab_visual}"'</a></li>
-            <li class="nav-item"><a class="nav-link" id="synocr-rules-tab-raw" data-bs-toggle="tab" href="#synocr-rules-pane-raw" role="tab">'"${lang_rules_tab_raw}"'</a></li>
-        </ul>
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="synocr-rules-pane-visual" role="tabpanel">
-                <div id="synocr-rules-editor" data-ruleset-id="'"${_id}"'">
-                    <div id="synocr-rules-editor-root"></div>
+        <div class="synocr-rules-tabs-row d-flex flex-wrap align-items-center gap-3 mb-3">
+            <ul class="nav nav-tabs mb-0 synocr-ruleset-tabs-nav" id="synocr-rules-tabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" id="synocr-rules-tab-visual" data-bs-toggle="tab" href="#synocr-rules-pane-visual" role="tab">'"${lang_rules_tab_visual}"'</a></li>
+                <li class="nav-item"><a class="nav-link" id="synocr-rules-tab-raw" data-bs-toggle="tab" href="#synocr-rules-pane-raw" role="tab">'"${lang_rules_tab_raw}"'</a></li>
+            </ul>
+            <div class="synocr-rules-filter-wrap ms-auto" id="synocr-rules-filter-wrap">
+                <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                    <input type="search" class="form-control form-control-sm synocr-rules-filter-input" id="synocr-rules-filter" autocomplete="off" placeholder="'"${lang_rules_filter_placeholder}"'">
+                    <span class="small text-muted synocr-rules-filter-count" id="synocr-rules-filter-count" style="display:none;" aria-live="polite"></span>
                 </div>
             </div>
-            <div class="tab-pane fade" id="synocr-rules-pane-raw" role="tabpanel">
-                <textarea class="form-control font-monospace" id="synocr-rules-raw" rows="18" spellcheck="false"></textarea>
-            </div>
         </div>
-
-        <div class="row mt-3">
-            <div class="col-sm-12 text-end">
-                <button type="button" class="btn btn-primary btn-sm synocr-rules-save-btn" style="background-color: #0086E5;" id="synocr-rules-save-bottom">'"${lang_rules_btn_save}"'</button>
-                <a href="index.cgi?page=rules" class="btn btn-secondary btn-sm ms-2 synocr-rules-leave-link">'"${lang_rules_back}"'</a>
-                <span id="synocr-rules-status" class="small ms-2"></span>
+        <div class="synocr-ruleset-tab-area">
+            <div class="tab-content synocr-ruleset-tab-content">
+                <div class="tab-pane fade show active" id="synocr-rules-pane-visual" role="tabpanel">
+                    <div class="synocr-rules-editor-toolbar d-flex justify-content-between align-items-center mb-2" id="synocr-rules-toolbar"></div>
+                    <div class="synocr-rules-editor-scroll" id="synocr-rules-editor-scroll">
+                        <div id="synocr-rules-editor" data-ruleset-id="'"${_id}"'">
+                            <div id="synocr-rules-editor-root"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="synocr-rules-pane-raw" role="tabpanel">
+                    <textarea class="form-control font-monospace synocr-rules-raw-input" id="synocr-rules-raw" spellcheck="false"></textarea>
+                </div>
             </div>
         </div>
     </form>
+    </div>
 
     <!-- YAML import modal (GET navigation — index.cgi routes via QUERY_STRING only) -->
     <div class="modal fade" id="popup-rules-import" tabindex="-1" aria-labelledby="label-rules-import" aria-hidden="true">

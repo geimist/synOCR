@@ -13,14 +13,12 @@
 
         var labelCollapse = btn.getAttribute('data-label-collapse') || 'Collapse navigation';
         var labelExpand = btn.getAttribute('data-label-expand') || 'Expand navigation';
-        var icon = btn.querySelector('.synocr-nav-toggle-icon');
 
         function setCollapsed(collapsed) {
             layout.classList.toggle('synocr-layout--nav-collapsed', collapsed);
             btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
             btn.setAttribute('aria-label', collapsed ? labelExpand : labelCollapse);
             btn.setAttribute('title', collapsed ? labelExpand : labelCollapse);
-            if (icon) icon.textContent = collapsed ? '»' : '«';
         }
 
         var collapsed = false;

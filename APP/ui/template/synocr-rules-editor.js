@@ -12,8 +12,12 @@
     var DATA_ID = 'synocr-ruleset-data';
     var LANG_ID = 'synocr-rules-lang';
     var ROOT_ID = 'synocr-rules-editor-root';
+    var TOOLBAR_ID = 'synocr-rules-toolbar';
+    var SCROLL_ID = 'synocr-rules-editor-scroll';
     var RAW_ID = 'synocr-rules-raw';
     var STATUS_ID = 'synocr-rules-status';
+    var FILTER_ID = 'synocr-rules-filter';
+    var FILTER_COUNT_ID = 'synocr-rules-filter-count';
     var ID_INPUT = 'synocr-ruleset-id';
     var NAME_INPUT = 'ruleset-name';
     var DESC_INPUT = 'ruleset-description';
@@ -40,7 +44,11 @@
     var TN_MULTILINE_ID = 'synocr-tn-multiline';
     var TN_APPLY_BTN_ID = 'synocr-tn-apply';
 
-    var state = { rules: [], groups: {}, rawDirty: false, dragIndex: null, expandedRules: {} };
+    var state = {
+        rules: [], groups: {}, rawDirty: false,
+        dragIndex: null, dragCard: null, dragHeight: null, dropPlaceholder: null,
+        expandedRules: {}, collapsedRules: {}
+    };
     var lang = {};
     var savedSnapshot = '';
     var pathTokens = {};
@@ -122,6 +130,174 @@
 
     function L(key) { return lang[key] != null ? lang[key] : key; }
 
+    var tipPopupEl = null;
+    var tipActiveHost = null;
+
+    function ensureTipPopup() {
+        if (!tipPopupEl) {
+            tipPopupEl = document.createElement('div');
+            tipPopupEl.className = 'synocr-tip-popup';
+            tipPopupEl.hidden = true;
+            document.body.appendChild(tipPopupEl);
+        }
+        return tipPopupEl;
+    }
+
+    function positionTipPopup(host) {
+        var popup = ensureTipPopup();
+        var hostRect = host.getBoundingClientRect();
+        var popupRect = popup.getBoundingClientRect();
+        var gap = 6;
+        var left = hostRect.left + (hostRect.width - popupRect.width) / 2;
+        var top = hostRect.top - popupRect.height - gap;
+        if (top < gap) top = hostRect.bottom + gap;
+        left = Math.max(gap, Math.min(left, window.innerWidth - popupRect.width - gap));
+        top = Math.max(gap, Math.min(top, window.innerHeight - popupRect.height - gap));
+        popup.style.left = Math.round(left) + 'px';
+        popup.style.top = Math.round(top) + 'px';
+    }
+
+    function hideDataTip() {
+        if (tipPopupEl) {
+            tipPopupEl.hidden = true;
+            tipPopupEl.classList.remove('synocr-tip-popup-wide', 'synocr-tip-popup-rich');
+            tipPopupEl.textContent = '';
+        }
+        tipActiveHost = null;
+    }
+
+    function tipPartsFromKey(baseKey) {
+        if (!baseKey || !lang) return null;
+        var title = lang[baseKey + '_t'];
+        var parts = [];
+        if (title != null && String(title) !== '') parts.push({ type: 'title', text: String(title) });
+        var i = 1;
+        while (i <= 12) {
+            var k = baseKey + '_' + i;
+            if (lang[k] == null || String(lang[k]) === '') break;
+            parts.push({ type: 'p', text: String(lang[k]) });
+            i++;
+        }
+        if (!parts.length) {
+            if (lang[baseKey] != null && String(lang[baseKey]) !== '') {
+                return [{ type: 'p', text: String(lang[baseKey]) }];
+            }
+            return null;
+        }
+        return parts;
+    }
+
+    function renderTipPopup(host) {
+        var popup = ensureTipPopup();
+        var tipKey = host.getAttribute('data-tip-key');
+        var parts = tipKey ? tipPartsFromKey(tipKey) : null;
+        popup.textContent = '';
+        popup.classList.remove('synocr-tip-popup-rich');
+        if (parts && parts.length) {
+            popup.classList.add('synocr-tip-popup-rich');
+            parts.forEach(function (part) {
+                var el = document.createElement(part.type === 'title' ? 'div' : 'p');
+                el.className = part.type === 'title' ? 'synocr-tip-title' : 'synocr-tip-line';
+                el.textContent = part.text;
+                popup.appendChild(el);
+            });
+            return;
+        }
+        var text = host.getAttribute('data-tip');
+        if (text) popup.textContent = text;
+    }
+
+    function showDataTip(host) {
+        if (!host.getAttribute('data-tip') && !host.getAttribute('data-tip-key')) return;
+        renderTipPopup(host);
+        var popup = ensureTipPopup();
+        if (!popup.childNodes.length && !popup.textContent) return;
+        popup.classList.toggle('synocr-tip-popup-wide', !!host.closest('#synocr-regex-assistant-modal'));
+        popup.hidden = false;
+        positionTipPopup(host);
+        tipActiveHost = host;
+    }
+
+    function applyDataTip(el, text) {
+        if (!el || !text) return;
+        el.setAttribute('data-tip', text);
+        el.removeAttribute('title');
+    }
+
+    function bindDataTipsOnce() {
+        if (document._synocrDataTipsBound) return;
+        document._synocrDataTipsBound = true;
+        document.body.addEventListener('mouseover', function (e) {
+            var host = e.target.closest('[data-tip],[data-tip-key]');
+            if (!host) {
+                if (tipActiveHost && !tipActiveHost.contains(e.target)) hideDataTip();
+                return;
+            }
+            if (host !== tipActiveHost) showDataTip(host);
+        });
+        document.body.addEventListener('mouseout', function (e) {
+            if (!tipActiveHost) return;
+            if (e.target.closest('[data-tip],[data-tip-key]') !== tipActiveHost) return;
+            var rel = e.relatedTarget;
+            if (rel && tipActiveHost.contains(rel)) return;
+            hideDataTip();
+        });
+        document.body.addEventListener('focusin', function (e) {
+            var host = e.target.closest('[data-tip],[data-tip-key]');
+            if (host) showDataTip(host);
+        });
+        document.body.addEventListener('focusout', function (e) {
+            if (tipActiveHost && e.target === tipActiveHost) hideDataTip();
+        });
+        window.addEventListener('scroll', function () {
+            if (tipActiveHost && tipPopupEl && !tipPopupEl.hidden) positionTipPopup(tipActiveHost);
+        }, true);
+    }
+
+    function regexAssistantAvailable() {
+        return !!window.synocrRegexAssistant && typeof window.synocrRegexAssistant.open === 'function';
+    }
+    function wandButton(titleKey, onClick) {
+        var btn = h('button', {
+            type: 'button',
+            class: 'btn btn-link synocr-regex-wand synocr-has-tip',
+            'data-tip': L(titleKey),
+            onclick: function (e) { e.preventDefault(); onClick(e); }
+        });
+        btn.appendChild(h('img', { src: './images/magic.svg', alt: '', class: 'synocr-regex-wand-icon' }));
+        return btn;
+    }
+    /** Builder gear (tag / target folder) — settings icon inside the field on the right. */
+    function gearButton(titleKey, onClick) {
+        var btn = h('button', {
+            type: 'button',
+            class: 'btn btn-link synocr-rule-targetfolder-gear synocr-has-tip',
+            'data-tip': L(titleKey),
+            onclick: function (e) { e.preventDefault(); onClick(e); }
+        });
+        btn.appendChild(h('img', { src: './images/settings.svg', alt: '', class: 'synocr-rule-targetfolder-gear-icon' }));
+        return btn;
+    }
+    /** Wrap a text input so the wand sits inside the field on the right (like the gear on tag/targetfolder). */
+    function wrapRegexWand(input, titleKey, onClick, active) {
+        input.classList.add('synocr-regex-field-input');
+        var wrap = h('div', { class: 'synocr-regex-field-wrap' + (active ? ' synocr-regex-active' : '') }, [input, wandButton(titleKey, onClick)]);
+        return wrap;
+    }
+
+    function applyRegexDependentControls(active, multilineInput, multilineRow) {
+        if (multilineInput) multilineInput.disabled = !active;
+        if (multilineRow) {
+            if (active) multilineRow.classList.remove('synocr-switch-disabled');
+            else multilineRow.classList.add('synocr-switch-disabled');
+        }
+    }
+
+    function syncModalRegexMultilineGate(multilineInput, multilineRow, regexValue) {
+        var active = !!(regexValue != null && String(regexValue).trim());
+        applyRegexDependentControls(active, multilineInput, multilineRow);
+    }
+
     function parseAppriseAttachment(val) {
         if (val === true || val === 'true') return 'true';
         if (val === false || val === 'false') return 'false';
@@ -149,14 +325,17 @@
     function labeled(text, tipKey) {
         var attrs = { class: 'synocr-rule-tip-label' };
         var t = tipKey ? tip(tipKey) : '';
-        if (t) attrs.title = t;
+        if (t) {
+            attrs['data-tip'] = t;
+            attrs.class += ' synocr-has-tip';
+        }
         return h('label', attrs, text);
     }
 
     function setTip(el, tipKey) {
         if (!el || !tipKey) return;
-        var t = tip(tipKey);
-        if (t) el.setAttribute('title', t);
+        applyDataTip(el, tip(tipKey));
+        if (el.getAttribute('data-tip')) el.classList.add('synocr-has-tip');
     }
 
     function fromBlob(blob) {
@@ -272,26 +451,154 @@
         state.expandedRules[ruleKey(r, i)] = expanded;
     }
 
-    function fieldText(label, value, onInput, ph, tipKey) {
+    function isRuleCollapsed(r, i) {
+        var key = ruleKey(r, i);
+        if (state.collapsedRules[key] === undefined) {
+            state.collapsedRules[key] = true;
+        }
+        return state.collapsedRules[key];
+    }
+
+    function setRuleCollapsed(r, i, collapsed) {
+        state.collapsedRules[ruleKey(r, i)] = collapsed;
+    }
+
+    function cleanupRuleDrag() {
+        if (state.dragCard) {
+            state.dragCard.classList.remove('synocr-rule-card-dragging');
+            state.dragCard = null;
+        }
+        if (state.dropPlaceholder && state.dropPlaceholder.parentNode) {
+            state.dropPlaceholder.parentNode.removeChild(state.dropPlaceholder);
+        }
+        state.dropPlaceholder = null;
+        state.dragIndex = null;
+        state.dragHeight = null;
+    }
+
+    function getRuleInsertIndex(listEl, clientY) {
+        var cards = listEl.querySelectorAll('.synocr-rule-card:not(.synocr-rule-card-dragging):not(.synocr-rule-card--filter-hidden)');
+        var c;
+        for (c = 0; c < cards.length; c++) {
+            var rect = cards[c].getBoundingClientRect();
+            if (clientY < rect.top + rect.height / 2) {
+                return parseInt(cards[c].dataset.ruleIndex, 10);
+            }
+        }
+        return state.rules.length;
+    }
+
+    function isNoOpRuleMove(from, insertAt) {
+        return insertAt === from || insertAt === from + 1;
+    }
+
+    function moveRulePlaceholder(listEl, insertAt) {
+        var ph = state.dropPlaceholder;
+        if (!ph || !listEl) return;
+        var from = state.dragIndex;
+        if (from == null || isNoOpRuleMove(from, insertAt)) {
+            if (ph.parentNode) ph.parentNode.removeChild(ph);
+            return;
+        }
+        var cards = listEl.querySelectorAll('.synocr-rule-card');
+        var target = null;
+        var c;
+        for (c = 0; c < cards.length; c++) {
+            if (parseInt(cards[c].dataset.ruleIndex, 10) === insertAt) {
+                target = cards[c];
+                break;
+            }
+        }
+        if (target && !target.classList.contains('synocr-rule-card-dragging')) {
+            listEl.insertBefore(ph, target);
+        } else {
+            listEl.appendChild(ph);
+        }
+    }
+
+    function applyRuleReorder(from, insertAt) {
+        if (from == null || isNoOpRuleMove(from, insertAt)) return;
+        var item = state.rules.splice(from, 1)[0];
+        if (insertAt > from) insertAt--;
+        state.rules.splice(insertAt, 0, item);
+    }
+
+    function onRulesListDragOver(e) {
+        if (state.dragIndex == null) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        moveRulePlaceholder(e.currentTarget, getRuleInsertIndex(e.currentTarget, e.clientY));
+    }
+
+    function onRulesListDrop(e) {
+        e.preventDefault();
+        if (state.dragIndex == null) return;
+        var from = state.dragIndex;
+        var insertAt = getRuleInsertIndex(e.currentTarget, e.clientY);
+        cleanupRuleDrag();
+        applyRuleReorder(from, insertAt);
+        render();
+    }
+
+    function bindRulesListDrag(listEl) {
+        if (!listEl || listEl._synocrDragBound) return;
+        listEl._synocrDragBound = true;
+        listEl.addEventListener('dragover', onRulesListDragOver);
+        listEl.addEventListener('drop', onRulesListDrop);
+    }
+
+    var APPRISE_SERVICES_URL = 'https://appriseit.com/services/';
+
+    function appriseServicesHelpLink() {
+        return h('a', {
+            href: APPRISE_SERVICES_URL,
+            target: '_blank',
+            rel: 'noopener noreferrer',
+            class: 'synocr-apprise-services-link'
+        }, L('help_link'));
+    }
+
+    function fieldPrimaryCell(label, control, tipKey, withAppriseHelp) {
+        var labelNode = labeled(label, tipKey);
+        if (withAppriseHelp) {
+            labelNode = h('div', { class: 'synocr-rule-label-row' }, [
+                labelNode,
+                appriseServicesHelpLink()
+            ]);
+        }
+        return h('div', { class: 'synocr-rule-field' }, [
+            labelNode,
+            control
+        ]);
+    }
+
+    function fieldPrimaryText(label, value, onInput, ph, tipKey, withAppriseHelp) {
         var inp = h('input', { type: 'text', class: 'form-control form-control-sm', value: value });
         if (ph) inp.setAttribute('placeholder', ph);
         inp.addEventListener('input', function () { onInput(inp.value); });
-        return h('div', { class: 'row mb-3' }, [
-            h('div', { class: 'col-sm-5' }, labeled(label, tipKey)),
-            h('div', { class: 'col-sm-5' }, inp)
-        ]);
+        return fieldPrimaryCell(label, inp, tipKey, withAppriseHelp);
     }
 
-    function fieldSelect(label, sel, tipKey) {
-        return h('div', { class: 'row mb-3' }, [
-            h('div', { class: 'col-sm-5' }, labeled(label, tipKey)),
-            h('div', { class: 'col-sm-5' }, sel)
-        ]);
+    function fieldPrimarySelect(label, sel, tipKey) {
+        return fieldPrimaryCell(label, sel, tipKey, false);
     }
 
-    function toggleSwitch(checked, onChange) {
+    function fieldPrimaryRefList(label, current, onChange, tipKey) {
+        return fieldPrimaryCell(label, refChecklist(current, onChange), tipKey, false);
+    }
+
+    function detailsGridRow(cells) {
+        var row = h('div', { class: 'synocr-rule-details-row' });
+        cells.forEach(function (cell) {
+            if (cell) row.appendChild(cell);
+        });
+        return row;
+    }
+
+    function toggleSwitch(checked, onChange, disabled) {
         var inp = h('input', { type: 'checkbox', class: 'form-check-input', role: 'switch' });
         if (checked) inp.checked = true;
+        if (disabled) inp.disabled = true;
         inp.addEventListener('change', function () { onChange(inp.checked); });
         return inp;
     }
@@ -303,26 +610,69 @@
         ]);
     }
 
-    function inlineSwitch(label, checked, onChange, tipKey) {
-        var inp = toggleSwitch(checked, onChange);
+    function inlineSwitch(label, checked, onChange, tipKey, disabled) {
+        var inp = toggleSwitch(checked, onChange, disabled);
         var labelAttrs = { class: 'form-check-label synocr-rule-tip-label' };
         var t = tipKey ? tip(tipKey) : '';
-        if (t) labelAttrs.title = t;
-        return h('div', { class: 'form-check form-switch form-check-inline mb-0' }, [
+        if (t) {
+            labelAttrs['data-tip'] = t;
+            labelAttrs.class += ' synocr-has-tip';
+        }
+        return h('div', { class: 'form-check form-switch form-check-inline mb-0' + (disabled ? ' synocr-switch-disabled' : '') }, [
             inp,
             h('label', labelAttrs, label)
         ]);
     }
 
-    function fieldRefList(label, current, onChange, tipKey) {
-        return h('div', { class: 'row mb-3' }, [
-            h('div', { class: 'col-sm-5' }, labeled(label, tipKey)),
-            h('div', { class: 'col-sm-5' }, refChecklist(current, onChange))
-        ]);
-    }
-
     function ruleNames() {
         return state.rules.map(function (r) { return (r.name || '').trim(); }).filter(function (n) { return !!n; });
+    }
+
+    function getFilterQuery() {
+        var el = document.getElementById(FILTER_ID);
+        return el ? el.value.trim().toLowerCase() : '';
+    }
+
+    function isFilterActive() {
+        return getFilterQuery().length > 0;
+    }
+
+    function ruleHaystack(r) {
+        var parts = [
+            r.name, r.tagname, r.tagname_RegEx, r.targetfolder, r.dirname_RegEx,
+            r.postscript, r.apprise_call, r.notify_lang, r.priority, r.condition,
+            r.apprise_attachment
+        ];
+        if (r.on_match) {
+            parts.push(r.on_match.action, r.on_match.result);
+        }
+        if (r.requires && r.requires.length) parts.push(r.requires.join(' '));
+        if (r.excludes && r.excludes.length) parts.push(r.excludes.join(' '));
+        (r.subrules || []).forEach(function (s) {
+            parts.push(s.searchstring, s.searchtyp, s.source);
+        });
+        return parts.filter(function (p) { return p != null && String(p) !== ''; }).join('\u0001').toLowerCase();
+    }
+
+    function ruleMatchesFilter(r, query) {
+        if (!query) return true;
+        return ruleHaystack(r).indexOf(query) !== -1;
+    }
+
+    function fmtFilterCount(shown, total) {
+        return L('filter_count').replace('%1', String(shown)).replace('%2', String(total));
+    }
+
+    function syncFilterCount(shown, total, active) {
+        var el = document.getElementById(FILTER_COUNT_ID);
+        if (!el) return;
+        if (!active) {
+            el.style.display = 'none';
+            el.textContent = '';
+            return;
+        }
+        el.style.display = '';
+        el.textContent = fmtFilterCount(shown, total);
     }
 
     function refChecklist(current, onChange) {
@@ -361,17 +711,32 @@
         setTip(src, 'help_sub_source');
         setTip(ss, 'help_sub_searchstring');
 
-        var del = h('button', { type: 'button', class: 'btn btn-outline-danger btn-sm synocr-subrule-delete', title: L('btn_remove_subrule'), onclick: function () { state.rules[i].subrules.splice(j, 1); render(); } }, '×');
+        var ssWrap = wrapRegexWand(ss, 'regex_wand_title', function () {
+            if (!regexAssistantAvailable()) return;
+            window.synocrRegexAssistant.open({
+                mode: 'match', source: s.source, multiline: s.multilineregex, casesensitive: s.casesensitive,
+                pattern: s.searchstring || '',
+                onApply: function (res) {
+                    s.searchstring = res.pattern; s.isRegEx = true; s.multilineregex = res.multiline; s.casesensitive = res.casesensitive;
+                    ss.value = res.pattern; render();
+                }
+            });
+        }, s.isRegEx);
+
+        var del = h('button', { type: 'button', class: 'btn btn-outline-danger btn-sm synocr-subrule-delete synocr-has-tip', 'data-tip': L('btn_remove_subrule'), onclick: function () { state.rules[i].subrules.splice(j, 1); render(); } }, '×');
 
         var fields = h('div', { class: 'synocr-subrule-fields' }, [
             h('div', { class: 'synocr-subrule-source' }, src),
             h('div', { class: 'synocr-subrule-typ' }, st),
-            h('div', { class: 'synocr-subrule-search' }, ss)
+            h('div', { class: 'synocr-subrule-search' }, ssWrap)
         ]);
         var flags = h('div', { class: 'synocr-subrule-flags' }, [
-            inlineSwitch(L('sub_isregex'), s.isRegEx, function (v) { s.isRegEx = v; }, 'help_sub_isregex'),
             inlineSwitch(L('sub_casesensitive'), s.casesensitive, function (v) { s.casesensitive = v; }, 'help_sub_casesensitive'),
-            inlineSwitch(L('sub_multiline'), s.multilineregex, function (v) { s.multilineregex = v; }, 'help_sub_multiline')
+            inlineSwitch(L('sub_isregex'), s.isRegEx, function (v) {
+                s.isRegEx = v;
+                render();
+            }, 'help_sub_isregex'),
+            inlineSwitch(L('sub_multiline'), s.multilineregex, function (v) { s.multilineregex = v; }, 'help_sub_multiline', !s.isRegEx)
         ]);
         var body = h('div', { class: 'synocr-subrule-body' }, [fields, flags]);
 
@@ -380,17 +745,12 @@
         return row;
     }
 
-    function fieldPrimaryCell(label, control, tipKey) {
-        return h('div', { class: 'synocr-rule-field' }, [
-            labeled(label, tipKey),
-            control
-        ]);
-    }
-
-    function renderRule(i) {
+    function renderRule(i, filterExpand) {
         var r = state.rules[i];
         var expanded = isRuleExpanded(r, i);
+        var collapsed = filterExpand ? false : isRuleCollapsed(r, i);
         var detailsId = 'synocr-rule-details-' + i;
+        var bodyId = 'synocr-rule-body-' + i;
 
         var nameInp = h('input', { type: 'text', class: 'form-control form-control-sm', value: r.name });
         nameInp.addEventListener('input', function () { r.name = nameInp.value; });
@@ -402,56 +762,44 @@
 
         var tagInp = h('input', { type: 'text', class: 'form-control form-control-sm synocr-rule-targetfolder-input', value: r.tagname });
         tagInp.addEventListener('input', function () { r.tagname = tagInp.value; });
-        var tagGearBtn = h('button', {
-            type: 'button', class: 'btn btn-link synocr-rule-targetfolder-gear',
-            title: L('tn_builder'),
-            onclick: function (e) { e.preventDefault(); openTagBuilder(i, tagInp); }
-        }, '\u2699');
+        var tagGearBtn = gearButton('tn_builder', function () { openTagBuilder(i, tagInp); });
         var tagWrap = h('div', { class: 'synocr-rule-targetfolder-wrap' }, [tagInp, tagGearBtn]);
 
         var targetInp = h('input', { type: 'text', class: 'form-control form-control-sm synocr-rule-targetfolder-input', value: r.targetfolder, placeholder: L('placeholder_targetfolder') });
         targetInp.addEventListener('input', function () { r.targetfolder = targetInp.value; });
-        var gearBtn = h('button', {
-            type: 'button', class: 'btn btn-link synocr-rule-targetfolder-gear',
-            title: L('tf_builder'),
-            onclick: function (e) { e.preventDefault(); openTargetFolderBuilder(i, targetInp); }
-        }, '\u2699');
+        var gearBtn = gearButton('tf_builder', function () { openTargetFolderBuilder(i, targetInp); });
         var targetWrap = h('div', { class: 'synocr-rule-targetfolder-wrap' }, [targetInp, gearBtn]);
 
         var handle = h('span', {
-            class: 'synocr-rule-drag-handle',
-            title: L('drag_hint'),
-            draggable: 'true',
-            ondragstart: function (e) {
-                state.dragIndex = i;
-                e.dataTransfer.effectAllowed = 'move';
-                try { e.dataTransfer.setData('text/plain', String(i)); } catch (err) {}
-            }
+            class: 'synocr-rule-drag-handle synocr-has-tip',
+            'data-tip': L('drag_hint'),
+            draggable: 'true'
         }, '⠿');
 
         var removeBtn = h('button', {
-            type: 'button', class: 'btn btn-outline-danger btn-sm synocr-rule-remove',
-            title: L('btn_remove_rule'),
+            type: 'button', class: 'btn btn-outline-danger btn-sm synocr-rule-remove synocr-has-tip',
+            'data-tip': L('btn_remove_rule'),
             onclick: function () { state.rules.splice(i, 1); render(); }
         }, '×');
 
-        var primaryBody = h('div', { class: 'synocr-rule-primary' }, [
+        var headerRow = h('div', { class: 'synocr-rule-header' }, [
             fieldPrimaryCell(L('rule_name'), nameInp, 'help_rule_name'),
-            fieldPrimaryCell(L('rule_condition'), condSel, 'help_rule_condition'),
-            fieldPrimaryCell(L('tagname'), tagWrap, 'help_tagname'),
-            fieldPrimaryCell(L('targetfolder'), targetWrap, 'help_targetfolder')
+            fieldPrimaryCell(L('tagname'), tagWrap, 'help_tagname')
         ]);
 
-        var ruleBody = h('div', { class: 'synocr-rule-body' });
+        var secondaryRow = h('div', { class: 'synocr-rule-secondary' }, [
+            fieldPrimaryCell(L('rule_condition'), condSel, 'help_rule_condition'),
+            fieldPrimaryCell(L('targetfolder'), targetWrap, 'help_targetfolder')
+        ]);
 
         var subWrap = h('div', { class: 'synocr-rule-subrules mb-2' }, [
             h('div', { class: 'd-flex justify-content-between align-items-center mb-2' }, [
                 h('span', { class: 'synocr-text-blue' }, [
-                    h('span', { class: 'synocr-rule-tip-label', title: tip('help_sub_source') }, L('sub_source')),
+                    h('span', { class: 'synocr-rule-tip-label synocr-has-tip', 'data-tip': tip('help_sub_source') }, L('sub_source')),
                     ' / ',
-                    h('span', { class: 'synocr-rule-tip-label', title: tip('help_sub_searchtyp') }, L('sub_searchtyp')),
+                    h('span', { class: 'synocr-rule-tip-label synocr-has-tip', 'data-tip': tip('help_sub_searchtyp') }, L('sub_searchtyp')),
                     ' / ',
-                    h('span', { class: 'synocr-rule-tip-label', title: tip('help_sub_searchstring') }, L('sub_searchstring'))
+                    h('span', { class: 'synocr-rule-tip-label synocr-has-tip', 'data-tip': tip('help_sub_searchstring') }, L('sub_searchstring'))
                 ]),
                 h('button', { type: 'button', class: 'btn btn-sm synocr-btn-add', onclick: function () { r.subrules.push({ searchstring: '', searchtyp: 'contains', isRegEx: false, source: 'content', casesensitive: false, multilineregex: false }); render(); } }, '+ ' + L('btn_add_subrule'))
             ])
@@ -480,39 +828,81 @@
             class: 'collapse synocr-rule-details' + (expanded ? ' show' : ''),
             id: detailsId
         });
-        var detailsInner = h('div', { class: 'pt-2' });
-        detailsInner.appendChild(fieldText(L('rule_priority'), r.priority, function (v) { r.priority = v; }, 'auto', 'help_rule_priority'));
-        detailsInner.appendChild(fieldSelect(L('on_match_action'), actSel, 'help_on_match_action'));
-        detailsInner.appendChild(fieldSelect(L('on_match_result'), resSel, 'help_on_match_result'));
-        detailsInner.appendChild(fieldRefList(L('requires'), r.requires, function (v) { r.requires = v; }, 'help_requires'));
-        detailsInner.appendChild(fieldRefList(L('excludes'), r.excludes, function (v) { r.excludes = v; }, 'help_excludes'));
-        detailsInner.appendChild(fieldText(L('postscript'), r.postscript, function (v) { r.postscript = v; }, undefined, 'help_postscript'));
-        detailsInner.appendChild(fieldText(L('apprise'), r.apprise_call, function (v) { r.apprise_call = v; }, undefined, 'help_apprise'));
-        detailsInner.appendChild(fieldSelect(L('apprise_att'), attSel, 'help_apprise_att'));
-        detailsInner.appendChild(fieldSelect(L('notify_lang'), langSel, 'help_notify_lang'));
+        var detailsInner = h('div', { class: 'pt-2 synocr-rule-details-grid' });
+        detailsInner.appendChild(detailsGridRow([
+            fieldPrimaryText(L('rule_priority'), r.priority, function (v) { r.priority = v; }, 'auto', 'help_rule_priority')
+        ]));
+        detailsInner.appendChild(detailsGridRow([
+            fieldPrimarySelect(L('on_match_action'), actSel, 'help_on_match_action'),
+            fieldPrimarySelect(L('on_match_result'), resSel, 'help_on_match_result')
+        ]));
+        detailsInner.appendChild(detailsGridRow([
+            fieldPrimaryRefList(L('requires'), r.requires, function (v) { r.requires = v; }, 'help_requires'),
+            fieldPrimaryRefList(L('excludes'), r.excludes, function (v) { r.excludes = v; }, 'help_excludes')
+        ]));
+        detailsInner.appendChild(detailsGridRow([
+            fieldPrimaryText(L('postscript'), r.postscript, function (v) { r.postscript = v; }, undefined, 'help_postscript'),
+            fieldPrimaryText(L('apprise'), r.apprise_call, function (v) { r.apprise_call = v; }, undefined, 'help_apprise', true)
+        ]));
+        detailsInner.appendChild(detailsGridRow([
+            fieldPrimarySelect(L('apprise_att'), attSel, 'help_apprise_att'),
+            fieldPrimarySelect(L('notify_lang'), langSel, 'help_notify_lang')
+        ]));
         detailsBody.appendChild(detailsInner);
 
-        ruleBody.appendChild(primaryBody);
+        var collapseBtn = h('button', {
+            type: 'button',
+            class: 'synocr-rule-collapse-toggle synocr-has-tip',
+            'data-tip': collapsed ? L('toggle_rule_expand') : L('toggle_rule_collapse'),
+            'aria-label': collapsed ? L('toggle_rule_expand') : L('toggle_rule_collapse'),
+            'aria-expanded': collapsed ? 'false' : 'true',
+            'aria-controls': bodyId,
+            onclick: function () {
+                setRuleCollapsed(r, i, !isRuleCollapsed(r, i));
+                render();
+            }
+        });
+
+        var ruleBody = h('div', {
+            class: 'collapse synocr-rule-body synocr-rule-collapsible' + (collapsed ? '' : ' show'),
+            id: bodyId
+        });
+        ruleBody.appendChild(secondaryRow);
         ruleBody.appendChild(subWrap);
         ruleBody.appendChild(detailsFooter);
         ruleBody.appendChild(detailsBody);
 
-        var cardLayout = h('div', { class: 'synocr-rule-layout' }, [handle, ruleBody]);
+        var headerRowWrap = h('div', { class: 'synocr-rule-header-row' }, [handle, collapseBtn, headerRow]);
+        var cardLayout = h('div', { class: 'synocr-rule-layout' }, [headerRowWrap, ruleBody]);
 
-        var card = h('div', { class: 'card card-body mb-3 synocr-rule-card', dataset: { ruleIndex: String(i) } }, [
+        var cardClass = 'card card-body mb-3 synocr-rule-card' + (collapsed ? ' synocr-rule-card-collapsed' : '');
+        var card = h('div', { class: cardClass, dataset: { ruleIndex: String(i) } }, [
             removeBtn, cardLayout
         ]);
-        card.addEventListener('dragover', function (e) { e.preventDefault(); });
-        card.addEventListener('drop', function (e) {
-            e.preventDefault();
-            var from = state.dragIndex;
-            var to = i;
-            if (from == null || from === to) return;
-            var moved = state.rules.splice(from, 1)[0];
-            state.rules.splice(to, 0, moved);
-            state.dragIndex = null;
-            render();
+
+        handle.addEventListener('dragstart', function (e) {
+            if (isFilterActive()) {
+                e.preventDefault();
+                return;
+            }
+            state.dragIndex = i;
+            state.dragCard = card;
+            var rect = card.getBoundingClientRect();
+            var mb = parseFloat(window.getComputedStyle(card).marginBottom) || 0;
+            state.dragHeight = rect.height + mb;
+            card.classList.add('synocr-rule-card-dragging');
+            var ph = document.createElement('div');
+            ph.className = 'synocr-rule-drop-placeholder';
+            ph.style.height = state.dragHeight + 'px';
+            ph.setAttribute('aria-hidden', 'true');
+            state.dropPlaceholder = ph;
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', String(i)); } catch (err) {}
         });
+        handle.addEventListener('dragend', function () {
+            cleanupRuleDrag();
+        });
+
         return card;
     }
 
@@ -521,23 +911,78 @@
         if (!root) return;
         root.textContent = '';
 
-        var toolbar = h('div', { class: 'd-flex justify-content-between align-items-center mb-2' }, [
-            h('span', { class: 'text-secondary small' }, L('drag_hint')),
-            h('button', { type: 'button', class: 'btn btn-sm synocr-btn-add synocr-btn-add-filled', onclick: function () {
+        var fq = getFilterQuery();
+        var filterActive = fq.length > 0;
+        var total = state.rules.length;
+
+        if (!total) {
+            root.appendChild(h('div', { class: 'card card-body text-secondary' }, '—'));
+            syncFilterCount(0, 0, false);
+            return;
+        }
+        var list = h('div', { class: 'synocr-rules-list' + (filterActive ? ' synocr-rules-list--filtered' : '') });
+        var shown = 0;
+        state.rules.forEach(function (r, i) {
+            var card = renderRule(i, filterActive);
+            if (filterActive && !ruleMatchesFilter(r, fq)) {
+                card.classList.add('synocr-rule-card--filter-hidden');
+            } else {
+                shown++;
+            }
+            list.appendChild(card);
+        });
+        if (filterActive && shown === 0) {
+            list.appendChild(h('div', { class: 'card card-body text-secondary synocr-rules-filter-empty' }, L('filter_empty')));
+        }
+        root.appendChild(list);
+        bindRulesListDrag(list);
+        syncFilterCount(shown, total, filterActive);
+    }
+
+    function initFilter() {
+        var inp = document.getElementById(FILTER_ID);
+        if (!inp || inp._synocrFilterBound) return;
+        inp._synocrFilterBound = true;
+        inp.addEventListener('input', function () {
+            if (state.dragIndex != null) cleanupRuleDrag();
+            render();
+        });
+    }
+
+    function initToolbar() {
+        var toolbar = document.getElementById(TOOLBAR_ID);
+        if (!toolbar || toolbar._synocrInit) return;
+        toolbar._synocrInit = true;
+        toolbar.appendChild(h('span', { class: 'text-secondary small' }, L('drag_hint')));
+        toolbar.appendChild(h('button', {
+            type: 'button',
+            class: 'btn btn-sm synocr-btn-add synocr-btn-add-filled',
+            onclick: function () {
                 var n = 1;
                 var names = ruleNames();
                 while (names.indexOf('rule_' + n) !== -1) n++;
                 state.rules.push({ name: 'rule_' + n, condition: 'any', priority: '', tagname: '', tagname_RegEx: '', targetfolder: '', dirname_RegEx: '', multilineregex: false, dirname_multilineregex: false, postscript: '', apprise_call: '', apprise_attachment: '', notify_lang: '', on_match: { action: '', result: '' }, requires: [], excludes: [], subrules: [{ searchstring: '', searchtyp: 'contains', isRegEx: false, source: 'content', casesensitive: false, multilineregex: false }] });
                 render();
-            } }, '+ ' + L('btn_add_rule'))
-        ]);
-        root.appendChild(toolbar);
+            }
+        }, '+ ' + L('btn_add_rule')));
+    }
 
-        if (!state.rules.length) {
-            root.appendChild(h('div', { class: 'card card-body text-secondary' }, '—'));
-            return;
+    function setRulesEditorPageMode() {
+        var page = document.querySelector('.synocr-rules-editor-page');
+        if (!page) return;
+        if (isRawTabActive()) {
+            page.classList.add('synocr-rules-editor-page--raw');
+        } else {
+            page.classList.remove('synocr-rules-editor-page--raw');
         }
-        state.rules.forEach(function (r, i) { root.appendChild(renderRule(i)); });
+    }
+
+    function initRulesEditorLayout() {
+        var scrollForm = document.querySelector('.synocr-content-scroll');
+        if (scrollForm && document.getElementById(ROOT_ID)) {
+            scrollForm.classList.add('synocr-rules-editor-active');
+        }
+        setRulesEditorPageMode();
     }
 
     function showRulesModal(modalId) {
@@ -705,6 +1150,42 @@
         }).catch(function (e) { setStatus(L('save_error') + ' ' + e, false); });
     }
 
+    function isRawTabActive() {
+        var pane = document.getElementById('synocr-rules-pane-raw');
+        return !!(pane && pane.classList.contains('active'));
+    }
+
+    function syncRawTextareaHeight() {
+        var rawTa = document.getElementById(RAW_ID);
+        if (!rawTa) return;
+        if (!isRawTabActive()) {
+            rawTa.style.height = '';
+            return;
+        }
+        var scrollEl = document.querySelector('.synocr-content-scroll');
+        var colEl = document.querySelector('.synocr-content-col');
+        var tabArea = document.querySelector('.synocr-ruleset-tab-area');
+        var containerBottom = scrollEl
+            ? scrollEl.getBoundingClientRect().bottom
+            : (colEl ? colEl.getBoundingClientRect().bottom : window.innerHeight);
+        if (tabArea) {
+            var tabRect = tabArea.getBoundingClientRect();
+            if (tabRect.bottom > 0 && tabRect.bottom < containerBottom) {
+                containerBottom = tabRect.bottom;
+            }
+        }
+
+        var top = rawTa.getBoundingClientRect().top;
+        var h = Math.floor(containerBottom - top - 8);
+        rawTa.style.height = Math.max(120, h) + 'px';
+    }
+
+    function scheduleRawTextareaHeight() {
+        syncRawTextareaHeight();
+        window.requestAnimationFrame(syncRawTextareaHeight);
+        window.setTimeout(syncRawTextareaHeight, 50);
+    }
+
     function initTabs() {
         var rawTa = document.getElementById(RAW_ID);
         var tabVisual = document.getElementById('synocr-rules-tab-visual');
@@ -712,6 +1193,8 @@
         if (tabRaw) {
             tabRaw.addEventListener('shown.bs.tab', function () {
                 if (rawTa) rawTa.value = JSON.stringify(toBlob(), null, 2);
+                setRulesEditorPageMode();
+                scheduleRawTextareaHeight();
             });
         }
         if (tabVisual) {
@@ -720,9 +1203,23 @@
                     try { fromBlob(JSON.parse(rawTa.value)); state.rawDirty = false; render(); }
                     catch (e) { setStatus(L('raw_invalid'), false); }
                 }
+                if (rawTa) rawTa.style.height = '';
+                setRulesEditorPageMode();
             });
         }
         if (rawTa) rawTa.addEventListener('input', function () { state.rawDirty = true; });
+        window.addEventListener('resize', syncRawTextareaHeight);
+        var scrollEl = document.querySelector('.synocr-content-scroll');
+        if (scrollEl && typeof window.ResizeObserver === 'function') {
+            new window.ResizeObserver(syncRawTextareaHeight).observe(scrollEl);
+        }
+        var navToggle = document.getElementById('synocr-nav-toggle');
+        if (navToggle) {
+            navToggle.addEventListener('click', function () {
+                window.setTimeout(scheduleRawTextareaHeight, 320);
+            });
+        }
+        scheduleRawTextareaHeight();
     }
 
     // --- target-folder builder modal ---------------------------------------
@@ -774,6 +1271,16 @@
         return { text: sample, abs: /^\/volume*/.test(sample) };
     }
 
+    function syncTfRegexGate() {
+        if (!tfModal.dirInput) return;
+        syncModalRegexMultilineGate(tfModal.multilineInput, tfModal.multilineRow, tfModal.dirInput.value);
+    }
+
+    function syncTnRegexGate() {
+        if (!tnModal.regexInput) return;
+        syncModalRegexMultilineGate(tnModal.multilineInput, tnModal.multilineRow, tnModal.regexInput.value);
+    }
+
     function updateTargetPreview() {
         if (!tfModal.editor) return;
         var v = tfModal.editor.getValue();
@@ -810,15 +1317,18 @@
         var palette = h('div', { id: TF_PALETTE_ID, class: 'synocr-namesyntax-palette d-flex flex-wrap gap-1 mb-3' });
         Object.keys(pathTokens).forEach(function (tok) {
             palette.appendChild(h('span', {
-                class: 'synocr-namesyntax-palette-item',
+                class: 'synocr-namesyntax-palette-item synocr-has-tip',
                 draggable: 'true',
                 'data-token': tok,
-                title: tok
+                'data-tip': tok
             }, pathTokens[tok]));
         });
 
         var dirInput = h('input', { type: 'text', id: TF_DIRINPUT_ID, class: 'form-control form-control-sm font-monospace', placeholder: '[0-9]{4}' });
-        dirInput.addEventListener('input', updateTargetPreview);
+        dirInput.addEventListener('input', function () {
+            updateTargetPreview();
+            syncTfRegexGate();
+        });
         var hintEl = h('div', { class: 'small text-muted mt-1' });
         var previewModeEl = h('div', { id: TF_PREVIEW_MODE_ID, class: 'small text-muted mb-1' });
         var previewEl = h('div', { id: TF_PREVIEW_ID, class: 'form-control form-control-sm bg-light font-monospace small' });
@@ -826,8 +1336,23 @@
         var tfMultilineInput = h('input', { type: 'checkbox', id: TF_MULTILINE_ID, class: 'form-check-input', role: 'switch' });
         var tfMultilineRow = h('div', { class: 'form-check form-switch mt-2' }, [
             tfMultilineInput,
-            h('label', { class: 'form-check-label synocr-rule-tip-label', 'for': TF_MULTILINE_ID, title: tip('help_dirname_multiline') }, L('dirname_multiline'))
+            h('label', { class: 'form-check-label synocr-rule-tip-label synocr-has-tip', 'for': TF_MULTILINE_ID, 'data-tip': tip('help_dirname_multiline') }, L('dirname_multiline'))
         ]);
+
+        var dirInputWrap = wrapRegexWand(dirInput, 'regex_wand_title', function () {
+            if (!regexAssistantAvailable()) return;
+            window.synocrRegexAssistant.open({
+                mode: 'extract', extractType: 'dir',
+                multiline: tfMultilineInput.checked, casesensitive: false,
+                pattern: dirInput.value || '',
+                onApply: function (res) {
+                    dirInput.value = res.pattern;
+                    tfMultilineInput.checked = res.multiline;
+                    updateTargetPreview();
+                    syncTfRegexGate();
+                }
+            });
+        }, true);
 
         var pickerBtn = h('button', { type: 'button', id: TF_PICKER_BTN_ID, class: 'btn btn-outline-secondary' }, L('tf_pick'));
         pickerBtn.addEventListener('click', function () {
@@ -856,18 +1381,18 @@
                         h('button', { type: 'button', class: 'btn-close', 'data-bs-dismiss': 'modal', 'aria-label': 'Close' })
                     ]),
                     h('div', { class: 'modal-body' }, [
-                        h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label', 'for': TF_VISUAL_ID, title: tip('help_targetfolder') }, L('targetfolder')),
+                        h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label synocr-has-tip', 'for': TF_VISUAL_ID, 'data-tip': tip('help_targetfolder') }, L('targetfolder')),
                         pathRow,
                         hidden,
                         palette,
                         h('div', { class: 'border-top pt-3 mb-3' }, [
-                            h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label', 'for': TF_DIRINPUT_ID, title: tip('help_dirname_regex') }, L('dirname_regex')),
-                            dirInput,
+                            h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label synocr-has-tip', 'for': TF_DIRINPUT_ID, 'data-tip': tip('help_dirname_regex') }, L('dirname_regex')),
+                            dirInputWrap,
                             hintEl,
                             tfMultilineRow
                         ]),
                         h('div', { class: 'border-top pt-3' }, [
-                            h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label', title: tip('help_tf_preview') }, L('tf_preview')),
+                            h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label synocr-has-tip', 'data-tip': tip('help_tf_preview') }, L('tf_preview')),
                             previewModeEl,
                             previewEl
                         ])
@@ -880,7 +1405,9 @@
         document.body.appendChild(modalEl);
         tfModal.el = modalEl;
         tfModal.dirInput = dirInput;
+        tfModal.dirInputWrap = dirInputWrap;
         tfModal.multilineInput = tfMultilineInput;
+        tfModal.multilineRow = tfMultilineRow;
         tfModal.hintEl = hintEl;
         tfModal.previewEl = previewEl;
         tfModal.previewModeEl = previewModeEl;
@@ -906,6 +1433,7 @@
         if (tfModal.dirInput) tfModal.dirInput.value = r.dirname_RegEx || '';
         if (tfModal.editor) tfModal.editor.setValue(r.targetfolder || '');
         if (tfModal.multilineInput) tfModal.multilineInput.checked = r.dirname_multilineregex === true;
+        syncTfRegexGate();
         updateTargetPreview();
         showModal(tfModal.el);
     }
@@ -948,22 +1476,40 @@
         var palette = h('div', { id: TN_PALETTE_ID, class: 'synocr-namesyntax-palette d-flex flex-wrap gap-1 mb-3' });
         Object.keys(tagTokens).forEach(function (tok) {
             palette.appendChild(h('span', {
-                class: 'synocr-namesyntax-palette-item',
+                class: 'synocr-namesyntax-palette-item synocr-has-tip',
                 draggable: 'true',
                 'data-token': tok,
-                title: tok
+                'data-tip': tok
             }, tagTokens[tok]));
         });
 
         var regexInput = h('input', { type: 'text', id: TN_REGEX_INPUT_ID, class: 'form-control form-control-sm font-monospace', placeholder: '[0-9]{4}' });
-        regexInput.addEventListener('input', updateTagHint);
+        regexInput.addEventListener('input', function () {
+            updateTagHint();
+            syncTnRegexGate();
+        });
         var hintEl = h('div', { class: 'small text-muted mt-1' });
 
         var multilineInput = h('input', { type: 'checkbox', id: TN_MULTILINE_ID, class: 'form-check-input', role: 'switch' });
         var multilineRow = h('div', { class: 'form-check form-switch' }, [
             multilineInput,
-            h('label', { class: 'form-check-label synocr-rule-tip-label', 'for': TN_MULTILINE_ID, title: tip('help_multiline') }, L('multiline'))
+            h('label', { class: 'form-check-label synocr-rule-tip-label synocr-has-tip', 'for': TN_MULTILINE_ID, 'data-tip': tip('help_multiline') }, L('multiline'))
         ]);
+
+        var regexInputWrap = wrapRegexWand(regexInput, 'regex_wand_title', function () {
+            if (!regexAssistantAvailable()) return;
+            window.synocrRegexAssistant.open({
+                mode: 'extract', extractType: 'tag',
+                multiline: multilineInput.checked, casesensitive: false,
+                pattern: regexInput.value || '',
+                onApply: function (res) {
+                    regexInput.value = res.pattern;
+                    multilineInput.checked = res.multiline;
+                    updateTagHint();
+                    syncTnRegexGate();
+                }
+            });
+        }, true);
 
         var applyBtn = h('button', { type: 'button', id: TN_APPLY_BTN_ID, class: 'btn btn-primary btn-sm', style: 'background-color:#0086E5;' }, L('tf_apply'));
         applyBtn.addEventListener('click', tagModalSave);
@@ -979,13 +1525,13 @@
                         h('button', { type: 'button', class: 'btn-close', 'data-bs-dismiss': 'modal', 'aria-label': 'Close' })
                     ]),
                     h('div', { class: 'modal-body' }, [
-                        h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label', 'for': TN_VISUAL_ID, title: tip('help_tagname') }, L('tagname')),
+                        h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label synocr-has-tip', 'for': TN_VISUAL_ID, 'data-tip': tip('help_tagname') }, L('tagname')),
                         editorWrap,
                         hidden,
                         palette,
                         h('div', { class: 'border-top pt-3 mb-3' }, [
-                            h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label', 'for': TN_REGEX_INPUT_ID, title: tip('help_tagname_regex') }, L('tagname_regex')),
-                            regexInput,
+                            h('label', { class: 'form-label small fw-bold mb-1 synocr-rule-tip-label synocr-has-tip', 'for': TN_REGEX_INPUT_ID, 'data-tip': tip('help_tagname_regex') }, L('tagname_regex')),
+                            regexInputWrap,
                             hintEl
                         ]),
                         h('div', { class: 'border-top pt-3' }, multilineRow)
@@ -998,7 +1544,9 @@
         document.body.appendChild(modalEl);
         tnModal.el = modalEl;
         tnModal.regexInput = regexInput;
+        tnModal.regexInputWrap = regexInputWrap;
         tnModal.multilineInput = multilineInput;
+        tnModal.multilineRow = multilineRow;
         tnModal.hintEl = hintEl;
 
         if (window.synocrChipEditor && typeof window.synocrChipEditor.create === 'function') {
@@ -1022,6 +1570,7 @@
         if (tnModal.regexInput) tnModal.regexInput.value = r.tagname_RegEx || '';
         if (tnModal.multilineInput) tnModal.multilineInput.checked = r.multilineregex === true;
         if (tnModal.editor) tnModal.editor.setValue(r.tagname || '');
+        syncTnRegexGate();
         updateTagHint();
         showModal(tnModal.el);
     }
@@ -1037,6 +1586,7 @@
     }
 
     function init() {
+        bindDataTipsOnce();
         var root = document.getElementById(ROOT_ID);
         if (!root) return;
         var l = readJson(LANG_ID);
@@ -1049,6 +1599,9 @@
         if (nl && typeof nl === 'object') notifyLangs = nl;
         var data = readJson(DATA_ID);
         fromBlob(data || { rules: {}, groups: {} });
+        initRulesEditorLayout();
+        initFilter();
+        initToolbar();
         render();
         initTabs();
         updateSavedSnapshot();

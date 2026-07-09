@@ -856,8 +856,7 @@ if [[ "${page}" == "edit" ]]; then
     <p>&nbsp;</p>
     <p>'"${lang_edit_summary1}"'</p>
     <p>'"${lang_edit_summary2}"'</p>
-    <p>'"${lang_edit_summary3}"'</p>
-    <p>'"${lang_edit_summary4}"' ('"${lang_example}"' <code>/volume1/…</code>)</p>'
+    <p>'"${lang_edit_summary3}" "${lang_edit_summary4}"' ('"${lang_example}"' <code>/volume1/…</code>)</p>'
 
         if [ -n "${restore_status}" ] ; then
             if [ "${restore_status}" = "ok" ]; then
@@ -1011,13 +1010,16 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="INPUTDIR">'"${lang_edit_set1_sourcedir_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
+                        <div class="col-sm-5">
+                            <div class="synocr-folder-input-wrap">'
                             if [ -n "${INPUTDIR}" ]; then
-                                echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm" value="'"${INPUTDIR}"'" data-initial-path="'"${INPUTDIR}"'" onblur="updatePathStatusIcon('\''INPUTDIR'\'')" />'
+                                echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm synocr-folder-input" value="'"${INPUTDIR}"'" data-initial-path="'"${INPUTDIR}"'" onblur="updatePathStatusIcon('\''INPUTDIR'\'')" />'
                             else
-                                echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm" value="" data-initial-path="" onblur="updatePathStatusIcon('\''INPUTDIR'\'')" />'
+                                echo '<input type="text" name="INPUTDIR" id="INPUTDIR" class="form-control form-control-sm synocr-folder-input" value="" data-initial-path="" onblur="updatePathStatusIcon('\''INPUTDIR'\'')" />'
                             fi
                             echo '
+                                <button type="button" class="btn btn-link synocr-folder-picker-btn" title="'"${lang_edit_set1_folderpicker_titel}"'" onclick="openFolderPicker('\''INPUTDIR'\'')">🔎</button>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">'
@@ -1030,7 +1032,6 @@ if [[ "${page}" == "edit" ]]; then
                                 fi
                                 echo '
 
-                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="openFolderPicker('INPUTDIR')">🔎</button>
                                 <a data-bs-toggle="collapse" href="#INPUTDIR-info" role="button" aria-expanded="false" aria-controls="INPUTDIR-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
@@ -1056,13 +1057,16 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="OUTPUTDIR">'"${lang_edit_set1_targetdir_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
+                        <div class="col-sm-5">
+                            <div class="synocr-folder-input-wrap">'
                             if [ -n "${OUTPUTDIR}" ]; then
-                                echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm" value="'"${OUTPUTDIR}"'" data-initial-path="'"${OUTPUTDIR}"'" onblur="updatePathStatusIcon('\''OUTPUTDIR'\'')" />'
+                                echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm synocr-folder-input" value="'"${OUTPUTDIR}"'" data-initial-path="'"${OUTPUTDIR}"'" onblur="updatePathStatusIcon('\''OUTPUTDIR'\'')" />'
                             else
-                                echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm" value="" data-initial-path="" onblur="updatePathStatusIcon('\''OUTPUTDIR'\'')" />'
+                                echo '<input type="text" name="OUTPUTDIR" id="OUTPUTDIR" class="form-control form-control-sm synocr-folder-input" value="" data-initial-path="" onblur="updatePathStatusIcon('\''OUTPUTDIR'\'')" />'
                             fi
                             echo '
+                                <button type="button" class="btn btn-link synocr-folder-picker-btn" title="'"${lang_edit_set1_folderpicker_titel}"'" onclick="openFolderPicker('\''OUTPUTDIR'\'')">🔎</button>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">'
@@ -1075,7 +1079,6 @@ if [[ "${page}" == "edit" ]]; then
                                 fi
                                 echo '
 
-                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="openFolderPicker('OUTPUTDIR')">🔎</button>
                                 <a data-bs-toggle="collapse" href="#OUTPUTDIR-info" role="button" aria-expanded="false" aria-controls="OUTPUTDIR-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
@@ -1101,13 +1104,16 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="BACKUPDIR">'"${lang_edit_set1_backupdir_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
+                        <div class="col-sm-5">
+                            <div class="synocr-folder-input-wrap">'
                             if [ -n "${BACKUPDIR}" ]; then
-                                echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm" value="'"${BACKUPDIR}"'" data-initial-path="'"${BACKUPDIR}"'" onblur="updatePathStatusIcon('\''BACKUPDIR'\'')" />'
+                                echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm synocr-folder-input" value="'"${BACKUPDIR}"'" data-initial-path="'"${BACKUPDIR}"'" onblur="updatePathStatusIcon('\''BACKUPDIR'\'')" />'
                             else
-                                echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm" value="" data-initial-path="" onblur="updatePathStatusIcon('\''BACKUPDIR'\'')" />'
+                                echo '<input type="text" name="BACKUPDIR" id="BACKUPDIR" class="form-control form-control-sm synocr-folder-input" value="" data-initial-path="" onblur="updatePathStatusIcon('\''BACKUPDIR'\'')" />'
                             fi
                             echo '
+                                <button type="button" class="btn btn-link synocr-folder-picker-btn" title="'"${lang_edit_set1_folderpicker_titel}"'" onclick="openFolderPicker('\''BACKUPDIR'\'')">🔎</button>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">'
@@ -1120,7 +1126,6 @@ if [[ "${page}" == "edit" ]]; then
                                 fi
                                 echo '
 
-                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="openFolderPicker('BACKUPDIR')">🔎</button>
                                 <a data-bs-toggle="collapse" href="#BACKUPDIR-info" role="button" aria-expanded="false" aria-controls="BACKUPDIR-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
@@ -1147,13 +1152,16 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-5">
                             <label for="LOGDIR">'"${lang_edit_set1_logdir_title}"'</label>
                         </div>
-                        <div class="col-sm-5">'
+                        <div class="col-sm-5">
+                            <div class="synocr-folder-input-wrap">'
                             if [ -n "${LOGDIR}" ]; then
-                                echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm" value="'"${LOGDIR}"'" data-initial-path="'"${LOGDIR}"'" onblur="updatePathStatusIcon('\''LOGDIR'\'')" />'
+                                echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm synocr-folder-input" value="'"${LOGDIR}"'" data-initial-path="'"${LOGDIR}"'" onblur="updatePathStatusIcon('\''LOGDIR'\'')" />'
                             else
-                                echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm" value="" data-initial-path="" onblur="updatePathStatusIcon('\''LOGDIR'\'')" />'
+                                echo '<input type="text" name="LOGDIR" id="LOGDIR" class="form-control form-control-sm synocr-folder-input" value="" data-initial-path="" onblur="updatePathStatusIcon('\''LOGDIR'\'')" />'
                             fi
                             echo '
+                                <button type="button" class="btn btn-link synocr-folder-picker-btn" title="'"${lang_edit_set1_folderpicker_titel}"'" onclick="openFolderPicker('\''LOGDIR'\'')">🔎</button>
+                            </div>
                         </div>
                         <div class="col-sm-2">
                             <div class="float-end">'
@@ -1166,7 +1174,6 @@ if [[ "${page}" == "edit" ]]; then
                                 fi
                                 echo '
 
-                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="openFolderPicker('LOGDIR')">🔎</button>
                                 <a data-bs-toggle="collapse" href="#LOGDIR-info" role="button" aria-expanded="false" aria-controls="LOGDIR-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
@@ -3281,7 +3288,7 @@ if [[ "${page}" == "edit" ]]; then
                             echo '
                         </div>
                         <div class="col-sm-2">
-                            <div class="float-end">
+                            <div class="float-end text-end">
                                 <a data-bs-toggle="collapse" href="#apprise_call-info" role="button" aria-expanded="false" aria-controls="apprise_call-info">
                                     <img src="images/icon_information_mini@geimist.svg" height="25" width="25"/></a>
                             </div>
@@ -3294,7 +3301,7 @@ if [[ "${page}" == "edit" ]]; then
                                     <span>
                                         '"${lang_edit_set3_APPRISE_help1}"'<br />
                                         <code><span style="font-hight:1.1em;">ifttt://webhooksID/Event mqtts://user:pass@hostname:9883/topic ...</span></code><br><br>
-                                        '"${lang_edit_set3_APPRISE_help2}"' <a href="https://github.com/caronc/apprise#productivity-based-notifications" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">github.com/caronc/apprise</a><br /><br />
+                                        '"${lang_edit_set3_APPRISE_help2}"' <a href="https://appriseit.com/services/" target="_blank" rel="noopener noreferrer" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">appriseit.com/services/</a><br /><br />
                                         '"${lang_edit_set3_APPRISE_help3}"'
                                     </span>
                                 </div>
