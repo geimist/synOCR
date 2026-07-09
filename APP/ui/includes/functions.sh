@@ -70,6 +70,11 @@ sql_escape() {
     printf '%s' "${s//\'/\'\'}"
 }
 
+# JSON string literal for safe embedding in generated JavaScript (includes surrounding quotes).
+synocr_js_json_string() {
+    printf '%s' "${1-}" | jq -Rs .
+}
+
 # rules_validate_json <json>
 # Hard, storage-agnostic validator for a ruleset JSON blob (wrapped
 # {"rules":...,"groups":...} or legacy flat). Prints localized error messages
