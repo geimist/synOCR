@@ -2,6 +2,16 @@ known issues / limitations:
  -  The check whether a selected folder (OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.6.2 [2026-07-09]
+
+  BUGFIXES:
+ - [GUI]    profile switch in settings did not reload when using English UI (issue #89)
+            A JavaScript syntax error from unescaped quotes in translated strings prevented
+            the settings page script from loading.
+ - [shell]  blank page removal no longer strips PDF/A conformance from OCRmyPDF output;
+            page deletion now uses pikepdf instead of rebuilding the PDF via PyMuPDF (thx @ArnoNuem)
+
+
 1.6.1 [2026-06-19]
 
   BUGFIXES:

@@ -2,6 +2,7 @@
 import argparse
 import fitz
 from PIL import Image, ImageFilter, ImageStat
+from pikepdf import Pdf
 import numpy as np
 import os
 import pathlib
@@ -55,10 +56,11 @@ def emit_new_document(doc, filename, out_dir, remove_blank, threshold_offset, lr
     pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
 
     pages = get_new_docs_pages(doc, remove_blank, threshold_offset, lr_margin_ratio, tb_margin_ratio, max_filter_size, min_filter_size, black_pixel_ratio, ignore_text)
-    new_doc = fitz.open()
-    for page_no in pages:
-        new_doc.insert_pdf(doc, from_page=page_no, to_page=page_no)
-    new_doc.save(os.path.join(out_dir, filename))
+    pdf = Pdf.open(doc.name)
+    for page_no in range(len(pdf.pages) - 1, -1, -1):
+        if page_no not in pages:
+            del pdf.pages[page_no]
+    pdf.save(os.path.join(out_dir, filename))
 
 def main():
     parser = argparse.ArgumentParser()

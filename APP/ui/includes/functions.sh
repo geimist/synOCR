@@ -62,8 +62,6 @@ synocr_sqlite() {
     fi
 }
 
-}
-
 # JSON string literal for safe embedding in generated JavaScript (includes surrounding quotes).
 synocr_js_json_string() {
     printf '%s' "${1-}" | jq -Rs .

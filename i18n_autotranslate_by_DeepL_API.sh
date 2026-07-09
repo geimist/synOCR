@@ -101,9 +101,11 @@ i18n_escape_for_double_quoted_assign() {
     printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
 }
 
-# Normalize ASCII quote examples that break naive JS embedding in GUI_edit.sh (e.g. ".." in enu).
+# Ersetze ASCII-Anführungszeichen um ".." durch typografische Anführungszeichen (wie in lang_ger).
+# Wichtig: nur das vollständige ".."-Token ersetzen — ein partielles Muster "\.\. würde die
+# schließende " stehen lassen; i18n_escape_for_double_quoted_assign würde sie zu \"." machen.
 i18n_normalize_display_quotes() {
-    printf '%s' "$1" | sed 's/"\.\./„..“/g'
+    printf '%s' "$1" | sed -e 's/"\.\."/„..“/g'
 }
 
 sql_escape() {

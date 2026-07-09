@@ -5,3 +5,5 @@ build_spk.sh
 .cursor/*
 *.zip
 APP/ui/_gsdata_/*
+__pycache__/
+*.pyc
