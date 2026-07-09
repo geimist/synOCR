@@ -101,6 +101,11 @@ i18n_escape_for_double_quoted_assign() {
     printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
 }
 
+# Normalize ASCII quote examples that break naive JS embedding in GUI_edit.sh (e.g. ".." in enu).
+i18n_normalize_display_quotes() {
+    printf '%s' "$1" | sed 's/"\.\./„..“/g'
+}
+
 sql_escape() {
     printf "%s" "$1" | sed "s/'/''/g"
 }
@@ -648,7 +653,8 @@ export_langfiles() {
         chmod 755 "${langFile}"
 
         while IFS=$'\t' read -r varname langstring; do
-            escaped=$(i18n_escape_for_double_quoted_assign "${langstring}")
+            normalized=$(i18n_normalize_display_quotes "${langstring}")
+            escaped=$(i18n_escape_for_double_quoted_assign "${normalized}")
             printf '%s="%s"\n' "${varname}" "${escaped}" >> "${langFile}"
         done < <(sqlite3 -separator $'\t' "${i18n_DB}" "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='${langID}' AND variables.inuse='1' ORDER BY varname ASC")
     done <<<"$(sqlite3 "${i18n_DB}" "SELECT DISTINCT langID FROM strings ORDER by langID ASC")"

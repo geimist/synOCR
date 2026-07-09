@@ -3400,8 +3400,9 @@ if [[ "${page}" == "edit" ]]; then
     <!-- Folder Picker JavaScript -->
     <script type="text/javascript">
         var editPageIsDirty = false;
-        var currentProfileSelection = "";
-        var dirtyWarningMessage = "lang_edit_unsaved_changes_warning";
+        var _profileSelectInit = document.getElementById("getprofile");
+        var currentProfileSelection = _profileSelectInit ? _profileSelectInit.value : "";
+        var dirtyWarningMessage = __SYNOCR_JS_DIRTY_WARNING__;
 
         function markEditPageDirty(event) {
             var target = event && event.target ? event.target : null;
@@ -3418,10 +3419,6 @@ if [[ "${page}" == "edit" ]]; then
         function handleProfileSelectionChange(selectElement) {
             if (!selectElement) return;
             var selectedValue = selectElement.value;
-
-            if (!currentProfileSelection) {
-                currentProfileSelection = selectedValue;
-            }
 
             if (selectedValue === currentProfileSelection) {
                 return;
@@ -3483,26 +3480,26 @@ if [[ "${page}" == "edit" ]]; then
         var sharesMap = {};
         var sharesRealMap = {};
         var folderPickerTitles = {
-            INPUTDIR: "FOLDERPICKER_TITLE_INPUTDIR",
-            OUTPUTDIR: "FOLDERPICKER_TITLE_OUTPUTDIR",
-            BACKUPDIR: "FOLDERPICKER_TITLE_BACKUPDIR",
-            LOGDIR: "FOLDERPICKER_TITLE_LOGDIR"
+            INPUTDIR: __SYNOCR_JS_FP_TITLE_INPUTDIR__,
+            OUTPUTDIR: __SYNOCR_JS_FP_TITLE_OUTPUTDIR__,
+            BACKUPDIR: __SYNOCR_JS_FP_TITLE_BACKUPDIR__,
+            LOGDIR: __SYNOCR_JS_FP_TITLE_LOGDIR__
         };
-        var folderPickerDefaultTitle = "lang_edit_set1_folderpicker_titel";
+        var folderPickerDefaultTitle = __SYNOCR_JS_FP_DEFAULT_TITLE__;
         var folderPickerCreatePlaceholders = {
-            INPUTDIR: "FOLDERPICKER_PLACEHOLDER_INPUTDIR",
-            OUTPUTDIR: "FOLDERPICKER_PLACEHOLDER_OUTPUTDIR",
-            BACKUPDIR: "FOLDERPICKER_PLACEHOLDER_BACKUPDIR",
-            LOGDIR: "FOLDERPICKER_PLACEHOLDER_LOGDIR"
+            INPUTDIR: __SYNOCR_JS_FP_PH_INPUTDIR__,
+            OUTPUTDIR: __SYNOCR_JS_FP_PH_OUTPUTDIR__,
+            BACKUPDIR: __SYNOCR_JS_FP_PH_BACKUPDIR__,
+            LOGDIR: __SYNOCR_JS_FP_PH_LOGDIR__
         };
-        var folderPickerDefaultPlaceholder = "FOLDERPICKER_PLACEHOLDER_OUTPUTDIR";
+        var folderPickerDefaultPlaceholder = __SYNOCR_JS_FP_DEFAULT_PH__;
         var folderPickerCreateMsg = {
-            noParent: "lang_edit_set1_folderpicker_create_no_parent",
-            nameEmpty: "lang_edit_set1_folderpicker_create_name_empty",
-            nameInvalid: "lang_edit_set1_folderpicker_create_name_invalid",
-            failed: "lang_edit_set1_folderpicker_create_failed",
-            exists: "lang_edit_set1_folderpicker_create_exists",
-            denied: "lang_edit_set1_folderpicker_create_denied"
+            noParent: __SYNOCR_JS_FP_MSG_NO_PARENT__,
+            nameEmpty: __SYNOCR_JS_FP_MSG_NAME_EMPTY__,
+            nameInvalid: __SYNOCR_JS_FP_MSG_NAME_INVALID__,
+            failed: __SYNOCR_JS_FP_MSG_FAILED__,
+            exists: __SYNOCR_JS_FP_MSG_EXISTS__,
+            denied: __SYNOCR_JS_FP_MSG_DENIED__
         };
 
         function resetFolderPickerCreateUI() {
@@ -3909,14 +3906,14 @@ if [[ "${page}" == "edit" ]]; then
                         if (errorCode == 119) {
                             $("#folderContent").html("<div class=\"alert alert-warning\"><strong>lang_edit_set1_folderpicker_access_denied</strong><br><br>lang_edit_set1_folderpicker_csrf_message<br><br>lang_edit_set1_folderpicker_fix_instructions<br>lang_edit_set1_folderpicker_step1<br>lang_edit_set1_folderpicker_step2<br>lang_edit_set1_folderpicker_step3<br><br>lang_edit_set1_folderpicker_alternative</div>");
                         } else {
-                            $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_shares " + errorCode + "</div>");
+                            $("#folderContent").html("<div class=\"alert alert-danger\">" + __SYNOCR_JS_FP_FAILED_SHARES__ + " " + errorCode + "</div>");
                         }
                         updateFolderPickerCreateControls();
                     }
                 },
                 error: function(xhr, status, error) {
                     console.log("AJAX Error:", status, error);
-                    $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_shares " + status + "</div>");
+                    $("#folderContent").html("<div class=\"alert alert-danger\">" + __SYNOCR_JS_FP_FAILED_SHARES__ + " " + status + "</div>");
                     updateFolderPickerCreateControls();
                 }
             });
@@ -3979,13 +3976,13 @@ if [[ "${page}" == "edit" ]]; then
                         $("#folderContent").html(html);
                         updateFolderPickerCreateControls();
                     } else {
-                        $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_folders: " + (response.error ? response.error.code : "unknown") + "</div>");
+                        $("#folderContent").html("<div class=\"alert alert-danger\">" + __SYNOCR_JS_FP_FAILED_FOLDERS__ + ": " + (response.error ? response.error.code : "unknown") + "</div>");
                         updateFolderPickerCreateControls();
                     }
                 },
                 error: function(xhr, status, error) {
                     console.log("AJAX Error:", status, error);
-                    $("#folderContent").html("<div class=\"alert alert-danger\">lang_edit_set1_folderpicker_failed_loading_folders: " + status + "</div>");
+                    $("#folderContent").html("<div class=\"alert alert-danger\">" + __SYNOCR_JS_FP_FAILED_FOLDERS__ + ": " + status + "</div>");
                     updateFolderPickerCreateControls();
                 }
             });
@@ -4043,10 +4040,46 @@ EOF
 )
 
     # Sprachvariablen nach dem Heredoc ersetzen, um JS-Kompatibilität zu erhalten
-    OUTPUT="${OUTPUT//FOLDERPICKER_TITLE_INPUTDIR/$lang_edit_set1_sourcedir_title}"
-    OUTPUT="${OUTPUT//FOLDERPICKER_TITLE_OUTPUTDIR/$lang_edit_set1_targetdir_title}"
-    OUTPUT="${OUTPUT//FOLDERPICKER_TITLE_BACKUPDIR/$lang_edit_set1_backupdir_title}"
-    OUTPUT="${OUTPUT//FOLDERPICKER_TITLE_LOGDIR/$lang_edit_set1_logdir_title}"
+    _synocr_js_dirty_warning=$(synocr_js_json_string "${lang_edit_unsaved_changes_warning}")
+    _synocr_js_fp_title_inputdir=$(synocr_js_json_string "${lang_edit_set1_sourcedir_title}")
+    _synocr_js_fp_title_outputdir=$(synocr_js_json_string "${lang_edit_set1_targetdir_title}")
+    _synocr_js_fp_title_backupdir=$(synocr_js_json_string "${lang_edit_set1_backupdir_title}")
+    _synocr_js_fp_title_logdir=$(synocr_js_json_string "${lang_edit_set1_logdir_title}")
+    _synocr_js_fp_default_title=$(synocr_js_json_string "${lang_edit_set1_folderpicker_titel}")
+    _synocr_js_fp_ph_inputdir=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_name_placeholder_inputdir}")
+    _synocr_js_fp_ph_outputdir=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_name_placeholder_outputdir}")
+    _synocr_js_fp_ph_backupdir=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_name_placeholder_backupdir}")
+    _synocr_js_fp_ph_logdir=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_name_placeholder_logdir}")
+    _synocr_js_fp_default_ph=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_name_placeholder_outputdir}")
+    _synocr_js_fp_msg_no_parent=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_no_parent}")
+    _synocr_js_fp_msg_name_empty=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_name_empty}")
+    _synocr_js_fp_msg_name_invalid=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_name_invalid}")
+    _synocr_js_fp_msg_failed=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_failed}")
+    _synocr_js_fp_msg_exists=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_exists}")
+    _synocr_js_fp_msg_denied=$(synocr_js_json_string "${lang_edit_set1_folderpicker_create_denied}")
+    _synocr_js_fp_failed_shares=$(synocr_js_json_string "${lang_edit_set1_folderpicker_failed_loading_shares}")
+    _synocr_js_fp_failed_folders=$(synocr_js_json_string "${lang_edit_set1_folderpicker_failed_loading_folders}")
+
+    OUTPUT="${OUTPUT//__SYNOCR_JS_DIRTY_WARNING__/${_synocr_js_dirty_warning}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_TITLE_INPUTDIR__/${_synocr_js_fp_title_inputdir}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_TITLE_OUTPUTDIR__/${_synocr_js_fp_title_outputdir}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_TITLE_BACKUPDIR__/${_synocr_js_fp_title_backupdir}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_TITLE_LOGDIR__/${_synocr_js_fp_title_logdir}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_DEFAULT_TITLE__/${_synocr_js_fp_default_title}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_PH_INPUTDIR__/${_synocr_js_fp_ph_inputdir}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_PH_OUTPUTDIR__/${_synocr_js_fp_ph_outputdir}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_PH_BACKUPDIR__/${_synocr_js_fp_ph_backupdir}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_PH_LOGDIR__/${_synocr_js_fp_ph_logdir}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_DEFAULT_PH__/${_synocr_js_fp_default_ph}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_MSG_NO_PARENT__/${_synocr_js_fp_msg_no_parent}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_MSG_NAME_EMPTY__/${_synocr_js_fp_msg_name_empty}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_MSG_NAME_INVALID__/${_synocr_js_fp_msg_name_invalid}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_MSG_FAILED__/${_synocr_js_fp_msg_failed}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_MSG_EXISTS__/${_synocr_js_fp_msg_exists}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_MSG_DENIED__/${_synocr_js_fp_msg_denied}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_FAILED_SHARES__/${_synocr_js_fp_failed_shares}}"
+    OUTPUT="${OUTPUT//__SYNOCR_JS_FP_FAILED_FOLDERS__/${_synocr_js_fp_failed_folders}}"
+
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_titel/$lang_edit_set1_folderpicker_titel}"
     OUTPUT="${OUTPUT//lang_button_abort/$lang_button_abort}"
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_not_available/$lang_edit_set1_folderpicker_not_available}"
@@ -4063,17 +4096,6 @@ EOF
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_failed_loading_folders/$lang_edit_set1_folderpicker_failed_loading_folders}"
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_enable/$lang_edit_set1_folderpicker_create_enable}"
     OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_name_label/$lang_edit_set1_folderpicker_create_name_label}"
-    OUTPUT="${OUTPUT//FOLDERPICKER_PLACEHOLDER_INPUTDIR/$lang_edit_set1_folderpicker_create_name_placeholder_inputdir}"
-    OUTPUT="${OUTPUT//FOLDERPICKER_PLACEHOLDER_OUTPUTDIR/$lang_edit_set1_folderpicker_create_name_placeholder_outputdir}"
-    OUTPUT="${OUTPUT//FOLDERPICKER_PLACEHOLDER_BACKUPDIR/$lang_edit_set1_folderpicker_create_name_placeholder_backupdir}"
-    OUTPUT="${OUTPUT//FOLDERPICKER_PLACEHOLDER_LOGDIR/$lang_edit_set1_folderpicker_create_name_placeholder_logdir}"
-    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_no_parent/$lang_edit_set1_folderpicker_create_no_parent}"
-    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_name_empty/$lang_edit_set1_folderpicker_create_name_empty}"
-    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_name_invalid/$lang_edit_set1_folderpicker_create_name_invalid}"
-    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_failed/$lang_edit_set1_folderpicker_create_failed}"
-    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_exists/$lang_edit_set1_folderpicker_create_exists}"
-    OUTPUT="${OUTPUT//lang_edit_set1_folderpicker_create_denied/$lang_edit_set1_folderpicker_create_denied}"
-    OUTPUT="${OUTPUT//lang_edit_unsaved_changes_warning/$lang_edit_unsaved_changes_warning}"
 
     echo "${OUTPUT}"
 fi

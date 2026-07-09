@@ -2,6 +2,14 @@ known issues / limitations:
  -  The check whether a selected folder (OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.6.1.1 [2026-07-09]
+
+  BUGFIXES:
+ - [GUI]    profile switch in settings did not reload when using English UI (issue #89)
+            A JavaScript syntax error from unescaped quotes in translated strings prevented
+            the settings page script from loading.
+
+
 1.6.1 [2026-06-19]
 
   BUGFIXES:

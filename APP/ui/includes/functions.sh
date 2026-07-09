@@ -62,6 +62,13 @@ synocr_sqlite() {
     fi
 }
 
+}
+
+# JSON string literal for safe embedding in generated JavaScript (includes surrounding quotes).
+synocr_js_json_string() {
+    printf '%s' "${1-}" | jq -Rs .
+}
+
 # Read one field from a sqlite3 -json array result (first row by default).
 synocr_jq_field() {
     local json="${1:-}"
