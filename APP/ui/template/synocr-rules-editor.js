@@ -5,6 +5,13 @@
  * #synocr-rules-lang, renders a visual rule/subrule editor with native HTML5
  * drag&drop prioritization, a Raw-JSON tab, and saves via POST to
  * index.cgi?page=rules-save-json (validated server-side by rules_validate_json).
+ *
+ * Phase 2 (planned): cross-ruleset rule copy/paste via sessionStorage (variant B).
+ * - "Copy rule" stores JSON.stringify(cloneRule(r)) under sessionStorage key
+ *   "synocr-rule-clipboard".
+ * - On editor init, if that key exists, show a "Paste rule" action in the toolbar.
+ * - Paste: uniqueRuleName + insert (e.g. after selection or at end); warn when
+ *   requires/excludes reference rule names missing in the target ruleset.
  */
 (function () {
     'use strict';
@@ -204,6 +211,24 @@
             return;
         }
         var text = host.getAttribute('data-tip');
+        if (text && text.indexOf('\n') >= 0) {
+            popup.classList.add('synocr-tip-popup-rich');
+            var lines = text.split('\n');
+            if (lines[0]) {
+                var titleEl = document.createElement('div');
+                titleEl.className = 'synocr-tip-title';
+                titleEl.textContent = lines[0];
+                popup.appendChild(titleEl);
+            }
+            for (var li = 1; li < lines.length; li++) {
+                if (!lines[li]) continue;
+                var lineEl = document.createElement('p');
+                lineEl.className = 'synocr-tip-line';
+                lineEl.textContent = lines[li];
+                popup.appendChild(lineEl);
+            }
+            return;
+        }
         if (text) popup.textContent = text;
     }
 
@@ -227,6 +252,12 @@
     function bindDataTipsOnce() {
         if (document._synocrDataTipsBound) return;
         document._synocrDataTipsBound = true;
+        // Improvement potential (mobile/touch): these custom tooltips are driven
+        // by mouseover/mouseout, which don't fire on touch devices. focusin is
+        // bound too, but taps on non-focusable hosts (e.g. span/badge) won't
+        // show a tip. A future enhancement could add a 'click' toggle for touch
+        // or fall back to the native title attribute (currently removed in
+        // applyDataTip) so help text is reachable on tablets/phones.
         document.body.addEventListener('mouseover', function (e) {
             var host = e.target.closest('[data-tip],[data-tip-key]');
             if (!host) {
@@ -439,6 +470,81 @@
         return (r.name || '').trim() || ('rule_' + i);
     }
 
+    function ruleNamesSet() {
+        var set = {};
+        state.rules.forEach(function (r) {
+            var n = (r.name || '').trim();
+            if (n) set[n] = true;
+        });
+        return set;
+    }
+
+    function uniqueDuplicateRuleName(original) {
+        var base = (original || '').trim() || 'rule';
+        var suffix = L('dup_suffix') || ' (Kopie)';
+        var candidate = base + suffix;
+        var names = ruleNamesSet();
+        var tryName = candidate;
+        var n = 2;
+        while (names[tryName]) {
+            tryName = candidate + ' ' + n;
+            n += 1;
+        }
+        return tryName;
+    }
+
+    function cloneRule(rule) {
+        var om = rule.on_match || {};
+        return {
+            name: rule.name,
+            condition: rule.condition || 'any',
+            priority: rule.priority,
+            tagname: rule.tagname || '',
+            tagname_RegEx: rule.tagname_RegEx || '',
+            targetfolder: rule.targetfolder || '',
+            dirname_RegEx: rule.dirname_RegEx || '',
+            multilineregex: !!rule.multilineregex,
+            dirname_multilineregex: !!rule.dirname_multilineregex,
+            postscript: rule.postscript || '',
+            apprise_call: rule.apprise_call || '',
+            apprise_attachment: rule.apprise_attachment || '',
+            notify_lang: rule.notify_lang || '',
+            on_match: { action: om.action || '', result: om.result || '' },
+            requires: (rule.requires || []).slice(),
+            excludes: (rule.excludes || []).slice(),
+            subrules: (rule.subrules || []).map(function (s) {
+                return {
+                    searchstring: s.searchstring || '',
+                    searchtyp: s.searchtyp || 'contains',
+                    isRegEx: !!s.isRegEx,
+                    source: s.source || 'content',
+                    casesensitive: !!s.casesensitive,
+                    multilineregex: !!s.multilineregex
+                };
+            })
+        };
+    }
+
+    function duplicateRuleAt(index) {
+        if (index < 0 || index >= state.rules.length) return;
+        var clone = cloneRule(state.rules[index]);
+        clone.name = uniqueDuplicateRuleName(clone.name);
+        clone.priority = '';
+        var insertAt = index + 1;
+        state.rules.splice(insertAt, 0, clone);
+        reassignRulePrioritiesFromOrder();
+        setRuleExpanded(clone, insertAt, false);
+        setRuleCollapsed(clone, insertAt, false);
+        render();
+        var listEl = document.querySelector('.synocr-rules-list');
+        if (listEl) {
+            var card = listEl.querySelector('.synocr-rule-card[data-rule-index="' + insertAt + '"]');
+            if (card && typeof card.scrollIntoView === 'function') {
+                card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+    }
+
     function isRuleExpanded(r, i) {
         var key = ruleKey(r, i);
         if (state.expandedRules[key] === undefined) {
@@ -516,11 +622,18 @@
         }
     }
 
+    function reassignRulePrioritiesFromOrder() {
+        state.rules.forEach(function (r, i) {
+            r.priority = String(10 * (i + 1));
+        });
+    }
+
     function applyRuleReorder(from, insertAt) {
         if (from == null || isNoOpRuleMove(from, insertAt)) return;
         var item = state.rules.splice(from, 1)[0];
         if (insertAt > from) insertAt--;
         state.rules.splice(insertAt, 0, item);
+        reassignRulePrioritiesFromOrder();
     }
 
     function onRulesListDragOver(e) {
@@ -543,6 +656,10 @@
     function bindRulesListDrag(listEl) {
         if (!listEl || listEl._synocrDragBound) return;
         listEl._synocrDragBound = true;
+        // Improvement potential (mobile/touch): HTML5 drag & drop has no
+        // reliable touch support, so reordering via the ⠿ handle does not work
+        // on tablets/phones. A future enhancement could add ↑/↓ buttons per
+        // rule card as a pointer/touch fallback (call applyRuleReorder()).
         listEl.addEventListener('dragover', onRulesListDragOver);
         listEl.addEventListener('drop', onRulesListDrop);
     }
@@ -782,6 +899,20 @@
             onclick: function () { state.rules.splice(i, 1); render(); }
         }, '×');
 
+        var duplicateBtn = h('button', {
+            type: 'button', class: 'btn btn-sm synocr-btn-outline-blue synocr-rule-duplicate synocr-btn-duplicate-icon synocr-has-tip',
+            'data-tip': L('btn_duplicate_rule'),
+            onclick: function () { duplicateRuleAt(i); }
+        }, '⧉');
+
+        var rawJumpBtn = h('button', {
+            type: 'button', class: 'btn btn-sm synocr-btn-outline-blue synocr-rule-raw-jump synocr-has-tip',
+            'data-tip': L('btn_jump_raw_rule', 'Im Raw-JSON anzeigen'),
+            onclick: function () { jumpToRuleRaw(i); }
+        }, '{}');
+
+        var cardActions = h('div', { class: 'synocr-rule-card-actions' }, [removeBtn, duplicateBtn, rawJumpBtn]);
+
         var headerRow = h('div', { class: 'synocr-rule-header' }, [
             fieldPrimaryCell(L('rule_name'), nameInp, 'help_rule_name'),
             fieldPrimaryCell(L('tagname'), tagWrap, 'help_tagname')
@@ -830,9 +961,6 @@
         });
         var detailsInner = h('div', { class: 'pt-2 synocr-rule-details-grid' });
         detailsInner.appendChild(detailsGridRow([
-            fieldPrimaryText(L('rule_priority'), r.priority, function (v) { r.priority = v; }, 'auto', 'help_rule_priority')
-        ]));
-        detailsInner.appendChild(detailsGridRow([
             fieldPrimarySelect(L('on_match_action'), actSel, 'help_on_match_action'),
             fieldPrimarySelect(L('on_match_result'), resSel, 'help_on_match_result')
         ]));
@@ -877,7 +1005,7 @@
 
         var cardClass = 'card card-body mb-3 synocr-rule-card' + (collapsed ? ' synocr-rule-card-collapsed' : '');
         var card = h('div', { class: cardClass, dataset: { ruleIndex: String(i) } }, [
-            removeBtn, cardLayout
+            cardActions, cardLayout
         ]);
 
         handle.addEventListener('dragstart', function (e) {
@@ -962,6 +1090,7 @@
                 var names = ruleNames();
                 while (names.indexOf('rule_' + n) !== -1) n++;
                 state.rules.push({ name: 'rule_' + n, condition: 'any', priority: '', tagname: '', tagname_RegEx: '', targetfolder: '', dirname_RegEx: '', multilineregex: false, dirname_multilineregex: false, postscript: '', apprise_call: '', apprise_attachment: '', notify_lang: '', on_match: { action: '', result: '' }, requires: [], excludes: [], subrules: [{ searchstring: '', searchtyp: 'contains', isRegEx: false, source: 'content', casesensitive: false, multilineregex: false }] });
+                reassignRulePrioritiesFromOrder();
                 render();
             }
         }, '+ ' + L('btn_add_rule')));
@@ -1135,7 +1264,12 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
-        }).then(function (r) { return r.json(); }).then(function (res) {
+        }).then(function (r) {
+            // Reject on HTTP errors (e.g. 502/403) so a non-JSON error page
+            // doesn't surface as a cryptic JSON-parse failure downstream.
+            if (!r.ok) throw new Error('http_' + r.status);
+            return r.json();
+        }).then(function (res) {
             if (res && res.ok) {
                 var dataEl = document.getElementById(DATA_ID);
                 if (dataEl) dataEl.textContent = JSON.stringify(blob);
@@ -1147,7 +1281,16 @@
                 var errs = (res && res.errors && res.errors.length) ? res.errors.join('\n') : L('save_error');
                 setStatus(L('save_error') + '\n' + errs, false);
             }
-        }).catch(function (e) { setStatus(L('save_error') + ' ' + e, false); });
+        }).catch(function (e) {
+            // 'http_<status>'  -> dedicated server-error message
+            // anything else    -> fetch-level/network failure (e.g. offline)
+            var s = String((e && e.message) || e);
+            if (s.indexOf('http_') === 0) {
+                setStatus(L('save_http_error').replace('%s', s.slice(5)), false);
+            } else {
+                setStatus(L('save_error') + ' ' + s, false);
+            }
+        });
     }
 
     function isRawTabActive() {
@@ -1184,6 +1327,123 @@
         syncRawTextareaHeight();
         window.requestAnimationFrame(syncRawTextareaHeight);
         window.setTimeout(syncRawTextareaHeight, 50);
+    }
+
+    // Find the character range of a rule's object in pretty-printed JSON text.
+    // `key` is the rules-object key exactly as produced by toBlob().
+    function findRuleRangeInJson(text, key) {
+        if (!text || !key) return null;
+        var needle = JSON.stringify(key) + ':';
+        var from = 0, occurrence = 0;
+        // match the nth occurrence equal to the requested key index among same-named keys
+        var pos = -1, hitIdx = 0;
+        while ((pos = text.indexOf(needle, from)) !== -1) {
+            // ensure the match is a top-level rules key: preceded by whitespace/start
+            // and the char after the colon is optional space + '{'
+            var after = pos + needle.length;
+            var j = after;
+            while (j < text.length && (text[j] === ' ' || text[j] === '\t')) j++;
+            if (text[j] === '{') {
+                if (occurrence === hitIdx) { break; }
+                hitIdx++;
+            }
+            from = pos + needle.length;
+            pos = -1;
+        }
+        if (pos === -1) {
+            // fallback: first occurrence with an opening brace
+            from = 0; pos = -1;
+            while ((pos = text.indexOf(needle, from)) !== -1) {
+                var after2 = pos + needle.length, j2 = after2;
+                while (j2 < text.length && (text[j2] === ' ' || text[j2] === '\t')) j2++;
+                if (text[j2] === '{') break;
+                from = pos + needle.length; pos = -1;
+            }
+            if (pos === -1) return null;
+        }
+        var bracePos = pos + needle.length;
+        while (bracePos < text.length && text[bracePos] !== '{') bracePos++;
+        if (bracePos >= text.length) return null;
+        // brace matching, respecting strings & escapes
+        var depth = 0, i = bracePos, inStr = false, esc = false;
+        while (i < text.length) {
+            var c = text[i];
+            if (inStr) {
+                if (esc) { esc = false; }
+                else if (c === '\\') { esc = true; }
+                else if (c === '"') { inStr = false; }
+            } else {
+                if (c === '"') { inStr = true; }
+                else if (c === '{') { depth++; }
+                else if (c === '}') { depth--; if (depth === 0) { i++; break; }
+                }
+            }
+            i++;
+        }
+        if (depth !== 0) return null;
+        // start a bit before the key for context (line start)
+        var start = pos;
+        while (start > 0 && text[start - 1] !== '\n') start--;
+        return { start: start, end: i };
+    }
+
+    function jumpToRuleRaw(ruleIndex) {
+        if (ruleIndex == null || ruleIndex < 0 || ruleIndex >= state.rules.length) return;
+        var r = state.rules[ruleIndex];
+        var key = (r.name || '').trim() || ('rule_' + (ruleIndex + 1));
+        var rawTa = document.getElementById(RAW_ID);
+        var tabRaw = document.getElementById('synocr-rules-tab-raw');
+        if (!rawTa || !tabRaw) return;
+
+        function doSelect() {
+            var text = rawTa.value || '';
+            var range = findRuleRangeInJson(text, key);
+            if (!range) { rawTa.focus(); return; }
+            rawTa.focus();
+            try { rawTa.setSelectionRange(range.start, range.end); } catch (e) {}
+            // best-effort scroll: focus + selection scrolls in most browsers;
+            // fallback: estimate by line number if selection not yet in view.
+            var beforeSel = text.slice(0, range.start);
+            var line = beforeSel.split('\n').length - 1;
+            var lh = parseFloat(window.getComputedStyle(rawTa).lineHeight) || 18;
+            var target = Math.max(0, line * lh - rawTa.clientHeight / 3);
+            if (Math.abs(rawTa.scrollTop - target) > rawTa.clientHeight) {
+                rawTa.scrollTop = target;
+            }
+        }
+
+        if (isRawTabActive()) {
+            // already on raw tab: refresh from visual model, then select
+            rawTa.value = JSON.stringify(toBlob(), null, 2);
+            state.rawDirty = false;
+            window.requestAnimationFrame(doSelect);
+        } else {
+            // Pre-fill the raw textarea from the current visual model so the
+            // selection is correct even if the tab's shown.bs.tab handler
+            // (which normally fills it) never fires. The shown handler will
+            // overwrite it with the same value, which is harmless.
+            rawTa.value = JSON.stringify(toBlob(), null, 2);
+            state.rawDirty = false;
+
+            var fired = false;
+            function runSelect() {
+                if (fired) return;
+                fired = true;
+                tabRaw.removeEventListener('shown.bs.tab', runSelect);
+                window.requestAnimationFrame(doSelect);
+            }
+            tabRaw.addEventListener('shown.bs.tab', runSelect);
+            if (window.bootstrap && window.bootstrap.Tab) {
+                window.bootstrap.Tab.getOrCreateInstance(tabRaw).show();
+            } else if (window.jQuery && window.jQuery.fn.tab) {
+                window.jQuery(tabRaw).tab('show');
+            } else {
+                tabRaw.click();
+            }
+            // Fallback: if shown.bs.tab never fires (framework missing or a
+            // race), still select after a short delay so the button works.
+            window.setTimeout(runSelect, 200);
+        }
     }
 
     function initTabs() {

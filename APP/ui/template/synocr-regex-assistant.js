@@ -159,29 +159,520 @@
         return segFrag(seg);
     }
 
-    function assemble() {
-        if (st.expertDirty) return st.expertPattern;
-        var segs = st.segments;
-        if (!segs.length) return '';
-        if (st.mode === 'extract') {
-            var i = 0, n = segs.length, prefix = [], suffix = [];
-            while (i < n && isLook(segs[i])) { prefix.push(segs[i]); i++; }
+    function assembleSegments(segments, mode) {
+        if (!segments || !segments.length) return '';
+        if (mode === 'extract') {
+            var i = 0, n = segments.length, prefix = [], suffix = [];
+            while (i < n && isLook(segments[i])) { prefix.push(segments[i]); i++; }
             var j = n - 1;
-            while (j >= i && isLook(segs[j])) { suffix.unshift(segs[j]); j--; }
-            var core = segs.slice(i, j + 1);
+            while (j >= i && isLook(segments[j])) { suffix.unshift(segments[j]); j--; }
+            var core = segments.slice(i, j + 1);
             var p = '';
             if (prefix.length) p += prefix.map(lookFrag).join('') + '\\K';
             p += core.map(function (s) { return optionalWrap(segFrag(s), s); }).join('');
             if (suffix.length) p += '(?=' + suffix.map(lookFrag).join('') + ')';
             return p;
         }
-        return segs.map(function (s) { return optionalWrap(segFrag(s), s); }).join('');
+        return segments.map(function (s) { return optionalWrap(segFrag(s), s); }).join('');
     }
 
-    // ---- rendering ---------------------------------------------------------
+    function assemble() {
+        if (st.expertDirty) return st.expertPattern;
+        return assembleSegments(st.segments, st.mode);
+    }
+
+    // ---- pattern decompiler (editor-produced PCRE only) ------------------
+    function unescPcre(s) {
+        return String(s).replace(/\\(.)/g, function (_, c) { return c; });
+    }
+
+    function splitTopLevelAlt(s) {
+        var parts = [], cur = '', depth = 0, i = 0;
+        while (i < s.length) {
+            if (s[i] === '\\') {
+                cur += s.slice(i, i + 2);
+                i += 2;
+                continue;
+            }
+            if (s.slice(i, i + 3) === '(?:') {
+                depth++;
+                cur += '(?:';
+                i += 3;
+                continue;
+            }
+            if (s[i] === '(') {
+                depth++;
+                cur += '(';
+                i++;
+                continue;
+            }
+            if (s[i] === ')') {
+                depth--;
+                cur += ')';
+                i++;
+                continue;
+            }
+            if (s[i] === '|' && depth === 0) {
+                parts.push(cur);
+                cur = '';
+                i++;
+                continue;
+            }
+            cur += s[i];
+            i++;
+        }
+        parts.push(cur);
+        return parts;
+    }
+
+    function hasTopLevelPipe(s) {
+        var depth = 0, i = 0;
+        while (i < s.length) {
+            if (s[i] === '\\') { i += 2; continue; }
+            if (s.slice(i, i + 3) === '(?:') { depth++; i += 3; continue; }
+            if (s[i] === '(') { depth++; i++; continue; }
+            if (s[i] === ')') { depth--; i++; continue; }
+            if (s[i] === '|' && depth === 0) return true;
+            i++;
+        }
+        return false;
+    }
+
+    function findBalancedClose(s, openPos) {
+        var depth = 1, i = openPos + 1;
+        while (i < s.length) {
+            if (s[i] === '\\') { i += 2; continue; }
+            if (s.slice(i, i + 3) === '(?:') {
+                var c2 = findBalancedClose(s, i);
+                if (c2 < 0) return -1;
+                i = c2 + 1;
+                continue;
+            }
+            if (s.slice(i, i + 2) === '(?') {
+                var close = findBalancedClose(s, i);
+                if (close < 0) return -1;
+                i = close + 1;
+                continue;
+            }
+            if (s[i] === '(') {
+                var c3 = findBalancedClose(s, i);
+                if (c3 < 0) return -1;
+                i = c3 + 1;
+                continue;
+            }
+            if (s[i] === ')') {
+                depth--;
+                if (depth === 0) return i;
+            }
+            i++;
+        }
+        return -1;
+    }
+
+    function defaultSeg(type) {
+        return {
+            type: type,
+            text: '',
+            start: 0,
+            end: 0,
+            wsFlex: false,
+            anchor: false,
+            optional: false,
+            varKind: 'any',
+            classKind: 'digits',
+            classQuant: 'plus',
+            n: '',
+            m: '',
+            lookKind: 'after',
+            anchorKind: 'word',
+            texts: ['']
+        };
+    }
+
+    function parsePatternToSegments(pattern, mode) {
+        if (!pattern) return { ok: true, segments: [] };
+        var tries = [];
+        tries.push(function () { return parsePatternBody(pattern, 'match'); });
+        if (mode === 'extract') tries.push(function () { return parsePatternBody(pattern, 'extract'); });
+        for (var t = 0; t < tries.length; t++) {
+            var parsed = tries[t]();
+            if (!parsed || !parsed.ok) continue;
+            if (assembleSegments(parsed.segments, mode) === pattern) return parsed;
+        }
+        return { ok: false };
+    }
+
+    function parsePatternBody(pattern, parseMode) {
+        try {
+            if (parseMode === 'extract') {
+                var kPos = pattern.indexOf('\\K');
+                if (kPos >= 0) {
+                    var prefix = pattern.slice(0, kPos);
+                    var rest = pattern.slice(kPos + 2);
+                    var peeled = peelExtractSuffix(rest);
+                    var coreStr = peeled ? peeled.core : rest;
+                    var suffixInner = peeled ? peeled.suffixInner : '';
+                    var pfx = new PatternParser(prefix, 'look');
+                    var prefixSegs = pfx.parseList();
+                    if (!pfx.atEnd()) return { ok: false };
+                    var core = new PatternParser(coreStr, 'match');
+                    var coreSegs = core.parseList();
+                    if (!core.atEnd()) return { ok: false };
+                    var suffixSegs = [];
+                    if (suffixInner) {
+                        var sfx = new PatternParser(suffixInner, 'look');
+                        suffixSegs = sfx.parseList();
+                        if (!sfx.atEnd()) return { ok: false };
+                    }
+                    return { ok: true, segments: prefixSegs.concat(coreSegs, suffixSegs) };
+                }
+            }
+            var p = new PatternParser(pattern, 'match');
+            var segs = p.parseList();
+            if (!p.atEnd()) return { ok: false };
+            return { ok: true, segments: segs };
+        } catch (e) {
+            return { ok: false };
+        }
+    }
+
+    function peelExtractSuffix(s) {
+        var idx = s.length;
+        while (idx > 0) {
+            var open = s.lastIndexOf('(?=', idx - 1);
+            if (open < 0) return null;
+            if (s[s.length - 1] !== ')') return null;
+            var close = findBalancedClose(s, open);
+            if (close !== s.length - 1) {
+                idx = open;
+                continue;
+            }
+            return {
+                core: s.slice(0, open),
+                suffixInner: s.slice(open + 3, close)
+            };
+        }
+        return null;
+    }
+
+    function PatternParser(pattern, listMode) {
+        this.pattern = pattern;
+        this.pos = 0;
+        this.listMode = listMode || 'match';
+    }
+    PatternParser.prototype.atEnd = function () { return this.pos >= this.pattern.length; };
+    PatternParser.prototype.slice = function (a, b) { return this.pattern.slice(a, b == null ? this.pos : b); };
+    PatternParser.prototype.tryTake = function (lit) {
+        if (this.pattern.slice(this.pos, this.pos + lit.length) !== lit) return false;
+        this.pos += lit.length;
+        return true;
+    };
+    PatternParser.prototype.parseList = function () {
+        var out = [];
+        while (!this.atEnd()) {
+            var seg = this.parseOne();
+            if (!seg) throw new Error('parse');
+            out.push(seg);
+        }
+        return out;
+    };
+    PatternParser.prototype.parseOne = function () {
+        var start = this.pos;
+        if (this.tryTake('(?:')) {
+            var innerStart = this.pos;
+            var close = findBalancedClose(this.pattern, innerStart - 3);
+            if (close < 0) throw new Error('parse');
+            var inner = this.pattern.slice(innerStart, close);
+            this.pos = close + 1;
+            var optional = this.tryTake('?');
+            var seg;
+            if (hasTopLevelPipe(inner)) {
+                seg = defaultSeg('alt');
+                seg.texts = splitTopLevelAlt(inner).map(unescPcre);
+                if (!seg.texts.length) seg.texts = [''];
+            } else {
+                var sub = new PatternParser(inner, this.listMode);
+                var subs = sub.parseList();
+                if (!sub.atEnd() || subs.length !== 1) throw new Error('parse');
+                seg = subs[0];
+            }
+            if (optional) seg.optional = true;
+            if (this.listMode === 'look' && (seg.type === 'fixed' || seg.type === 'alt')) seg.anchor = true;
+            return seg;
+        }
+        var seg2 = this.parseAtom();
+        if (!seg2) throw new Error('parse');
+        return seg2;
+    };
+    PatternParser.prototype.parseAtom = function () {
+        if (this.tryTake('\\b')) {
+            var a = defaultSeg('anchor');
+            a.anchorKind = 'word';
+            return a;
+        }
+        if (this.tryTake('^')) {
+            var a2 = defaultSeg('anchor');
+            a2.anchorKind = 'start';
+            return a2;
+        }
+        if (this.tryTake('$')) {
+            var a3 = defaultSeg('anchor');
+            a3.anchorKind = 'end';
+            return a3;
+        }
+        if (this.tryTake('.*?')) {
+            var v = defaultSeg('variable');
+            v.varKind = 'any';
+            return v;
+        }
+        if (this.tryTake('.*')) {
+            var v2 = defaultSeg('variable');
+            v2.varKind = 'greedy';
+            return v2;
+        }
+        if (this.tryTake('\\s+')) {
+            var v3 = defaultSeg('variable');
+            v3.varKind = 'ws';
+            return v3;
+        }
+        var look = this.tryLookaround();
+        if (look) return look;
+        var cls = this.tryClass();
+        if (cls) return cls;
+        var lit = this.tryLiteral();
+        if (lit) {
+            if (this.listMode === 'look') lit.anchor = true;
+            return lit;
+        }
+        return null;
+    };
+    PatternParser.prototype.tryLookaround = function () {
+        var rest = this.pattern.slice(this.pos);
+        var m = rest.match(/^\(\?(<=|<!|!|=)/);
+        if (!m) return null;
+        var kindMap = { '<=': 'before', '<!': 'notBefore', '!': 'notAfter', '=': 'after' };
+        var openLen = 3 + (m[1].length - 1);
+        var close = findBalancedClose(this.pattern, this.pos);
+        if (close < 0) return null;
+        var inner = this.pattern.slice(this.pos + openLen, close);
+        this.pos = close + 1;
+        var seg = defaultSeg('context');
+        seg.lookKind = kindMap[m[1]] || 'after';
+        seg.text = unescPcre(inner);
+        return seg;
+    };
+    PatternParser.prototype.tryClass = function () {
+        var base = null, kind = '';
+        if (this.tryTake('\\d')) { base = '\\d'; kind = 'digits'; }
+        else if (this.tryTake('[A-Za-z0-9]')) { base = '[A-Za-z0-9]'; kind = 'alnum'; }
+        else if (this.tryTake('[A-Za-z]')) { base = '[A-Za-z]'; kind = 'letters'; }
+        else if (this.tryTake('[^A-Za-z0-9]')) { base = '[^A-Za-z0-9]'; kind = 'special'; }
+        if (!base) return null;
+        var seg = defaultSeg('class');
+        seg.classKind = kind;
+        if (this.tryTake('{')) {
+            var body = '';
+            while (!this.atEnd() && this.pattern[this.pos] !== '}') {
+                body += this.pattern[this.pos];
+                this.pos++;
+            }
+            if (!this.tryTake('}')) throw new Error('parse');
+            var parts = body.split(',');
+            seg.classQuant = parts.length > 1 ? 'range' : 'fixed';
+            seg.n = parts[0] || '0';
+            seg.m = parts.length > 1 ? (parts[1] || '') : '';
+            return seg;
+        }
+        if (!this.tryTake('+')) throw new Error('parse');
+        seg.classQuant = 'plus';
+        return seg;
+    };
+    PatternParser.prototype.tryLiteral = function () {
+        var start = this.pos;
+        while (!this.atEnd()) {
+            if (this.pattern[this.pos] === '\\') {
+                this.pos += 2;
+                continue;
+            }
+            if (this.isAtomStart()) break;
+            this.pos++;
+        }
+        if (this.pos === start) return null;
+        var raw = this.pattern.slice(start, this.pos);
+        var seg = defaultSeg('fixed');
+        seg.text = unescPcre(raw.replace(/\\s\+/g, ' '));
+        seg.wsFlex = /\\s\+/.test(raw);
+        return seg;
+    };
+    PatternParser.prototype.isAtomStart = function () {
+        var s = this.pattern.slice(this.pos);
+        if (s.indexOf('(?:') === 0) return true;
+        if (/^\(\?(<=|<!|!|=)/.test(s)) return true;
+        if (s.indexOf('\\b') === 0 || s.indexOf('\\s+') === 0 || s.indexOf('\\d') === 0) return true;
+        if (s.indexOf('.*?') === 0 || s.indexOf('.*') === 0) return true;
+        if (s.indexOf('[A-Za-z0-9]') === 0 || s.indexOf('[A-Za-z]') === 0 || s.indexOf('[^A-Za-z0-9]') === 0) return true;
+        if (s[0] === '^' || s[0] === '$') return true;
+        return false;
+    };
+
+    function segTypeClass(seg) {
+        return { fixed: 'seg_fixed', variable: 'seg_var', class: 'seg_class', alt: 'seg_alt', anchor: 'seg_anchor', context: 'seg_context' }[seg.type] || 'seg_fixed';
+    }
+
+    function buildExplainSummary() {
+        if (!st) return '';
+        if (st.expertDirty) {
+            if (st.expertExplainItems && st.expertExplainItems.length) {
+                var title = L('regex_explain_title');
+                var lines = st.expertExplainItems.map(function (item, i) {
+                    return (i + 1) + '. ' + explainItem(item);
+                });
+                return title + '\n' + lines.join('\n');
+            }
+            return L('regex_explain_expert_only');
+        }
+        if (!st.segments.length) return L('regex_explain_empty');
+        var title = L('regex_explain_title');
+        var lines = st.segments.map(function (seg, i) {
+            return (i + 1) + '. ' + explainSeg(seg);
+        });
+        return title + '\n' + lines.join('\n');
+    }
+
+    function syncPatternExplainTip() {
+        if (!st) return;
+        var tip = buildExplainSummary();
+        if (st.patternLabelEl) {
+            if (tip) {
+                st.patternLabelEl.setAttribute('data-tip', tip);
+                st.patternLabelEl.classList.add('synocr-has-tip');
+            } else {
+                st.patternLabelEl.removeAttribute('data-tip');
+                st.patternLabelEl.classList.remove('synocr-has-tip');
+            }
+        }
+        if (st.patternPreviewEl) {
+            if (!st.expertDirty && st.segments.length && tip) {
+                st.patternPreviewEl.setAttribute('data-tip', tip);
+                st.patternPreviewEl.classList.add('synocr-has-tip');
+            } else {
+                st.patternPreviewEl.removeAttribute('data-tip');
+                st.patternPreviewEl.classList.remove('synocr-has-tip');
+            }
+        }
+        if (st.expertEl) {
+            if (st.expertDirty && tip) {
+                st.expertEl.setAttribute('data-tip', tip);
+                st.expertEl.classList.add('synocr-has-tip');
+            } else {
+                st.expertEl.removeAttribute('data-tip');
+                st.expertEl.classList.remove('synocr-has-tip');
+            }
+        }
+    }
+
+    function segToggleLabel() {
+        if (!st) return '';
+        var open = !!st.segExpanded;
+        var label = open ? L('regex_toggle_seg_hide', 'Bausteine ausblenden') : L('regex_toggle_seg_show', 'Bausteine anzeigen');
+        var n = st.segments ? st.segments.length : 0;
+        if (n > 0) label += ' (' + n + ')';
+        return (open ? '\u25BC ' : '\u25B6 ') + label;
+    }
+
+    function syncSegCollapse() {
+        if (!st || !st.segCollapseEl || !st.segToggleBtn) return;
+        st.segCollapseEl.style.display = st.segExpanded ? '' : 'none';
+        st.segToggleBtn.textContent = segToggleLabel();
+        st.segToggleBtn.setAttribute('aria-expanded', st.segExpanded ? 'true' : 'false');
+    }
+
+    function renderPatternPreview() {
+        if (!st || !st.patternPreviewEl) return;
+        var el = st.patternPreviewEl;
+        el.innerHTML = '';
+        if (st.expertDirty || !st.segments.length) {
+            el.style.display = 'none';
+            syncPatternExplainTip();
+            return;
+        }
+        el.style.display = '';
+        st.segments.forEach(function (seg) {
+            var frag = optionalWrap(segFrag(seg), seg);
+            if (!frag) return;
+            el.appendChild(h('span', {
+                class: 'synocr-regex-pattern-frag ' + segTypeClass(seg) + ' synocr-has-tip',
+                'data-tip': explainSeg(seg)
+            }, frag));
+        });
+        syncPatternPreviewHeight(el);
+        syncPatternExplainTip();
+    }
+
+    function syncPatternPreviewHeight(el) {
+        if (!el) return;
+        var minH = 34;
+        var max = Math.max(minH, Math.floor(window.innerHeight * 0.5));
+        el.style.minHeight = minH + 'px';
+        el.style.maxHeight = max + 'px';
+    }
+
+    function syncPatternView() {
+        if (!st) return;
+        var expert = st.expertDirty;
+        if (st.expertEl) st.expertEl.style.display = expert ? '' : 'none';
+        if (st.patternPreviewEl) renderPatternPreview();
+        if (st.modeToggleBtn) {
+            st.modeToggleBtn.textContent = expert ? L('regex_btn_visual_mode', 'Visuelle Ansicht') : L('regex_btn_expert_mode', 'Experten-RegEx bearbeiten');
+        }
+        syncPatternExplainTip();
+        syncSegCollapse();
+    }
+
+    function setExpertMode(on, opts) {
+        opts = opts || {};
+        if (!st) return;
+        if (on) {
+            st.expertDirty = true;
+            st.expertPattern = st.expertEl ? st.expertEl.value : assemble();
+            if (st.expertEl) st.expertEl.value = st.expertPattern;
+            scheduleExpertExplain();
+        } else {
+            st.expertExplainItems = null;
+            var pattern = st.expertEl ? st.expertEl.value : st.expertPattern;
+            var parsed = parsePatternToSegments(pattern, st.mode);
+            if (!parsed.ok) {
+                if (!opts.silent) setStatus(L('regex_parse_failed', 'Muster konnte nicht in Segmente umgewandelt werden.'));
+                return false;
+            }
+            st.segments = parsed.segments;
+            st.expertDirty = false;
+            st.expertPattern = '';
+            renderSegments();
+        }
+        syncPatternView();
+        syncExpert();
+        schedulePreview();
+        return true;
+    }
+
     function spanSpaces(s) { return s.replace(/ /g, '<span class="synocr-sp"> </span>'); }
 
-    function renderText(matches) {
+    // grep -ob reports byte offsets; JS strings use character indices (UTF-8 multibyte safe).
+    function charIndexFromByteOffset(raw, byteOff) {
+        if (!raw || byteOff <= 0) return 0;
+        var enc = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
+        if (!enc) return byteOff;
+        var lo = 0, hi = raw.length;
+        while (lo < hi) {
+            var mid = (lo + hi) >> 1;
+            if (enc.encode(raw.slice(0, mid)).length < byteOff) lo = mid + 1;
+            else hi = mid;
+        }
+        return lo;
+    }
+
+    function renderText(matches, offsets) {
         var raw = st.text || '';
         var out = '', pos = 0;
         if (matches && matches.length) {
@@ -189,6 +680,15 @@
                 var m = matches[k];
                 if (m === '') continue;
                 var idx = raw.indexOf(m, pos);
+                if (offsets && offsets[k] != null && offsets[k] >= 0) {
+                    var byteOff = offsets[k];
+                    var charFromByte = charIndexFromByteOffset(raw, byteOff);
+                    if (raw.slice(charFromByte, charFromByte + m.length) === m) {
+                        idx = charFromByte;
+                    } else if (raw.slice(byteOff, byteOff + m.length) === m) {
+                        idx = byteOff;
+                    }
+                }
                 if (idx < 0) continue;
                 out += spanSpaces(escHtml(raw.slice(pos, idx)));
                 out += '<mark class="synocr-regex-match">' + spanSpaces(escHtml(m)) + '</mark>';
@@ -235,11 +735,22 @@
             seg = { type: 'anchor', anchorKind: 'word', start: lastEnd(), end: lastEnd(),
                     optional: false, anchor: false };
         } else {
+            // fixed & context: their text feeds the pattern, so a marked selection is
+            // required. variable & class are inserted directly per click; an optional
+            // selection is kept only as orientation (it is not part of the pattern).
+            var needSel = (type === 'fixed' || type === 'context');
             var txt = st.selText || '';
-            if (!txt) return;
-            var start = st.text.indexOf(txt, lastEnd());
-            if (start < 0) start = st.text.indexOf(txt);
-            if (start < 0) return;
+            if (needSel && !txt) return;
+            var start = lastEnd();
+            if (txt) {
+                start = st.text.indexOf(txt, lastEnd());
+                if (start < 0) start = st.text.indexOf(txt);
+                if (start < 0) {
+                    if (needSel) return;       // selection no longer present -> abort
+                    start = lastEnd();         // variable/class: drop orientation, insert anyway
+                    txt = '';
+                }
+            }
             seg = { type: type, text: txt, start: start, end: start + txt.length,
                     wsFlex: false, anchor: false, optional: false,
                     varKind: 'any', classKind: 'digits', classQuant: 'plus', n: '', m: '',
@@ -249,8 +760,10 @@
         }
         st.segments.push(seg);
         st.expertDirty = false;
+        st.segExpanded = true;
         renderSegments();
         syncExpert();
+        syncPatternView();
         schedulePreview();
     }
 
@@ -272,6 +785,86 @@
         return h('label', labelAttrs, [cb, h('span', { text: L(labelKey) })]);
     }
 
+    // ---- segment drag & drop reorder --------------------------------------
+    function cleanupSegDrag() {
+        if (st.dragChip) {
+            st.dragChip.classList.remove('synocr-regex-seg-dragging');
+            st.dragChip = null;
+        }
+        if (st.dropPlaceholder && st.dropPlaceholder.parentNode) {
+            st.dropPlaceholder.parentNode.removeChild(st.dropPlaceholder);
+        }
+        st.dropPlaceholder = null;
+        st.dragIndex = null;
+        st.dragHeight = null;
+    }
+
+    function getSegInsertIndex(bar, clientY) {
+        var chips = bar.querySelectorAll('.synocr-regex-seg:not(.synocr-regex-seg-dragging)');
+        for (var c = 0; c < chips.length; c++) {
+            var rect = chips[c].getBoundingClientRect();
+            if (clientY < rect.top + rect.height / 2) {
+                return parseInt(chips[c].dataset.segIndex, 10);
+            }
+        }
+        return st.segments.length;
+    }
+
+    function isNoOpSegMove(from, insertAt) {
+        return insertAt === from || insertAt === from + 1;
+    }
+
+    function moveSegPlaceholder(bar, insertAt) {
+        var ph = st.dropPlaceholder;
+        if (!ph || !bar) return;
+        var from = st.dragIndex;
+        if (from == null || isNoOpSegMove(from, insertAt)) {
+            if (ph.parentNode) ph.parentNode.removeChild(ph);
+            return;
+        }
+        var chips = bar.querySelectorAll('.synocr-regex-seg');
+        var target = null;
+        for (var c = 0; c < chips.length; c++) {
+            if (parseInt(chips[c].dataset.segIndex, 10) === insertAt) {
+                target = chips[c];
+                break;
+            }
+        }
+        if (target && !target.classList.contains('synocr-regex-seg-dragging')) {
+            bar.insertBefore(ph, target);
+        } else {
+            bar.appendChild(ph);
+        }
+    }
+
+    function applySegReorder(from, insertAt) {
+        if (from == null || isNoOpSegMove(from, insertAt)) return;
+        var item = st.segments.splice(from, 1)[0];
+        if (insertAt > from) insertAt--;
+        st.segments.splice(insertAt, 0, item);
+        st.expertDirty = false;
+    }
+
+    function onSegBarDragOver(e) {
+        if (st.dragIndex == null) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        moveSegPlaceholder(e.currentTarget, getSegInsertIndex(e.currentTarget, e.clientY));
+    }
+
+    function onSegBarDrop(e) {
+        e.preventDefault();
+        if (st.dragIndex == null) return;
+        var from = st.dragIndex;
+        var insertAt = getSegInsertIndex(e.currentTarget, e.clientY);
+        cleanupSegDrag();
+        applySegReorder(from, insertAt);
+        renderSegments();
+        syncExpert();
+        syncPatternView();
+        schedulePreview();
+    }
+
     function renderSegments() {
         var bar = st.segBarEl;
         bar.innerHTML = '';
@@ -280,7 +873,7 @@
             return;
         }
         st.segments.forEach(function (seg, idx) {
-            var chip = h('div', { class: 'synocr-regex-seg' });
+            var chip = h('div', { class: 'synocr-regex-seg', dataset: { segIndex: String(idx) } });
             var typeClass = { fixed: 'seg_fixed', variable: 'seg_var', class: 'seg_class', alt: 'seg_alt', anchor: 'seg_anchor', context: 'seg_context' }[seg.type];
             var label = L('regex_' + typeClass, seg.type);
             var helpKey = SEG_HELP_KEYS[seg.type];
@@ -289,6 +882,29 @@
                 badgeAttrs.class += ' synocr-has-tip';
                 badgeAttrs['data-tip-key'] = helpKey;
             }
+            var dragHint = L('regex_seg_drag_hint', 'Baustein durch Ziehen verschieben');
+            var handle = h('span', {
+                class: 'synocr-regex-seg-drag-handle synocr-has-tip',
+                'data-tip': dragHint,
+                title: dragHint,
+                draggable: 'true'
+            }, '\u283F');
+            handle.addEventListener('dragstart', function (e) {
+                if (st.expertDirty) { e.preventDefault(); return; }
+                st.dragIndex = idx;
+                st.dragChip = chip;
+                st.dragHeight = chip.getBoundingClientRect().height;
+                chip.classList.add('synocr-regex-seg-dragging');
+                var ph = document.createElement('div');
+                ph.className = 'synocr-regex-seg-drop-placeholder';
+                ph.style.height = st.dragHeight + 'px';
+                ph.setAttribute('aria-hidden', 'true');
+                st.dropPlaceholder = ph;
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', String(idx)); } catch (err) {}
+            });
+            handle.addEventListener('dragend', cleanupSegDrag);
+            chip.appendChild(handle);
             chip.appendChild(h('span', badgeAttrs));
 
             if (seg.type === 'fixed') {
@@ -386,8 +1002,24 @@
                 chip.appendChild(makeOptCheckbox(seg, 'optional', 'regex_seg_optional', 'regex_help_seg_optional'));
             }
 
-            // text preview for fixed/variable/class/context (alt & anchor show controls instead)
-            if (seg.type === 'fixed' || seg.type === 'variable' || seg.type === 'class' || seg.type === 'context') {
+            // text field — editable for fixed/context (their text feeds the pattern);
+            // read-only preview for variable/class (text is only the marked sample)
+            if (seg.type === 'fixed' || seg.type === 'context') {
+                var txtInp = h('input', {
+                    type: 'text',
+                    class: 'form-control form-control-sm synocr-regex-seg-text-inp font-monospace',
+                    value: seg.text,
+                    placeholder: L('regex_seg_text_placeholder', 'Text'),
+                    draggable: 'false'
+                });
+                txtInp.addEventListener('input', function () {
+                    seg.text = txtInp.value;
+                    st.expertDirty = false;
+                    syncExpert();
+                    schedulePreview();
+                });
+                chip.appendChild(txtInp);
+            } else if ((seg.type === 'variable' || seg.type === 'class') && seg.text) {
                 chip.appendChild(h('span', { class: 'synocr-regex-seg-text font-monospace', title: seg.text, text: '\u201e' + seg.text + '\u201c' }));
             }
 
@@ -397,6 +1029,7 @@
             chip.appendChild(rm);
             bar.appendChild(chip);
         });
+        syncSegCollapse();
     }
 
     // ---- plain-text explanation -------------------------------------------
@@ -419,6 +1052,7 @@
             var quantLabel;
             if (seg.classQuant === 'fixed') quantLabel = ' ' + L('regex_explain_class_fixed').replace('%n', String(seg.n || '1'));
             else if (seg.classQuant === 'range') quantLabel = ' ' + L('regex_explain_class_range').replace('%n', String(seg.n || '0')).replace('%m', String(seg.m || ''));
+            else if (seg.classQuant === 'star') quantLabel = ' ' + L('regex_explain_class_star');
             else quantLabel = ' ' + L('regex_explain_class_plus');
             s = kindLabel + quantLabel;
         } else if (seg.type === 'alt') {
@@ -442,31 +1076,80 @@
         return s;
     }
 
-    function renderExplain() {
-        if (!st || !st.explainEl) return;
-        var el = st.explainEl;
-        el.innerHTML = '';
-        el.appendChild(h('div', { class: 'synocr-regex-explain-title small fw-bold mb-1' }, L('regex_explain_title')));
-        if (st.expertDirty) {
-            el.appendChild(h('div', { class: 'small text-muted' }, L('regex_explain_expert_only')));
-            return;
+    function explainItem(item) {
+        if (!item || !item.kind) return '';
+        if (item.kind === 'keep') return L('regex_explain_keep');
+        if (item.kind === 'char_optional') return L('regex_explain_char_optional');
+        if (item.kind === 'char_any') return L('regex_explain_char_any');
+        if (item.kind === 'char_plus') {
+            var s = L('regex_explain_char_any') + ' ' + L('regex_explain_class_plus');
+            if (item.optional) s += ' ' + L('regex_explain_optional_suffix');
+            return s;
         }
-        if (!st.segments.length) {
-            el.appendChild(h('div', { class: 'small text-muted' }, L('regex_explain_empty')));
-            return;
+        if (item.kind === 'unknown') return L('regex_explain_unknown').replace('%t', item.raw || '');
+        if (item.kind === 'escape') {
+            var escMap = {
+                newline: L('regex_explain_escape_newline'),
+                tab: L('regex_explain_escape_tab'),
+                cr: L('regex_explain_escape_cr')
+            };
+            return escMap[item.escapeKind] || L('regex_explain_unknown').replace('%t', item.escapeKind || '');
         }
-        var ol = h('ol', { class: 'synocr-regex-explain-list mb-0' });
-        st.segments.forEach(function (seg) {
-            ol.appendChild(h('li', { class: 'synocr-regex-explain-item' }, explainSeg(seg)));
-        });
-        el.appendChild(ol);
+        if (item.kind === 'branch_reset') {
+            var br = L('regex_explain_branch_reset');
+            if (item.items && item.items.length) {
+                br += ': ' + item.items.map(explainItem).join(' ');
+            }
+            if (item.optional) br += ' ' + L('regex_explain_optional_suffix');
+            return br;
+        }
+        if (item.kind === 'alt') {
+            if (item.branches && item.branches.length) {
+                var parts = item.branches.map(function (branch) {
+                    return branch.map(explainItem).join(' ');
+                });
+                var altS = L('regex_explain_alt').replace('%t', parts.join(', '));
+                if (item.optional) altS += ' ' + L('regex_explain_optional_suffix');
+                return altS;
+            }
+        }
+        if (item.kind === 'group' && item.items && item.items.length) {
+            return item.items.map(explainItem).join(' ');
+        }
+        if (item.kind === 'variable' && item.varKind === 'ws') {
+            var wsS = L('regex_explain_var_ws');
+            if (item.varQuant === 'star') wsS += ' ' + L('regex_explain_class_star');
+            else if (item.varQuant === 'plus') wsS += ' ' + L('regex_explain_class_plus');
+            if (item.optional) wsS += ' ' + L('regex_explain_optional_suffix');
+            return wsS;
+        }
+        var seg = { type: item.kind, optional: !!item.optional };
+        if (item.kind === 'fixed') {
+            seg.text = item.text || '';
+            seg.wsFlex = !!item.wsFlex;
+        } else if (item.kind === 'variable') {
+            seg.varKind = item.varKind || 'any';
+        } else if (item.kind === 'class') {
+            seg.classKind = item.classKind || 'digits';
+            seg.classQuant = item.classQuant || 'plus';
+            seg.n = item.n || '';
+            seg.m = item.m || '';
+        } else if (item.kind === 'alt') {
+            seg.texts = item.texts || [];
+        } else if (item.kind === 'anchor') {
+            seg.anchorKind = item.anchorKind || 'word';
+        } else if (item.kind === 'context') {
+            seg.lookKind = item.lookKind || 'after';
+            seg.text = item.text || '';
+        }
+        return explainSeg(seg);
     }
 
     function syncExpert() {
         if (!st.expertEl) return;
         if (!st.expertDirty) st.expertEl.value = assemble();
         syncExpertTextareaHeight(st.expertEl);
-        renderExplain();
+        syncPatternView();
     }
 
     function syncExpertTextareaHeight(el) {
@@ -486,22 +1169,48 @@
     }
 
     // ---- server calls ------------------------------------------------------
+    // Error contract: cb receives { ok:false, error:'network' } on connection
+    // failure / HTTP non-2xx / timeout, or { ok:false, error:'response' } when
+    // the body is not valid JSON. The 'done' guard prevents double callbacks
+    // (onreadystatechange + onerror can both fire on network errors).
     function post(body, cb) {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', ENDPOINT, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState !== 4) return;
-            try { cb(JSON.parse(xhr.responseText)); } catch (e) { cb({ ok: false, error: 'response' }); }
-        };
-        xhr.send(JSON.stringify(body));
+        var done = false;
+        function fail(type) { if (done) return; done = true; cb({ ok: false, error: type }); }
+        try {
+            xhr.open('POST', ENDPOINT, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.timeout = 20000;
+            xhr.ontimeout = function () { fail('network'); };
+            xhr.onerror = function () { fail('network'); };
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4 || done) return;
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    var parsed;
+                    try { parsed = JSON.parse(xhr.responseText); }
+                    catch (e) { return fail('response'); }
+                    done = true;
+                    cb(parsed);
+                } else {
+                    fail('network');
+                }
+            };
+            xhr.send(JSON.stringify(body));
+        } catch (e) {
+            fail('network');
+        }
+    }
+
+    function statusFromError(r) {
+        if (r && r.error === 'network') return L('regex_network_error');
+        return (r && r.error) || 'error';
     }
 
     function doLoad() {
         if (!st.path) return;
         setStatus(L('regex_sample_loading'));
         post({ op: 'load', path: st.path, searchAll: st.searchAll, clean_up_spaces: st.clean, source: st.source }, function (r) {
-            if (!r || !r.ok) { setStatus((r && r.error) || 'error'); return; }
+            if (!r || !r.ok) { setStatus(statusFromError(r)); return; }
             saveLastPdf(st.path);
             syncLastDocBtn();
             st.token = r.token;
@@ -509,6 +1218,8 @@
             renderText(null);
             st.viewerWrapEl.style.display = '';
             st.bodyEl.style.display = '';
+            st.segExpanded = false;
+            syncSegCollapse();
             if (r.notes === 'no_text_layer') setStatus(L('regex_hint_no_text_layer'));
             else setStatus(L('regex_sample_loaded').replace('%n', st.text.length));
             schedulePreview();
@@ -522,6 +1233,33 @@
         previewTimer = setTimeout(runPreview, 300);
     }
 
+    var explainTimer = null;
+    function scheduleExpertExplain() {
+        if (!st || !st.expertDirty) return;
+        if (explainTimer) clearTimeout(explainTimer);
+        explainTimer = setTimeout(runExpertExplain, 300);
+    }
+
+    function runExpertExplain() {
+        if (!st || !st.expertDirty) return;
+        var pattern = st.expertPattern || (st.expertEl ? st.expertEl.value : '');
+        if (!pattern) {
+            st.expertExplainItems = null;
+            syncPatternExplainTip();
+            return;
+        }
+        post({ op: 'explain', pattern: pattern, multiline: st.multiline, casesensitive: st.casesensitive }, function (r) {
+            if (!st || !st.expertDirty) return;
+            if (!r || !r.ok) {
+                st.expertExplainItems = null;
+                syncPatternExplainTip();
+                return;
+            }
+            st.expertExplainItems = r.items || [];
+            syncPatternExplainTip();
+        });
+    }
+
     function runPreview() {
         if (!st || !st.token) return;
         var pattern = st.expertDirty ? st.expertPattern : assemble();
@@ -531,11 +1269,11 @@
             if (r.ok === false) {
                 st.countEl.textContent = '';
                 renderMatchPreview([], null);
-                setStatus(r.error === 'syntax' ? L('regex_preview_error') : (r.error || 'error'));
+                setStatus(r.error === 'syntax' ? L('regex_preview_error') : statusFromError(r));
                 renderText(null);
                 return;
             }
-            renderText(r.matches || []);
+            renderText(r.matches || [], r.offsets || null);
             var n = r.count || 0;
             st.countEl.textContent = n > 0 ? L('regex_preview_matches').replace('%n', n) : L('regex_preview_no_match');
             renderMatchPreview(r.matches || [], r.extracted);
@@ -578,21 +1316,57 @@
         toolAnchor.addEventListener('click', function () { addSegment('anchor'); });
         toolContext.addEventListener('click', function () { addSegment('context'); });
 
-        var segBar = h('div', { class: 'synocr-regex-segbar mb-2' });
+        var segBar = h('div', { class: 'synocr-regex-segbar' });
+        // Improvement potential (mobile/touch): HTML5 drag & drop has no
+        // reliable touch support, so reordering segments via the ⠿ handle does
+        // not work on tablets/phones. A future enhancement could add ↑/↓
+        // buttons per segment chip as a pointer/touch fallback (call
+        // applySegReorder()).
+        segBar.addEventListener('dragover', onSegBarDragOver);
+        segBar.addEventListener('drop', onSegBarDrop);
+        var segToggleBtn = h('button', {
+            type: 'button',
+            class: 'btn btn-link btn-sm synocr-regex-seg-toggle p-0 mb-1',
+            'aria-expanded': 'false'
+        }, L('regex_toggle_seg_show', 'Bausteine anzeigen'));
+        var segCollapseEl = h('div', { class: 'synocr-regex-seg-collapse', style: 'display:none;' }, [segBar]);
+        segToggleBtn.addEventListener('click', function () {
+            if (!st) return;
+            st.segExpanded = !st.segExpanded;
+            syncSegCollapse();
+        });
+
+        var patternPreviewEl = h('div', {
+            class: 'form-control form-control-sm font-monospace synocr-regex-pattern-preview',
+            tabindex: '0',
+            role: 'textbox',
+            'aria-readonly': 'true'
+        });
         var expertEl = h('textarea', { class: 'form-control form-control-sm font-monospace synocr-regex-expert', rows: '1', spellcheck: 'false' });
         expertEl.addEventListener('input', function () {
             st.expertDirty = true;
             st.expertPattern = expertEl.value;
             syncExpertTextareaHeight(expertEl);
-            renderExplain();
+            syncPatternView();
             schedulePreview();
+            scheduleExpertExplain();
         });
-
-        var explainEl = h('div', { class: 'synocr-regex-explain mt-2 mb-2' });
+        var patternLabelEl = h('span', {
+            class: 'form-label small fw-bold mb-0 synocr-has-tip synocr-regex-pattern-label'
+        }, L('regex_expert_pattern'));
+        var modeToggleBtn = h('button', {
+            type: 'button',
+            class: 'btn btn-link btn-sm synocr-regex-mode-toggle p-0'
+        }, L('regex_btn_expert_mode', 'Experten-RegEx bearbeiten'));
+        modeToggleBtn.addEventListener('click', function () {
+            if (!st) return;
+            if (st.expertDirty) setExpertMode(false);
+            else setExpertMode(true);
+        });
 
         var countEl = h('span', { class: 'small fw-bold synocr-regex-count flex-shrink-0' });
         var matchPreviewEl = h('span', { class: 'synocr-regex-match-preview font-monospace', style: 'display:none;' });
-        var previewRow = h('div', { class: 'synocr-regex-preview-row d-flex align-items-center gap-2' }, [countEl, matchPreviewEl]);
+        var statusEl = h('span', { class: 'small text-muted synocr-regex-footer-status text-truncate' });
 
         // load section — single compact row
         var lastDocBtn = h('button', { type: 'button', class: 'btn btn-outline-primary btn-sm', style: 'display:none;' }, L('regex_btn_last_doc'));
@@ -645,13 +1419,20 @@
             ])
         ]);
 
-        // flags
-        var mlInp = h('input', { type: 'checkbox', class: 'form-check-input', role: 'switch' });
-        mlInp.addEventListener('change', function () { st.multiline = mlInp.checked ? 'true' : 'false'; schedulePreview(); });
-        var csInp = h('input', { type: 'checkbox', class: 'form-check-input', role: 'switch' });
-        csInp.addEventListener('change', function () { st.casesensitive = csInp.checked ? 'true' : 'false'; schedulePreview(); });
-
-        var statusEl = h('div', { class: 'small text-muted mt-1' });
+        // flags (beside type toolbar)
+        var mlId = 'synocr-regex-multiline';
+        var csId = 'synocr-regex-casesensitive';
+        var mlInp = h('input', { type: 'checkbox', class: 'form-check-input', role: 'switch', id: mlId });
+        mlInp.addEventListener('change', function () { st.multiline = mlInp.checked ? 'true' : 'false'; schedulePreview(); scheduleExpertExplain(); });
+        var csInp = h('input', { type: 'checkbox', class: 'form-check-input', role: 'switch', id: csId });
+        csInp.addEventListener('change', function () { st.casesensitive = csInp.checked ? 'true' : 'false'; schedulePreview(); scheduleExpertExplain(); });
+        var toolRow = h('div', { class: 'synocr-regex-toolbar-row d-flex flex-wrap align-items-center gap-1 mb-2' }, [
+            h('div', { class: 'd-flex flex-wrap gap-1 synocr-regex-tools' }, [toolFixed, toolVar, toolClass, toolAlt, toolAnchor, toolContext]),
+            h('div', { class: 'synocr-regex-flag-switches d-flex flex-wrap align-items-center gap-3 ms-auto' }, [
+                h('div', { class: 'form-check form-switch mb-0' }, [mlInp, h('label', { class: 'form-check-label', 'for': mlId, text: L('regex_multiline', 'Multi-Line') })]),
+                h('div', { class: 'form-check form-switch mb-0' }, [csInp, h('label', { class: 'form-check-label', 'for': csId, text: L('regex_casesensitive', 'Groß-/Kleinschreibung') })])
+            ])
+        ]);
 
         var applyBtn = h('button', { type: 'button', class: 'btn btn-primary btn-sm', style: 'background-color:#0086E5;' }, L('regex_btn_apply'));
         applyBtn.addEventListener('click', function () {
@@ -662,33 +1443,40 @@
         });
         var cancelBtn = h('button', { type: 'button', class: 'btn btn-secondary btn-sm', 'data-bs-dismiss': 'modal' }, L('regex_btn_cancel'));
 
+        var footerCenter = h('div', { class: 'synocr-regex-footer-center d-flex align-items-center gap-2 flex-grow-1' }, [
+            countEl, matchPreviewEl, statusEl
+        ]);
+        var footerActions = h('div', { class: 'synocr-regex-footer-actions d-flex align-items-center gap-2 flex-shrink-0' }, [
+            cancelBtn, applyBtn
+        ]);
+        var footerEl = h('div', { class: 'modal-footer bg-light synocr-regex-footer d-flex flex-wrap align-items-center gap-2' }, [
+            footerCenter, footerActions
+        ]);
+
         var bodyEl = h('div', { class: 'synocr-regex-body', style: 'display:none;' }, [
-            h('div', { class: 'd-flex flex-wrap gap-1 mb-2' }, [toolFixed, toolVar, toolClass, toolAlt, toolAnchor, toolContext]),
-            segBar,
-            h('label', { class: 'form-label small fw-bold mb-1' }, L('regex_expert_pattern')),
-            expertEl,
-            explainEl,
-            h('div', { class: 'd-flex flex-wrap align-items-center gap-3 mt-2 mb-2' }, [
-                h('div', { class: 'form-check form-switch' }, [mlInp, h('label', { class: 'form-check-label', 'for': mlInp.id, text: L('regex_multiline', 'Multi-Line') })]),
-                h('div', { class: 'form-check form-switch' }, [csInp, h('label', { class: 'form-check-label', 'for': csInp.id, text: L('regex_casesensitive', 'Groß-/Kleinschreibung') })])
+            toolRow,
+            h('div', { class: 'synocr-regex-seg-section mb-2' }, [segToggleBtn, segCollapseEl]),
+            h('div', { class: 'd-flex justify-content-between align-items-center mb-1 gap-2 flex-wrap' }, [
+                patternLabelEl,
+                modeToggleBtn
             ]),
-            viewerWrap,
-            previewRow,
-            statusEl
+            patternPreviewEl,
+            expertEl,
+            viewerWrap
         ]);
 
         var modalEl = h('div', { id: MODAL_ID, class: 'modal fade', tabindex: '-1', 'aria-hidden': 'true' }, [
             h('div', { class: 'modal-dialog modal-dialog-centered synocr-regex-assistant-modal' }, [
                 h('div', { class: 'modal-content' }, [
                     h('div', { class: 'modal-header bg-light' }, [
-                        h('h5', { class: 'modal-title' }, L('regex_assistant_title')),
+                        h('h5', { class: 'modal-title' }, L('regex_assistant_title') + ' [BETA]'),
                         h('button', { type: 'button', class: 'btn-close', 'data-bs-dismiss': 'modal', 'aria-label': 'Close' })
                     ]),
                     h('div', { class: 'modal-body' }, [
                         loadSection,
                         bodyEl
                     ]),
-                    h('div', { class: 'modal-footer bg-light' }, [cancelBtn, applyBtn])
+                    footerEl
                 ])
             ])
         ]);
@@ -697,7 +1485,9 @@
         // stash refs
         var M = {};
         M.el = modalEl; M.viewerEl = viewerEl; M.viewerWrapEl = viewerWrap; M.matchPreviewEl = matchPreviewEl; M.bodyEl = bodyEl;
-        M.segBarEl = segBar; M.expertEl = expertEl; M.explainEl = explainEl; M.countEl = countEl; M.statusEl = statusEl;
+        M.segBarEl = segBar; M.segToggleBtn = segToggleBtn; M.segCollapseEl = segCollapseEl;
+        M.expertEl = expertEl; M.patternPreviewEl = patternPreviewEl; M.patternLabelEl = patternLabelEl;
+        M.modeToggleBtn = modeToggleBtn; M.countEl = countEl; M.statusEl = statusEl; M.footerEl = footerEl;
         M.srcSel = srcSel; M.srcWrapEl = srcWrap; M.mlInp = mlInp; M.csInp = csInp;
         M.optFirst = optFirst; M.optAll = optAll; M.cleanInp = cleanInp; M.pathLabelEl = pathLabel;
         M.lastDocBtn = lastDocBtn; M.pickBtn = pickBtn; M.loadBtn = loadBtn;
@@ -737,7 +1527,9 @@
 
         st = {
             el: el, viewerEl: M.viewerEl, viewerWrapEl: M.viewerWrapEl, matchPreviewEl: M.matchPreviewEl, bodyEl: M.bodyEl,
-            segBarEl: M.segBarEl, expertEl: M.expertEl, explainEl: M.explainEl, countEl: M.countEl, statusEl: M.statusEl,
+            segBarEl: M.segBarEl, segToggleBtn: M.segToggleBtn, segCollapseEl: M.segCollapseEl,
+            expertEl: M.expertEl, patternPreviewEl: M.patternPreviewEl, patternLabelEl: M.patternLabelEl,
+            modeToggleBtn: M.modeToggleBtn, countEl: M.countEl, statusEl: M.statusEl, footerEl: M.footerEl,
             pathLabelEl: M.pathLabelEl, lastDocBtn: M.lastDocBtn, pickBtn: M.pickBtn, loadBtn: M.loadBtn,
             mode: opts.mode === 'extract' ? 'extract' : 'match',
             extractType: opts.extractType === 'dir' ? 'dir' : 'tag',
@@ -746,13 +1538,21 @@
             source: opts.source === 'filename' ? 'filename' : 'content',
             searchAll: 'first', clean: 'true',
             path: '', token: null, text: '', segments: [], selText: '',
-            expertDirty: false, expertPattern: '', onApply: opts.onApply || null
+            segExpanded: false,
+            dragIndex: null, dragChip: null, dragHeight: null, dropPlaceholder: null,
+            expertDirty: false, expertPattern: '', expertExplainItems: null, onApply: opts.onApply || null
         };
 
         var initialPattern = opts.pattern != null ? String(opts.pattern) : '';
         if (initialPattern) {
-            st.expertDirty = true;
-            st.expertPattern = initialPattern;
+            var parsed = parsePatternToSegments(initialPattern, st.mode);
+            if (parsed.ok) {
+                st.segments = parsed.segments;
+                st.expertDirty = false;
+            } else {
+                st.expertDirty = true;
+                st.expertPattern = initialPattern;
+            }
         }
 
         // reset UI
@@ -767,11 +1567,13 @@
         M.srcWrapEl.style.display = (st.mode === 'extract') ? 'none' : '';
         M.countEl.textContent = '';
         M.statusEl.textContent = '';
-        M.expertEl.value = initialPattern;
+        M.expertEl.value = st.expertDirty ? st.expertPattern : initialPattern;
         renderMatchPreview([], null);
         renderSegments();
-        renderExplain();
         renderText(null);
+        syncSegCollapse();
+        syncPatternView();
+        if (st.expertDirty) scheduleExpertExplain();
 
         showModal(el);
         syncExpertTextareaHeight(M.expertEl);

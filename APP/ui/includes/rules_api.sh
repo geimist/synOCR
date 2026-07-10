@@ -97,16 +97,53 @@ rules_api_save_json() {
     printf '{"ok":true,"rule_count":%s,"updated":"%s"}' "${_count}" "$(date '+%Y-%m-%d %H:%M')"
 }
 
-# POST body (JSON), three operations via `op`:
+# POST body (JSON), four operations via `op`:
 #   load:    { op, path, searchAll, clean_up_spaces, source }
 #            -> { ok, text, token, notes? }
 #   preview: { op, token, pattern, mode, multiline, casesensitive, extractType }
-#            -> { ok, matches:[text,...], count, extracted?, error?, notes? }
+#            -> { ok, matches:[text,...], offsets:[int,...], count, extracted?, error?, notes? }
+#   explain: { op, pattern, multiline, casesensitive }
+#            -> { ok, items:[...] } | { ok:false, error:"syntax"|"venv" }
 #   release: { op, token } -> { ok }
 #
 # Text extraction mirrors synOCR.sh (pdftotext -layout + sed clean_up); match
 # runs the same grep -oP/-oPz flags as the rule engine; extract post-processing
 # mirrors the tagname_RegEx / dirname_RegEx pipelines so preview == production.
+
+# Resolve synOCR venv interpreter (not system python3).
+rules_api_resolve_venv_python() {
+    local _p _home
+    _home=$(synocr_app_home)
+    for _p in \
+        "${_home}/python3_env/bin/python3" \
+        "${_home}/python3_env/bin/python" \
+        "${_home%/ui}/python3_env/bin/python3" \
+        "${_home%/ui}/python3_env/bin/python"
+    do
+        [ -x "${_p}" ] && { printf '%s' "${_p}"; return 0; }
+    done
+    return 1
+}
+
+# Parse `grep -obP` into JSON arrays _grep_ob_offsets / _grep_ob_matches (both '[]' if none).
+rules_api_grep_ob_parse() {
+    local _grep_opt="$1" _pattern="$2" _file="$3" _ml="$4"
+    local _raw
+    _grep_ob_offsets='[]'
+    _grep_ob_matches='[]'
+    _raw=$(grep -obP${_grep_opt} -- "${_pattern}" "${_file}" 2>/dev/null) || _raw=""
+    [ -z "${_raw}" ] && return 0
+    if [ "${_ml}" = "true" ]; then
+        _grep_ob_offsets=$(printf '%s' "${_raw}" | tr '\0' '\n' | sed -n 's/^\([0-9][0-9]*\):.*/\1/p' | jq -Rs 'split("\n") | map(select(length>0) | tonumber)' 2>/dev/null) || _grep_ob_offsets='[]'
+        _grep_ob_matches=$(printf '%s' "${_raw}" | tr '\0' '\n' | sed -n 's/^[0-9][0-9]*:\(.*\)/\1/p' | tr '\n' '\001' | jq -Rs 'split("\u0001") | map(select(length>0))' 2>/dev/null) || _grep_ob_matches='[]'
+    else
+        _grep_ob_offsets=$(printf '%s\n' "${_raw}" | sed -n 's/^\([0-9][0-9]*\):.*/\1/p' | jq -Rs 'split("\n") | map(select(length>0) | tonumber)' 2>/dev/null) || _grep_ob_offsets='[]'
+        _grep_ob_matches=$(printf '%s\n' "${_raw}" | sed -n 's/^[0-9][0-9]*:\(.*\)/\1/p' | jq -Rs 'split("\n") | map(select(length>0))' 2>/dev/null) || _grep_ob_matches='[]'
+    fi
+    [ -z "${_grep_ob_offsets}" ] && _grep_ob_offsets='[]'
+    [ -z "${_grep_ob_matches}" ] && _grep_ob_matches='[]'
+}
+
 rules_api_regex_preview() {
     local _body _op _tmpdir
     _tmpdir="${TMPDIR:-/tmp}"
@@ -172,7 +209,7 @@ rules_api_regex_preview() {
             fi
             ;;
         preview)
-            local _token _pattern _mode _ml _cs _extractType _tmpfile _grep_opt _matches _count _extracted _sanitize1 _result
+            local _token _pattern _mode _ml _cs _extractType _tmpfile _grep_opt _matches _offsets _count _extracted _sanitize1 _result
             _token=$(printf '%s' "${_body}" | jq -r '.token // empty')
             _pattern=$(printf '%s' "${_body}" | jq -r '.pattern // empty')
             _mode=$(printf '%s' "${_body}" | jq -r '.mode // "match"')
@@ -200,12 +237,11 @@ rules_api_regex_preview() {
                 return
             fi
 
-            if [ "${_ml}" = "true" ]; then
-                _matches=$(grep -oP${_grep_opt} -- "${_pattern}" "${_tmpfile}" 2>/dev/null | tr '\000' '\001' | jq -Rs 'split("\u0001") | map(select(length>0))')
-            else
-                _matches=$(grep -oP${_grep_opt} -- "${_pattern}" "${_tmpfile}" 2>/dev/null | jq -Rs 'split("\n") | map(select(length>0))')
-            fi
+            rules_api_grep_ob_parse "${_grep_opt}" "${_pattern}" "${_tmpfile}" "${_ml}"
+            _matches="${_grep_ob_matches}"
+            _offsets="${_grep_ob_offsets}"
             [ -z "${_matches}" ] && _matches='[]'
+            [ -z "${_offsets}" ] && _offsets='[]'
             _count=$(printf '%s' "${_matches}" | jq 'length' 2>/dev/null)
             [ -z "${_count}" ] && _count=0
 
@@ -223,10 +259,10 @@ rules_api_regex_preview() {
                     _result=${_result%%[.-]}
                     _result=${_result##[.-]}
                 fi
-                printf '{"ok":true,"matches":%s,"count":%s,"extracted":%s}' \
-                    "${_matches}" "${_count}" "$(printf '%s' "${_result}" | jq -Rs .)"
+                printf '{"ok":true,"matches":%s,"offsets":%s,"count":%s,"extracted":%s}' \
+                    "${_matches}" "${_offsets}" "${_count}" "$(printf '%s' "${_result}" | jq -Rs .)"
             else
-                printf '{"ok":true,"matches":%s,"count":%s}' "${_matches}" "${_count}"
+                printf '{"ok":true,"matches":%s,"offsets":%s,"count":%s}' "${_matches}" "${_offsets}" "${_count}"
             fi
             ;;
         release)
@@ -237,6 +273,29 @@ rules_api_regex_preview() {
                 rm -f "${_tmpfile}" 2>/dev/null
             fi
             printf '{"ok":true}'
+            ;;
+        explain)
+            local _pattern _ml _cs _py _home _req _out
+            _pattern=$(printf '%s' "${_body}" | jq -r '.pattern // empty')
+            _ml=$(printf '%s' "${_body}" | jq -r '.multiline // "false"')
+            _cs=$(printf '%s' "${_body}" | jq -r '.casesensitive // "false"')
+
+            _py=$(rules_api_resolve_venv_python) || {
+                printf '{"ok":false,"error":"venv"}'
+                return
+            }
+            _home=$(synocr_app_home)
+            _req=$(printf '%s' "${_body}" | jq -c \
+                '{pattern:(.pattern//""),multiline:((.multiline//"false")=="true"),casesensitive:((.casesensitive//"false")=="true")}')
+            _out=$("${_py}" "${_home}/includes/regex_explain.py" <<< "${_req}" 2>/dev/null) || {
+                printf '{"ok":false,"error":"venv"}'
+                return
+            }
+            if [ -z "${_out}" ] || ! printf '%s' "${_out}" | jq -e . >/dev/null 2>&1; then
+                printf '{"ok":false,"error":"venv"}'
+                return
+            fi
+            printf '%s' "${_out}"
             ;;
         *)
             printf '{"ok":false,"error":%s}' "$(printf '%s' "${lang_rules_regex_err_op}" | jq -Rs .)"

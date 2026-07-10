@@ -101,9 +101,22 @@ i18n_escape_for_double_quoted_assign() {
     printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
 }
 
-# Normalize ASCII quote examples that break naive JS embedding in GUI_edit.sh (e.g. ".." in enu).
+# Ersetze ASCII-Anführungszeichen um ".." durch typografische Anführungszeichen (wie in lang_ger).
+# Wichtig: nur das vollständige ".."-Token ersetzen — ein partielles Muster "\.\. würde die
+# schließende " stehen lassen; i18n_escape_for_double_quoted_assign würde sie zu \"." machen.
 i18n_normalize_display_quotes() {
-    printf '%s' "$1" | sed 's/"\.\./„..“/g'
+    printf '%s' "$1" | sed -e 's/"\.\."/„..“/g'
+}
+
+# Schneller Batch-Pfad für export_langfiles: gleiche Logik wie normalize + escape, ein Durchlauf.
+i18n_format_langfile_body() {
+    awk -F'\t' '{
+        s = $2
+        gsub(/"\.\."/, "„..“", s)
+        gsub(/\\/, "\\\\", s)
+        gsub(/"/, "\\\"", s)
+        printf "%s=\"%s\"\n", $1, s
+    }'
 }
 
 sql_escape() {
@@ -654,7 +667,8 @@ export_langfiles() {
             continue
         fi
 
-        {   echo "    #######################################################################################################"
+        {
+            echo "    #######################################################################################################"
             printf "    # %-100s#\n"  "${targetLongName} language file for synOCR-GUI"
             printf "    # %-100s#\n"  ""
             printf "    # %-100s#\n"  "Path:"
@@ -666,15 +680,12 @@ export_langfiles() {
             printf "    # %-101s#\n"  "    © $(date +%Y) by geimist"
             echo "    #######################################################################################################"
             echo -e
+            sqlite3 -separator $'\t' "${i18n_DB}" \
+                "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='${langID}' AND variables.inuse='1' ORDER BY varname ASC" \
+                | i18n_format_langfile_body
         } > "${langFile}"
-        
-        chmod 755 "${langFile}"
 
-        while IFS=$'\t' read -r varname langstring; do
-            normalized=$(i18n_normalize_display_quotes "${langstring}")
-            escaped=$(i18n_escape_for_double_quoted_assign "${normalized}")
-            printf '%s="%s"\n' "${varname}" "${escaped}" >> "${langFile}"
-        done < <(sqlite3 -separator $'\t' "${i18n_DB}" "SELECT varname, langstring FROM strings INNER JOIN variables ON variables.varID = strings.varID WHERE strings.langID='${langID}' AND variables.inuse='1' ORDER BY varname ASC")
+        chmod 755 "${langFile}"
     done <<<"$(sqlite3 "${i18n_DB}" "SELECT DISTINCT langID FROM strings ORDER by langID ASC")"
 }
 

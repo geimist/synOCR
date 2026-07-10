@@ -66,9 +66,69 @@ div.warning {
     /* fill: #94d31b; */
     }
 
-input:focus {
+/* synOCR form skin — shared by edit page (.synocr-form-page) and rules editor */
+.synocr-form-page,
+.synocr-ruleset-form {
+    --synocr-field-bg: #ffffff;
+    --synocr-field-bg-muted: #f6faff;
+    --synocr-field-border: #c5d8ec;
+    --synocr-field-border-focus: #0086E5;
+    --synocr-field-shadow: 0 1px 2px rgba(15, 45, 75, 0.04);
+    --synocr-field-focus-ring: 0 0 0 0.2rem rgba(0, 134, 229, 0.14);
+}
+
+.synocr-form-page .form-control,
+.synocr-form-page .form-select,
+.synocr-ruleset-form .form-control,
+.synocr-ruleset-form .form-select {
+    background-color: var(--synocr-field-bg-muted);
+    border: 1px solid var(--synocr-field-border);
+    border-radius: 0.4rem;
+    box-shadow: var(--synocr-field-shadow);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.synocr-form-page .form-control:focus,
+.synocr-form-page .form-select:focus,
+.synocr-ruleset-form .form-control:focus,
+.synocr-ruleset-form .form-select:focus {
+    background-color: var(--synocr-field-bg);
+    border-color: var(--synocr-field-border-focus);
+    box-shadow: var(--synocr-field-focus-ring);
     outline: none;
-    border: 1px solid red;
+}
+
+.synocr-form-page label,
+.synocr-ruleset-form label {
+    font-weight: 500;
+    color: #3a4a5c;
+}
+
+.synocr-form-page .form-control[readonly],
+.synocr-ruleset-form .form-control[readonly] {
+    background-color: #eef3f8;
+    color: #5c6b7a;
+    cursor: default;
+}
+
+.synocr-form-page .accordion-body {
+    background-color: #fbfdff;
+    padding: 1rem 1.25rem;
+}
+
+.synocr-form-page .input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.synocr-form-page .input-group .btn {
+    border-color: var(--synocr-field-border);
+}
+
+.synocr-hint-card {
+    background-color: #F2FAFF;
+    border: 1px solid #e3edf7;
+    border-radius: 0.375rem;
 }
 
 .pulsate {
@@ -326,6 +386,12 @@ a.btn.synocr-btn-outline-blue:focus {
     gap: 0.5rem;
 }
 
+.synocr-nav-list .nav-link.active {
+    background-color: #0086E5 !important;
+    color: #fff !important;
+    border-radius: 0.375rem;
+}
+
 .synocr-nav-icon {
     flex-shrink: 0;
 }
@@ -376,16 +442,48 @@ a.btn.synocr-btn-outline-blue:focus {
 
 .synocr-layout--nav-collapsed .synocr-nav-col {
     width: 3.25rem;
+    overflow: visible;
+}
+
+.synocr-layout--nav-collapsed .synocr-nav-inner {
+    overflow: visible;
 }
 
 .synocr-layout--nav-collapsed .synocr-nav-label {
     display: none;
 }
 
+.synocr-layout--nav-collapsed .synocr-nav-list {
+    overflow: visible;
+}
+
+.synocr-layout--nav-collapsed .synocr-nav-list .nav-item {
+    text-align: center;
+}
+
+/* .svg carries 10px right padding + 35px size (for icon+label in expanded mode).
+   In icon-only mode that padding shifts the icon off-center and makes the pill
+   overlap the right separator. Neutralize it and use the 25px icon size. */
+.synocr-layout--nav-collapsed .synocr-nav-icon {
+    padding-right: 0;
+    width: 25px;
+    height: 25px;
+}
+
+/* block-level .nav-link fills the column (width:auto still stretches); inline-flex shrink-wraps the pill */
 .synocr-layout--nav-collapsed .synocr-nav-list .synocr-nav-link {
+    display: inline-flex;
     justify-content: center;
+    align-items: center;
+    width: auto;
+    min-width: 2.35rem;
     padding-left: 0.45rem;
     padding-right: 0.45rem;
+    border-radius: 0.375rem !important;
+}
+
+.synocr-layout--nav-collapsed .synocr-nav-list .nav-link.active {
+    border-radius: 0.375rem !important;
 }
 
 .synocr-layout--nav-collapsed .synocr-nav-toggle {
@@ -440,6 +538,7 @@ a.btn.synocr-btn-outline-blue:focus {
     }
 
     .synocr-layout--nav-collapsed .synocr-nav-list .synocr-nav-link {
+        display: inline-flex;
         justify-content: flex-start;
     }
 }
@@ -681,6 +780,10 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
 .synocr-regex-tool[data-tip-key] {
     cursor: help;
 }
+.synocr-regex-pattern-preview.synocr-has-tip,
+.synocr-regex-pattern-frag.synocr-has-tip {
+    cursor: default;
+}
 
 /* gear button inside inline builder fields on rule card */
 .synocr-rule-tip-label[data-tip] {
@@ -753,13 +856,59 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     --synocr-rule-rail-gap: 0.5rem;
 }
 
-.synocr-rule-remove {
+.synocr-rule-card-actions {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
     z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: stretch;
+}
+
+.synocr-rule-duplicate,
+.synocr-rule-remove,
+.synocr-rule-raw-jump {
+    position: static;
     line-height: 1;
     padding: 0.1rem 0.45rem;
+}
+
+.synocr-rule-raw-jump {
+    min-width: 2rem;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+    font-size: 0.82rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    text-align: center;
+}
+
+.synocr-btn-duplicate-icon {
+    min-width: 2rem;
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.synocr-rulesets-actions .synocr-btn-duplicate-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.35rem;
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.synocr-rule-duplicate.synocr-btn-duplicate-icon {
+    font-size: 1.05rem;
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
 }
 
 .synocr-rule-layout {
@@ -929,6 +1078,50 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     }
 }
 
+/* Rulesets list table: reserve space for narrow columns; name/description share the rest */
+.synocr-rulesets-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.synocr-rulesets-table col.synocr-rulesets-col-count {
+    width: 4.5rem;
+}
+
+.synocr-rulesets-table col.synocr-rulesets-col-updated {
+    width: 9rem;
+}
+
+.synocr-rulesets-table col.synocr-rulesets-col-actions {
+    width: 16rem;
+}
+
+.synocr-rulesets-table .synocr-rulesets-col-name,
+.synocr-rulesets-table .synocr-rulesets-col-desc {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.synocr-rulesets-table .synocr-rulesets-col-count,
+.synocr-rulesets-table .synocr-rulesets-col-updated,
+.synocr-rulesets-table .synocr-rulesets-col-actions {
+    white-space: nowrap;
+}
+
+.synocr-rulesets-table th.synocr-rulesets-col-actions,
+.synocr-rulesets-table td.synocr-rulesets-col-actions {
+    padding-left: 0.75rem;
+}
+
+.synocr-rulesets-actions {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+
 /* Rules editor page: fixed chrome, scrollable rule list */
 .synocr-content-scroll.synocr-rules-editor-active {
     display: flex;
@@ -1079,6 +1272,12 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
 
 .synocr-rule-card .form-control,
 .synocr-rule-card .form-select {
+    background-color: #fff;
+    box-shadow: none;
+}
+
+.synocr-rule-card .form-control:focus,
+.synocr-rule-card .form-select:focus {
     background-color: #fff;
 }
 
@@ -1367,6 +1566,27 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
 .synocr-regex-assistant-modal .synocr-regex-body > *:not(.synocr-regex-viewer-wrap) {
     flex: 0 0 auto;
 }
+.synocr-regex-toolbar-row {
+    flex: 0 0 auto;
+}
+.synocr-regex-flag-switches .form-check-label {
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+.synocr-regex-seg-toggle {
+    font-size: 0.8rem;
+    text-decoration: none;
+    color: #0086E5;
+}
+.synocr-regex-seg-toggle:hover {
+    text-decoration: underline;
+}
+.synocr-regex-seg-collapse .synocr-regex-segbar {
+    margin-bottom: 0;
+}
+.synocr-regex-pattern-label {
+    cursor: help;
+}
 .synocr-regex-assistant-modal .synocr-regex-segbar {
     max-height: min(35vh, 22rem);
     overflow-y: auto;
@@ -1383,9 +1603,57 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     color: #212529;
     background-color: #fff;
 }
+.synocr-regex-assistant-modal .synocr-regex-pattern-preview {
+    resize: none;
+    min-height: calc(1.5em + 0.5rem + 2px);
+    max-height: 50vh;
+    overflow-x: auto;
+    overflow-y: auto;
+    line-height: 1.5;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    background-color: #fff;
+    cursor: default;
+}
+.synocr-regex-pattern-frag {
+    border-radius: 0.15rem;
+    padding: 0 0.1rem;
+    cursor: default;
+}
+.synocr-regex-pattern-frag.seg_fixed { background-color: #e8f1ff; color: #004085; }
+.synocr-regex-pattern-frag.seg_var { background-color: #fff4e5; color: #7a4a00; }
+.synocr-regex-pattern-frag.seg_class { background-color: #eafbe8; color: #1e6b1e; }
+.synocr-regex-pattern-frag.seg_alt { background-color: #f3ecfb; color: #5a3680; }
+.synocr-regex-pattern-frag.seg_anchor { background-color: #eef1f4; color: #3a434d; }
+.synocr-regex-pattern-frag.seg_context { background-color: #e7f7ee; color: #1b6b3a; }
+.synocr-regex-mode-toggle {
+    font-size: 0.78rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.synocr-regex-mode-toggle:hover {
+    text-decoration: underline;
+}
 .synocr-regex-assistant-modal .synocr-regex-explain {
     max-height: 10rem;
     overflow-y: auto;
+}
+.synocr-regex-footer {
+    gap: 0.75rem;
+}
+.synocr-regex-footer-center {
+    min-width: 0;
+    justify-content: flex-start;
+}
+.synocr-regex-footer-actions {
+    margin-left: auto;
+}
+.synocr-regex-footer-status {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
 }
 .synocr-regex-assistant-modal .synocr-regex-viewer-wrap {
     flex: 1 1 auto;
@@ -1494,6 +1762,26 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     border-radius: 0.25rem;
     flex: 0 0 auto;
 }
+.synocr-regex-seg-drag-handle {
+    cursor: grab;
+    font-size: 1rem;
+    line-height: 1;
+    color: #9aa6b2;
+    user-select: none;
+    flex: 0 0 auto;
+    padding: 0 0.1rem;
+}
+.synocr-regex-seg-drag-handle:hover { color: #0086E5; }
+.synocr-regex-seg-drag-handle:active { cursor: grabbing; }
+.synocr-regex-seg-dragging { opacity: 0.35; }
+.synocr-regex-seg-drop-placeholder {
+    border: 2px dashed #0086E5;
+    border-radius: 0.25rem;
+    background-color: rgba(0, 134, 229, 0.07);
+    box-sizing: border-box;
+    pointer-events: none;
+    flex: 0 0 auto;
+}
 .synocr-regex-seg-type {
     font-weight: 600;
     padding: 0 0.25rem;
@@ -1548,6 +1836,12 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     color: #555;
     font-size: 0.8rem;
     margin-left: 0.15rem;
+}
+.synocr-regex-seg-text-inp {
+    flex: 1 1 0;
+    min-width: 6rem;
+    padding: 0.05rem 0.3rem;
+    font-size: 0.8rem;
 }
 .synocr-regex-seg-rm {
     line-height: 1;

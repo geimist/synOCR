@@ -250,7 +250,7 @@ echo '
                         if [[ "${mainpage}" == "main" ]]; then
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link active synocr-nav-link" style="background-color: #0086E5;" href="index.cgi?page=main" title="'"${lang_page1}"'">
+                                <a class="nav-link active synocr-nav-link" href="index.cgi?page=main" title="'"${lang_page1}"'">
                                     <img class="svg synocr-nav-icon" src="images/home_white@geimist.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page1}"'</span>
                                 </a>
                             </li>'
@@ -267,7 +267,7 @@ echo '
                         if [[ "${mainpage}" == "edit" ]]; then
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link active synocr-nav-link" style="background-color: #0086E5;" href="index.cgi?page=edit" title="'"${lang_page2}"'">
+                                <a class="nav-link active synocr-nav-link" href="index.cgi?page=edit" title="'"${lang_page2}"'">
                                     <img class="svg synocr-nav-icon" src="images/settings_white@geimist.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page2}"'</span>
                                 </a>
                             </li>'
@@ -284,7 +284,7 @@ echo '
                         if [[ "${mainpage}" == "rules" ]]; then
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link active synocr-nav-link" style="background-color: #0086E5;" href="index.cgi?page=rules" title="'"${lang_page5}"'">
+                                <a class="nav-link active synocr-nav-link" href="index.cgi?page=rules" title="'"${lang_page5}"'">
                                     <img class="svg synocr-nav-icon" src="images/flowchart_white.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page5}"'</span>
                                 </a>
                             </li>'
@@ -301,7 +301,7 @@ echo '
                         if [[ "${mainpage}" == "help" ]]; then
                             echo '
                             <li class="nav-item">
-                                <a class="nav-link active synocr-nav-link" style="background-color: #0086E5;" href="index.cgi?page=help" title="'"${lang_page4}"'">
+                                <a class="nav-link active synocr-nav-link" href="index.cgi?page=help" title="'"${lang_page4}"'">
                                     <img class="svg synocr-nav-icon" src="images/help_white@geimist.svg" height="25" width="25" alt=""/><span class="synocr-nav-label">'"${lang_page4}"'</span>
                                 </a>
                             </li>'

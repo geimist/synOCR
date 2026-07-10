@@ -185,20 +185,27 @@ rules_list_view() {
 
     if [ -z "${_rows}" ] || [ "${_rows}" = "[]" ]; then
         echo '
-        <div class="card card-body mb-3" style="background-color: #F2FAFF;">'"${lang_rules_empty}"'</div>'
+        <div class="card card-body mb-3 synocr-hint-card">'"${lang_rules_empty}"'</div>'
         return
     fi
 
     echo '
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
+    <div class="table-responsive synocr-rulesets-table-wrap">
+        <table class="table table-hover align-middle synocr-rulesets-table">
+            <colgroup>
+                <col class="synocr-rulesets-col-name">
+                <col class="synocr-rulesets-col-desc">
+                <col class="synocr-rulesets-col-count">
+                <col class="synocr-rulesets-col-updated">
+                <col class="synocr-rulesets-col-actions">
+            </colgroup>
             <thead class="synocr-text-blue">
                 <tr>
-                    <th>'"${lang_rules_col_name}"'</th>
-                    <th>'"${lang_rules_col_description}"'</th>
-                    <th class="text-center">'"${lang_rules_col_rules}"'</th>
-                    <th class="text-center">'"${lang_rules_col_updated}"'</th>
-                    <th class="text-center">'"${lang_rules_col_actions}"'</th>
+                    <th class="synocr-rulesets-col-name">'"${lang_rules_col_name}"'</th>
+                    <th class="synocr-rulesets-col-desc">'"${lang_rules_col_description}"'</th>
+                    <th class="text-center synocr-rulesets-col-count">'"${lang_rules_col_rules}"'</th>
+                    <th class="text-center synocr-rulesets-col-updated">'"${lang_rules_col_updated}"'</th>
+                    <th class="text-center synocr-rulesets-col-actions">'"${lang_rules_col_actions}"'</th>
                 </tr>
             </thead>
             <tbody>'
@@ -219,19 +226,19 @@ rules_list_view() {
 
         echo '
                 <tr>
-                    <td>
+                    <td class="synocr-rulesets-col-name">
                         <strong>'"${_name_h}"'</strong><br>
                         <span class="text-secondary small">'"${_assigned}"' '"${lang_rules_assigned_profiles}"'</span>
                     </td>
-                    <td>'"${_desc_h}"'</td>
-                    <td class="text-center">'"${_count}"'</td>
-                    <td class="text-center small">'"${_updated}"'</td>
-                    <td class="text-center">
-                        <a href="index.cgi?page=rules-edit-'"${_id}"'" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_rules_btn_edit}"'</a>
-                        &nbsp;
-                        <a href="index.cgi?page=rules-dup-'"${_id}"'" class="btn btn-sm synocr-btn-outline-blue">'"${lang_rules_btn_duplicate}"'</a>
-                        &nbsp;
-                        <a href="index.cgi?page=rules-del-'"${_id}"'" class="btn btn-outline-danger btn-sm">'"${lang_rules_btn_delete}"'</a>
+                    <td class="synocr-rulesets-col-desc">'"${_desc_h}"'</td>
+                    <td class="text-center synocr-rulesets-col-count">'"${_count}"'</td>
+                    <td class="text-center small synocr-rulesets-col-updated">'"${_updated}"'</td>
+                    <td class="text-center synocr-rulesets-col-actions">
+                        <span class="synocr-rulesets-actions">
+                            <a href="index.cgi?page=rules-edit-'"${_id}"'" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_rules_btn_edit}"'</a>
+                            <a href="index.cgi?page=rules-dup-'"${_id}"'" class="btn btn-sm synocr-btn-outline-blue synocr-btn-duplicate-icon synocr-rulesets-btn-duplicate" title="'"${lang_rules_btn_duplicate}"'" aria-label="'"${lang_rules_btn_duplicate}"'">⧉</a>
+                            <a href="index.cgi?page=rules-del-'"${_id}"'" class="btn btn-outline-danger btn-sm">'"${lang_rules_btn_delete}"'</a>
+                        </span>
                     </td>
                 </tr>'
     done < <(synocr_jq_rows "${_rows}")
@@ -328,7 +335,7 @@ rules_edit_view() {
     _json=$(synocr_sqlite -json "SELECT id, name, description, rules_json, groups_json FROM ruleset WHERE id='${_id}'")
     if [ -z "${_json}" ] || [ "${_json}" = "[]" ]; then
         echo '
-        <div class="card card-body mb-3" style="background-color: #F2FAFF;">'"${lang_rules_empty}"'</div>'
+        <div class="card card-body mb-3 synocr-hint-card">'"${lang_rules_empty}"'</div>'
         echo '
         <a href="index.cgi?page=rules" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_rules_back}"'</a>'
         return
@@ -354,11 +361,12 @@ rules_edit_view() {
         --arg btn_add_rule        "${lang_rules_btn_add_rule}" \
         --arg btn_add_subrule     "${lang_rules_btn_add_subrule}" \
         --arg btn_remove_rule     "${lang_rules_btn_remove_rule}" \
+        --arg btn_duplicate_rule  "${lang_rules_btn_duplicate_rule}" \
+        --arg btn_jump_raw_rule   "${lang_rules_btn_jump_raw_rule}" \
         --arg btn_remove_subrule  "${lang_rules_btn_remove_subrule}" \
         --arg btn_save            "${lang_rules_btn_save}" \
         --arg btn_cancel          "${lang_rules_btn_cancel}" \
         --arg rule_name           "${lang_rules_rule_name}" \
-        --arg rule_priority       "${lang_rules_rule_priority}" \
         --arg rule_condition      "${lang_rules_rule_condition}" \
         --arg cond_any            "${lang_rules_rule_condition_any}" \
         --arg cond_all            "${lang_rules_rule_condition_all}" \
@@ -407,6 +415,7 @@ rules_edit_view() {
         --arg tab_visual          "${lang_rules_tab_visual}" \
         --arg tab_raw             "${lang_rules_tab_raw}" \
         --arg drag_hint           "${lang_rules_drag_hint}" \
+        --arg dup_suffix          "${lang_rules_dup_suffix}" \
         --arg filter_placeholder  "${lang_rules_filter_placeholder}" \
         --arg filter_count        "${lang_rules_filter_count}" \
         --arg filter_empty        "${lang_rules_filter_empty}" \
@@ -418,6 +427,7 @@ rules_edit_view() {
         --arg save_success        "${lang_rules_save_success}" \
         --arg save_error          "${lang_rules_save_error}" \
         --arg save_error_title    "${lang_rules_save_error_title}" \
+        --arg save_http_error     "${lang_rules_save_http_error}" \
         --arg save_dup_blocked    "${lang_rules_save_dup_blocked}" \
         --arg val_rule_dup_name   "${lang_rules_val_rule_dup_name}" \
         --arg raw_invalid         "${lang_rules_raw_invalid}" \
@@ -450,7 +460,6 @@ rules_edit_view() {
         --arg help_tagname_regex  "${lang_rules_help_tagname_regex}" \
         --arg help_multiline      "${lang_rules_help_multiline}" \
         --arg help_dirname_multiline "${lang_rules_help_dirname_multiline}" \
-        --arg help_rule_priority  "${lang_rules_help_rule_priority}" \
         --arg help_on_match_action "${lang_rules_help_on_match_action}" \
         --arg help_on_match_result "${lang_rules_help_on_match_result}" \
         --arg help_requires       "${lang_rules_help_requires}" \
@@ -471,6 +480,15 @@ rules_edit_view() {
         --arg regex_context_before "${lang_rules_regex_context_before}" \
         --arg regex_context_not_after "${lang_rules_regex_context_not_after}" \
         --arg regex_context_not_before "${lang_rules_regex_context_not_before}" \
+        --arg regex_explain_branch_reset "${lang_rules_regex_explain_branch_reset}" \
+        --arg regex_explain_class_star "${lang_rules_regex_explain_class_star}" \
+        --arg regex_explain_escape_cr "${lang_rules_regex_explain_escape_cr}" \
+        --arg regex_explain_escape_newline "${lang_rules_regex_explain_escape_newline}" \
+        --arg regex_explain_escape_tab "${lang_rules_regex_explain_escape_tab}" \
+        --arg regex_explain_char_any "${lang_rules_regex_explain_char_any}" \
+        --arg regex_explain_char_optional "${lang_rules_regex_explain_char_optional}" \
+        --arg regex_explain_keep "${lang_rules_regex_explain_keep}" \
+        --arg regex_explain_unknown "${lang_rules_regex_explain_unknown}" \
         --arg regex_explain_context_after "${lang_rules_regex_explain_context_after}" \
         --arg regex_explain_context_before "${lang_rules_regex_explain_context_before}" \
         --arg regex_explain_context_not_after "${lang_rules_regex_explain_context_not_after}" \
@@ -520,6 +538,11 @@ rules_edit_view() {
         --arg regex_seg_context "${lang_rules_regex_seg_context}" \
         --arg regex_tool_context "${lang_rules_regex_tool_context}" \
         --arg regex_assistant_title "${lang_rules_regex_assistant_title}" \
+        --arg regex_toggle_seg_show "${lang_rules_regex_toggle_seg_show}" \
+        --arg regex_toggle_seg_hide "${lang_rules_regex_toggle_seg_hide}" \
+        --arg regex_btn_expert_mode "${lang_rules_regex_btn_expert_mode}" \
+        --arg regex_btn_visual_mode "${lang_rules_regex_btn_visual_mode}" \
+        --arg regex_parse_failed "${lang_rules_regex_parse_failed}" \
         --arg regex_btn_apply "${lang_rules_regex_btn_apply}" \
         --arg regex_btn_cancel "${lang_rules_regex_btn_cancel}" \
         --arg regex_btn_last_doc "${lang_rules_regex_btn_last_doc}" \
@@ -528,6 +551,7 @@ rules_edit_view() {
         --arg regex_btn_pick_confirm "${lang_rules_regex_btn_pick_confirm}" \
         --arg regex_btn_reload "${lang_rules_regex_btn_reload}" \
         --arg regex_btn_remove_seg "${lang_rules_regex_btn_remove_seg}" \
+        --arg regex_seg_drag_hint "${lang_rules_regex_seg_drag_hint}" \
         --arg regex_casesensitive "${lang_rules_regex_casesensitive}" \
         --arg regex_class_alnum "${lang_rules_regex_class_alnum}" \
         --arg regex_class_digits "${lang_rules_regex_class_digits}" \
@@ -569,6 +593,7 @@ rules_edit_view() {
         --arg regex_opt_source_content "${lang_rules_regex_opt_source_content}" \
         --arg regex_opt_source_filename "${lang_rules_regex_opt_source_filename}" \
         --arg regex_preview_error "${lang_rules_regex_preview_error}" \
+        --arg regex_network_error "${lang_rules_regex_network_error}" \
         --arg regex_preview_matches "${lang_rules_regex_preview_matches}" \
         --arg regex_preview_no_match "${lang_rules_regex_preview_no_match}" \
         --arg regex_sample_loaded "${lang_rules_regex_sample_loaded}" \
@@ -592,7 +617,7 @@ rules_edit_view() {
         --arg regex_var_until_anchor "${lang_rules_regex_var_until_anchor}" \
         --arg regex_var_whitespace "${lang_rules_regex_var_whitespace}" \
         --arg regex_wand_title "${lang_rules_regex_wand_title}" \
-        '{regex_alt_add:$regex_alt_add,regex_alt_placeholder:$regex_alt_placeholder,regex_anchor_end:$regex_anchor_end,regex_anchor_start:$regex_anchor_start,regex_anchor_word:$regex_anchor_word,regex_context_after:$regex_context_after,regex_context_before:$regex_context_before,regex_context_not_after:$regex_context_not_after,regex_context_not_before:$regex_context_not_before,regex_assistant_title:$regex_assistant_title,regex_btn_apply:$regex_btn_apply,regex_btn_cancel:$regex_btn_cancel,regex_btn_last_doc:$regex_btn_last_doc,regex_btn_load:$regex_btn_load,regex_btn_pick_doc:$regex_btn_pick_doc,regex_btn_pick_confirm:$regex_btn_pick_confirm,regex_btn_reload:$regex_btn_reload,regex_btn_remove_seg:$regex_btn_remove_seg,regex_casesensitive:$regex_casesensitive,regex_class_alnum:$regex_class_alnum,regex_class_digits:$regex_class_digits,regex_class_length_fixed:$regex_class_length_fixed,regex_class_length_range:$regex_class_length_range,regex_class_letters:$regex_class_letters,regex_class_special:$regex_class_special,regex_expert_pattern:$regex_expert_pattern,regex_explain_alt:$regex_explain_alt,regex_explain_anchor_end:$regex_explain_anchor_end,regex_explain_anchor_start:$regex_explain_anchor_start,regex_explain_anchor_word:$regex_explain_anchor_word,regex_explain_context_after:$regex_explain_context_after,regex_explain_context_before:$regex_explain_context_before,regex_explain_context_not_after:$regex_explain_context_not_after,regex_explain_context_not_before:$regex_explain_context_not_before,regex_explain_class_alnum:$regex_explain_class_alnum,regex_explain_class_digits:$regex_explain_class_digits,regex_explain_class_fixed:$regex_explain_class_fixed,regex_explain_class_letters:$regex_explain_class_letters,regex_explain_class_plus:$regex_explain_class_plus,regex_explain_class_range:$regex_explain_class_range,regex_explain_class_special:$regex_explain_class_special,regex_explain_empty:$regex_explain_empty,regex_explain_expert_only:$regex_explain_expert_only,regex_explain_fixed:$regex_explain_fixed,regex_explain_fixed_wsflex:$regex_explain_fixed_wsflex,regex_explain_optional_suffix:$regex_explain_optional_suffix,regex_explain_title:$regex_explain_title,regex_explain_var_any:$regex_explain_var_any,regex_explain_var_greedy:$regex_explain_var_greedy,regex_explain_var_ws:$regex_explain_var_ws,regex_extract_value_label:$regex_extract_value_label,regex_hint_context:$regex_hint_context,regex_help_seg_extract_anchor_1:$regex_help_seg_extract_anchor_1,regex_help_seg_extract_anchor_2:$regex_help_seg_extract_anchor_2,regex_help_seg_extract_anchor_3:$regex_help_seg_extract_anchor_3,regex_help_seg_extract_anchor_t:$regex_help_seg_extract_anchor_t,regex_help_seg_optional_1:$regex_help_seg_optional_1,regex_help_seg_optional_2:$regex_help_seg_optional_2,regex_help_seg_optional_3:$regex_help_seg_optional_3,regex_help_seg_optional_t:$regex_help_seg_optional_t,regex_help_seg_wsflex_1:$regex_help_seg_wsflex_1,regex_help_seg_wsflex_2:$regex_help_seg_wsflex_2,regex_help_seg_wsflex_t:$regex_help_seg_wsflex_t,regex_help_tool_alt_1:$regex_help_tool_alt_1,regex_help_tool_alt_2:$regex_help_tool_alt_2,regex_help_tool_alt_3:$regex_help_tool_alt_3,regex_help_tool_alt_4:$regex_help_tool_alt_4,regex_help_tool_alt_t:$regex_help_tool_alt_t,regex_help_tool_anchor_1:$regex_help_tool_anchor_1,regex_help_tool_anchor_2:$regex_help_tool_anchor_2,regex_help_tool_anchor_3:$regex_help_tool_anchor_3,regex_help_tool_anchor_4:$regex_help_tool_anchor_4,regex_help_tool_anchor_t:$regex_help_tool_anchor_t,regex_help_tool_class_1:$regex_help_tool_class_1,regex_help_tool_class_2:$regex_help_tool_class_2,regex_help_tool_class_3:$regex_help_tool_class_3,regex_help_tool_class_t:$regex_help_tool_class_t,regex_help_tool_context_1:$regex_help_tool_context_1,regex_help_tool_context_2:$regex_help_tool_context_2,regex_help_tool_context_3:$regex_help_tool_context_3,regex_help_tool_context_4:$regex_help_tool_context_4,regex_help_tool_context_t:$regex_help_tool_context_t,regex_help_tool_fixed_1:$regex_help_tool_fixed_1,regex_help_tool_fixed_2:$regex_help_tool_fixed_2,regex_help_tool_fixed_3:$regex_help_tool_fixed_3,regex_help_tool_fixed_4:$regex_help_tool_fixed_4,regex_help_tool_fixed_t:$regex_help_tool_fixed_t,regex_help_tool_variable_1:$regex_help_tool_variable_1,regex_help_tool_variable_2:$regex_help_tool_variable_2,regex_help_tool_variable_3:$regex_help_tool_variable_3,regex_help_tool_variable_4:$regex_help_tool_variable_4,regex_help_tool_variable_5:$regex_help_tool_variable_5,regex_help_tool_variable_t:$regex_help_tool_variable_t,regex_hint_extract_lookaround:$regex_hint_extract_lookaround,regex_hint_no_text_layer:$regex_hint_no_text_layer,regex_hint_options_change_requires_reload:$regex_hint_options_change_requires_reload,regex_hint_tested_one_sample:$regex_hint_tested_one_sample,regex_load_section_title:$regex_load_section_title,regex_multiline:$regex_multiline,regex_opt_all_pages:$regex_opt_all_pages,regex_opt_clean_spaces:$regex_opt_clean_spaces,regex_opt_first_page:$regex_opt_first_page,regex_opt_source_content:$regex_opt_source_content,regex_opt_source_filename:$regex_opt_source_filename,regex_preview_error:$regex_preview_error,regex_preview_matches:$regex_preview_matches,regex_preview_no_match:$regex_preview_no_match,regex_sample_loaded:$regex_sample_loaded,regex_sample_loading:$regex_sample_loading,regex_sample_pick:$regex_sample_pick,regex_seg_alt:$regex_seg_alt,regex_seg_anchor:$regex_seg_anchor,regex_seg_context:$regex_seg_context,regex_seg_class:$regex_seg_class,regex_seg_empty:$regex_seg_empty,regex_seg_fixed:$regex_seg_fixed,regex_seg_optional:$regex_seg_optional,regex_seg_var:$regex_seg_var,regex_seg_wsflex:$regex_seg_wsflex,regex_source_label:$regex_source_label,regex_tool_alt:$regex_tool_alt,regex_tool_anchor:$regex_tool_anchor,regex_tool_context:$regex_tool_context,regex_tool_class:$regex_tool_class,regex_tool_fixed:$regex_tool_fixed,regex_tool_variable:$regex_tool_variable,regex_var_any:$regex_var_any,regex_var_until_anchor:$regex_var_until_anchor,regex_var_whitespace:$regex_var_whitespace,regex_wand_title:$regex_wand_title,btn_add_rule:$btn_add_rule,btn_add_subrule:$btn_add_subrule,btn_remove_rule:$btn_remove_rule,btn_remove_subrule:$btn_remove_subrule,btn_save:$btn_save,btn_cancel:$btn_cancel,rule_name:$rule_name,rule_priority:$rule_priority,rule_condition:$rule_condition,cond_any:$cond_any,cond_all:$cond_all,cond_none:$cond_none,tagname:$tagname,tagname_regex:$tagname_regex,targetfolder:$targetfolder,placeholder_targetfolder:$placeholder_targetfolder,dirname_regex:$dirname_regex,multiline:$multiline,dirname_multiline:$dirname_multiline,postscript:$postscript,apprise:$apprise,apprise_att:$apprise_att,apprise_att_true:$apprise_att_true,apprise_att_false:$apprise_att_false,notify_lang:$notify_lang,on_match_action:$on_match_action,on_match_result:$on_match_result,omatch_unset:$omatch_unset,omatch_continue:$omatch_continue,omatch_break:$omatch_break,omatch_merge:$omatch_merge,omatch_replace:$omatch_replace,omatch_exclusive:$omatch_exclusive,requires:$requires,excludes:$excludes,sub_searchstring:$sub_searchstring,sub_searchtyp:$sub_searchtyp,sub_isregex:$sub_isregex,sub_source:$sub_source,sub_casesensitive:$sub_casesensitive,sub_multiline:$sub_multiline,src_filename:$src_filename,src_content:$src_content,st_contains:$st_contains,st_not_contains:$st_not_contains,st_is:$st_is,st_is_not:$st_is_not,st_starts:$st_starts,st_not_starts:$st_not_starts,st_ends:$st_ends,st_not_ends:$st_not_ends,st_matches:$st_matches,st_not_matches:$st_not_matches,tab_visual:$tab_visual,tab_raw:$tab_raw,filter_placeholder:$filter_placeholder,filter_count:$filter_count,filter_empty:$filter_empty,drag_hint:$drag_hint,section_details:$section_details,toggle_details_show:$toggle_details_show,toggle_details_hide:$toggle_details_hide,toggle_rule_expand:$toggle_rule_expand,toggle_rule_collapse:$toggle_rule_collapse,save_success:$save_success,save_error:$save_error,save_error_title:$save_error_title,save_dup_blocked:$save_dup_blocked,val_rule_dup_name:$val_rule_dup_name,raw_invalid:$raw_invalid,unsaved_warning:$unsaved_warning,tf_builder:$tf_builder,tf_pick:$tf_pick,tf_pick_title:$tf_pick_title,tf_pick_confirm:$tf_pick_confirm,tf_preview:$tf_preview,tf_mode_abs:$tf_mode_abs,tf_mode_rel:$tf_mode_rel,tf_dirhint:$tf_dirhint,tf_dirregex_help:$tf_dirregex_help,tf_chip_dirname:$tf_chip_dirname,tf_apply:$tf_apply,tn_builder:$tn_builder,tn_chip_tagname:$tn_chip_tagname,tn_dirhint:$tn_dirhint,tn_regex_help:$tn_regex_help,help_rule_name:$help_rule_name,help_rule_condition:$help_rule_condition,help_tagname:$help_tagname,help_targetfolder:$help_targetfolder,help_sub_source:$help_sub_source,help_sub_searchtyp:$help_sub_searchtyp,help_sub_searchstring:$help_sub_searchstring,help_sub_isregex:$help_sub_isregex,help_sub_casesensitive:$help_sub_casesensitive,help_sub_multiline:$help_sub_multiline,help_tagname_regex:$help_tagname_regex,help_multiline:$help_multiline,help_dirname_multiline:$help_dirname_multiline,help_rule_priority:$help_rule_priority,help_on_match_action:$help_on_match_action,help_on_match_result:$help_on_match_result,help_requires:$help_requires,help_excludes:$help_excludes,help_postscript:$help_postscript,help_apprise:$help_apprise,help_link:$help_link,help_apprise_att:$help_apprise_att,help_notify_lang:$help_notify_lang,help_dirname_regex:$help_dirname_regex,help_tf_preview:$help_tf_preview}')
+        '{regex_alt_add:$regex_alt_add,regex_alt_placeholder:$regex_alt_placeholder,regex_anchor_end:$regex_anchor_end,regex_anchor_start:$regex_anchor_start,regex_anchor_word:$regex_anchor_word,regex_context_after:$regex_context_after,regex_context_before:$regex_context_before,regex_context_not_after:$regex_context_not_after,regex_context_not_before:$regex_context_not_before,regex_assistant_title:$regex_assistant_title,regex_btn_expert_mode:$regex_btn_expert_mode,regex_btn_visual_mode:$regex_btn_visual_mode,regex_parse_failed:$regex_parse_failed,regex_toggle_seg_show:$regex_toggle_seg_show,regex_toggle_seg_hide:$regex_toggle_seg_hide,regex_btn_apply:$regex_btn_apply,regex_btn_cancel:$regex_btn_cancel,regex_btn_last_doc:$regex_btn_last_doc,regex_btn_load:$regex_btn_load,regex_btn_pick_doc:$regex_btn_pick_doc,regex_btn_pick_confirm:$regex_btn_pick_confirm,regex_btn_reload:$regex_btn_reload,regex_btn_remove_seg:$regex_btn_remove_seg,regex_seg_drag_hint:$regex_seg_drag_hint,regex_casesensitive:$regex_casesensitive,regex_class_alnum:$regex_class_alnum,regex_class_digits:$regex_class_digits,regex_class_length_fixed:$regex_class_length_fixed,regex_class_length_range:$regex_class_length_range,regex_class_letters:$regex_class_letters,regex_class_special:$regex_class_special,regex_expert_pattern:$regex_expert_pattern,regex_explain_alt:$regex_explain_alt,regex_explain_anchor_end:$regex_explain_anchor_end,regex_explain_anchor_start:$regex_explain_anchor_start,regex_explain_anchor_word:$regex_explain_anchor_word,regex_explain_context_after:$regex_explain_context_after,regex_explain_context_before:$regex_explain_context_before,regex_explain_context_not_after:$regex_explain_context_not_after,regex_explain_context_not_before:$regex_explain_context_not_before,regex_explain_class_alnum:$regex_explain_class_alnum,regex_explain_char_any:$regex_explain_char_any,regex_explain_char_optional:$regex_explain_char_optional,regex_explain_keep:$regex_explain_keep,regex_explain_unknown:$regex_explain_unknown,regex_explain_branch_reset:$regex_explain_branch_reset,regex_explain_class_star:$regex_explain_class_star,regex_explain_escape_cr:$regex_explain_escape_cr,regex_explain_escape_newline:$regex_explain_escape_newline,regex_explain_escape_tab:$regex_explain_escape_tab,regex_explain_class_digits:$regex_explain_class_digits,regex_explain_class_fixed:$regex_explain_class_fixed,regex_explain_class_letters:$regex_explain_class_letters,regex_explain_class_plus:$regex_explain_class_plus,regex_explain_class_range:$regex_explain_class_range,regex_explain_class_special:$regex_explain_class_special,regex_explain_empty:$regex_explain_empty,regex_explain_expert_only:$regex_explain_expert_only,regex_explain_fixed:$regex_explain_fixed,regex_explain_fixed_wsflex:$regex_explain_fixed_wsflex,regex_explain_optional_suffix:$regex_explain_optional_suffix,regex_explain_title:$regex_explain_title,regex_explain_var_any:$regex_explain_var_any,regex_explain_var_greedy:$regex_explain_var_greedy,regex_explain_var_ws:$regex_explain_var_ws,regex_extract_value_label:$regex_extract_value_label,regex_hint_context:$regex_hint_context,regex_help_seg_extract_anchor_1:$regex_help_seg_extract_anchor_1,regex_help_seg_extract_anchor_2:$regex_help_seg_extract_anchor_2,regex_help_seg_extract_anchor_3:$regex_help_seg_extract_anchor_3,regex_help_seg_extract_anchor_t:$regex_help_seg_extract_anchor_t,regex_help_seg_optional_1:$regex_help_seg_optional_1,regex_help_seg_optional_2:$regex_help_seg_optional_2,regex_help_seg_optional_3:$regex_help_seg_optional_3,regex_help_seg_optional_t:$regex_help_seg_optional_t,regex_help_seg_wsflex_1:$regex_help_seg_wsflex_1,regex_help_seg_wsflex_2:$regex_help_seg_wsflex_2,regex_help_seg_wsflex_t:$regex_help_seg_wsflex_t,regex_help_tool_alt_1:$regex_help_tool_alt_1,regex_help_tool_alt_2:$regex_help_tool_alt_2,regex_help_tool_alt_3:$regex_help_tool_alt_3,regex_help_tool_alt_4:$regex_help_tool_alt_4,regex_help_tool_alt_t:$regex_help_tool_alt_t,regex_help_tool_anchor_1:$regex_help_tool_anchor_1,regex_help_tool_anchor_2:$regex_help_tool_anchor_2,regex_help_tool_anchor_3:$regex_help_tool_anchor_3,regex_help_tool_anchor_4:$regex_help_tool_anchor_4,regex_help_tool_anchor_t:$regex_help_tool_anchor_t,regex_help_tool_class_1:$regex_help_tool_class_1,regex_help_tool_class_2:$regex_help_tool_class_2,regex_help_tool_class_3:$regex_help_tool_class_3,regex_help_tool_class_t:$regex_help_tool_class_t,regex_help_tool_context_1:$regex_help_tool_context_1,regex_help_tool_context_2:$regex_help_tool_context_2,regex_help_tool_context_3:$regex_help_tool_context_3,regex_help_tool_context_4:$regex_help_tool_context_4,regex_help_tool_context_t:$regex_help_tool_context_t,regex_help_tool_fixed_1:$regex_help_tool_fixed_1,regex_help_tool_fixed_2:$regex_help_tool_fixed_2,regex_help_tool_fixed_3:$regex_help_tool_fixed_3,regex_help_tool_fixed_4:$regex_help_tool_fixed_4,regex_help_tool_fixed_t:$regex_help_tool_fixed_t,regex_help_tool_variable_1:$regex_help_tool_variable_1,regex_help_tool_variable_2:$regex_help_tool_variable_2,regex_help_tool_variable_3:$regex_help_tool_variable_3,regex_help_tool_variable_4:$regex_help_tool_variable_4,regex_help_tool_variable_5:$regex_help_tool_variable_5,regex_help_tool_variable_t:$regex_help_tool_variable_t,regex_hint_extract_lookaround:$regex_hint_extract_lookaround,regex_hint_no_text_layer:$regex_hint_no_text_layer,regex_hint_options_change_requires_reload:$regex_hint_options_change_requires_reload,regex_hint_tested_one_sample:$regex_hint_tested_one_sample,regex_load_section_title:$regex_load_section_title,regex_multiline:$regex_multiline,regex_opt_all_pages:$regex_opt_all_pages,regex_opt_clean_spaces:$regex_opt_clean_spaces,regex_opt_first_page:$regex_opt_first_page,regex_opt_source_content:$regex_opt_source_content,regex_opt_source_filename:$regex_opt_source_filename,regex_preview_error:$regex_preview_error,regex_network_error:$regex_network_error,regex_preview_matches:$regex_preview_matches,regex_preview_no_match:$regex_preview_no_match,regex_sample_loaded:$regex_sample_loaded,regex_sample_loading:$regex_sample_loading,regex_sample_pick:$regex_sample_pick,regex_seg_alt:$regex_seg_alt,regex_seg_anchor:$regex_seg_anchor,regex_seg_context:$regex_seg_context,regex_seg_class:$regex_seg_class,regex_seg_empty:$regex_seg_empty,regex_seg_fixed:$regex_seg_fixed,regex_seg_optional:$regex_seg_optional,regex_seg_var:$regex_seg_var,regex_seg_wsflex:$regex_seg_wsflex,regex_source_label:$regex_source_label,regex_tool_alt:$regex_tool_alt,regex_tool_anchor:$regex_tool_anchor,regex_tool_context:$regex_tool_context,regex_tool_class:$regex_tool_class,regex_tool_fixed:$regex_tool_fixed,regex_tool_variable:$regex_tool_variable,regex_var_any:$regex_var_any,regex_var_until_anchor:$regex_var_until_anchor,regex_var_whitespace:$regex_var_whitespace,regex_wand_title:$regex_wand_title,btn_add_rule:$btn_add_rule,btn_add_subrule:$btn_add_subrule,btn_remove_rule:$btn_remove_rule,btn_duplicate_rule:$btn_duplicate_rule,btn_jump_raw_rule:$btn_jump_raw_rule,btn_remove_subrule:$btn_remove_subrule,btn_save:$btn_save,btn_cancel:$btn_cancel,rule_name:$rule_name,rule_condition:$rule_condition,cond_any:$cond_any,cond_all:$cond_all,cond_none:$cond_none,tagname:$tagname,tagname_regex:$tagname_regex,targetfolder:$targetfolder,placeholder_targetfolder:$placeholder_targetfolder,dirname_regex:$dirname_regex,multiline:$multiline,dirname_multiline:$dirname_multiline,postscript:$postscript,apprise:$apprise,apprise_att:$apprise_att,apprise_att_true:$apprise_att_true,apprise_att_false:$apprise_att_false,notify_lang:$notify_lang,on_match_action:$on_match_action,on_match_result:$on_match_result,omatch_unset:$omatch_unset,omatch_continue:$omatch_continue,omatch_break:$omatch_break,omatch_merge:$omatch_merge,omatch_replace:$omatch_replace,omatch_exclusive:$omatch_exclusive,requires:$requires,excludes:$excludes,sub_searchstring:$sub_searchstring,sub_searchtyp:$sub_searchtyp,sub_isregex:$sub_isregex,sub_source:$sub_source,sub_casesensitive:$sub_casesensitive,sub_multiline:$sub_multiline,src_filename:$src_filename,src_content:$src_content,st_contains:$st_contains,st_not_contains:$st_not_contains,st_is:$st_is,st_is_not:$st_is_not,st_starts:$st_starts,st_not_starts:$st_not_starts,st_ends:$st_ends,st_not_ends:$st_not_ends,st_matches:$st_matches,st_not_matches:$st_not_matches,tab_visual:$tab_visual,tab_raw:$tab_raw,filter_placeholder:$filter_placeholder,filter_count:$filter_count,filter_empty:$filter_empty,drag_hint:$drag_hint,dup_suffix:$dup_suffix,section_details:$section_details,toggle_details_show:$toggle_details_show,toggle_details_hide:$toggle_details_hide,toggle_rule_expand:$toggle_rule_expand,toggle_rule_collapse:$toggle_rule_collapse,save_success:$save_success,save_error:$save_error,save_error_title:$save_error_title,save_http_error:$save_http_error,save_dup_blocked:$save_dup_blocked,val_rule_dup_name:$val_rule_dup_name,raw_invalid:$raw_invalid,unsaved_warning:$unsaved_warning,tf_builder:$tf_builder,tf_pick:$tf_pick,tf_pick_title:$tf_pick_title,tf_pick_confirm:$tf_pick_confirm,tf_preview:$tf_preview,tf_mode_abs:$tf_mode_abs,tf_mode_rel:$tf_mode_rel,tf_dirhint:$tf_dirhint,tf_dirregex_help:$tf_dirregex_help,tf_chip_dirname:$tf_chip_dirname,tf_apply:$tf_apply,tn_builder:$tn_builder,tn_chip_tagname:$tn_chip_tagname,tn_dirhint:$tn_dirhint,tn_regex_help:$tn_regex_help,help_rule_name:$help_rule_name,help_rule_condition:$help_rule_condition,help_tagname:$help_tagname,help_targetfolder:$help_targetfolder,help_sub_source:$help_sub_source,help_sub_searchtyp:$help_sub_searchtyp,help_sub_searchstring:$help_sub_searchstring,help_sub_isregex:$help_sub_isregex,help_sub_casesensitive:$help_sub_casesensitive,help_sub_multiline:$help_sub_multiline,help_tagname_regex:$help_tagname_regex,help_multiline:$help_multiline,help_dirname_multiline:$help_dirname_multiline,help_on_match_action:$help_on_match_action,help_on_match_result:$help_on_match_result,help_requires:$help_requires,help_excludes:$help_excludes,help_postscript:$help_postscript,help_apprise:$help_apprise,help_link:$help_link,help_apprise_att:$help_apprise_att,help_notify_lang:$help_notify_lang,help_dirname_regex:$help_dirname_regex,help_tf_preview:$help_tf_preview}')
 
     _name_val=$(rules_html_escape "${_name}")
     _desc_val=$(rules_html_escape "${_desc}")
@@ -660,7 +685,7 @@ rules_edit_view() {
     fi
 
     echo '
-    <div class="synocr-rules-editor-page">
+    <div class="synocr-rules-editor-page synocr-form-page">
     <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2 synocr-rules-editor-head">
         <h2 class="synocr-text-blue mb-0">'"${lang_rules_editor_title}"'</h2>
         <div class="synocr-rules-actionbar d-flex gap-2 flex-shrink-0 align-items-center flex-wrap justify-content-end">
@@ -727,7 +752,7 @@ rules_edit_view() {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="card card-body mb-3" style="background-color:#F2FAFF;">'"${lang_rules_import_hint}"'</div>
+                    <div class="card card-body mb-3 synocr-hint-card">'"${lang_rules_import_hint}"'</div>
                     <label class="form-label" for="synocr-import-path">'"${lang_rules_import_path}"'</label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="synocr-import-path" readonly placeholder="*.yml / *.yaml">

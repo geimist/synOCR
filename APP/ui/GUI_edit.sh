@@ -884,6 +884,7 @@ if [[ "${page}" == "edit" ]]; then
 
     echo '
     <p>&nbsp;</p>
+    <div class="synocr-form-page">
     <div class="row mb-3">
         <div class="col-sm-5">
             <label for="getprofile" class="ms-4">'"${lang_edit_change_profile}"'</label>
@@ -953,7 +954,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="profile-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set1_profilename_help}"' ('"${lang_example}"' Shop, John)
                                     </span>
@@ -990,7 +991,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="active-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set1_profile_activ_help1}"'<br />
                                         '"${lang_edit_set1_profile_activ_help2}"'
@@ -1040,7 +1041,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="INPUTDIR-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set1_sourcedir_help1}"'<br />
                                         '"${lang_edit_set1_sourcedir_help2}"' ('"${lang_example}"' /volume1/homes/username/scan/input/)
@@ -1087,7 +1088,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="OUTPUTDIR-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set1_targetdir_help1}"'<br />
                                         '"${lang_edit_set1_targetdir_help2}"' ('"${lang_example}"' /volume1/homes/username/scan/output/)
@@ -1134,7 +1135,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="BACKUPDIR-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set1_backupdir_help1}"'<br />
                                         '"${lang_edit_set1_backupdir_help2}"'<br />
@@ -1182,7 +1183,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="LOGDIR-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set1_logdir_help1}"'<br />
                                         '"${lang_edit_set1_logdir_help2}"' ('"${lang_example}"' /volume1/homes/username/scan/log/)
@@ -1239,7 +1240,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="ocropt-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_ocropt_help1}"'<br /><br />
                                         <code>-l</code>&nbsp;&nbsp;'"${lang_edit_set2_ocropt_help5}"' (deu, eng, deu+eng, ...)<br />
@@ -1301,7 +1302,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="dockercontainer-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_dockerimage_help1}"'<br />
                                         jbarlow83/ocrmypdf '"${lang_edit_set2_dockerimage_help2}"' chi_sim,deu,eng,fra,osd,por,spa.<br />
@@ -1341,7 +1342,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="dockerimageupdate-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_dockerimageupdate_help1}"'
                                     </span>
@@ -1376,7 +1377,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="inotify_delay-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_inotify_delay_help1}"'<br /><br />
                                         '"${lang_edit_set2_inotify_delay_help2}"'<br />
@@ -1428,7 +1429,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="adjustColorBWthreshold-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_adjustColorBWthreshold_help1}"'<br />
                                         '"${lang_edit_set2_adjustColorBWthreshold_help2}"'<br />
@@ -1501,7 +1502,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="adjustColorDPI-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_adjustColorDPI_help1}"'<br />
                                         '"${lang_edit_set2_adjustColorDPI_help2}"'<br />
@@ -1566,7 +1567,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="adjustColorContrast-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_adjustColorContrast_help1}"'<br />
                                         <code>'"${lang_deactivated}"'&nbsp;</code>'"➜ ${lang_edit_set2_adjustColorContrast_help2}"'<br />
@@ -1618,7 +1619,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="adjustColorSharpness-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_adjustColorSharpness_help1}"'<br />
                                         <code>'"${lang_deactivated}"'&nbsp;</code>'"➜ ${lang_edit_set2_adjustColorSharpness_help2}"'<br />
@@ -1659,7 +1660,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="img2pdf-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_img2pdf_help1}"'
                                     </span>
@@ -1697,7 +1698,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="SearchPraefix-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_searchpref_help1}"'  ('"${lang_example}"' &quot;SCAN_&quot;)<br />
                                         '"${lang_edit_set2_searchpref_help2}"'<br />
@@ -1737,7 +1738,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="delSearchPraefix-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_delsearchpref_help1}"'<br />
                                         '"${lang_edit_set2_delsearchpref_help2}"'
@@ -1823,7 +1824,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="documentSplitPattern-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         <b>'"${lang_edit_set2_documentSplitPattern_userDefined}"':</b><br>
                                         '"${lang_edit_set2_documentSplitPattern_help1}"'<br><br>
@@ -1884,7 +1885,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="filedate_nearest-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_splitpagehandling_help1}"'<br>
                                     </span>
@@ -1924,7 +1925,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="blank_page_detection_switch-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_blank_page_detection_switch_help1}"'<br />
                                         '"${lang_edit_set2_blank_page_detection_switch_help2}"'
@@ -1961,7 +1962,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="blank_page_detection_mainThreshold-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_blank_page_detection_mainThreshold_help1}"'<br /><br />
                                         '"${lang_edit_set2_blank_page_detection_mainThreshold_help2}"'<br />
@@ -2022,7 +2023,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="blank_page_detection_ignoreText-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_blank_page_detection_ignoreText_help1}"'<br />
                                         '"${lang_edit_set2_blank_page_detection_ignoreText_help2}"'
@@ -2077,7 +2078,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="blank_page_detection_widthCropping-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                          '"${lang_edit_set2_blank_page_detection_widthCropping_help1}"'<br><br>
                                          '"${lang_edit_set2_blank_page_detection_widthCropping_help2}"'<br><br>
@@ -2124,7 +2125,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="blank_page_detection_hightCropping-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                          '"${lang_edit_set2_blank_page_detection_hightCropping_help1}"'<br><br>
                                          '"${lang_edit_set2_blank_page_detection_hightCropping_help2}"'<br><br>
@@ -2167,7 +2168,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="blank_page_detection_interferenceMaxFilter-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                          '"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_help1}"'<br><br>
                                          '"${lang_edit_set2_blank_page_detection_interferenceMaxFilter_help2}"'<br><br>
@@ -2210,7 +2211,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="blank_page_detection_interferenceMinFilter-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                          '"${lang_edit_set2_blank_page_detection_interferenceMinFilter_help1}"'<br><br>
                                          '"${lang_default}"': <code><span style="font-hight:1.1em;">3</span></code>
@@ -2256,7 +2257,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="blank_page_detection_black_pixel_ratio-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                          '"${lang_edit_set2_blank_page_detection_black_pixel_ratio_help1}"'<br><br>
                                          '"${lang_edit_set2_blank_page_detection_black_pixel_ratio_help2}"'<br><br>
@@ -2313,7 +2314,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="ruleset-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>'"${lang_edit_ruleset_hint}"'</span>
                                 </div>
                             </div>
@@ -2359,7 +2360,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="convert2YAML">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         <strong>'"${lang_edit_yamlsample_button_help_headline}"'</strong><br /><br />
                                         '"${lang_edit_yamlsample_button_help_01}"'<br />
@@ -2370,7 +2371,7 @@ if [[ "${page}" == "edit" ]]; then
                             </div>
 
                             <div class="collapse" id="taglist-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_taglist_help1}"'<br />
                                         '"${lang_edit_set2_taglist_help2}"'<br />
@@ -2428,7 +2429,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="searchAll-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_searchall_help1}"'<br />
                                         '"${lang_edit_set2_searchall_help2}"'
@@ -2487,7 +2488,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="moveTaggedFiles-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_moveTaggedFiles_help1}"'
                                         <br>-&nbsp;'"${lang_edit_set2_moveTaggedFiles_help2}"'
@@ -2559,7 +2560,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="NameSyntax-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <div class="synocr-namesyntax-help-text">
                                         <p class="mb-2">'"${lang_edit_set2_renamesyntax_help1}"'</p>
                                         <p class="mb-2">'"${lang_edit_set2_renamesyntax_help2}"'</p>
@@ -2638,7 +2639,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="tagsymbol-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_tagsymbol_help1}"' ('"${lang_example}"': #)<br />
                                         '"${lang_edit_set2_tagsymbol_help2}"'
@@ -2689,7 +2690,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="filedate-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_filedate_help1}"'<br />
                                         '"${lang_edit_set2_filedate_help2}"'
@@ -2726,7 +2727,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="ignoredDate-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_ignoredDate_help1}"'<br /><br />
                                     </span>
@@ -2763,7 +2764,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="DateSearchMinYear-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_DateSearchMinYear_help1}"'<br />
                                         '"${lang_edit_set2_DateSearchMinYear_help2}"'<br /><br />
@@ -2801,7 +2802,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="DateSearchMaxYear-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_DateSearchMaxYear_help1}"'<br /><br />
                                         '"${lang_edit_set2_DateSearchMaxYear_help2}"'
@@ -2845,7 +2846,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="filedate_nearest-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_filedate_search_nearest_help1}"'<br>
                                         '"${lang_edit_set2_filedate_search_nearest_help2}"'
@@ -2889,7 +2890,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="date_search_method-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_date_search_method_help1}"'<br><br><b>Python:</b><br>
                                         '"${lang_edit_set2_date_search_method_help2}"'<br><br><b>RegEx:</b><br>
@@ -2936,7 +2937,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="clean_up_spaces-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set2_clean_up_spaces_help1}"'<br><br>
                                         '"${lang_edit_set2_clean_up_spaces_help2}"'
@@ -3005,7 +3006,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="backup_max_type-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_backuprotate_help1}"'<br /><br />
                                         '"${lang_edit_set3_backuprotate_help2}"'<br />
@@ -3042,7 +3043,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="backup_clean_orphaned-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_backup_clean_orphaned_help1}"'<br /><br />
                                         '"${lang_edit_set3_backup_clean_orphaned_help2}"'
@@ -3091,7 +3092,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="LOGmax-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_logmax_help}"'
                                     </span>
@@ -3130,7 +3131,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="loglevel-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_loglevel_help1}"'<br />
                                         '"${lang_edit_set3_loglevel_help2}"'<br />
@@ -3169,7 +3170,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="dsmbeepnotify-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_dsmbeepnotify_help1}"'
                                     </span>
@@ -3205,7 +3206,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="dsmtextnotify-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_dsmtextnotify_help1}"'<br />
                                         '"${lang_edit_set3_dsmtextnotify_help2}"'
@@ -3259,7 +3260,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="MessageTo-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_MessageTo_help1}"'<br />
                                         '"${lang_edit_set3_MessageTo_help2}"'<br />
@@ -3297,7 +3298,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="apprise_call-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_APPRISE_help1}"'<br />
                                         <code><span style="font-hight:1.1em;">ifttt://webhooksID/Event mqtts://user:pass@hostname:9883/topic ...</span></code><br><br>
@@ -3335,7 +3336,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="apprise_attachment-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_apprise_attachment_help1}"'<br><br>
                                         '"${lang_edit_set3_apprise_attachment_help2}"'
@@ -3406,7 +3407,7 @@ if [[ "${page}" == "edit" ]]; then
                     <div class="row">
                         <div class="col-sm-10">
                             <div class="collapse" id="notify_lang-info">
-                                <div class="card card-body mb-3" style="background-color: #F2FAFF;">
+                                <div class="card card-body mb-3 synocr-hint-card">
                                     <span>
                                         '"${lang_edit_set3_notify_lang_help1}"'<br />
                                         '"${lang_edit_set3_notify_lang_help2}"' <code><span style="font-hight:1.1em;">'"${ownlangvar}"'</span></code><br />
@@ -3423,6 +3424,7 @@ if [[ "${page}" == "edit" ]]; then
                 </div>
             </div>
         </div>
+    </div>
     </div>
     <!-- Folder Picker Modal -->
     <div class="modal fade" id="folderPickerModal" tabindex="-1" aria-labelledby="folderPickerModalLabel" aria-hidden="true">
