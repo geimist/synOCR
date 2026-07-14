@@ -1592,19 +1592,16 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     overflow-y: auto;
     overflow-x: hidden;
 }
-.synocr-regex-assistant-modal .synocr-regex-expert {
-    resize: none;
+.synocr-regex-pattern-line {
+    position: relative;
+    padding: 0;
+    overflow: hidden;
     min-height: calc(1.5em + 0.5rem + 2px);
-    max-height: 50vh;
-    overflow-y: hidden;
-    line-height: 1.5;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-    color: #212529;
-    background-color: #fff;
 }
-.synocr-regex-assistant-modal .synocr-regex-pattern-preview {
-    resize: none;
+.synocr-regex-pattern-line .synocr-regex-pattern-preview {
+    border: 0;
+    box-shadow: none;
+    background-color: #fff;
     min-height: calc(1.5em + 0.5rem + 2px);
     max-height: 50vh;
     overflow-x: auto;
@@ -1614,8 +1611,46 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     font-size: 0.875rem;
     white-space: pre-wrap;
     word-break: break-all;
-    background-color: #fff;
     cursor: default;
+}
+.synocr-regex-pattern-line .synocr-regex-expert {
+    display: none;
+    resize: none;
+    width: 100%;
+    margin: 0;
+    border: 0;
+    box-shadow: none;
+    outline: none;
+    line-height: 1.5;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: transparent;
+    color: #212529;
+}
+.synocr-regex-pattern-line--expert .synocr-regex-pattern-preview {
+    pointer-events: none;
+    user-select: none;
+}
+.synocr-regex-pattern-line--expert .synocr-regex-expert {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    caret-color: #212529;
+    overflow: auto;
+}
+.synocr-regex-pattern-line--expert .synocr-regex-pattern-frag {
+    padding: 0;
+    border-radius: 0;
+}
+.synocr-regex-pattern-line--expert .synocr-regex-expert::selection {
+    background-color: rgba(0, 134, 229, 0.35);
+    color: transparent;
+    -webkit-text-fill-color: transparent;
 }
 .synocr-regex-pattern-frag {
     border-radius: 0.15rem;
@@ -1627,7 +1662,7 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
 .synocr-regex-pattern-frag.seg_class { background-color: #eafbe8; color: #1e6b1e; }
 .synocr-regex-pattern-frag.seg_alt { background-color: #f3ecfb; color: #5a3680; }
 .synocr-regex-pattern-frag.seg_anchor { background-color: #eef1f4; color: #3a434d; }
-.synocr-regex-pattern-frag.seg_context { background-color: #e7f7ee; color: #1b6b3a; }
+.synocr-regex-pattern-frag.seg_context { background-color: #e8f6fa; color: #0b5f73; }
 .synocr-regex-mode-toggle {
     font-size: 0.78rem;
     text-decoration: none;
@@ -1689,9 +1724,9 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     color: #3a434d;
 }
 .synocr-regex-tool-context {
-    background-color: #e7f7ee;
-    border-color: #b6e3c8;
-    color: #1b6b3a;
+    background-color: #e8f6fa;
+    border-color: #a8d8e8;
+    color: #0b5f73;
 }
 
 .synocr-regex-viewer {
@@ -1751,7 +1786,7 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
 }
 .synocr-regex-seg {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 0.35rem;
     width: 100%;
@@ -1761,6 +1796,14 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     font-size: 0.78rem;
     border-radius: 0.25rem;
     flex: 0 0 auto;
+}
+.synocr-regex-seg-body {
+    display: flex;
+    flex: 1 1 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
 }
 .synocr-regex-seg-drag-handle {
     cursor: grab;
@@ -1794,7 +1837,7 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
 .synocr-regex-seg-type.seg_class  { background-color: #2ea23a; }
 .synocr-regex-seg-type.seg_alt    { background-color: #8a5cb8; }
 .synocr-regex-seg-type.seg_anchor { background-color: #6c757d; }
-.synocr-regex-seg-type.seg_context { background-color: #1b6b3a; }
+.synocr-regex-seg-type.seg_context { background-color: #0b7a94; }
 
 .synocr-regex-seg-opt {
     display: inline-flex;
@@ -1849,7 +1892,9 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
     color: #b02a37;
     background: transparent;
     border: 0;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    align-self: center;
+    margin-left: 0.15rem;
 }
 
 .synocr-regex-seg-alt-inputs {
@@ -1890,6 +1935,26 @@ button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
 .synocr-regex-explain-item {
     line-height: 1.35;
     margin-bottom: 0.1rem;
+}
+.synocr-regex-pattern-frag.synocr-regex-explain-highlight {
+    outline: 2px solid #0086E5;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 1px rgba(0, 134, 229, 0.25);
+}
+.synocr-regex-explain-item.synocr-regex-explain-highlight {
+    background-color: #e8f1ff;
+    border-radius: 0.15rem;
+}
+.synocr-regex-explain-frag-ref {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.92em;
+    background-color: #eef1f4;
+    color: #2a3340;
+    padding: 0 0.2rem;
+    border-radius: 0.15rem;
+}
+.synocr-regex-explain-title {
+    color: #334;
 }
 .synocr-regex-explain-item:last-child {
     margin-bottom: 0;

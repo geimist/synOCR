@@ -186,7 +186,9 @@ exit 1
     printf "\n-----------------------------------------------------------------------------------\n\n"
 
     if [ "$buildversion" = local ]; then
-        tar --exclude='./.git' --exclude='./*.spk' --exclude='.DS_Store' --exclude='._*' -cf - . | tar -C "$build_tmp" -xf -
+        tar --exclude='./.git' --exclude='./*.spk' --exclude='.DS_Store' --exclude='._*' \
+            --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
+            -cf - . | tar -C "$build_tmp" -xf -
     else
         git pull
         git worktree add --force "$build_tmp" "$(git rev-parse --abbrev-ref HEAD)"
@@ -425,11 +427,16 @@ exit 1
 
     rm -f "$build_tmp"/APP/._* "$build_tmp"/$PKG/._* 2>/dev/null || true
     find "$build_tmp/APP" "$build_tmp/$PKG" -name '._*' -delete
+    find "$build_tmp/APP" "$build_tmp/$PKG" -type d -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || true
+    find "$build_tmp/APP" "$build_tmp/$PKG" \( -name '*.pyc' -o -name '*.pyo' \) -delete
 
 # Packing and dropping the current installation into the appropriate /Pack folder
     printf "\n - INFO: The archive package.tgz will be created ...\n"
 
-    $FAKEROOT tar "${TAR_CREATE_OPTS[@]}" -C "${build_tmp}/APP" --exclude='.DS_Store' --exclude='._*' -czf "${build_tmp}/$PKG"/package.tgz .
+    $FAKEROOT tar "${TAR_CREATE_OPTS[@]}" -C "${build_tmp}/APP" \
+        --exclude='.DS_Store' --exclude='._*' \
+        --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
+        -czf "${build_tmp}/$PKG"/package.tgz .
 
 # Change to the storage location of package.tgz regarding the structure of the SPKs
     cd "${build_tmp}/${PKG}"
@@ -438,7 +445,10 @@ exit 1
     printf "\n - INFO: the SPK will be created ...\n"
     TargetName="${project}_DSM${TargetDSM}_${set_spk_version}${beta_status}.spk"
     # $build_version
-    $FAKEROOT tar "${TAR_CREATE_OPTS[@]}" --exclude='.DS_Store' --exclude='._*' -cf "${TargetName}" *
+    $FAKEROOT tar "${TAR_CREATE_OPTS[@]}" \
+        --exclude='.DS_Store' --exclude='._*' \
+        --exclude='*/__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
+        -cf "${TargetName}" *
     cp -f "${TargetName}" "${APPDIR}"
 
     printf "\n-----------------------------------------------------------------------------------\n"

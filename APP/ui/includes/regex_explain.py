@@ -11,7 +11,6 @@ except ImportError:
     print(json.dumps({"ok": False, "error": "venv"}))
     sys.exit(1)
 
-
 def unesc_pcre(s):
     return re.sub(r"\\(.)", r"\1", s)
 
@@ -105,6 +104,37 @@ def split_top_level_alt(s):
     return parts
 
 
+_BRACKET_SHORTHANDS = {
+    "w": "word", "W": "non_word",
+    "d": "digit", "D": "non_digit",
+    "s": "space", "S": "non_space",
+    "h": "h_space", "v": "v_space",
+    "n": "newline", "r": "cr", "t": "tab",
+}
+
+
+def parse_bracket_parts(raw):
+    parts = []
+    i = 0
+    n = len(raw)
+    while i < n:
+        if raw[i] == "\\" and i + 1 < n:
+            c = raw[i + 1]
+            if c in _BRACKET_SHORTHANDS:
+                parts.append({"kind": "shorthand", "escape": _BRACKET_SHORTHANDS[c]})
+            else:
+                parts.append({"kind": "char", "char": c})
+            i += 2
+            continue
+        if i + 2 < n and raw[i + 1] == "-" and raw[i + 2] != "]":
+            parts.append({"kind": "range", "from": raw[i], "to": raw[i + 2]})
+            i += 3
+            continue
+        parts.append({"kind": "char", "char": raw[i]})
+        i += 1
+    return parts
+
+
 class PatternTokenizer:
     def __init__(self, pattern, list_mode="match"):
         self.pattern = pattern
@@ -120,15 +150,23 @@ class PatternTokenizer:
         self.pos += len(lit)
         return True
 
+    def _set_span(self, item, start, end):
+        item["start"] = start
+        item["length"] = end - start
+        item["span"] = self.pattern[start:end]
+
     def parse_list(self):
         out = []
         while not self.at_end():
+            start = self.pos
             item = self.parse_one()
             if item is None:
                 raise ValueError("parse")
+            end = self.pos
             if isinstance(item, list):
                 out.extend(item)
             else:
+                self._set_span(item, start, end)
                 out.append(item)
         return out
 
@@ -138,8 +176,36 @@ class PatternTokenizer:
             return group
         return self.parse_atom()
 
+    def try_inline_flags(self, open_pos):
+        rest = self.pattern[self.pos :]
+        if not rest.startswith("?"):
+            return None
+        if re.match(r"^\?(?:\||:|[<=!])", rest):
+            return None
+        m = re.match(r"^\?([imsxU\-]+)(:)?", rest)
+        if not m:
+            return None
+        flags_str = m.group(1)
+        has_colon = bool(m.group(2))
+        self.pos += len(m.group(0))
+        if has_colon:
+            close = find_balanced_close(self.pattern, open_pos)
+            if close < 0:
+                raise ValueError("parse")
+            inner = self.pattern[self.pos : close]
+            self.pos = close + 1
+            sub = PatternTokenizer(inner, self.list_mode)
+            items = sub.parse_list()
+            if not sub.at_end():
+                raise ValueError("parse")
+            return {"kind": "flags_group", "flags": flags_str, "items": items}
+        if not self.try_take(")"):
+            raise ValueError("parse")
+        return {"kind": "flags", "flags": flags_str, "scope": "rest"}
+
     def parse_paren_group(self):
         branch_reset = False
+        captured = False
         open_pos = -1
         inner_start = -1
 
@@ -147,16 +213,36 @@ class PatternTokenizer:
             branch_reset = True
             open_pos = self.pos - 3
             inner_start = self.pos
+        elif self.try_take("(?>"):
+            open_pos = self.pos - 3
+            inner_start = self.pos
+            close = find_balanced_close(self.pattern, open_pos)
+            if close < 0:
+                raise ValueError("parse")
+            inner = self.pattern[inner_start:close]
+            self.pos = close + 1
+            sub = PatternTokenizer(inner, self.list_mode)
+            inner_items = sub.parse_list()
+            if not sub.at_end():
+                raise ValueError("parse")
+            item = {"kind": "atomic", "items": inner_items}
+            self._apply_repeat_quantifier(item)
+            return item
         elif self.try_take("(?:"):
             open_pos = self.pos - 3
             inner_start = self.pos
         elif self.pos < len(self.pattern) and self.pattern[self.pos] == "(":
-            rest = self.pattern[self.pos :]
-            if rest.startswith("(?") and not rest.startswith("(?|") and not rest.startswith("(?:"):
-                return None
             open_pos = self.pos
             self.pos += 1
+            flags_item = self.try_inline_flags(open_pos)
+            if flags_item is not None:
+                return flags_item
+            rest = self.pattern[self.pos :]
+            if re.match(r"^\?(<=|<!|!|=)", rest):
+                self.pos = open_pos
+                return None
             inner_start = self.pos
+            captured = True
         else:
             return None
 
@@ -165,7 +251,6 @@ class PatternTokenizer:
             raise ValueError("parse")
         inner = self.pattern[inner_start:close]
         self.pos = close + 1
-        optional = self.try_take("?")
 
         if branch_reset:
             sub = PatternTokenizer(inner, self.list_mode)
@@ -187,24 +272,91 @@ class PatternTokenizer:
             subs = sub.parse_list()
             if not sub.at_end():
                 raise ValueError("parse")
-            if len(subs) == 1:
+            if captured:
+                item = {"kind": "group", "captured": True, "items": subs}
+            elif len(subs) == 1:
                 item = subs[0]
             elif len(subs) == 0:
                 item = {"kind": "group", "items": []}
             else:
-                return subs
+                item = {"kind": "group", "items": subs}
 
-        if optional:
+        self._apply_repeat_quantifier(item)
+        return item
+
+    def _apply_repeat_quantifier(self, item):
+        if self.try_take("*"):
+            item["repeat"] = "star"
+        elif self.try_take("+"):
+            item["repeat"] = "plus"
+        elif self.try_take("?"):
             item["optional"] = True
+        elif self.try_take("{"):
+            body = ""
+            while not self.at_end() and self.pattern[self.pos] != "}":
+                body += self.pattern[self.pos]
+                self.pos += 1
+            if not self.try_take("}"):
+                raise ValueError("parse")
+            parts = body.split(",")
+            item["repeat"] = "range"
+            item["n"] = parts[0] or "0"
+            item["m"] = parts[1] if len(parts) > 1 else ""
+
+    def apply_class_quantifier(self, item):
+        if self.try_take("{"):
+            body = ""
+            while not self.at_end() and self.pattern[self.pos] != "}":
+                body += self.pattern[self.pos]
+                self.pos += 1
+            if not self.try_take("}"):
+                raise ValueError("parse")
+            parts = body.split(",")
+            if len(parts) > 1:
+                item["classQuant"] = "range"
+                item["n"] = parts[0] or "0"
+                item["m"] = parts[1] if len(parts) > 1 else ""
+            else:
+                item["classQuant"] = "fixed"
+                item["n"] = parts[0] or "0"
+                item["m"] = ""
+            return item
+        if self.try_take("*"):
+            item["classQuant"] = "star"
+            return item
+        if self.try_take("+"):
+            item["classQuant"] = "plus"
+            return item
+        if self.try_take("?"):
+            item["optional"] = True
+            return item
         return item
 
     def parse_atom(self):
         if self.try_take("\\K"):
             return {"kind": "keep"}
 
-        for esc, kind in (("\\n", "newline"), ("\\r", "cr"), ("\\t", "tab")):
+        backref = self.try_backreference()
+        if backref:
+            return backref
+
+        for esc, kind in (
+            ("\\w", "word"),
+            ("\\W", "non_word"),
+            ("\\D", "non_digit"),
+            ("\\S", "non_space"),
+            ("\\R", "line_break"),
+            ("\\N", "not_newline"),
+            ("\\n", "newline"),
+            ("\\r", "cr"),
+            ("\\t", "tab"),
+        ):
             if self.try_take(esc):
-                return {"kind": "escape", "escapeKind": kind}
+                item = {"kind": "escape", "escapeKind": kind}
+                if esc in ("\\w", "\\W", "\\D", "\\S"):
+                    if self.pattern[self.pos : self.pos + 1] in "*+?{":
+                        return self.apply_class_quantifier(item)
+                return item
 
         if self.try_take("\\b"):
             return {"kind": "anchor", "anchorKind": "word"}
@@ -242,6 +394,9 @@ class PatternTokenizer:
         if self.try_take("\\s?"):
             return {"kind": "variable", "varKind": "ws", "optional": True}
 
+        if self.try_take("\\s"):
+            return {"kind": "variable", "varKind": "ws"}
+
         look = self.try_lookaround()
         if look:
             return look
@@ -256,6 +411,22 @@ class PatternTokenizer:
 
         return None
 
+    def try_backreference(self):
+        rest = self.pattern[self.pos :]
+        m = re.match(r"^\\g(?:<([^>]+)>|'([^']+)')", rest)
+        if m:
+            self.pos += m.end()
+            return {"kind": "backref", "ref": m.group(1) or m.group(2), "style": "g"}
+        m = re.match(r"^\\k(?:<([^>]+)>|'([^']+)')", rest)
+        if m:
+            self.pos += m.end()
+            return {"kind": "backref", "ref": m.group(1) or m.group(2), "style": "k"}
+        m = re.match(r"^\\([1-9]\d*)", rest)
+        if m:
+            self.pos += m.end()
+            return {"kind": "backref", "ref": m.group(1), "style": "num"}
+        return None
+
     def try_lookaround(self):
         rest = self.pattern[self.pos :]
         m = re.match(r"^\(\?(<=|<!|!|=)", rest)
@@ -268,10 +439,54 @@ class PatternTokenizer:
             return None
         inner = self.pattern[self.pos + open_len : close]
         self.pos = close + 1
-        return {
+        item = {
             "kind": "context",
             "lookKind": kind_map.get(m.group(1), "after"),
             "text": unesc_pcre(inner),
+        }
+        try:
+            sub = PatternTokenizer(inner, self.list_mode)
+            inner_items = sub.parse_list()
+            if sub.at_end() and inner_items:
+                item["items"] = inner_items
+        except ValueError:
+            pass
+        return item
+
+    def try_parse_bracket_class(self):
+        if self.pos >= len(self.pattern) or self.pattern[self.pos] != "[":
+            return None
+        negated = False
+        i = self.pos + 1
+        if i < len(self.pattern) and self.pattern[i] == "^":
+            negated = True
+            i += 1
+        raw_parts = []
+        while i < len(self.pattern):
+            if self.pattern[i] == "\\":
+                if i + 1 < len(self.pattern):
+                    raw_parts.append(self.pattern[i : i + 2])
+                    i += 2
+                    continue
+                break
+            if self.pattern[i] == "]" and raw_parts:
+                i += 1
+                break
+            if self.pattern[i] == "]" and not raw_parts:
+                raw_parts.append("]")
+                i += 1
+                break
+            raw_parts.append(self.pattern[i])
+            i += 1
+        else:
+            return None
+        raw = "".join(raw_parts)
+        self.pos = i
+        return {
+            "kind": "class_generic",
+            "raw": raw,
+            "negated": negated,
+            "parts": parse_bracket_parts(raw),
         }
 
     def try_class(self):
@@ -284,39 +499,15 @@ class PatternTokenizer:
             kind = "letters"
         elif self.try_take("[^A-Za-z0-9]"):
             kind = "special"
-        if not kind:
-            return None
+        if kind:
+            item = {"kind": "class", "classKind": kind}
+            return self.apply_class_quantifier(item)
 
-        item = {"kind": "class", "classKind": kind}
-        if self.try_take("{"):
-            body = ""
-            while not self.at_end() and self.pattern[self.pos] != "}":
-                body += self.pattern[self.pos]
-                self.pos += 1
-            if not self.try_take("}"):
-                raise ValueError("parse")
-            parts = body.split(",")
-            if len(parts) > 1:
-                item["classQuant"] = "range"
-                item["n"] = parts[0] or "0"
-                item["m"] = parts[1] if len(parts) > 1 else ""
-            else:
-                item["classQuant"] = "fixed"
-                item["n"] = parts[0] or "0"
-                item["m"] = ""
-            return item
+        generic = self.try_parse_bracket_class()
+        if generic:
+            return self.apply_class_quantifier(generic)
 
-        if self.try_take("*"):
-            item["classQuant"] = "star"
-            return item
-        if self.try_take("+"):
-            item["classQuant"] = "plus"
-            return item
-        if self.try_take("?"):
-            item["classQuant"] = "plus"
-            item["optional"] = True
-            return item
-        raise ValueError("parse")
+        return None
 
     def try_literal(self):
         start = self.pos
@@ -325,6 +516,13 @@ class PatternTokenizer:
                 break
             if self.pattern[self.pos] == "\\":
                 if self.pos + 1 < len(self.pattern):
+                    nxt = self.pattern[self.pos + 1]
+                    if nxt in "wWdDsSnrtRNK":
+                        break
+                    if nxt.isdigit() and nxt != "0":
+                        break
+                    if nxt in "gk":
+                        break
                     self.pos += 2
                     continue
                 break
@@ -337,11 +535,22 @@ class PatternTokenizer:
 
     def is_atom_start(self):
         s = self.pattern[self.pos :]
+        if re.match(r"^\\[1-9]\d*", s):
+            return True
+        if s.startswith("\\g") or s.startswith("\\k"):
+            return True
         checks = (
             "(?|",
             "(?:",
+            "(?>",
             "(?",
             "(",
+            "\\w",
+            "\\W",
+            "\\D",
+            "\\S",
+            "\\R",
+            "\\N",
             "\\n",
             "\\r",
             "\\t",
@@ -349,6 +558,7 @@ class PatternTokenizer:
             "\\s*",
             "\\s+",
             "\\s?",
+            "\\s",
             "\\d",
             ".*?",
             ".*",
@@ -356,6 +566,7 @@ class PatternTokenizer:
             ".+",
             ".?",
             ".",
+            "[",
             "[A-Za-z0-9]",
             "[A-Za-z]",
             "[^A-Za-z0-9]",
@@ -390,8 +601,12 @@ def tokenize_best_effort(pattern):
                 items.extend(one)
                 pos += sub.pos
             else:
+                end = pos + sub.pos
+                one["start"] = pos
+                one["length"] = sub.pos
+                one["span"] = pattern[pos:end]
                 items.append(one)
-                pos += sub.pos
+                pos = end
         except ValueError:
             end = pos + 1
             while end < len(pattern):
@@ -402,7 +617,7 @@ def tokenize_best_effort(pattern):
                 except ValueError:
                     end += 1
             raw = pattern[pos:end]
-            items.append({"kind": "unknown", "raw": raw})
+            items.append({"kind": "unknown", "raw": raw, "start": pos, "length": end - pos, "span": raw})
             pos = end
     return items
 
@@ -410,14 +625,43 @@ def tokenize_best_effort(pattern):
 _DEBRIS_RE = re.compile(r"[?|():\\]")
 
 
+def check_redos_warnings(pattern):
+    warnings = []
+    if re.search(r"\([^)]*(\.\*|\.\+|\.\+?)[^)]*\)[+*?]", pattern):
+        warnings.append("redos_nested_quant")
+    if re.search(r"\([^)]*[+*?][^)]*\)[+*]", pattern):
+        warnings.append("redos_nested_quant")
+    if re.search(r"(\.\*|\.\+).{0,40}(\.\*|\.\+)", pattern):
+        warnings.append("redos_overlapping_wildcard")
+    return list(dict.fromkeys(warnings))
+
+
+def annotate_extract_roles(items):
+    phase = "before"
+    for item in items:
+        if item.get("kind") == "keep":
+            phase = "value"
+            continue
+        if phase == "before":
+            item["extractRole"] = "anchor"
+        elif phase == "value":
+            if item.get("kind") == "context" and item.get("lookKind") in ("after", "notAfter"):
+                item["extractRole"] = "anchor"
+                phase = "after"
+            else:
+                item["extractRole"] = "value"
+        else:
+            item["extractRole"] = "anchor"
+
+
 def is_low_quality(items, pattern):
     if not items:
         return True
 
     unknown = sum(1 for i in items if i.get("kind") == "unknown")
-    if unknown > 2:
+    if unknown > 3 and len(items) > 8:
         return True
-    if unknown and unknown / len(items) > 0.2:
+    if unknown and unknown / len(items) > 0.33:
         return True
 
     debris = 0
@@ -459,7 +703,14 @@ def explain_pattern(pattern, multiline=False, casesensitive=False):
     if is_low_quality(items, pattern):
         return {"ok": True, "items": []}
 
-    return {"ok": True, "items": items}
+    if "\\K" in pattern:
+        annotate_extract_roles(items)
+
+    result = {"ok": True, "items": items}
+    warnings = check_redos_warnings(pattern)
+    if warnings:
+        result["warnings"] = warnings
+    return result
 
 
 def main():

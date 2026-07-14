@@ -1248,7 +1248,12 @@ if [ "${type_of_rule}" = advanced ]; then
                 fi
                 printf "%s\n\n" "${searchtag}"
             else
-                printf "%s\n\n" "RegEx not found (fallback to ${searchtag})"
+                if echo "${searchtag}" | grep -q "§tagname_RegEx" ; then
+                    searchtag="${searchtag//§tagname_RegEx/}"
+                    printf "%s\n\n" "RegEx not found (§tagname_RegEx cleared)"
+                else
+                    printf "%s\n\n" "RegEx not found (fallback to ${searchtag})"
+                fi
             fi
         fi
         # ---------------------------------------------------------------------
@@ -1275,12 +1280,12 @@ if [ "${type_of_rule}" = advanced ]; then
                 sanitized=${sanitized##[.-]}
 
                 targetfolder="${targetfolder//§dirname_RegEx/${sanitized}}"
-                        
-                    printf "%s\n\n" "${targetfolder}"
-                else
-                    printf "%s\n\n" "RegEx not found (fallback to ${targetfolder})"
-                fi
+                printf "%s\n\n" "${targetfolder}"
+            else
+                targetfolder="${targetfolder//§dirname_RegEx/-}"
+                printf "%s\n\n" "RegEx not found (§dirname_RegEx → -)"
             fi
+        fi
 
         # --- on_match.result: replace/exclusive clear prior tags/folders --------
         # Per-field: only clear a buffer when THIS rule contributes that field,

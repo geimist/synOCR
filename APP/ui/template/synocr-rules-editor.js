@@ -1172,6 +1172,9 @@
             msgEl.textContent = L('save_success');
         }
         showRulesModal('popup-rules-save');
+        if (typeof window.synocrAutoDismissModal === 'function') {
+            window.synocrAutoDismissModal(document.getElementById('popup-rules-save'), 2000);
+        }
     }
 
     function showSaveErrorModal(msg) {

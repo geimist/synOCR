@@ -5,10 +5,11 @@ known issues / limitations:
 1.6.99.1 [2026-xx-xx]
   
   IMPLEMENTATIONS:
- - [GUI]    🔥 Regeledtitor implementiert
-            Alte YAML-Regeln können zur schnellen weiterverarbeitung importiert werden
+ - [GUI]    🔥 visueller Regeledtitor implementiert
+            bisherige YAML-Regeln können zur schnellen Weiterverarbeitung in einen leeren Regelsatz importiert werden
  - [YAML]   🔥 Regeln können nun in Beziehung zueinander gebracht werden
  - [YAML]   🔥 es gibt einen einfachen RegEx-Editor für ein paar grundlegende Ausdrücke
+ - [YAML]   Tooltips versuchen dem User erweiterte RegEx zuerklären
  - [YAML]   MultiLine Regex jetzt auch für den Zielpfad möglich
  
   IMPROVEMENT:
@@ -17,8 +18,9 @@ known issues / limitations:
             ➜ Die im Profil eingestellte OCR-Sprache wird automatisch als Hinweis herangezogen, um mehrdeutige Schreibweisen (z. B. 02.07.2026 vs. 07/02/2026) korrekt zuzuordnen.
             Robustere Erkennung von OCR-Fehlern: Typische Lesefehler bei Ziffern (O<>0, l<>1, A<>4, …) und bei Trennzeichen (".<>,", "-<>–") werden automatisch korrigiert
  - [shell]  Die virtuelle Pythonumgebung wird bei einem Update jetzt migriert und muss nich jedes mal neu erstellt werden.
+ - [shell]  §tagname_RegEx / §dirname_RegEx: bei definiertem RegEx ohne Treffer wird der Platzhalter ersetzt (Tag: leer, Ordner: -) statt wörtlich im Pfad/Tag zu landen
 
   BUGFIXES:
- - [YAML]   …
+ - 
 
 

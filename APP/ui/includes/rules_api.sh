@@ -126,19 +126,38 @@ rules_api_resolve_venv_python() {
 }
 
 # Parse `grep -obP` into JSON arrays _grep_ob_offsets / _grep_ob_matches (both '[]' if none).
+# grep emits "<byte-offset>:<match>" per record. With -z (multiline) records are
+# NUL-separated and a match may contain internal newlines; the previous line-based
+# sed parse conflated NUL separators with in-match newlines and dropped the
+# continuation lines, truncating multi-line matches to their first physical line.
+# We therefore pipe grep straight into jq (never storing NUL in a shell variable),
+# convert NUL -> \u0001 (a byte absent from PDF text) and split on it so internal
+# newlines survive. Without -z records are newline-separated and matches stay
+# single-line. jq builds both arrays in one pass, keeping offsets and matches aligned.
 rules_api_grep_ob_parse() {
     local _grep_opt="$1" _pattern="$2" _file="$3" _ml="$4"
-    local _raw
+    local _parsed
     _grep_ob_offsets='[]'
     _grep_ob_matches='[]'
-    _raw=$(grep -obP${_grep_opt} -- "${_pattern}" "${_file}" 2>/dev/null) || _raw=""
-    [ -z "${_raw}" ] && return 0
     if [ "${_ml}" = "true" ]; then
-        _grep_ob_offsets=$(printf '%s' "${_raw}" | tr '\0' '\n' | sed -n 's/^\([0-9][0-9]*\):.*/\1/p' | jq -Rs 'split("\n") | map(select(length>0) | tonumber)' 2>/dev/null) || _grep_ob_offsets='[]'
-        _grep_ob_matches=$(printf '%s' "${_raw}" | tr '\0' '\n' | sed -n 's/^[0-9][0-9]*:\(.*\)/\1/p' | tr '\n' '\001' | jq -Rs 'split("\u0001") | map(select(length>0))' 2>/dev/null) || _grep_ob_matches='[]'
+        _parsed=$(grep -obP${_grep_opt} -- "${_pattern}" "${_file}" 2>/dev/null \
+            | tr '\000' '\001' \
+            | jq -Rs 'split("\u0001")
+                | map(select(length>0))
+                | map(select(test("^[0-9]+:")))
+                | {matches: map(sub("^[0-9]+:"; "")),
+                   offsets: map(capture("^(?<n>[0-9]+):") | .n | tonumber)}' 2>/dev/null) || _parsed=''
     else
-        _grep_ob_offsets=$(printf '%s\n' "${_raw}" | sed -n 's/^\([0-9][0-9]*\):.*/\1/p' | jq -Rs 'split("\n") | map(select(length>0) | tonumber)' 2>/dev/null) || _grep_ob_offsets='[]'
-        _grep_ob_matches=$(printf '%s\n' "${_raw}" | sed -n 's/^[0-9][0-9]*:\(.*\)/\1/p' | jq -Rs 'split("\n") | map(select(length>0))' 2>/dev/null) || _grep_ob_matches='[]'
+        _parsed=$(grep -obP${_grep_opt} -- "${_pattern}" "${_file}" 2>/dev/null \
+            | jq -Rs 'split("\n")
+                | map(select(length>0))
+                | map(select(test("^[0-9]+:")))
+                | {matches: map(sub("^[0-9]+:"; "")),
+                   offsets: map(capture("^(?<n>[0-9]+):") | .n | tonumber)}' 2>/dev/null) || _parsed=''
+    fi
+    if [ -n "${_parsed}" ]; then
+        _grep_ob_offsets=$(printf '%s' "${_parsed}" | jq -c '.offsets // []' 2>/dev/null) || _grep_ob_offsets='[]'
+        _grep_ob_matches=$(printf '%s' "${_parsed}" | jq -c '.matches // []' 2>/dev/null) || _grep_ob_matches='[]'
     fi
     [ -z "${_grep_ob_offsets}" ] && _grep_ob_offsets='[]'
     [ -z "${_grep_ob_matches}" ] && _grep_ob_matches='[]'
@@ -258,6 +277,8 @@ rules_api_regex_preview() {
                     _result=$(printf '%s' "${_result}" | sed 's/[^A-Za-z0-9_. -]/_/g')
                     _result=${_result%%[.-]}
                     _result=${_result##[.-]}
+                elif [ "${_extractType}" = "dir" ] && [ -z "${_result}" ]; then
+                    _result="-"
                 fi
                 printf '{"ok":true,"matches":%s,"offsets":%s,"count":%s,"extracted":%s}' \
                     "${_matches}" "${_offsets}" "${_count}" "$(printf '%s' "${_result}" | jq -Rs .)"

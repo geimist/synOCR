@@ -379,7 +379,13 @@ if [[ "${page}" == "edit-convert2YAML" ]]; then
     </div>
     <script type="text/javascript">
         $(window).on("load", function() {
+            var _synocrModal = document.getElementById("popup-validation");
             $("#popup-validation").modal("show");
+            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
+                if (typeof window.synocrAutoDismissModal === "function") {
+                    window.synocrAutoDismissModal(_synocrModal, 2000);
+                }
+            }
         });
     </script>'
 fi
@@ -446,7 +452,13 @@ if [[ "${page}" == "edit-del_profile-query" ]] || [[ "${page}" == "edit-del_prof
     </div>
     <script type="text/javascript">
         $(window).on("load", function() {
+            var _synocrModal = document.getElementById("popup-validation");
             $("#popup-validation").modal("show");
+            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
+                if (typeof window.synocrAutoDismissModal === "function") {
+                    window.synocrAutoDismissModal(_synocrModal, 2000);
+                }
+            }
         });
     </script>'
 fi
@@ -549,7 +561,13 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
     </div>
     <script type="text/javascript">
         $(window).on("load", function() {
+            var _synocrModal = document.getElementById("popup-validation");
             $("#popup-validation").modal("show");
+            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
+                if (typeof window.synocrAutoDismissModal === "function") {
+                    window.synocrAutoDismissModal(_synocrModal, 2000);
+                }
+            }
         });
     </script>'
 fi
@@ -641,7 +659,13 @@ if [[ "${page}" == "edit-new_profile-query" ]] || [[ "${page}" == "edit-new_prof
     </div>
     <script type="text/javascript">
         $(window).on("load", function() {
+            var _synocrModal = document.getElementById("popup-validation");
             $("#popup-validation").modal("show");
+            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
+                if (typeof window.synocrAutoDismissModal === "function") {
+                    window.synocrAutoDismissModal(_synocrModal, 2000);
+                }
+            }
         });
     </script>'
 fi
@@ -724,7 +748,13 @@ if [[ "${page}" == "edit-restore-query" ]] || [[ "${page}" == "edit-restore" ]];
     </div>
     <script type="text/javascript">
         $(window).on("load", function() {
+            var _synocrModal = document.getElementById("popup-validation");
             $("#popup-validation").modal("show");
+            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
+                if (typeof window.synocrAutoDismissModal === "function") {
+                    window.synocrAutoDismissModal(_synocrModal, 2000);
+                }
+            }
         });
     </script>'
 fi
@@ -830,7 +860,13 @@ if [[ "${page}" == "edit-save" ]]; then
     </div>
     <script type="text/javascript">
         $(window).on("load", function() {
+            var _synocrModal = document.getElementById("popup-validation");
             $("#popup-validation").modal("show");
+            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
+                if (typeof window.synocrAutoDismissModal === "function") {
+                    window.synocrAutoDismissModal(_synocrModal, 2000);
+                }
+            }
         });
     </script>'
 fi
