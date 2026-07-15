@@ -67,6 +67,7 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
         --arg historyColSource "${lang_main_history_source}" \
         --arg historyColTargets "${lang_main_history_targets}" \
         --arg historyColStatus "${lang_main_history_status}" \
+        --arg historyTargetOpenHint "${lang_main_history_target_open_hint}" \
         --arg historyClearUrl "index.cgi?page=main-clear-history" \
         --arg historyClearLabel "${lang_main_history_clear}" \
         --arg historyClearSuccess "${lang_main_history_clear_success}" \
@@ -79,7 +80,7 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
         --argjson pollMs 2500 \
         --argjson doneHoldMs 5000 \
         --argjson doneFadeMs 800 \
-        '{statusUrl:$statusUrl,filesTpl:$filesTpl,iconIdle:$iconIdle,iconBusy:$iconBusy,allDoneText:$allDoneText,doneStepText:$doneStepText,profileLabel:$profileLabel,historyEmpty:$historyEmpty,historyStatusSuccess:$historyStatusSuccess,historyStatusFailed:$historyStatusFailed,historyStatusRunning:$historyStatusRunning,historyColTime:$historyColTime,historyColProfile:$historyColProfile,historyColSource:$historyColSource,historyColTargets:$historyColTargets,historyColStatus:$historyColStatus,historyClearUrl:$historyClearUrl,historyClearLabel:$historyClearLabel,historyClearSuccess:$historyClearSuccess,historyClearProblems:$historyClearProblems,historyClearTitle:$historyClearTitle,historyClearConfirmSuccess:$historyClearConfirmSuccess,historyClearConfirmProblems:$historyClearConfirmProblems,historyClearConfirmYes:$historyClearConfirmYes,historyClearConfirmAbort:$historyClearConfirmAbort,pollMs:$pollMs,doneHoldMs:$doneHoldMs,doneFadeMs:$doneFadeMs}' 2>/dev/null) || synocr_progress_config_json=""
+        '{statusUrl:$statusUrl,filesTpl:$filesTpl,iconIdle:$iconIdle,iconBusy:$iconBusy,allDoneText:$allDoneText,doneStepText:$doneStepText,profileLabel:$profileLabel,historyEmpty:$historyEmpty,historyStatusSuccess:$historyStatusSuccess,historyStatusFailed:$historyStatusFailed,historyStatusRunning:$historyStatusRunning,historyColTime:$historyColTime,historyColProfile:$historyColProfile,historyColSource:$historyColSource,historyColTargets:$historyColTargets,historyColStatus:$historyColStatus,historyTargetOpenHint:$historyTargetOpenHint,historyClearUrl:$historyClearUrl,historyClearLabel:$historyClearLabel,historyClearSuccess:$historyClearSuccess,historyClearProblems:$historyClearProblems,historyClearTitle:$historyClearTitle,historyClearConfirmSuccess:$historyClearConfirmSuccess,historyClearConfirmProblems:$historyClearConfirmProblems,historyClearConfirmYes:$historyClearConfirmYes,historyClearConfirmAbort:$historyClearConfirmAbort,pollMs:$pollMs,doneHoldMs:$doneHoldMs,doneFadeMs:$doneFadeMs}' 2>/dev/null) || synocr_progress_config_json=""
 
     _synocr_history_count=0
     if synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then

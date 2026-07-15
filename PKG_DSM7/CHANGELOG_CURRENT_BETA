@@ -9,12 +9,13 @@ known issues / limitations:
             bisherige YAML-Regeln können zur schnellen Weiterverarbeitung in einen leeren Regelsatz importiert werden
  - [YAML]   🔥 Regeln können nun in Beziehung zueinander gebracht werden
  - [YAML]   🔥 es gibt einen einfachen RegEx-Editor für ein paar grundlegende Ausdrücke
- - [YAML]   Tooltips versuchen dem User erweiterte RegEx zuerklären
+ - [YAML]   Tooltips versuchen dem User erweiterte RegEx zu erklären
  - [YAML]   MultiLine Regex jetzt auch für den Zielpfad möglich
  
   IMPROVEMENT:
  - [GUI]    Statistik auf der Übersichtsseite wird live aktualisiert
  - [GUI]    Verarbeitungshistorie auf der Übersichtsseite (letzte 100 Jobs, live aktualisiert, mit Profil und Zieldateien)
+            Zielpfade lassen sich direkt per Klick in der FileStation öffnen
  - [GUI]    Die linke Navigationsleiste lässt sich jetzt auf Icongröße minimieren
  - [shell]  🔥 Internationale Datumsformate: synOCR erkennt nun Datumsangaben in verschiedenen Länderformaten zuverlässiger. 
             ➜ Die im Profil eingestellte OCR-Sprache wird automatisch als Hinweis herangezogen, um mehrdeutige Schreibweisen (z. B. 02.07.2026 vs. 07/02/2026) korrekt zuzuordnen.

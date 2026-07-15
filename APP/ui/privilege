@@ -17,6 +17,9 @@
         "SYNO.FileStation.List": {
             "allowed": ["list", "list_share"]
         },
+        "SYNO.FileStation.Download": {
+            "allowed": ["download"]
+        },
         "SYNO.FileStation.Auth": {
             "allowed": ["login"]
         }

@@ -750,8 +750,19 @@ a.btn.synocr-btn-outline-blue:focus {
     max-width: 28rem;
 }
 
-.synocr-job-target.synocr-has-tip[data-tip] {
+.synocr-job-target.synocr-has-tip[data-tip]:not(.synocr-job-target--link) {
     cursor: default;
+}
+
+.synocr-job-target--link,
+.synocr-job-target--link.synocr-has-tip[data-tip] {
+    cursor: pointer;
+}
+
+.synocr-job-target--link:hover,
+.synocr-job-target--link:focus-visible {
+    color: #0086E5;
+    text-decoration: underline;
 }
 
 @media (max-width: 767.98px) {
@@ -965,7 +976,7 @@ a.btn.synocr-btn-outline-blue:focus {
 }
 .synocr-rule-tip-label[data-tip],
 label.synocr-has-tip[data-tip],
-span.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
+span.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle):not(.synocr-job-target--link),
 input.synocr-has-tip[data-tip],
 select.synocr-has-tip[data-tip],
 textarea.synocr-has-tip[data-tip],

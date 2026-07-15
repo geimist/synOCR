@@ -1163,6 +1163,12 @@ synocr_path_norm_dir() {
     printf '%s' "${p}"
 }
 
+# True when path is an absolute NAS volume path (/volumeN/...).
+synocr_path_is_nas_volume() {
+    local p="${1-}"
+    [[ "${p}" =~ ^/volume[0-9]+/ ]]
+}
+
 # Shorten full path for display by stripping a profile directory prefix when it matches.
 synocr_path_display_short() {
     local full="${1-}"
@@ -1456,7 +1462,15 @@ synocr_render_processing_history_rows() {
                 [ -z "${target}" ] && continue
                 target_h=$(synocr_html_escape "${target}")
                 target_d=$(synocr_html_escape "$(synocr_path_display_short "${target}" "${output_dir}")")
-                targets_html="${targets_html}<div class=\"synocr-job-target synocr-has-tip\" data-tip=\"${target_h}\">${target_d}</div>"
+                if synocr_path_is_nas_volume "${target}"; then
+                    target_tip_h="${target_h}"
+                    if [ -n "${lang_main_history_target_open_hint:-}" ]; then
+                        target_tip_h="${target_h}"$'\n'"$(synocr_html_escape "${lang_main_history_target_open_hint}")"
+                    fi
+                    targets_html="${targets_html}<span class=\"synocr-job-target synocr-job-target--link synocr-has-tip\" role=\"link\" tabindex=\"0\" data-nas-path=\"${target_h}\" data-tip=\"${target_tip_h}\">${target_d}</span>"
+                else
+                    targets_html="${targets_html}<div class=\"synocr-job-target synocr-has-tip\" data-tip=\"${target_h}\">${target_d}</div>"
+                fi
             done < <(printf '%s' "${targets_json}" | jq -r '.[]' 2>/dev/null)
         fi
 

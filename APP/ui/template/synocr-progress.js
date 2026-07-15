@@ -400,13 +400,31 @@
         return f;
     }
 
-    function renderTargets(targets, outputDir) {
+    function renderTargets(targets, outputDir, cfg) {
         if (!targets || !targets.length) {
             return "-";
         }
+        var hint = (cfg && cfg.historyTargetOpenHint) ? String(cfg.historyTargetOpenHint) : "";
+        var fs = window.synocrFileStation;
         return targets.map(function (target) {
             var safeFull = escapeHtml(target);
             var safeDisplay = escapeHtml(pathDisplayShort(target, outputDir));
+            var isLinkable = fs && fs.isNasVolumePath && fs.isNasVolumePath(target);
+            if (isLinkable) {
+                var tip = safeFull;
+                if (hint) {
+                    tip = safeFull + "\n" + escapeHtml(hint);
+                }
+                return (
+                    '<span class="synocr-job-target synocr-job-target--link synocr-has-tip" role="link" tabindex="0" data-nas-path="' +
+                    safeFull +
+                    '" data-tip="' +
+                    tip +
+                    '">' +
+                    safeDisplay +
+                    "</span>"
+                );
+            }
             return '<div class="synocr-job-target synocr-has-tip" data-tip="' + safeFull + '">' + safeDisplay + "</div>";
         }).join("");
     }
@@ -425,7 +443,7 @@
                 '<td class="synocr-job-time small text-nowrap">' + started + "</td>" +
                 '<td class="synocr-job-profile small">' + profile + "</td>" +
                 '<td class="synocr-job-source small" title="' + source + '">' + source + "</td>" +
-                '<td class="synocr-job-targets small">' + renderTargets(job.targets, job.output_dir) + "</td>" +
+                '<td class="synocr-job-targets small">' + renderTargets(job.targets, job.output_dir, cfg) + "</td>" +
                 '<td class="synocr-job-status small text-nowrap text-end">' + renderStatusBadge(meta) + "</td>" +
                 "</tr>"
             );
@@ -548,6 +566,46 @@
         });
 
         refreshClearVisibility();
+    }
+
+    function initHistoryTargetLinks() {
+        var tbody = document.getElementById("synocr-processing-history-tbody");
+        if (!tbody || tbody._synocrTargetLinksBound) {
+            return;
+        }
+        tbody._synocrTargetLinksBound = true;
+
+        function handleTargetLink(el) {
+            if (!el || !window.synocrFileStation || typeof window.synocrFileStation.openNasPath !== "function") {
+                return;
+            }
+            var path = el.getAttribute("data-nas-path");
+            if (!path) {
+                return;
+            }
+            window.synocrFileStation.openNasPath(path);
+        }
+
+        tbody.addEventListener("click", function (e) {
+            var link = e.target.closest(".synocr-job-target--link");
+            if (!link || !tbody.contains(link)) {
+                return;
+            }
+            e.preventDefault();
+            handleTargetLink(link);
+        });
+
+        tbody.addEventListener("keydown", function (e) {
+            if (e.key !== "Enter" && e.key !== " ") {
+                return;
+            }
+            var link = e.target.closest(".synocr-job-target--link");
+            if (!link || !tbody.contains(link)) {
+                return;
+            }
+            e.preventDefault();
+            handleTargetLink(link);
+        });
     }
 
     function updateGlobalStats(data) {
@@ -678,6 +736,7 @@
         }
 
         initHistoryClear(cfg);
+        initHistoryTargetLinks();
 
         if (typeof jQuery !== "undefined") {
             jQuery(function () {

@@ -28,6 +28,7 @@
         "${app_home}/template/jquery/jquery-3.7.1.min.js" \
         "${app_home}/template/bootstrap/js/bootstrap.bundle.min.js" \
         "${app_home}/template/synocr-data-tips.js" \
+        "${app_home}/template/synocr-filestation.js" \
         "${app_home}/template/synocr-progress.js" \
         "${app_home}/template/synocr-rules-editor.js" \
         "${app_home}/template/synocr-folderpicker.js" \
@@ -48,6 +49,7 @@
     synocr_jq_src="template/jquery/jquery-3.7.1.min.js${synocr_asset_q}"
     synocr_bootstrap_js_src="template/bootstrap/js/bootstrap.bundle.min.js${synocr_asset_q}"
     synocr_data_tips_js_src="template/synocr-data-tips.js${synocr_asset_q}"
+    synocr_filestation_js_src="template/synocr-filestation.js${synocr_asset_q}"
     synocr_progress_js_src="template/synocr-progress.js${synocr_asset_q}"
     synocr_rules_editor_js_src="template/synocr-rules-editor.js${synocr_asset_q}"
     synocr_folderpicker_js_src="template/synocr-folderpicker.js${synocr_asset_q}"
@@ -376,6 +378,7 @@ echo '
 if [ "${mainpage}" = "main" ] && [ -n "${synocr_progress_config_json:-}" ]; then
     echo '
     <script src="'"${synocr_data_tips_js_src}"'"></script>
+    <script src="'"${synocr_filestation_js_src}"'"></script>
     <script type="application/json" id="synocr-progress-config">'"${synocr_progress_config_json}"'</script>
     <script src="'"${synocr_progress_js_src}"'"></script>'
 fi
