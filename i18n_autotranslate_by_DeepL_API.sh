@@ -88,17 +88,87 @@ date_start=$(date +%s)
 exportPath="${exportPath%/}/"
 manFilePath="${manFilePath%/}/"
 
+# DB speichert den logischen Wert (nach bash source). Dateien brauchen Maskierung für source.
+# Import muss daher unescapen; Export escapen — sonst verdoppeln sich Backslashes bei jedem Lauf.
+
+# Umkehrung von i18n_escape_for_double_quoted_assign: \" → " und \\ → \  (rein Bash)
+i18n_unescape_from_double_quoted_assign() {
+    local s="$1" out="" i=0 c n
+    local len=${#s}
+    while (( i < len )); do
+        c="${s:i:1}"
+        if [[ "${c}" == '\' ]] && (( i + 1 < len )); then
+            n="${s:i+1:1}"
+            if [[ "${n}" == '\' || "${n}" == '"' ]]; then
+                out+="${n}"
+                i=$((i + 2))
+                continue
+            fi
+        fi
+        out+="${c}"
+        i=$((i + 1))
+    done
+    printf '%s' "${out}"
+}
+
+# Hilfe-Texte zeigen RegEx-Tokens (\K \R \N \s+ \b) — genau ein Backslash im logischen Wert.
+# Verhindert/heilt Hochschaukeln durch wiederholte Import/Export-Zyklen. (rein Bash)
+i18n_normalize_regex_escapes() {
+    local s="$1" out="" i=0 c bs=0
+    local len=${#s}
+    while (( i < len )); do
+        c="${s:i:1}"
+        if [[ "${c}" == '\' ]]; then
+            bs=$((bs + 1))
+            i=$((i + 1))
+            continue
+        fi
+        if (( bs > 0 )); then
+            if [[ "${c}" == 'K' || "${c}" == 'R' || "${c}" == 'N' || "${c}" == 'b' ]]; then
+                out+="\\${c}"
+                i=$((i + 1))
+                bs=0
+                continue
+            elif [[ "${s:i:2}" == 's+' ]]; then
+                out+='\s+'
+                i=$((i + 2))
+                bs=0
+                continue
+            else
+                while (( bs > 0 )); do
+                    out+='\'
+                    bs=$((bs - 1))
+                done
+            fi
+        fi
+        out+="${c}"
+        i=$((i + 1))
+    done
+    while (( bs > 0 )); do
+        out+='\'
+        bs=$((bs - 1))
+    done
+    printf '%s' "${out}"
+}
+
 get_key_value() {
     # this function is a workaround replacement of synology DSM binary get_key_value
     # $1 = file
     # $2 = key
-    grep "^${2}=" "$1" | sed -e 's~^'"$2"'=~~;s~^"~~g;s~"$~~g'
-    }
+    # Liefert den logischen Wert (unescaped + RegEx-Backslash-Normalisierung).
+    local raw
+    raw=$(grep "^${2}=" "$1" | sed -e 's~^'"$2"'=~~;s~^"~~g;s~"$~~g')
+    raw=$(i18n_unescape_from_double_quoted_assign "${raw}")
+    raw=$(i18n_normalize_regex_escapes "${raw}")
+    printf '%s' "${raw}"
+}
 
 # Wert für Ausgabezeilen varname="…" escapen (synOCR lädt Sprachdateien per source).
-# Reihenfolge: zuerst Backslash, dann doppelte Anführungszeichen.
+# Reihenfolge: RegEx-Normalisierung, dann Backslash, dann doppelte Anführungszeichen.
 i18n_escape_for_double_quoted_assign() {
-    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+    local s
+    s=$(i18n_normalize_regex_escapes "$1")
+    printf '%s' "${s}" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
 }
 
 # Ersetze ASCII-Anführungszeichen um ".." durch typografische Anführungszeichen (wie in lang_ger).
@@ -108,15 +178,16 @@ i18n_normalize_display_quotes() {
     printf '%s' "$1" | sed -e 's/"\.\."/„..“/g'
 }
 
-# Schneller Batch-Pfad für export_langfiles: gleiche Logik wie normalize + escape, ein Durchlauf.
+# Schneller Batch-Pfad für export_langfiles: normalize quotes + regex escapes, dann escape.
 i18n_format_langfile_body() {
-    awk -F'\t' '{
-        s = $2
-        gsub(/"\.\."/, "„..“", s)
-        gsub(/\\/, "\\\\", s)
-        gsub(/"/, "\\\"", s)
-        printf "%s=\"%s\"\n", $1, s
-    }'
+    perl -F'\t' -ane '
+        chomp(my $s = $F[1] // "");
+        $s =~ s/"\.\."/„..“/g;
+        $s =~ s/\\+(K|R|N|s\+|b)/\\$1/g;
+        $s =~ s/\\/\\\\/g;
+        $s =~ s/"/\\"/g;
+        print "$F[0]=\"$s\"\n";
+    '
 }
 
 sql_escape() {
@@ -245,88 +316,112 @@ fi
 
 create_master() {
     # diese Funktion liest die Musterdatei, definiert daraus die benötigten Variablennamen und deren Werte und schreibt sie in die DB
-    # sind Variablennamen bereits vorhanden, werden die Werte aktualisiert und der Versionszähler der Variable um 1 erhöht
+    # sind Variablennamen bereits vorhanden und langstring geändert → Version +1; unveränderte Strings bleiben unberührt
+    # Performance: Datei einmal parsen + ein SQLite-Batch (statt N× sqlite3 pro Key)
 
-    # set progressbar:
     printf "\n\n%s\n"  "Importiere / aktualisiere Mastertabelle ..."
     printf "%s\n\n" "[Masterfile: ${masterFile}]"
 
     progress_end=$(grep -v "^$" "${masterFile}" | grep -vc '^[[:space:]]*#')
-    
+
     cCount=0
-    insertCount=0
     # Synology-Sprachcode nur aus dem Dateinamen (lang_<code>.txt), nicht aus dem Pfad:
     # Enthält der Pfad Unterstriche (z. B. .../Code_Projekte/...), liefert
     # cut … am ganzen Pfad falsche Werte → leeres langID → master_template ohne langID → translate() überspringt.
     synoLangCode=$(basename "${masterFile}" .txt | sed -e 's/^lang_//')
     langID=$(sqlite3 "${i18n_DB}" "SELECT langID FROM languages WHERE synoshortname='${synoLangCode}'")
 
-    # setze bisherige Variablen auf false um nur die der Mastertabelle auf aktiv zu stellen
-    sqlite3 "${i18n_DB}" "UPDATE variables SET inuse = false;"
-    
-    # Schleife über jede Zeile im ini-File, welche nicht auskommentiert oder leer ist:
-    while read -r line; do
-        key=$(echo "${line}" | awk -F= '{print $1}')
-        value=$(get_key_value "${masterFile}" "${key}")
-
-        # Progressbar:
-        cCount=$((cCount+1))
-        progressbar "${cCount}" "${progress_end}"
-
-        # schreibe den Variablennamen der Zeile in die DB / überspringe vorhandenen:
-        if ! sqlite3 "${i18n_DB}" "INSERT OR IGNORE INTO variables ( varname ) VALUES ( '${key}' )"; then
-            echo "! ! ! ERROR @ LINE: INSERT OR IGNORE INTO variables ( varname ) VALUES ( '${key}' )"
-        fi
-
-        # setze genutzte Variable auf true:
-        sqlite3 "${i18n_DB}" "UPDATE variables SET inuse = true WHERE varname='${key}';"
-
-        # identifiziere die ID der aktuellen Variable um den Wert mit der String-Tabelle zu verknüpfen:
-        varID=$(sqlite3 "${i18n_DB}" "SELECT varID FROM variables WHERE varname='${key}'")
-
-        # lese Info einer ggf. vorhandenen Version - prüfen, ob eine Aktualisierung nötig ist und erhöhe ggf. die Version:
-        checkValue=$(sqlite3 -separator $'\t' "${i18n_DB}" "SELECT ID, version, langstring FROM master_template WHERE varID='${varID}' AND langID='${langID}'" | head -n1)
-
-        # ist die Zeile vorhanden, dann wird sie aktualisiert, sonst eine neue erstellt ("INSERT OR REPLACE …"):
-        rowID=$(echo "${checkValue}" | awk -F'\t' '{print $1}')
-        if [ -n "${rowID}" ]; then
-            IDname="ID, "
-            rowID="'${rowID}',"
-        else
-            IDname=""
-            rowID=""
-        fi
-
-        # wird der Datensatz lediglich aktualisiert, dann erhöht sich dessen Version um 1 / ist er neu, wird die Version 1 definiert:
-        checkVersion=$(echo "${checkValue}" | awk -F'\t' '{print $2}')
-        if [ -z "${checkVersion}" ]; then
-            langVersion=1
-        else
-            langVersion=$((checkVersion + 1))
-        fi
-
-        # vergleiche neuen mit vorhandenem Datensatz - weiter wenn keine Änderung:
-        checkLangstring=$(echo "${checkValue}" | awk -F'\t' '{print $3}')
-        if [ "${checkLangstring}" == "${value}" ]; then
-            continue
-        fi
-
-        value_sql=$(sql_escape "${value}")
-
-        # speichere die Werte in der Mastertabelle:
-        if ! sqlite3 "${i18n_DB}" "INSERT OR REPLACE INTO master_template ( $IDname varID, langID, version, timestamp, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion',(datetime('now','localtime')),'${value_sql}' ) "; then
-            echo "! ! ! ERROR @ LINE: INSERT OR REPLACE INTO master_template ( $IDname varID, langID, version, timestamp, langstring  ) VALUES (  $rowID '$varID','$langID','$langVersion',(datetime('now','localtime')),'${value_sql}' )"
-        else
-            insertCount=$((insertCount + 1))
-        fi
-    done <<< "$(grep -v "^$" "${masterFile}" | grep -v '^[[:space:]]*#' )"  #| grep lang_PKG_NOINSTALL_MISSING_DOCKER_ERROR )
-
-    # Bestehende Mastertabellen-Zeilen ohne langID (Folge früherer Pfad-Parsing-Fehler) der Mastersprache zuordnen
-    if [ -n "${langID}" ]; then
-        sqlite3 "${i18n_DB}" "UPDATE master_template SET langID='${langID}' WHERE langID IS NULL OR langID = '';"
+    if [ -z "${langID}" ]; then
+        printf "%s\n" "! ! ! ERROR: langID für synoshortname '${synoLangCode}' nicht gefunden."
+        return 1
     fi
 
-    printf "\n\n%s\n" "Es wurden ${insertCount} Datensätze in die Mastertabelle eingefügt, bzw. aktualisiert."
+    local sql_tmp key raw value key_sql value_sql
+    sql_tmp=$(mktemp "${TMPDIR:-/tmp}/synocr_master_sql.XXXXXX") || return 1
+
+    {
+        echo "BEGIN IMMEDIATE;"
+        echo "CREATE TEMP TABLE incoming (varname TEXT PRIMARY KEY, langstring TEXT NOT NULL);"
+        # inuse als 0/1 — translate()/export filtern auf inuse='1'
+        echo "UPDATE variables SET inuse = 0;"
+    } > "${sql_tmp}"
+
+    # Schleife: Progressbar live + Staging-INSERTs; DB-Schreiben erst danach in einem Rutsch
+    # Wert direkt aus der Zeile (kein get_key_value / kein erneutes Datei-Grep)
+    while read -r line; do
+        key="${line%%=*}"
+        raw="${line#*=}"
+        if [[ "${raw}" == \"*\" ]]; then
+            raw="${raw#\"}"
+            raw="${raw%\"}"
+        fi
+        value=$(i18n_unescape_from_double_quoted_assign "${raw}")
+        value=$(i18n_normalize_regex_escapes "${value}")
+
+        cCount=$((cCount + 1))
+        progressbar "${cCount}" "${progress_end}"
+
+        # SQL-Escape ohne Fork. Nicht "${v//'/''}" — das zerbricht unter bash 3.2 (/bin/bash auf macOS).
+        # Auch nicht //\'/\'\' — in "…" wird daraus literal \'\' (SQLite-Parse-Fehler).
+        _i18n_sq="'"
+        key_sql="${key//${_i18n_sq}/${_i18n_sq}${_i18n_sq}}"
+        value_sql="${value//${_i18n_sq}/${_i18n_sq}${_i18n_sq}}"
+        printf "INSERT OR REPLACE INTO incoming (varname, langstring) VALUES ('%s', '%s');\n" \
+            "${key_sql}" "${value_sql}" >> "${sql_tmp}"
+    done <<< "$(grep -v "^$" "${masterFile}" | grep -v '^[[:space:]]*#' )"
+
+    cat >> "${sql_tmp}" <<EOF
+INSERT OR IGNORE INTO variables (varname) SELECT varname FROM incoming;
+UPDATE variables SET inuse = 1 WHERE varname IN (SELECT varname FROM incoming);
+
+-- Anzahl neuer/geänderter Strings vor dem Schreiben (Version nur bei Diff)
+CREATE TEMP TABLE _stats AS
+SELECT COUNT(*) AS insert_count
+FROM incoming AS i
+JOIN variables AS v ON v.varname = i.varname
+LEFT JOIN master_template AS m ON m.varID = v.varID AND m.langID = ${langID}
+WHERE m.ID IS NULL OR m.langstring IS DISTINCT FROM i.langstring;
+
+-- bestehend + geändert → Version +1, Timestamp/String aktualisieren
+UPDATE master_template AS m
+SET
+    version = m.version + 1,
+    timestamp = datetime('now', 'localtime'),
+    langstring = i.langstring
+FROM incoming AS i
+JOIN variables AS v ON v.varname = i.varname
+WHERE m.varID = v.varID
+  AND m.langID = ${langID}
+  AND m.langstring IS DISTINCT FROM i.langstring;
+
+-- neu → Version 1
+INSERT INTO master_template (varID, langID, version, timestamp, langstring)
+SELECT v.varID, ${langID}, 1, datetime('now', 'localtime'), i.langstring
+FROM incoming AS i
+JOIN variables AS v ON v.varname = i.varname
+WHERE NOT EXISTS (
+    SELECT 1 FROM master_template AS m
+    WHERE m.varID = v.varID AND m.langID = ${langID}
+);
+
+-- Legacy: Masterzeilen ohne langID der Mastersprache zuordnen
+UPDATE master_template SET langID = ${langID} WHERE langID IS NULL OR langID = '';
+
+SELECT insert_count FROM _stats;
+COMMIT;
+EOF
+
+    insertCount=$(sqlite3 "${i18n_DB}" < "${sql_tmp}")
+    sql_rc=$?
+    rm -f "${sql_tmp}"
+    # sql_rc bewusst ohne »local …=$?« — sonst überschreibt local den Exitcode
+
+    if [ "${sql_rc}" -ne 0 ]; then
+        printf "\n%s\n" "! ! ! ERROR: SQLite-Batch für Mastertabelle fehlgeschlagen (Exit ${sql_rc})."
+        return 1
+    fi
+
+    printf "\n\n%s\n" "Es wurden ${insertCount:-0} Datensätze in die Mastertabelle eingefügt, bzw. aktualisiert."
 
 }
 
