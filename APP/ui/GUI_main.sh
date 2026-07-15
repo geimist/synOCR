@@ -474,7 +474,7 @@ echo '
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                     <li><button type="button" class="dropdown-item small" data-synocr-history-clear="success">'"${lang_main_history_clear_success}"'</button></li>
-                    <li><button type="button" class="dropdown-item small" data-synocr-history-clear="failed_running">'"${lang_main_history_clear_problems}"'</button></li>
+                    <li><button type="button" class="dropdown-item small" data-synocr-history-clear="all">'"${lang_main_history_clear_problems}"'</button></li>
                 </ul>
             </div>
         </div>

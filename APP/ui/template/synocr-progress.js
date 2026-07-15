@@ -524,7 +524,7 @@
         document.querySelectorAll("[data-synocr-history-clear]").forEach(function (btn) {
             btn.addEventListener("click", function () {
                 historyClearScope = btn.getAttribute("data-synocr-history-clear");
-                modalBody.textContent = historyClearScope === "failed_running"
+                modalBody.textContent = historyClearScope === "all"
                     ? (cfg.historyClearConfirmProblems || "")
                     : (cfg.historyClearConfirmSuccess || "");
                 if (modal) {

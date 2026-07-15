@@ -3172,7 +3172,7 @@ while read -r input1 ; do
     # ---------------------------------------------------------------------
     if [ ! -f "${outputtmp}" ] || [ "$(stat -c %s "${outputtmp}" 2>/dev/null)" -eq 0 ]; then
         log_error_at "OCR target empty or missing: ${outputtmp}"
-        rm "${outputtmp}"
+        rm -f "${outputtmp}"
         if echo "${dockerlog}" | grep -iq ERROR ;then
             if [ ! -d "${INPUTDIR}ERRORFILES" ] ; then
                 log_item "                  ERROR-Directory [${INPUTDIR}ERRORFILES] will be created!"
@@ -3184,8 +3184,10 @@ while read -r input1 ; do
             mv "${input1}" "${output}"
             [ "${loglevel}" != 0 ] && cp "${current_logfile}" "${output}.log"
             log_item_deep "move to ERRORFILES"
-            synocr_processing_job_fail
         fi
+        # Always close the history job as failed when OCR produced no usable output
+        # (do not gate status on OCRmyPDF log text).
+        synocr_processing_job_fail
         rm -rf "${work_tmp_step1}"
         continue
     else

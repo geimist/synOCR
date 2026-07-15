@@ -132,6 +132,7 @@
 
     # Analyze incoming GET requests and process them into key="$value" variable
     _synocr_page_from_loop=""
+    _synocr_scope_from_loop=""
     for i in "$@"; do
         IFS="${backupIFS}"
         variable=${i%%=*}
@@ -139,6 +140,8 @@
         decode_value=$(urldecode "${encode_value}")
         if [ "${variable}" = "page" ]; then
             _synocr_page_from_loop="${decode_value}"
+        elif [ "${variable}" = "scope" ]; then
+            _synocr_scope_from_loop="${decode_value}"
         fi
         "${set_var}" "${var}" "${variable}" "${decode_value}"
         "${set_var}" "${var}" "encode_${variable}" "${encode_value}"
@@ -156,6 +159,10 @@
         synocr_request_page="${page:-}"
     fi
     mainpage=${synocr_request_page%%-*}
+    # Clear-history scope from QUERY_STRING (not from sourced /tmp file — race + local shadowing).
+    if [ -n "${_synocr_scope_from_loop}" ]; then
+        scope="${_synocr_scope_from_loop}"
+    fi
 
     if [ -z "${synocr_request_page}" ]; then
         #[ -f "${var}" ] && rm "${var}"
@@ -184,7 +191,7 @@
         cd "${app_home}" || exit 1
         echo "Content-type: application/json"
         echo
-        if ! synocr_render_main_clear_history_json; then
+        if ! synocr_render_main_clear_history_json "${scope:-success}"; then
             echo '{"ok":false,"error":"clear_failed"}'
         fi
         exit 0

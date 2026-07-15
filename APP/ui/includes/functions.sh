@@ -1170,20 +1170,21 @@ synocr_path_is_nas_volume() {
 }
 
 # Shorten full path for display by stripping a profile directory prefix when it matches.
+# Only the prefix is directory-normalized (trailing /); the file path stays as-is
+# so display matches synocr-progress.js pathDisplayShort (no trailing slash on filenames).
 synocr_path_display_short() {
     local full="${1-}"
     local prefix="${2-}"
-    local norm_full norm_prefix rest
+    local norm_prefix rest
 
     [ -z "${full}" ] && return 0
     [ -z "${prefix}" ] && { printf '%s' "${full}"; return 0; }
 
-    norm_full=$(synocr_path_norm_dir "${full}")
     norm_prefix=$(synocr_path_norm_dir "${prefix}")
 
-    case "${norm_full}" in
+    case "${full}/" in
         "${norm_prefix}"*)
-            rest="${norm_full#"${norm_prefix}"}"
+            rest="${full#"${norm_prefix%/}"}"
             rest="${rest#/}"
             if [ -n "${rest}" ]; then
                 printf '%s' "${rest}"
@@ -1223,7 +1224,7 @@ synocr_processing_job_abort_open() {
     [ -n "${SYNOCR_PROCESSING_JOB_ID:-}" ] && synocr_processing_job_fail
 }
 
-# Remove processing-history rows (scope: success | failed_running).
+# Remove processing-history rows (scope: success | all).
 synocr_processing_jobs_clear() {
     local scope="${1:-success}"
     local removed
@@ -1238,9 +1239,9 @@ synocr_processing_jobs_clear() {
             removed=$(synocr_sqlite "SELECT COUNT(*) FROM processing_jobs WHERE status='success';" 2>/dev/null)
             synocr_sqlite "DELETE FROM processing_jobs WHERE status='success';" >/dev/null 2>&1
             ;;
-        failed_running)
-            removed=$(synocr_sqlite "SELECT COUNT(*) FROM processing_jobs WHERE status IN ('failed','running');" 2>/dev/null)
-            synocr_sqlite "DELETE FROM processing_jobs WHERE status IN ('failed','running');" >/dev/null 2>&1
+        all)
+            removed=$(synocr_sqlite "SELECT COUNT(*) FROM processing_jobs;" 2>/dev/null)
+            synocr_sqlite "DELETE FROM processing_jobs;" >/dev/null 2>&1
             ;;
         *)
             printf '0'
@@ -1254,13 +1255,14 @@ synocr_processing_jobs_clear() {
     printf '%s' "${removed}"
 }
 
-# JSON API for index.cgi?page=main-clear-history&scope=success|failed_running
+# JSON API for index.cgi?page=main-clear-history&scope=success|all
+# Scope must be passed as $1 (do not read a global "scope" — local would shadow it).
 synocr_render_main_clear_history_json() {
-    local scope removed
+    local scope="${1:-success}"
+    local removed
 
-    scope="${scope:-success}"
     case "${scope}" in
-        success|failed_running) ;;
+        success|all) ;;
         *)
             jq -n '{ok:false,error:"invalid_scope"}'
             return 1
