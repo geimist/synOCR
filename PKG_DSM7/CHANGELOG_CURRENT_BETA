@@ -14,6 +14,7 @@ known issues / limitations:
  
   IMPROVEMENT:
  - [GUI]    Statistik auf der Übersichtsseite wird live aktualisiert
+ - [GUI]    Verarbeitungshistorie auf der Übersichtsseite (letzte 100 Jobs, live aktualisiert, mit Profil und Zieldateien)
  - [GUI]    Die linke Navigationsleiste lässt sich jetzt auf Icongröße minimieren
  - [shell]  🔥 Internationale Datumsformate: synOCR erkennt nun Datumsangaben in verschiedenen Länderformaten zuverlässiger. 
             ➜ Die im Profil eingestellte OCR-Sprache wird automatisch als Hinweis herangezogen, um mehrdeutige Schreibweisen (z. B. 02.07.2026 vs. 07/02/2026) korrekt zuzuordnen.
@@ -22,6 +23,6 @@ known issues / limitations:
  - [shell]  §tagname_RegEx / §dirname_RegEx: bei definiertem RegEx ohne Treffer wird der Platzhalter ersetzt (Tag: leer, Ordner: -) statt wörtlich im Pfad/Tag zu landen
 
   BUGFIXES:
- - 
-
+ - [GUI]    Verarbeitungshistorie: Zielpfade gekürzt (Profil-OUTPUTDIR als Prefix), voller Pfad per Hover
+ - [GUI]    Verarbeitungshistorie: Jobs nach Verschieben nach ERRORFILES (z. B. verschlüsselte PDFs) werden als fehlgeschlagen markiert; offene Jobs bei Abbruch per EXIT-Trap bzw. beim nächsten Lauf
 

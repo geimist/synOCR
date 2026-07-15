@@ -141,7 +141,7 @@ uuid=$(uuidgen)
         # write default data:
         # ---------------------------------------------------------------------
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
-        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('db_version', '13');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('db_version', '14');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('global_pagecount', '0');"
@@ -211,6 +211,28 @@ uuid=$(uuidgen)
                     );
                     CREATE UNIQUE INDEX \"idx_ruleset_name\" ON \"ruleset\" (\"name\");
                     COMMIT;"
+
+        wait $!
+
+        # table processing_jobs (GUI processing history):
+        # ---------------------------------------------------------------------
+        synocr_sqlite "BEGIN;
+                    CREATE TABLE \"processing_jobs\"
+                    (
+                        \"job_ID\" INTEGER PRIMARY KEY ,
+                        \"profile_ID\" INTEGER NOT NULL ,
+                        \"source_filename\" VARCHAR NOT NULL ,
+                        \"targets_json\" TEXT NOT NULL DEFAULT ('[]') ,
+                        \"status\" VARCHAR NOT NULL ,
+                        \"started_at\" timestamp NOT NULL DEFAULT (datetime('now','localtime')) ,
+                        \"finished_at\" timestamp
+                    );
+                    CREATE INDEX \"idx_processing_jobs_started\" ON \"processing_jobs\" (\"started_at\" DESC);
+                    COMMIT;"
+
+        wait $!
+
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('processing_history_max', '100');"
 
         wait $!
 
@@ -1102,6 +1124,48 @@ fi
         if [[ "${error}" == 0 ]]; then
             # lift DB version:
             lift_db 12 13
+        fi
+        error=0
+    fi
+
+
+# DB-update from v13 to v14:
+# ---------------------------------------------------------------------
+    if [ "$(synocr_sqlite "SELECT value_1 FROM system WHERE key='db_version';")" -eq 13 ] ; then
+
+        # processing_jobs table (GUI processing history):
+        # ---------------------------------------------------------------------
+        sqlite3log=$(synocr_sqlite "BEGIN;
+                    CREATE TABLE IF NOT EXISTS \"processing_jobs\"
+                    (
+                        \"job_ID\" INTEGER PRIMARY KEY ,
+                        \"profile_ID\" INTEGER NOT NULL ,
+                        \"source_filename\" VARCHAR NOT NULL ,
+                        \"targets_json\" TEXT NOT NULL DEFAULT ('[]') ,
+                        \"status\" VARCHAR NOT NULL ,
+                        \"started_at\" timestamp NOT NULL DEFAULT (datetime('now','localtime')) ,
+                        \"finished_at\" timestamp
+                    );
+                    CREATE INDEX IF NOT EXISTS \"idx_processing_jobs_started\" ON \"processing_jobs\" (\"started_at\" DESC);
+                    COMMIT;")
+        wait $!
+
+        # check:
+        if ! synocr_sqlite "PRAGMA table_info(processing_jobs);" | awk -F'|' '{print $2}' | grep -q targets_json ; then
+            log="${log}
+            ➜ ERROR: the DB table could not be created (processing_jobs)
+              Log:   ${sqlite3log}"
+            error=1
+        fi
+
+        count=$(synocr_sqlite "SELECT COUNT(*) FROM system WHERE key = 'processing_history_max';")
+        if [ "${count}" -eq 0 ]; then
+            synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('processing_history_max', '100');"
+        fi
+
+        if [[ "${error}" == 0 ]]; then
+            # lift DB version:
+            lift_db 13 14
         fi
         error=0
     fi

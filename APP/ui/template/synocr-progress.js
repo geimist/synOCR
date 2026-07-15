@@ -2,7 +2,7 @@
  * Main page live UI: polls index.cgi?page=main-status (see #synocr-progress-config).
  * Loaded outside the <form> after bootstrap — DSM often blocks inline scripts in forms.
  * Updates: progress bars (while running), status icon, open-file row (queued and idle),
- * global PDF/page totals (synocr-global-stats-value).
+ * global PDF/page totals (synocr-global-stats-value), processing history list.
  * After run ends: hold at 100% (doneHoldMs), subtle ring countdown, then fade-out (doneFadeMs).
  */
 (function () {
@@ -19,6 +19,8 @@
     var fadeTimer = null;
     var fadeListener = null;
     var lastStatusData = null;
+    var lastJobsHash = "";
+    var historyClearScope = null;
 
     var RING_RADIUS = 8;
     var RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
@@ -326,6 +328,228 @@
         }
     }
 
+    function escapeHtml(text) {
+        return String(text || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function jobsHash(jobs) {
+        if (!jobs || !jobs.length) {
+            return "0";
+        }
+        return jobs.map(function (job) {
+            return [
+                job.id,
+                job.status,
+                job.source,
+                job.output_dir || "",
+                (job.targets || []).join("|")
+            ].join(":");
+        }).join(";");
+    }
+
+    function statusMeta(cfg, status) {
+        if (status === "success") {
+            return { cls: "synocr-job-row--success", badge: "success", label: cfg.historyStatusSuccess || "success" };
+        }
+        if (status === "failed") {
+            return { cls: "synocr-job-row--failed", badge: "failed", label: cfg.historyStatusFailed || "failed" };
+        }
+        return { cls: "synocr-job-row--running", badge: "running", label: cfg.historyStatusRunning || "running" };
+    }
+
+    function renderStatusBadge(meta) {
+        var label = escapeHtml(meta.label);
+        return (
+            '<span class="synocr-job-status-badge synocr-job-status-badge--' +
+            escapeHtml(meta.badge) +
+            '">' +
+            label +
+            "</span>"
+        );
+    }
+
+    function normalizeDirPrefix(prefix) {
+        if (!prefix) {
+            return "";
+        }
+        var p = String(prefix).replace(/\/+$/, "");
+        return p ? p + "/" : "";
+    }
+
+    function pathDisplayShort(full, prefix) {
+        if (!full) {
+            return "";
+        }
+        var normPrefix = normalizeDirPrefix(prefix);
+        if (!normPrefix) {
+            return full;
+        }
+        var f = String(full);
+        if (f.indexOf(normPrefix) === 0) {
+            var rest = f.slice(normPrefix.length).replace(/^\/+/, "");
+            if (rest) {
+                return rest;
+            }
+            var parts = f.split("/");
+            return parts[parts.length - 1] || f;
+        }
+        return f;
+    }
+
+    function renderTargets(targets, outputDir) {
+        if (!targets || !targets.length) {
+            return "-";
+        }
+        return targets.map(function (target) {
+            var safeFull = escapeHtml(target);
+            var safeDisplay = escapeHtml(pathDisplayShort(target, outputDir));
+            return '<div class="synocr-job-target synocr-has-tip" data-tip="' + safeFull + '">' + safeDisplay + "</div>";
+        }).join("");
+    }
+
+    function renderHistoryRows(cfg, jobs) {
+        if (!jobs || !jobs.length) {
+            return '<tr><td colspan="5" class="text-muted small">' + escapeHtml(cfg.historyEmpty || "-") + "</td></tr>";
+        }
+        return jobs.map(function (job) {
+            var meta = statusMeta(cfg, job.status);
+            var source = escapeHtml(job.source || "");
+            var profile = escapeHtml(job.profile || "");
+            var started = escapeHtml(job.started_at || "");
+            return (
+                '<tr class="synocr-job-row ' + meta.cls + '" data-job-id="' + escapeHtml(String(job.id || "")) + '">' +
+                '<td class="synocr-job-time small text-nowrap">' + started + "</td>" +
+                '<td class="synocr-job-profile small">' + profile + "</td>" +
+                '<td class="synocr-job-source small" title="' + source + '">' + source + "</td>" +
+                '<td class="synocr-job-targets small">' + renderTargets(job.targets, job.output_dir) + "</td>" +
+                '<td class="synocr-job-status small text-nowrap text-end">' + renderStatusBadge(meta) + "</td>" +
+                "</tr>"
+            );
+        }).join("");
+    }
+
+    function updateHistoryCount(count) {
+        var el = document.getElementById("synocr-processing-history-count");
+        if (!el) {
+            return;
+        }
+        var n = count || 0;
+        el.textContent = String(n);
+        el.hidden = n < 1;
+    }
+
+    function updateProcessingHistory(cfg, data) {
+        var tbody = document.getElementById("synocr-processing-history-tbody");
+        if (!tbody) {
+            return;
+        }
+        var jobs = (data && data.jobs) ? data.jobs : [];
+        var hash = jobsHash(jobs);
+        if (hash === lastJobsHash) {
+            return;
+        }
+        lastJobsHash = hash;
+        tbody.innerHTML = renderHistoryRows(cfg, jobs);
+        updateHistoryCount(jobs.length);
+        updateHistoryClearVisibility(jobs.length);
+    }
+
+    function isHistoryExpanded() {
+        var body = document.getElementById("synocr-processing-history-body");
+        return !!(body && body.classList.contains("show"));
+    }
+
+    function updateHistoryClearVisibility(count) {
+        var wrap = document.getElementById("synocr-processing-history-clear-wrap");
+        if (!wrap) {
+            return;
+        }
+        wrap.hidden = !isHistoryExpanded() || !(count > 0);
+    }
+
+    function initHistoryClear(cfg) {
+        if (!cfg || !cfg.historyClearUrl) {
+            return;
+        }
+
+        var body = document.getElementById("synocr-processing-history-body");
+        var modalEl = document.getElementById("synocr-history-clear-modal");
+        var modalBody = document.getElementById("synocr-history-clear-modal-body");
+        var confirmBtn = document.getElementById("synocr-history-clear-confirm");
+        if (!body || !modalEl || !modalBody || !confirmBtn) {
+            return;
+        }
+
+        var modal = typeof bootstrap !== "undefined" && bootstrap.Modal
+            ? bootstrap.Modal.getOrCreateInstance(modalEl)
+            : null;
+
+        function refreshClearVisibility() {
+            var jobs = (lastStatusData && lastStatusData.jobs) ? lastStatusData.jobs : [];
+            var count = jobs.length;
+            if (!lastStatusData) {
+                var badge = document.getElementById("synocr-processing-history-count");
+                if (badge && !badge.hidden) {
+                    count = parseInt(badge.textContent, 10) || 0;
+                }
+            }
+            updateHistoryClearVisibility(count);
+        }
+
+        body.addEventListener("shown.bs.collapse", refreshClearVisibility);
+        body.addEventListener("hidden.bs.collapse", refreshClearVisibility);
+
+        document.querySelectorAll("[data-synocr-history-clear]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                historyClearScope = btn.getAttribute("data-synocr-history-clear");
+                modalBody.textContent = historyClearScope === "failed_running"
+                    ? (cfg.historyClearConfirmProblems || "")
+                    : (cfg.historyClearConfirmSuccess || "");
+                if (modal) {
+                    modal.show();
+                }
+            });
+        });
+
+        confirmBtn.addEventListener("click", function () {
+            if (!historyClearScope || typeof jQuery === "undefined") {
+                return;
+            }
+            confirmBtn.disabled = true;
+            jQuery.ajax({
+                url: cfg.historyClearUrl,
+                data: { scope: historyClearScope },
+                dataType: "json",
+                cache: false
+            })
+                .done(function (res) {
+                    if (res && res.ok) {
+                        lastJobsHash = "";
+                        if (modal) {
+                            modal.hide();
+                        }
+                        jQuery.ajax({
+                            url: cfg.statusUrl,
+                            dataType: "json",
+                            cache: false
+                        }).done(function (data) {
+                            applyStatus(cfg, data || {});
+                        });
+                    }
+                })
+                .always(function () {
+                    confirmBtn.disabled = false;
+                    historyClearScope = null;
+                });
+        });
+
+        refreshClearVisibility();
+    }
+
     function updateGlobalStats(data) {
         var el = document.getElementById("synocr-global-stats-value");
         if (!el || !data || data.global_ocrcount == null || data.global_pagecount == null) {
@@ -416,6 +640,7 @@
         updateMainStatus(cfg, data);
         updateGlobalStats(data);
         updateProgressBars(cfg, data);
+        updateProcessingHistory(cfg, data);
     }
 
     function startPolling(cfg) {
@@ -447,6 +672,12 @@
         if (!cfg) {
             return;
         }
+
+        if (window.synocrDataTips) {
+            window.synocrDataTips.bindOnce();
+        }
+
+        initHistoryClear(cfg);
 
         if (typeof jQuery !== "undefined") {
             jQuery(function () {

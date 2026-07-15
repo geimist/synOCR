@@ -1145,9 +1145,334 @@ synocr_progress_compute() {
     synocr_pg_step_label=$(synocr_progress_step_label "${synocr_pg_step_id}")
 }
 
+# Escape text for safe HTML output.
+synocr_html_escape() {
+    local s="${1-}"
+    s="${s//&/&amp;}"
+    s="${s//</&lt;}"
+    s="${s//>/&gt;}"
+    s="${s//\"/&quot;}"
+    printf '%s' "${s}"
+}
+
+# Normalize a directory path for prefix matching (trailing slash).
+synocr_path_norm_dir() {
+    local p="${1-}"
+    [ -z "${p}" ] && return 0
+    p="${p%/}/"
+    printf '%s' "${p}"
+}
+
+# Shorten full path for display by stripping a profile directory prefix when it matches.
+synocr_path_display_short() {
+    local full="${1-}"
+    local prefix="${2-}"
+    local norm_full norm_prefix rest
+
+    [ -z "${full}" ] && return 0
+    [ -z "${prefix}" ] && { printf '%s' "${full}"; return 0; }
+
+    norm_full=$(synocr_path_norm_dir "${full}")
+    norm_prefix=$(synocr_path_norm_dir "${prefix}")
+
+    case "${norm_full}" in
+        "${norm_prefix}"*)
+            rest="${norm_full#"${norm_prefix}"}"
+            rest="${rest#/}"
+            if [ -n "${rest}" ]; then
+                printf '%s' "${rest}"
+            else
+                printf '%s' "${full##*/}"
+            fi
+            ;;
+        *)
+            printf '%s' "${full}"
+            ;;
+    esac
+}
+
+# Return max retained processing-history rows (default 100).
+synocr_processing_history_max() {
+    local max
+    max=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='processing_history_max' LIMIT 1;" 2>/dev/null)
+    max=${max:-100}
+    if ! printf '%s' "${max}" | grep -Eq '^[0-9]+$' >/dev/null 2>&1; then
+        max=100
+    fi
+    printf '%s' "${max}"
+}
+
+# Fail orphan jobs left 'running' by a crashed/killed synOCR (no time threshold).
+synocr_processing_job_fail_orphans() {
+    if ! synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then
+        return 0
+    fi
+    synocr_sqlite "UPDATE processing_jobs
+        SET status='failed', finished_at=datetime('now','localtime')
+        WHERE status='running';" >/dev/null 2>&1
+}
+
+# Fail the current open job (EXIT trap / abrupt abort mid-file).
+synocr_processing_job_abort_open() {
+    [ -n "${SYNOCR_PROCESSING_JOB_ID:-}" ] && synocr_processing_job_fail
+}
+
+# Remove processing-history rows (scope: success | failed_running).
+synocr_processing_jobs_clear() {
+    local scope="${1:-success}"
+    local removed
+
+    if ! synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then
+        printf '0'
+        return 0
+    fi
+
+    case "${scope}" in
+        success)
+            removed=$(synocr_sqlite "SELECT COUNT(*) FROM processing_jobs WHERE status='success';" 2>/dev/null)
+            synocr_sqlite "DELETE FROM processing_jobs WHERE status='success';" >/dev/null 2>&1
+            ;;
+        failed_running)
+            removed=$(synocr_sqlite "SELECT COUNT(*) FROM processing_jobs WHERE status IN ('failed','running');" 2>/dev/null)
+            synocr_sqlite "DELETE FROM processing_jobs WHERE status IN ('failed','running');" >/dev/null 2>&1
+            ;;
+        *)
+            printf '0'
+            return 1
+            ;;
+    esac
+    removed=${removed:-0}
+    if ! printf '%s' "${removed}" | grep -Eq '^[0-9]+$' >/dev/null 2>&1; then
+        removed=0
+    fi
+    printf '%s' "${removed}"
+}
+
+# JSON API for index.cgi?page=main-clear-history&scope=success|failed_running
+synocr_render_main_clear_history_json() {
+    local scope removed
+
+    scope="${scope:-success}"
+    case "${scope}" in
+        success|failed_running) ;;
+        *)
+            jq -n '{ok:false,error:"invalid_scope"}'
+            return 1
+            ;;
+    esac
+
+    removed=$(synocr_processing_jobs_clear "${scope}")
+    jq -n --arg scope "${scope}" --argjson removed "${removed}" '{ok:true,scope:$scope,removed:$removed}'
+}
+
+# Delete processing jobs beyond the configured retention limit.
+synocr_processing_job_purge() {
+    local max
+    if ! synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then
+        return 0
+    fi
+    max=$(synocr_processing_history_max)
+    synocr_sqlite "DELETE FROM processing_jobs
+        WHERE job_ID NOT IN (
+            SELECT job_ID FROM processing_jobs ORDER BY started_at DESC LIMIT ${max}
+        );" >/dev/null 2>&1
+}
+
+# Start a processing-history job (independent of loglevel).
+synocr_processing_job_start() {
+    local source_filename="$1"
+    local source_sql profile_sql new_id sqlite3log sqlite3rc
+
+    SYNOCR_PROCESSING_JOB_ID=""
+
+    if ! synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    synocr_processing_job_fail_orphans
+
+    source_sql=$(sql_escape "${source_filename}")
+
+    sqlite3log=$(synocr_sqlite "INSERT INTO processing_jobs (profile_ID, source_filename, targets_json, status)
+        VALUES ('${profile_ID:-0}', '${source_sql}', '[]', 'running');
+        SELECT last_insert_rowid();" 2>&1)
+    sqlite3rc=$?
+
+    if [ "${sqlite3rc}" -ne 0 ]; then
+        return 1
+    fi
+
+    new_id=$(printf '%s\n' "${sqlite3log}" | tail -n 1)
+    if printf '%s' "${new_id}" | grep -Eq '^[0-9]+$' >/dev/null 2>&1; then
+        SYNOCR_PROCESSING_JOB_ID="${new_id}"
+    fi
+}
+
+# Append a target path to the current processing-history job.
+synocr_processing_job_add_target() {
+    local target_path="$1"
+    local job_id="${SYNOCR_PROCESSING_JOB_ID:-}"
+    local current_json new_json sqlite3log sqlite3rc
+
+    [ -z "${job_id}" ] && return 0
+    if ! synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    current_json=$(synocr_sqlite "SELECT targets_json FROM processing_jobs WHERE job_ID='${job_id}' LIMIT 1;" 2>/dev/null)
+    current_json=${current_json:-[]}
+    new_json=$(printf '%s' "${current_json}" | jq -c --arg p "${target_path}" '. + [$p]' 2>/dev/null) || new_json="[\"${target_path}\"]"
+    new_json=$(sql_escape "${new_json}")
+
+    sqlite3log=$(synocr_sqlite "UPDATE processing_jobs
+        SET targets_json='${new_json}'
+        WHERE job_ID='${job_id}';" 2>&1)
+    sqlite3rc=$?
+
+    if [ "${sqlite3rc}" -ne 0 ]; then
+        return 1
+    fi
+}
+
+# Close the current processing-history job with a terminal status.
+_synocr_processing_job_close() {
+    local status="$1"
+    local job_id="${SYNOCR_PROCESSING_JOB_ID:-}"
+
+    [ -z "${job_id}" ] && return 0
+    if ! synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then
+        SYNOCR_PROCESSING_JOB_ID=""
+        return 0
+    fi
+
+    synocr_sqlite "UPDATE processing_jobs
+        SET status='${status}', finished_at=datetime('now','localtime')
+        WHERE job_ID='${job_id}';" >/dev/null 2>&1
+
+    synocr_processing_job_purge
+    SYNOCR_PROCESSING_JOB_ID=""
+}
+
+# Mark job successful (valid target produced).
+synocr_processing_job_succeed() {
+    _synocr_processing_job_close "success"
+}
+
+# Mark job failed (e.g. source moved to ERRORFILES).
+synocr_processing_job_fail() {
+    _synocr_processing_job_close "failed"
+}
+
+# Finalize the current processing-history job (legacy: success only).
+synocr_processing_job_finalize() {
+    local process_error="${1:-1}"
+
+    [ "${process_error}" -eq 0 ] && synocr_processing_job_succeed
+}
+
+# JSON array of recent processing jobs for API / GUI.
+synocr_processing_jobs_json() {
+    local max jobs_json
+    if ! synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then
+        printf '[]'
+        return 0
+    fi
+    max=$(synocr_processing_history_max)
+    jobs_json=$(synocr_sqlite -json "SELECT
+            pj.job_ID AS id,
+            COALESCE(c.profile, '') AS profile,
+            COALESCE(c.OUTPUTDIR, '') AS output_dir,
+            pj.source_filename AS source,
+            pj.targets_json AS targets,
+            pj.status AS status,
+            pj.started_at AS started_at
+        FROM processing_jobs pj
+        LEFT JOIN config c ON c.profile_ID = pj.profile_ID
+        ORDER BY pj.started_at DESC
+        LIMIT ${max};" 2>/dev/null)
+    if [ -z "${jobs_json}" ] || [ "${jobs_json}" = "[]" ]; then
+        printf '[]'
+        return 0
+    fi
+    printf '%s' "${jobs_json}" | jq -c '[.[] | {
+        id: .id,
+        profile: .profile,
+        output_dir: .output_dir,
+        source: .source,
+        targets: (try (.targets | fromjson) catch []),
+        status: .status,
+        started_at: .started_at
+    }]' 2>/dev/null || printf '[]'
+}
+
+# Render processing-history list HTML (tbody rows).
+synocr_render_processing_history_rows() {
+    local jobs_json row id profile output_dir source status started_at targets_json
+        local status_class status_badge status_label status_h source_h profile_h started_h target target_h target_d targets_html
+
+    jobs_json=$(synocr_processing_jobs_json)
+    if [ "${jobs_json}" = "[]" ] || [ -z "${jobs_json}" ]; then
+        echo '<tr><td colspan="5" class="text-muted small">'$(synocr_html_escape "${lang_main_history_empty}")'</td></tr>'
+        return 0
+    fi
+
+    while IFS= read -r row; do
+        [ -z "${row}" ] && continue
+        id=$(printf '%s' "${row}" | jq -r '.id // empty')
+        profile=$(printf '%s' "${row}" | jq -r '.profile // ""')
+        output_dir=$(printf '%s' "${row}" | jq -r '.output_dir // ""')
+        source=$(printf '%s' "${row}" | jq -r '.source // ""')
+        status=$(printf '%s' "${row}" | jq -r '.status // ""')
+        started_at=$(printf '%s' "${row}" | jq -r '.started_at // ""')
+        targets_json=$(printf '%s' "${row}" | jq -c '.targets // []')
+
+        case "${status}" in
+            success)
+                status_class="synocr-job-row--success"
+                status_badge="success"
+                status_label="${lang_main_history_status_success}"
+                ;;
+            failed)
+                status_class="synocr-job-row--failed"
+                status_badge="failed"
+                status_label="${lang_main_history_status_failed}"
+                ;;
+            *)
+                status_class="synocr-job-row--running"
+                status_badge="running"
+                status_label="${lang_main_history_status_running}"
+                ;;
+        esac
+
+        source_h=$(synocr_html_escape "${source}")
+        profile_h=$(synocr_html_escape "${profile}")
+        started_h=$(synocr_html_escape "${started_at}")
+        status_h=$(synocr_html_escape "${status_label}")
+
+        targets_html="-"
+        if [ "$(printf '%s' "${targets_json}" | jq 'length' 2>/dev/null)" -gt 0 ] 2>/dev/null; then
+            targets_html=""
+            while IFS= read -r target; do
+                [ -z "${target}" ] && continue
+                target_h=$(synocr_html_escape "${target}")
+                target_d=$(synocr_html_escape "$(synocr_path_display_short "${target}" "${output_dir}")")
+                targets_html="${targets_html}<div class=\"synocr-job-target synocr-has-tip\" data-tip=\"${target_h}\">${target_d}</div>"
+            done < <(printf '%s' "${targets_json}" | jq -r '.[]' 2>/dev/null)
+        fi
+
+        echo '<tr class="synocr-job-row '"${status_class}"'" data-job-id="'"${id}"'">'
+        echo '  <td class="synocr-job-time small text-nowrap">'"${started_h}"'</td>'
+        echo '  <td class="synocr-job-profile small">'"${profile_h}"'</td>'
+        echo '  <td class="synocr-job-source small" title="'"${source_h}"'">'"${source_h}"'</td>'
+        echo '  <td class="synocr-job-targets small">'"${targets_html}"'</td>'
+        echo '  <td class="synocr-job-status small text-nowrap text-end"><span class="synocr-job-status-badge synocr-job-status-badge--'"${status_badge}"'">'"${status_h}"'</span></td>'
+        echo '</tr>'
+    done < <(printf '%s' "${jobs_json}" | jq -c '.[]' 2>/dev/null)
+}
+
 # JSON API for index.cgi?page=main-status (jQuery polling).
 synocr_render_main_status_json() {
-    local _global_ocr _global_pages
+    local _global_ocr _global_pages _jobs_json
 
     synocr_progress_compute
 
@@ -1155,6 +1480,7 @@ synocr_render_main_status_json() {
     _global_pages=$(synocr_sqlite "SELECT value_1 FROM system WHERE key='global_pagecount'" 2>/dev/null)
     _global_ocr=${_global_ocr:-0}
     _global_pages=${_global_pages:-0}
+    _jobs_json=$(synocr_processing_jobs_json)
 
     jq -n \
         --arg state "${synocr_pg_state}" \
@@ -1172,6 +1498,7 @@ synocr_render_main_status_json() {
         --argjson step_total "${synocr_pg_step_total}" \
         --argjson global_ocrcount "${_global_ocr}" \
         --argjson global_pagecount "${_global_pages}" \
+        --argjson jobs "${_jobs_json:-[]}" \
         '{
             state: $state,
             running: ($running == 1),
@@ -1187,7 +1514,8 @@ synocr_render_main_status_json() {
             step_index: $step_index,
             step_total: $step_total,
             global_ocrcount: $global_ocrcount,
-            global_pagecount: $global_pagecount
+            global_pagecount: $global_pagecount,
+            jobs: $jobs
         }'
 }
 

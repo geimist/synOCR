@@ -27,6 +27,7 @@
         "${app_home}/template/bootstrap/css/bootstrap.min.css" \
         "${app_home}/template/jquery/jquery-3.7.1.min.js" \
         "${app_home}/template/bootstrap/js/bootstrap.bundle.min.js" \
+        "${app_home}/template/synocr-data-tips.js" \
         "${app_home}/template/synocr-progress.js" \
         "${app_home}/template/synocr-rules-editor.js" \
         "${app_home}/template/synocr-folderpicker.js" \
@@ -46,6 +47,7 @@
     synocr_stylesheet_href="template/stylesheet.css${synocr_asset_q}"
     synocr_jq_src="template/jquery/jquery-3.7.1.min.js${synocr_asset_q}"
     synocr_bootstrap_js_src="template/bootstrap/js/bootstrap.bundle.min.js${synocr_asset_q}"
+    synocr_data_tips_js_src="template/synocr-data-tips.js${synocr_asset_q}"
     synocr_progress_js_src="template/synocr-progress.js${synocr_asset_q}"
     synocr_rules_editor_js_src="template/synocr-rules-editor.js${synocr_asset_q}"
     synocr_folderpicker_js_src="template/synocr-folderpicker.js${synocr_asset_q}"
@@ -157,6 +159,11 @@
         #[ -f "${var}" ] && rm "${var}"
         mainpage="main"
     fi
+
+    synocr_content_scroll_class="synocr-content-scroll"
+    if [ "${mainpage}" = "main" ]; then
+        synocr_content_scroll_class="synocr-content-scroll synocr-main-page-active"
+    fi
     
     "${set_var}" "${var}" "page" ""
 
@@ -166,7 +173,17 @@
         echo "Content-type: application/json"
         echo
         if ! synocr_render_main_status_json; then
-            echo '{"state":"error","running":false,"files_remaining":0,"files_total":0,"files_done":0,"percent_files":0,"percent_file":0,"file":"","profile":"","step_id":"","step_label":"","step_index":0,"step_total":0}'
+            echo '{"state":"error","running":false,"files_remaining":0,"files_total":0,"files_done":0,"percent_files":0,"percent_file":0,"file":"","profile":"","step_id":"","step_label":"","step_index":0,"step_total":0,"global_ocrcount":0,"global_pagecount":0,"jobs":[]}'
+        fi
+        exit 0
+    fi
+
+    if [ "${synocr_request_page}" = "main-clear-history" ]; then
+        cd "${app_home}" || exit 1
+        echo "Content-type: application/json"
+        echo
+        if ! synocr_render_main_clear_history_json; then
+            echo '{"ok":false,"error":"clear_failed"}'
         fi
         exit 0
     fi
@@ -326,7 +343,7 @@ echo '
                 # ------------------------------------------------------
                 echo '
                 <div class="col synocr-content-col">
-                    <form action="index.cgi" method="get" autocomplete="on" class="synocr-content-scroll">'
+                    <form action="index.cgi" method="get" autocomplete="on" class="'"${synocr_content_scroll_class}"'">'
 
                         # Dynamic page reloading
                         if [ -z "${mainpage}" ]; then
@@ -358,11 +375,13 @@ echo '
 # Main page: live progress script after bootstrap, outside the form
 if [ "${mainpage}" = "main" ] && [ -n "${synocr_progress_config_json:-}" ]; then
     echo '
+    <script src="'"${synocr_data_tips_js_src}"'"></script>
     <script type="application/json" id="synocr-progress-config">'"${synocr_progress_config_json}"'</script>
     <script src="'"${synocr_progress_js_src}"'"></script>'
 fi
 if [[ "${synocr_request_page}" == rules-edit-* ]]; then
     echo '
+    <script src="'"${synocr_data_tips_js_src}"'"></script>
     <script src="'"${synocr_rules_editor_js_src}"'"></script>
     <script src="'"${synocr_folderpicker_js_src}"'"></script>
     <script src="'"${synocr_namesyntax_editor_js_src}"'"></script>

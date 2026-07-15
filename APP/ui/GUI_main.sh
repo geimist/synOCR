@@ -58,10 +58,36 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
         --arg allDoneText "${lang_main_alldone}" \
         --arg doneStepText "${lang_main_progress_step_cleanup:-${lang_main_alldone}}" \
         --arg profileLabel "${lang_edit_profname}" \
+        --arg historyEmpty "${lang_main_history_empty}" \
+        --arg historyStatusSuccess "${lang_main_history_status_success}" \
+        --arg historyStatusFailed "${lang_main_history_status_failed}" \
+        --arg historyStatusRunning "${lang_main_history_status_running}" \
+        --arg historyColTime "${lang_main_history_time}" \
+        --arg historyColProfile "${lang_edit_profname}" \
+        --arg historyColSource "${lang_main_history_source}" \
+        --arg historyColTargets "${lang_main_history_targets}" \
+        --arg historyColStatus "${lang_main_history_status}" \
+        --arg historyClearUrl "index.cgi?page=main-clear-history" \
+        --arg historyClearLabel "${lang_main_history_clear}" \
+        --arg historyClearSuccess "${lang_main_history_clear_success}" \
+        --arg historyClearProblems "${lang_main_history_clear_problems}" \
+        --arg historyClearTitle "${lang_main_history_clear_title}" \
+        --arg historyClearConfirmSuccess "${lang_main_history_clear_confirm_success}" \
+        --arg historyClearConfirmProblems "${lang_main_history_clear_confirm_problems}" \
+        --arg historyClearConfirmYes "${lang_yes}" \
+        --arg historyClearConfirmAbort "${lang_button_abort}" \
         --argjson pollMs 2500 \
         --argjson doneHoldMs 5000 \
         --argjson doneFadeMs 800 \
-        '{statusUrl:$statusUrl,filesTpl:$filesTpl,iconIdle:$iconIdle,iconBusy:$iconBusy,allDoneText:$allDoneText,doneStepText:$doneStepText,profileLabel:$profileLabel,pollMs:$pollMs,doneHoldMs:$doneHoldMs,doneFadeMs:$doneFadeMs}' 2>/dev/null) || synocr_progress_config_json=""
+        '{statusUrl:$statusUrl,filesTpl:$filesTpl,iconIdle:$iconIdle,iconBusy:$iconBusy,allDoneText:$allDoneText,doneStepText:$doneStepText,profileLabel:$profileLabel,historyEmpty:$historyEmpty,historyStatusSuccess:$historyStatusSuccess,historyStatusFailed:$historyStatusFailed,historyStatusRunning:$historyStatusRunning,historyColTime:$historyColTime,historyColProfile:$historyColProfile,historyColSource:$historyColSource,historyColTargets:$historyColTargets,historyColStatus:$historyColStatus,historyClearUrl:$historyClearUrl,historyClearLabel:$historyClearLabel,historyClearSuccess:$historyClearSuccess,historyClearProblems:$historyClearProblems,historyClearTitle:$historyClearTitle,historyClearConfirmSuccess:$historyClearConfirmSuccess,historyClearConfirmProblems:$historyClearConfirmProblems,historyClearConfirmYes:$historyClearConfirmYes,historyClearConfirmAbort:$historyClearConfirmAbort,pollMs:$pollMs,doneHoldMs:$doneHoldMs,doneFadeMs:$doneFadeMs}' 2>/dev/null) || synocr_progress_config_json=""
+
+    _synocr_history_count=0
+    if synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then
+        _synocr_history_count=$(synocr_sqlite "SELECT COUNT(*) FROM processing_jobs;" 2>/dev/null)
+    fi
+    _synocr_history_count=${_synocr_history_count:-0}
+    _synocr_history_badge_hidden=""
+    [ "${_synocr_history_count}" -lt 1 ] && _synocr_history_badge_hidden=' hidden'
 
 # manual synOCR start:
 # ---------------------------------------------------------------------
@@ -185,9 +211,12 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == "" ]]; then
 
     echo '
-    <h5 class="text-center mt-3">
+    <div id="synocr-main-page" class="synocr-main-page">
+    <div class="synocr-main-page-head">
+    <h4 class="text-center mt-3">
         <strong class="synocr-text-red">'"${lang_main_title1}"'</strong>
-    </h5>'
+    </h4>
+    <p class="mb-0">&nbsp;</p>'
 
     # monitoring active?:
     PID=$(ps aux | grep -v "grep" | grep -E "inotifywait.*--fromfile.*inotify.list" | awk -F' ' '{print $2}')
@@ -356,9 +385,6 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
     fi
 
     echo '
-    <p>&nbsp;</p>
-    <h2 class="synocr-text-blue">'"${lang_main_title2}"':</h2>
-    <p>&nbsp;</p>
     <p>'"${lang_main_desc1}"'</p>
     <p>'"${lang_main_desc2}"'</p>'
 
@@ -415,11 +441,11 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
         fi
     fi
 
-# Status / statistics (stats table first; progress below while running)
+# Status / statistics + processing history (progress last while running)
 echo '
-<div id="synocr-status-stats" class="mb-3">
+<div id="synocr-activity" class="synocr-activity mb-2">
     <p class="synocr-text-blue mb-2"><strong>'"${lang_main_statshead}"'</strong></p>
-    <table class="table table-borderless mb-0" style="width: 70%;">
+    <table class="table table-borderless mb-0 synocr-activity-stats" style="width: 70%;">
         <tbody>
             <tr id="synocr-open-files-row" style="'"${_synocr_open_files_row_style}"'">
                 <td class="synocr-text-blue">'"${lang_main_openfilecount}"':</td>
@@ -431,7 +457,61 @@ echo '
             </tr>
         </tbody>
     </table>
-    <div id="synocr-progress" style="'"${_synocr_progress_style}"'">
+</div>
+</div>
+    <div id="synocr-processing-history" class="synocr-processing-history">
+        <div class="synocr-processing-history-toolbar d-flex align-items-center justify-content-between gap-2 mb-1 flex-wrap">
+            <p class="synocr-processing-history-toggle mb-0">
+                <a class="synocr-text-blue text-decoration-none d-inline-flex align-items-center gap-1" data-bs-toggle="collapse" href="#synocr-processing-history-body" role="button" aria-expanded="false" aria-controls="synocr-processing-history-body">
+                    <strong id="synocr-processing-history-toggle">'"${lang_main_history_toggle}"'</strong>
+                    <span id="synocr-processing-history-count" class="synocr-processing-history-count badge rounded-pill"'"${_synocr_history_badge_hidden}"'>'"${_synocr_history_count}"'</span>
+                </a>
+            </p>
+            <div class="dropdown synocr-processing-history-clear-wrap" id="synocr-processing-history-clear-wrap" hidden>
+                <button type="button" class="btn btn-link btn-sm text-muted synocr-processing-history-clear-btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="'"${lang_main_history_clear}"'">
+                    '"${lang_main_history_clear}"'
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li><button type="button" class="dropdown-item small" data-synocr-history-clear="success">'"${lang_main_history_clear_success}"'</button></li>
+                    <li><button type="button" class="dropdown-item small" data-synocr-history-clear="failed_running">'"${lang_main_history_clear_problems}"'</button></li>
+                </ul>
+            </div>
+        </div>
+        <div class="collapse" id="synocr-processing-history-body">
+            <div class="synocr-processing-history-scroll table-responsive">
+                <table class="table table-sm table-borderless mb-0 synocr-processing-history-table">
+                    <thead>
+                        <tr class="small text-muted">
+                            <th scope="col">'"${lang_main_history_time}"'</th>
+                            <th scope="col">'"${lang_edit_profname}"'</th>
+                            <th scope="col">'"${lang_main_history_source}"'</th>
+                            <th scope="col">'"${lang_main_history_targets}"'</th>
+                            <th scope="col">'"${lang_main_history_status}"'</th>
+                        </tr>
+                    </thead>
+                    <tbody id="synocr-processing-history-tbody">
+                        '"$(synocr_render_processing_history_rows)"'
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="synocr-history-clear-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title fs-6" id="synocr-history-clear-modal-title">'"${lang_main_history_clear_title}"'</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body small" id="synocr-history-clear-modal-body"></div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">'"${lang_button_abort}"'</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="synocr-history-clear-confirm" style="background-color: #0086E5;">'"${lang_yes}"'</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="synocr-progress" class="synocr-main-progress" style="'"${_synocr_progress_style}"'">
         <div class="d-flex align-items-center justify-content-between mb-1 synocr-progress-files-header">
             <label class="small text-muted mb-0" id="synocr-progress-files-label">'"${_pg_files_label}"'</label>
             <svg id="synocr-progress-done-ring" class="synocr-progress-done-ring" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">

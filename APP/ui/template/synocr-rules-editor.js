@@ -137,152 +137,21 @@
 
     function L(key) { return lang[key] != null ? lang[key] : key; }
 
-    var tipPopupEl = null;
-    var tipActiveHost = null;
-
-    function ensureTipPopup() {
-        if (!tipPopupEl) {
-            tipPopupEl = document.createElement('div');
-            tipPopupEl.className = 'synocr-tip-popup';
-            tipPopupEl.hidden = true;
-            document.body.appendChild(tipPopupEl);
-        }
-        return tipPopupEl;
-    }
-
-    function positionTipPopup(host) {
-        var popup = ensureTipPopup();
-        var hostRect = host.getBoundingClientRect();
-        var popupRect = popup.getBoundingClientRect();
-        var gap = 6;
-        var left = hostRect.left + (hostRect.width - popupRect.width) / 2;
-        var top = hostRect.top - popupRect.height - gap;
-        if (top < gap) top = hostRect.bottom + gap;
-        left = Math.max(gap, Math.min(left, window.innerWidth - popupRect.width - gap));
-        top = Math.max(gap, Math.min(top, window.innerHeight - popupRect.height - gap));
-        popup.style.left = Math.round(left) + 'px';
-        popup.style.top = Math.round(top) + 'px';
-    }
-
-    function hideDataTip() {
-        if (tipPopupEl) {
-            tipPopupEl.hidden = true;
-            tipPopupEl.classList.remove('synocr-tip-popup-wide', 'synocr-tip-popup-rich');
-            tipPopupEl.textContent = '';
-        }
-        tipActiveHost = null;
-    }
-
-    function tipPartsFromKey(baseKey) {
-        if (!baseKey || !lang) return null;
-        var title = lang[baseKey + '_t'];
-        var parts = [];
-        if (title != null && String(title) !== '') parts.push({ type: 'title', text: String(title) });
-        var i = 1;
-        while (i <= 12) {
-            var k = baseKey + '_' + i;
-            if (lang[k] == null || String(lang[k]) === '') break;
-            parts.push({ type: 'p', text: String(lang[k]) });
-            i++;
-        }
-        if (!parts.length) {
-            if (lang[baseKey] != null && String(lang[baseKey]) !== '') {
-                return [{ type: 'p', text: String(lang[baseKey]) }];
-            }
-            return null;
-        }
-        return parts;
-    }
-
-    function renderTipPopup(host) {
-        var popup = ensureTipPopup();
-        var tipKey = host.getAttribute('data-tip-key');
-        var parts = tipKey ? tipPartsFromKey(tipKey) : null;
-        popup.textContent = '';
-        popup.classList.remove('synocr-tip-popup-rich');
-        if (parts && parts.length) {
-            popup.classList.add('synocr-tip-popup-rich');
-            parts.forEach(function (part) {
-                var el = document.createElement(part.type === 'title' ? 'div' : 'p');
-                el.className = part.type === 'title' ? 'synocr-tip-title' : 'synocr-tip-line';
-                el.textContent = part.text;
-                popup.appendChild(el);
-            });
-            return;
-        }
-        var text = host.getAttribute('data-tip');
-        if (text && text.indexOf('\n') >= 0) {
-            popup.classList.add('synocr-tip-popup-rich');
-            var lines = text.split('\n');
-            if (lines[0]) {
-                var titleEl = document.createElement('div');
-                titleEl.className = 'synocr-tip-title';
-                titleEl.textContent = lines[0];
-                popup.appendChild(titleEl);
-            }
-            for (var li = 1; li < lines.length; li++) {
-                if (!lines[li]) continue;
-                var lineEl = document.createElement('p');
-                lineEl.className = 'synocr-tip-line';
-                lineEl.textContent = lines[li];
-                popup.appendChild(lineEl);
-            }
-            return;
-        }
-        if (text) popup.textContent = text;
-    }
-
-    function showDataTip(host) {
-        if (!host.getAttribute('data-tip') && !host.getAttribute('data-tip-key')) return;
-        renderTipPopup(host);
-        var popup = ensureTipPopup();
-        if (!popup.childNodes.length && !popup.textContent) return;
-        popup.classList.toggle('synocr-tip-popup-wide', !!host.closest('#synocr-regex-assistant-modal'));
-        popup.hidden = false;
-        positionTipPopup(host);
-        tipActiveHost = host;
-    }
-
     function applyDataTip(el, text) {
+        if (window.synocrDataTips) {
+            window.synocrDataTips.applyDataTip(el, text);
+            return;
+        }
         if (!el || !text) return;
         el.setAttribute('data-tip', text);
         el.removeAttribute('title');
     }
 
     function bindDataTipsOnce() {
-        if (document._synocrDataTipsBound) return;
-        document._synocrDataTipsBound = true;
-        // Improvement potential (mobile/touch): these custom tooltips are driven
-        // by mouseover/mouseout, which don't fire on touch devices. focusin is
-        // bound too, but taps on non-focusable hosts (e.g. span/badge) won't
-        // show a tip. A future enhancement could add a 'click' toggle for touch
-        // or fall back to the native title attribute (currently removed in
-        // applyDataTip) so help text is reachable on tablets/phones.
-        document.body.addEventListener('mouseover', function (e) {
-            var host = e.target.closest('[data-tip],[data-tip-key]');
-            if (!host) {
-                if (tipActiveHost && !tipActiveHost.contains(e.target)) hideDataTip();
-                return;
-            }
-            if (host !== tipActiveHost) showDataTip(host);
-        });
-        document.body.addEventListener('mouseout', function (e) {
-            if (!tipActiveHost) return;
-            if (e.target.closest('[data-tip],[data-tip-key]') !== tipActiveHost) return;
-            var rel = e.relatedTarget;
-            if (rel && tipActiveHost.contains(rel)) return;
-            hideDataTip();
-        });
-        document.body.addEventListener('focusin', function (e) {
-            var host = e.target.closest('[data-tip],[data-tip-key]');
-            if (host) showDataTip(host);
-        });
-        document.body.addEventListener('focusout', function (e) {
-            if (tipActiveHost && e.target === tipActiveHost) hideDataTip();
-        });
-        window.addEventListener('scroll', function () {
-            if (tipActiveHost && tipPopupEl && !tipPopupEl.hidden) positionTipPopup(tipActiveHost);
-        }, true);
+        if (window.synocrDataTips) {
+            window.synocrDataTips.bindOnce();
+            return;
+        }
     }
 
     function regexAssistantAvailable() {
@@ -1849,11 +1718,16 @@
     }
 
     function init() {
+        var l = readJson(LANG_ID);
+        if (l) {
+            lang = l;
+            if (window.synocrDataTips) {
+                window.synocrDataTips.setLang(l);
+            }
+        }
         bindDataTipsOnce();
         var root = document.getElementById(ROOT_ID);
         if (!root) return;
-        var l = readJson(LANG_ID);
-        if (l) lang = l;
         var pt = readJson(PATH_TOKENS_ID);
         if (pt && typeof pt === 'object') pathTokens = pt;
         var tt = readJson(TAG_TOKENS_ID);

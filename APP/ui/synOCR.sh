@@ -35,6 +35,7 @@
         if (( ec != 0 )) && [[ -z "${_SYNOCR_ABORT_LOGGED:-}" ]]; then
             log_error_at "synOCR aborted with exit code ${ec}"
         fi
+        synocr_processing_job_abort_open
         synocr_exit_cleanup
     }
 
@@ -2272,6 +2273,7 @@ rename()
             adjust_attributes "${keep_hash_input}" "${output}"
         fi
         file_processing_log 2 "${output}"
+        synocr_processing_job_add_target "${output}"
 
     elif [ "${moveTaggedFiles}" = useYearMonthDir ] ; then
     # move to folder each year & month:
@@ -2297,6 +2299,7 @@ rename()
             adjust_attributes "${keep_hash_input}" "${output}"
         fi
         file_processing_log 2 "${output}"
+        synocr_processing_job_add_target "${output}"
 
     elif [ -n "${renameCat}" ] && [ "${moveTaggedFiles}" = useCatDir ] ; then
     # use sorting in category folder:
@@ -2356,6 +2359,7 @@ rename()
                         cp "${outputtmp}" "${output}"
                     fi
                    file_processing_log 2 "${output}"
+        synocr_processing_job_add_target "${output}"
                 else
                     log_item "  set a hard link"
                     if [[ "${keep_hash}" = "true" ]]; then
@@ -2381,6 +2385,7 @@ rename()
                         fi
                     fi
                     file_processing_log 2 "${output}"
+        synocr_processing_job_add_target "${output}"
                 fi
                 [[ "${keep_hash}" != "true" ]] && adjust_attributes "${keep_hash_input}" "${output}"
             fi
@@ -2431,6 +2436,7 @@ rename()
                     cp "${outputtmp}" "${output}"
                 fi
                 file_processing_log 2 "${output}"
+        synocr_processing_job_add_target "${output}"
             else
                 log_item "  set a hard link"
                 if [[ "${keep_hash}" = "true" ]]; then
@@ -2456,6 +2462,7 @@ rename()
                     fi
                 fi
                 file_processing_log 2 "${output}"
+        synocr_processing_job_add_target "${output}"
             fi
 
             [[ "${keep_hash}" != "true" ]] && adjust_attributes "${keep_hash_input}" "${output}"
@@ -2479,6 +2486,7 @@ rename()
             adjust_attributes "${keep_hash_input}" "${output}"
         fi
         file_processing_log 2 "${output}"
+        synocr_processing_job_add_target "${output}"
     fi
 
 }
@@ -3069,6 +3077,7 @@ while read -r input1 ; do
     keep_hash_input="${input1}"
     log_file "${filename}" "${file_index}" "${file_total}"
     file_processing_log 1 "${filename}"
+    synocr_processing_job_start "${filename}"
     synocr_status_file_pipeline_start "${filename}"
     date_start_file=$(date +%s)
     was_splitted=0
@@ -3175,6 +3184,7 @@ while read -r input1 ; do
             mv "${input1}" "${output}"
             [ "${loglevel}" != 0 ] && cp "${current_logfile}" "${output}.log"
             log_item_deep "move to ERRORFILES"
+            synocr_processing_job_fail
         fi
         rm -rf "${work_tmp_step1}"
         continue
@@ -3458,6 +3468,7 @@ while read -r input1 ; do
         else
             log_error_at "backup copy failed: ${input1}"
         fi
+        synocr_processing_job_succeed
     elif [ "${process_error}" -eq 1 ]; then
         # target file is not valid / source files are moved to ERRORFILES including LOG:
         log_error_at "processing failed (process_error=1) for ${input1}"
@@ -3472,9 +3483,11 @@ while read -r input1 ; do
         [ "${loglevel}" != 0 ] && cp "${current_logfile}" "${output}.log"
         log_item_deep "move to ERRORFILES"
         rm -rf "${work_tmp_step1}"
+        synocr_processing_job_fail
     else
         rm -f "${input1}"
         log_item "delete source file (${filename})"
+        synocr_processing_job_succeed
     fi
 
     rm -rfv "${work_tmp_step1}" | log_block
