@@ -1214,12 +1214,10 @@ if [ "${type_of_rule}" = advanced ]; then
         fi
 
         # ---------------------------------------------------------------------
-        # store user defined (YAML) post scripts as alias in an array:
+        # store user defined (YAML) post scripts; eval at runtime so variables
+        # like ${output}/${input1} expand after rename (not at rule-match time):
         if [[ "${postscript}" != null ]] ; then
-            aliasname="postscript_${tagrule}_$(date +%N)"
-            postscriptarray+=( "${aliasname}" )
-            # shellcheck disable=SC2139  # Don't warn about "expands when defined, not when used"
-            alias "${aliasname}"="${postscript}"
+            postscriptarray+=( "${postscript}" )
             log_rule_pass2_action "activate post script: ${postscript}"
         fi
         # ---------------------------------------------------------------------
@@ -3717,7 +3715,6 @@ while read -r input ; do
     for cmd in "${postscriptarray[@]}"; do
         log_item "${cmd}"
         eval "${cmd}"
-        unalias "${cmd}"
     done
     unset postscriptarray
 
