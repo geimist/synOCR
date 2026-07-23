@@ -412,7 +412,16 @@ if [[ "${page}" == "edit-del_profile-query" ]] || [[ "${page}" == "edit-del_prof
                     <div class="modal-footer bg-light">
                         <a href="index.cgi?page=edit-del_profile" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_yes}"'</a>&nbsp;&nbsp;&nbsp;
                         <a href="index.cgi?page=edit&value=" class="btn btn-secondary btn-sm">'"${lang_button_abort}"'</a>
-                    </div>'
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(window).on("load", function() {
+            $("#popup-validation").modal("show");
+        });
+    </script>'
 
                 elif [[ "${page}" == "edit-del_profile" ]]; then
                     synocr_sqlite "DELETE FROM config WHERE profile_ID='${profile_ID}';"
@@ -426,41 +435,48 @@ if [[ "${page}" == "edit-del_profile-query" ]] || [[ "${page}" == "edit-del_prof
                     "${set_var}" "$var" "encode_getprofile" "${encode_value}"
                     sleep 0.1
 
-                    echo '
-                    <div class="modal-body text-center">'
-                        if [ "$(synocr_sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='${profile_ID}' ")" = "0" ] ; then
-                            echo '
-                            <p>
-                                '"${lang_edit_delfin1}"' <strong>'"${profile}"'</strong> '"${lang_edit_delfin2}"'
-                            </p>'
-                        else
-                            echo '
-                            <p class="text-danger">
-                                '"${lang_edit_deler}"' (<strong>'"${profile}"'</strong>)!
-                            </p>'
-                        fi
+                    _del_ok=0
+                    if [ "$(synocr_sqlite "SELECT count(profile_ID) FROM config WHERE profile_ID='${profile_ID}' ")" = "0" ] ; then
+                        _del_ok=1
                         echo '
+                    <div class="modal-body text-center">
+                        <p>
+                            '"${lang_edit_delfin1}"' <strong>'"${profile}"'</strong> '"${lang_edit_delfin2}"'
+                        </p>
                     </div>
                     <div class="modal-footer bg-light">
-                        <button name="page" value="edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_buttonnext}"'...</button>
+                        <a href="index.cgi?page=edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_buttonnext}"'...</a>
                     </div>'
-
-                fi
-                echo '
+                    else
+                        echo '
+                    <div class="modal-body text-center">
+                        <p class="text-danger">
+                            '"${lang_edit_deler}"' (<strong>'"${profile}"'</strong>)!
+                        </p>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <a href="index.cgi?page=edit" class="btn btn-primary btn-sm" style="background-color: #0086E5;">'"${lang_buttonnext}"'...</a>
+                    </div>'
+                    fi
+                    echo '
+                </div>
             </div>
         </div>
     </div>
     <script type="text/javascript">
         $(window).on("load", function() {
             var _synocrModal = document.getElementById("popup-validation");
-            $("#popup-validation").modal("show");
-            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
-                if (typeof window.synocrAutoDismissModal === "function") {
-                    window.synocrAutoDismissModal(_synocrModal, 2000);
-                }
-            }
+            $("#popup-validation").modal("show");'
+                    if [ "${_del_ok}" = "1" ]; then
+                        echo '
+            if (_synocrModal && typeof window.synocrAutoDismissModal === "function") {
+                window.synocrAutoDismissModal(_synocrModal, 2000);
+            }'
+                    fi
+                    echo '
         });
     </script>'
+                fi
 fi
 
 # --------------------------------------------------------------
@@ -563,7 +579,9 @@ if [[ "${page}" == "edit-dup-profile-query" ]] || [[ "${page}" == "edit-dup-prof
         $(window).on("load", function() {
             var _synocrModal = document.getElementById("popup-validation");
             $("#popup-validation").modal("show");
-            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
+            // Name input step needs explicit user action — no auto-dismiss
+            if (_synocrModal && '"${page}"' !== "edit-dup-profile-query"
+                && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
                 if (typeof window.synocrAutoDismissModal === "function") {
                     window.synocrAutoDismissModal(_synocrModal, 2000);
                 }
@@ -661,7 +679,9 @@ if [[ "${page}" == "edit-new_profile-query" ]] || [[ "${page}" == "edit-new_prof
         $(window).on("load", function() {
             var _synocrModal = document.getElementById("popup-validation");
             $("#popup-validation").modal("show");
-            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
+            // Name input step needs explicit user action — no auto-dismiss
+            if (_synocrModal && '"${page}"' !== "edit-new_profile-query"
+                && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
                 if (typeof window.synocrAutoDismissModal === "function") {
                     window.synocrAutoDismissModal(_synocrModal, 2000);
                 }
@@ -750,7 +770,9 @@ if [[ "${page}" == "edit-restore-query" ]] || [[ "${page}" == "edit-restore" ]];
         $(window).on("load", function() {
             var _synocrModal = document.getElementById("popup-validation");
             $("#popup-validation").modal("show");
-            if (_synocrModal && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
+            // Confirm step needs explicit user action — no auto-dismiss
+            if (_synocrModal && '"${page}"' !== "edit-restore-query"
+                && !_synocrModal.querySelector(".text-danger") && !_synocrModal.querySelector(".text-warning")) {
                 if (typeof window.synocrAutoDismissModal === "function") {
                     window.synocrAutoDismissModal(_synocrModal, 2000);
                 }
@@ -2314,10 +2336,12 @@ if [[ "${page}" == "edit" ]]; then
 
                     echo '<hr><br>'
 
-                    # Regelsatz (ruleset_id) — alternative zur Tag-Liste (Vorrang, wenn gesetzt)
+                    # Regelsatz (ruleset_id) — ersetzt die Tag-Liste (Vorrang, wenn gesetzt).
+                    # Leere Tag-Liste / ohne YAML-Pfad: Block ausblenden (Soft-Migration zum Regeleditor).
                     _rs_rows=$(synocr_sqlite -json "SELECT id, name FROM ruleset ORDER BY name COLLATE NOCASE;") 2>/dev/null
+                    _taglist_trimmed=$(printf '%s' "${taglist:-}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
                     _taglist_block_style=""
-                    if [ -n "${ruleset_id:-}" ] && [ "${ruleset_id}" != "0" ]; then
+                    if { [ -n "${ruleset_id:-}" ] && [ "${ruleset_id}" != "0" ]; } || [ -z "${_taglist_trimmed}" ]; then
                         _taglist_block_style=' style="display:none;"'
                     fi
                     echo '
@@ -2358,7 +2382,7 @@ if [[ "${page}" == "edit" ]]; then
                         <div class="col-sm-2"></div>
                     </div>'
 
-                    # Taglist (ausgeblendet, wenn ein Regelsatz gewählt ist)
+                    # Taglist (ausgeblendet bei Regelsatz oder leerem Feld — Soft-Migration)
                     echo '
                     <div id="taglistBlock"'"${_taglist_block_style}"'>
                     <div class="row mb-3">
@@ -3514,8 +3538,11 @@ if [[ "${page}" == "edit" ]]; then
 
         function handleRulesetChange(selectElement) {
             var taglistBlock = document.getElementById("taglistBlock");
+            var taglistField = document.getElementById("taglist");
             if (!taglistBlock) return;
-            if (selectElement.value !== "0") {
+            var hasTaglist = taglistField && taglistField.value.trim() !== "";
+            // Hide when a ruleset is selected, or when no legacy taglist/YAML path exists.
+            if (selectElement.value !== "0" || !hasTaglist) {
                 taglistBlock.style.display = "none";
             } else {
                 taglistBlock.style.display = "block";

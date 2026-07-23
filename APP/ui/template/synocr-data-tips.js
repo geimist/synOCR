@@ -37,7 +37,12 @@
     function hideDataTip() {
         if (tipPopupEl) {
             tipPopupEl.hidden = true;
-            tipPopupEl.classList.remove("synocr-tip-popup-wide", "synocr-tip-popup-rich", "synocr-tip-popup-path");
+            tipPopupEl.classList.remove(
+                "synocr-tip-popup-wide",
+                "synocr-tip-popup-rich",
+                "synocr-tip-popup-path",
+                "synocr-tip-popup-has-warn"
+            );
             tipPopupEl.textContent = "";
         }
         tipActiveHost = null;
@@ -70,12 +75,24 @@
         return parts;
     }
 
+    function appendTipWarn(popup, host) {
+        var warn = host.getAttribute("data-tip-warn");
+        if (!warn) {
+            return;
+        }
+        popup.classList.add("synocr-tip-popup-rich", "synocr-tip-popup-has-warn");
+        var warnEl = document.createElement("div");
+        warnEl.className = "synocr-tip-warn";
+        warnEl.textContent = warn;
+        popup.appendChild(warnEl);
+    }
+
     function renderTipPopup(host) {
         var popup = ensureTipPopup();
         var tipKey = host.getAttribute("data-tip-key");
         var parts = tipKey ? tipPartsFromKey(tipKey) : null;
         popup.textContent = "";
-        popup.classList.remove("synocr-tip-popup-rich");
+        popup.classList.remove("synocr-tip-popup-rich", "synocr-tip-popup-has-warn");
         if (parts && parts.length) {
             popup.classList.add("synocr-tip-popup-rich");
             parts.forEach(function (part) {
@@ -84,6 +101,7 @@
                 el.textContent = part.text;
                 popup.appendChild(el);
             });
+            appendTipWarn(popup, host);
             return;
         }
         var text = host.getAttribute("data-tip");
@@ -105,15 +123,17 @@
                 lineEl.textContent = lines[li];
                 popup.appendChild(lineEl);
             }
+            appendTipWarn(popup, host);
             return;
         }
         if (text) {
             popup.textContent = text;
         }
+        appendTipWarn(popup, host);
     }
 
     function showDataTip(host) {
-        if (!host.getAttribute("data-tip") && !host.getAttribute("data-tip-key")) {
+        if (!host.getAttribute("data-tip") && !host.getAttribute("data-tip-key") && !host.getAttribute("data-tip-warn")) {
             return;
         }
         renderTipPopup(host);
@@ -134,7 +154,7 @@
         }
         document._synocrDataTipsBound = true;
         document.body.addEventListener("mouseover", function (e) {
-            var host = e.target.closest("[data-tip],[data-tip-key]");
+            var host = e.target.closest("[data-tip],[data-tip-key],[data-tip-warn]");
             if (!host) {
                 if (tipActiveHost && !tipActiveHost.contains(e.target)) {
                     hideDataTip();
@@ -149,7 +169,7 @@
             if (!tipActiveHost) {
                 return;
             }
-            if (e.target.closest("[data-tip],[data-tip-key]") !== tipActiveHost) {
+            if (e.target.closest("[data-tip],[data-tip-key],[data-tip-warn]") !== tipActiveHost) {
                 return;
             }
             var rel = e.relatedTarget;
@@ -159,7 +179,7 @@
             hideDataTip();
         });
         document.body.addEventListener("focusin", function (e) {
-            var host = e.target.closest("[data-tip],[data-tip-key]");
+            var host = e.target.closest("[data-tip],[data-tip-key],[data-tip-warn]");
             if (host) {
                 showDataTip(host);
             }
@@ -184,6 +204,15 @@
         el.removeAttribute("title");
     }
 
+    function applyDataTipWarn(el, text) {
+        if (!el || !text) {
+            return;
+        }
+        el.setAttribute("data-tip-warn", text);
+        el.removeAttribute("title");
+        el.classList.add("synocr-has-tip");
+    }
+
     function setLang(l) {
         lang = l;
     }
@@ -191,6 +220,7 @@
     window.synocrDataTips = {
         bindOnce: bindOnce,
         applyDataTip: applyDataTip,
+        applyDataTipWarn: applyDataTipWarn,
         setLang: setLang
     };
 })();

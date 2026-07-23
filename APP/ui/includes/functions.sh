@@ -836,23 +836,127 @@ synocr_needs_dockerimage_update() {
     return 1
 }
 
-# Sets global python_path (same search as prepare_python in synOCR.sh).
+# Pinned Python modules (Py>=3.8 ceiling for DSM7 x86_64; aarch64 runtime min is 3.9).
+# pymupdf/numpy/Pillow/pikepdf: blank page detection & PDF handling; apprise: notifications.
+# Keep pins at the highest versions that still declare requires_python supporting 3.8.
+synOCR_python_module_list=(
+    "DateTime==5.5"
+    "dateparser==1.2.2"
+    "pikepdf==9.2.1"
+    "Pillow==10.4.0"
+    "yq==4.1.2"
+    "PyYAML==6.0.3"
+    "apprise==1.9.3"
+    "pymupdf==1.24.11"
+    "numpy==1.24.4"
+)
+
+# Best-effort delete of leftover trash dirs (package-dir + /tmp).
+synocr_purge_python_env_trash() {
+    local parent="${1:-}"
+    local d
+    for d in ${parent:+"${parent}"/.python3_env_trash_*} /tmp/synOCR_python3_env_trash_*; do
+        [ -e "${d}" ] || continue
+        find "${d}" -depth -name '@eaDir' -type d -exec rm -rf {} + 2>/dev/null || true
+        chmod -R u+w "${d}" 2>/dev/null || true
+        rm -rf "${d}" 2>/dev/null || true
+    done
+}
+
+# Best-effort: delete a trash dir, optionally after moving it to /tmp.
+synocr_dispose_python_env_trash() {
+    local trash="$1"
+    local tmp_trash
+    [ -e "${trash}" ] || return 0
+
+    tmp_trash="/tmp/synOCR_python3_env_trash_$$"
+    # Prefer relocating out of the package tree (may be cross-device; ignore failure)
+    if [ "$(dirname "${trash}")" != "/tmp" ]; then
+        mv "${trash}" "${tmp_trash}" 2>/dev/null && trash="${tmp_trash}"
+    fi
+    find "${trash}" -depth -name '@eaDir' -type d -exec rm -rf {} + 2>/dev/null || true
+    chmod -R u+w "${trash}" 2>/dev/null || true
+    rm -rf "${trash}" 2>/dev/null || true
+}
+
+# Reset python3_env for $python_path.
+# Prefer in-place `venv --clear`. If that fails (typical with Synology @eaDir),
+# rename aside on the SAME filesystem so the original path is free — that rename
+# does not need to delete @eaDir. Success = original path gone OR fresh usable venv.
+# Trash deletion is best-effort and must not fail the reset.
+synocr_remove_python_env() {
+    local env_dir="${1:-${python3_env:-}}"
+    local trash parent
+
+    [ -n "${env_dir}" ] || return 0
+    parent=$(dirname "${env_dir}")
+    synocr_purge_python_env_trash "${parent}"
+
+    [ -e "${env_dir}" ] || return 0
+
+    # 1) In-place clear with the target interpreter
+    if [ -n "${python_path:-}" ] && [ -x "${python_path}" ]; then
+        if "${python_path}" -m venv --clear "${env_dir}" >/dev/null 2>&1 \
+            && [ -x "${env_dir}/bin/python3" ] && [ -f "${env_dir}/bin/activate" ]; then
+            return 0
+        fi
+    fi
+
+    # 2) Same-directory rename (same filesystem → atomic, works even with @eaDir inside)
+    trash="${parent}/.python3_env_trash_$$"
+    if mv "${env_dir}" "${trash}" 2>/dev/null; then
+        synocr_dispose_python_env_trash "${trash}"
+        [ ! -e "${env_dir}" ]
+        return $?
+    fi
+
+    # 3) Cross-device fallback to /tmp (can fail to remove source @eaDir — still try)
+    trash="/tmp/synOCR_python3_env_trash_$$"
+    if mv "${env_dir}" "${trash}" 2>/dev/null; then
+        synocr_dispose_python_env_trash "${trash}"
+        # Cross-device mv may leave env_dir partially behind; finish cleanup
+        if [ -e "${env_dir}" ]; then
+            find "${env_dir}" -depth -name '@eaDir' -type d -exec rm -rf {} + 2>/dev/null || true
+            chmod -R u+w "${env_dir}" 2>/dev/null || true
+            rm -rf "${env_dir}" 2>/dev/null || true
+        fi
+        [ ! -e "${env_dir}" ]
+        return $?
+    fi
+
+    # 4) Last resort: in-place delete
+    find "${env_dir}" -depth -name '@eaDir' -type d -exec rm -rf {} + 2>/dev/null || true
+    chmod -R u+w "${env_dir}" 2>/dev/null || true
+    rm -rf "${env_dir}" 2>/dev/null || true
+    [ ! -e "${env_dir}" ]
+}
+
+# Sets global python_path: newest suitable python3.x (sort -V).
+# Minimum: aarch64 >= 3.9 (dateparser/zoneinfo), otherwise >= 3.8 (DSM7 x86_64).
 synocr_resolve_python_path() {
     python_path=""
+    local min_py_version="3.8"
+    local best_line candidate py_version lowest
+
     if [ "${machinetyp:-}" = aarch64 ]; then
-        local python_versions py_interpreter py_version latest_py_version
-        IFS=$'\n' read -d '' -ra python_versions <<< "$(find /bin /usr/bin /usr/local/bin -maxdepth 1 -name 'python3.*' 2>/dev/null)" ; IFS="${IFSsaved:-$' \t\n'}"
-        latest_py_version="3.8"
-        for py_interpreter in "${python_versions[@]}"; do
-            py_version=$("${py_interpreter}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" 2>/dev/null) || continue
-            if [[ "${py_version}" > "${latest_py_version}" ]]; then
-                latest_py_version="${py_version}"
-                python_path="${py_interpreter}"
-            fi
-        done
-        [ "${latest_py_version}" = "3.8" ] && python_path=""
-    else
-        python_path="$(which python3 2>/dev/null)"
+        min_py_version="3.9"
+    fi
+
+    best_line=$(
+        {
+            find /bin /usr/bin /usr/local/bin -maxdepth 1 \( -name 'python3' -o -name 'python3.*' \) 2>/dev/null
+            command -v python3 2>/dev/null
+        } | sort -u | while IFS= read -r candidate; do
+            [ -n "${candidate}" ] && [ -x "${candidate}" ] || continue
+            py_version=$("${candidate}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" 2>/dev/null) || continue
+            lowest=$(printf '%s\n%s\n' "${min_py_version}" "${py_version}" | sort -V | head -n1)
+            [ "${lowest}" = "${min_py_version}" ] || continue
+            printf '%s\t%s\n' "${py_version}" "${candidate}"
+        done | sort -t "$(printf '\t')" -k1,1V | tail -n1
+    )
+
+    if [ -n "${best_line}" ]; then
+        python_path=$(printf '%s\n' "${best_line}" | cut -f2-)
     fi
 }
 
@@ -1393,7 +1497,12 @@ synocr_processing_jobs_json() {
             pj.source_filename AS source,
             pj.targets_json AS targets,
             pj.status AS status,
-            pj.started_at AS started_at
+            pj.started_at AS started_at,
+            CASE
+                WHEN pj.finished_at IS NOT NULL
+                THEN CAST((strftime('%s', pj.finished_at) - strftime('%s', pj.started_at)) AS INTEGER)
+                ELSE NULL
+            END AS duration_sec
         FROM processing_jobs pj
         LEFT JOIN config c ON c.profile_ID = pj.profile_ID
         ORDER BY pj.started_at DESC
@@ -1409,14 +1518,17 @@ synocr_processing_jobs_json() {
         source: .source,
         targets: (try (.targets | fromjson) catch []),
         status: .status,
-        started_at: .started_at
+        started_at: .started_at,
+        duration_sec: (if .duration_sec == null then null else .duration_sec end)
     }]' 2>/dev/null || printf '[]'
 }
 
 # Render processing-history list HTML (tbody rows).
 synocr_render_processing_history_rows() {
-    local jobs_json row id profile output_dir source status started_at targets_json
+    local jobs_json row id profile output_dir source status started_at duration_sec targets_json
         local status_class status_badge status_label status_h source_h profile_h started_h target target_h target_d targets_html
+        local time_td duration_fmt duration_tip duration_tip_h
+        local duration_tpl="${lang_main_history_duration:-Dauer: <x id='duration'/>}"
 
     jobs_json=$(synocr_processing_jobs_json)
     if [ "${jobs_json}" = "[]" ] || [ -z "${jobs_json}" ]; then
@@ -1432,6 +1544,7 @@ synocr_render_processing_history_rows() {
         source=$(printf '%s' "${row}" | jq -r '.source // ""')
         status=$(printf '%s' "${row}" | jq -r '.status // ""')
         started_at=$(printf '%s' "${row}" | jq -r '.started_at // ""')
+        duration_sec=$(printf '%s' "${row}" | jq -r '.duration_sec // empty')
         targets_json=$(printf '%s' "${row}" | jq -c '.targets // []')
 
         case "${status}" in
@@ -1457,6 +1570,14 @@ synocr_render_processing_history_rows() {
         started_h=$(synocr_html_escape "${started_at}")
         status_h=$(synocr_html_escape "${status_label}")
 
+        time_td='<td class="synocr-job-time small text-nowrap">'"${started_h}"'</td>'
+        if [ -n "${duration_sec}" ] && [ "${duration_sec}" -ge 0 ] 2>/dev/null; then
+            duration_fmt=$(_synocr_sec_to_time "${duration_sec}")
+            duration_tip=$(synocr_lang_fill_x "${duration_tpl}" duration "${duration_fmt}")
+            duration_tip_h=$(synocr_html_escape "${duration_tip}")
+            time_td='<td class="synocr-job-time small text-nowrap synocr-has-tip" data-tip="'"${duration_tip_h}"'">'"${started_h}"'</td>'
+        fi
+
         targets_html="-"
         if [ "$(printf '%s' "${targets_json}" | jq 'length' 2>/dev/null)" -gt 0 ] 2>/dev/null; then
             targets_html=""
@@ -1477,7 +1598,7 @@ synocr_render_processing_history_rows() {
         fi
 
         echo '<tr class="synocr-job-row '"${status_class}"'" data-job-id="'"${id}"'">'
-        echo '  <td class="synocr-job-time small text-nowrap">'"${started_h}"'</td>'
+        echo '  '"${time_td}"
         echo '  <td class="synocr-job-profile small">'"${profile_h}"'</td>'
         echo '  <td class="synocr-job-source small" title="'"${source_h}"'">'"${source_h}"'</td>'
         echo '  <td class="synocr-job-targets small">'"${targets_html}"'</td>'

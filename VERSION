@@ -39,8 +39,8 @@
     },
     "dsm7": {
       "beta": {
-        "releaseDate": "2026-07-11T14:00:00.000Z",
-        "version": "1.6.2",
+        "releaseDate": "2026-07-23T15:55:00.000Z",
+        "version": "1.9.99.2",
         "size": "",
         "checksum": "",
         "file": "",
@@ -53,7 +53,7 @@
         "size": "",
         "checksum": "",
         "file": "",
-        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.6.2/synOCR_v1.6.2.spk",
+        "downloadUrl": "https://github.com/geimist/synOCR/releases/download/v1.9.99.2-beta/synOCR_DSM7_v1.9.99.2.spk",
         "changeLogUrl": "https://raw.githubusercontent.com/geimist/synOCR/master/PKG_DSM7/CHANGELOG_CURRENT_RELEASE"
       }
     }

@@ -346,7 +346,8 @@
                 job.status,
                 job.source,
                 job.output_dir || "",
-                (job.targets || []).join("|")
+                (job.targets || []).join("|"),
+                job.duration_sec == null ? "" : String(job.duration_sec)
             ].join(":");
         }).join(";");
     }
@@ -359,6 +360,29 @@
             return { cls: "synocr-job-row--failed", badge: "failed", label: cfg.historyStatusFailed || "failed" };
         }
         return { cls: "synocr-job-row--running", badge: "running", label: cfg.historyStatusRunning || "running" };
+    }
+
+    /** Format seconds as HH:MM:SS (same as shell _synocr_sec_to_time). */
+    function formatDurationSec(sec) {
+        var n = Math.floor(Number(sec));
+        if (!isFinite(n) || n < 0) {
+            return "";
+        }
+        var h = Math.floor(n / 3600);
+        var m = Math.floor((n % 3600) / 60);
+        var s = n % 60;
+        function pad(v) {
+            return (v < 10 ? "0" : "") + String(v);
+        }
+        return pad(h) + ":" + pad(m) + ":" + pad(s);
+    }
+
+    function durationTipText(cfg, durationSec) {
+        var formatted = formatDurationSec(durationSec);
+        if (!formatted) {
+            return "";
+        }
+        return fillXTags(cfg.historyDurationTpl || "Dauer: <x id='duration'/>", { duration: formatted });
     }
 
     function renderStatusBadge(meta) {
@@ -438,9 +462,13 @@
             var source = escapeHtml(job.source || "");
             var profile = escapeHtml(job.profile || "");
             var started = escapeHtml(job.started_at || "");
+            var tip = durationTipText(cfg, job.duration_sec);
+            var timeTd = tip
+                ? '<td class="synocr-job-time small text-nowrap synocr-has-tip" data-tip="' + escapeHtml(tip) + '">' + started + "</td>"
+                : '<td class="synocr-job-time small text-nowrap">' + started + "</td>";
             return (
                 '<tr class="synocr-job-row ' + meta.cls + '" data-job-id="' + escapeHtml(String(job.id || "")) + '">' +
-                '<td class="synocr-job-time small text-nowrap">' + started + "</td>" +
+                timeTd +
                 '<td class="synocr-job-profile small">' + profile + "</td>" +
                 '<td class="synocr-job-source small" title="' + source + '">' + source + "</td>" +
                 '<td class="synocr-job-targets small">' + renderTargets(job.targets, job.output_dir, cfg) + "</td>" +

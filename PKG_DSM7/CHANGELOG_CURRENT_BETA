@@ -2,30 +2,29 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
-1.9.99.1 [2026-xx-xx]
-  
+1.9.99.2 [2026-07-23]
+ 
   IMPLEMENTATIONS:
- - [GUI]    🔥 visueller Regeledtitor implementiert
-            bisherige YAML-Regeln können zur schnellen Weiterverarbeitung in einen leeren Regelsatz importiert werden
- - [YAML]   🔥 Regeln können nun in Beziehung zueinander gebracht werden
- - [YAML]   🔥 es gibt einen einfachen RegEx-Editor für ein paar grundlegende Ausdrücke
- - [YAML]   Tooltips versuchen dem User erweiterte RegEx zu erklären
- - [YAML]   MultiLine Regex jetzt auch für den Zielpfad möglich
+ - [GUI]    🔥 Visual rule editor implemented
+            Existing YAML rules can be imported into an empty rule set for quick further editing
+ - [YAML]   🔥 Rules can now be related to each other
+ - [GUI]    🔥 Simple RegEx editor for a few basic expressions
+ - [GUI]    Live preview for RegEx against a PDF of your choice
+ - [GUI]    Tooltips try to explain advanced RegEx to the user
+ - [YAML]   MultiLine Regex now also possible for the target path
  
   IMPROVEMENT:
- - [GUI]    Statistik auf der Übersichtsseite wird live aktualisiert
- - [GUI]    Verarbeitungshistorie auf der Übersichtsseite (letzte 100 Jobs, live aktualisiert, mit Profil und Zieldateien)
-            Zielpfade lassen sich direkt per Klick in der FileStation öffnen
- - [GUI]    Die linke Navigationsleiste lässt sich jetzt auf Icongröße minimieren
- - [shell]  🔥 Internationale Datumsformate: synOCR erkennt nun Datumsangaben in verschiedenen Länderformaten zuverlässiger. 
-            ➜ Die im Profil eingestellte OCR-Sprache wird automatisch als Hinweis herangezogen, um mehrdeutige Schreibweisen (z. B. 02.07.2026 vs. 07/02/2026) korrekt zuzuordnen.
-            Robustere Erkennung von OCR-Fehlern: Typische Lesefehler bei Ziffern (O<>0, l<>1, A<>4, …) und bei Trennzeichen (".<>,", "-<>–") werden automatisch korrigiert
- - [shell]  Die virtuelle Pythonumgebung wird bei einem Update jetzt migriert und muss nich jedes mal neu erstellt werden.
- - [shell]  §tagname_RegEx / §dirname_RegEx: bei definiertem RegEx ohne Treffer wird der Platzhalter ersetzt (Tag: leer, Ordner: -) statt wörtlich im Pfad/Tag zu landen
- - [shell]  postscripts werden intern nicht mehr als Alias verarbeitet, was zusätzliche Namenskonventionen voraussetzte
-
-  BUGFIXES:
- - [shell]  Postscripts: Aliase entfernt — Regelnamen mit Leerzeichen/Sonderzeichen führten zu „invalid alias name“; Variablen (${output}, ${input1}, …) werden jetzt erst zur Laufzeit ausgewertet
- - [GUI]    Verarbeitungshistorie: Zielpfade gekürzt (Profil-OUTPUTDIR als Prefix), voller Pfad per Hover
- - [GUI]    Verarbeitungshistorie: Jobs nach Verschieben nach ERRORFILES (z. B. verschlüsselte PDFs) werden als fehlgeschlagen markiert; offene Jobs bei Abbruch per EXIT-Trap bzw. beim nächsten Lauf
-
+ - [GUI]    Statistics on the overview page are updated live
+ - [GUI]    Processing history on the overview page (last 100 jobs, live updated, with profile and target files)
+            ➜ Target paths can be opened directly in File Station with a click
+            ➜ Job duration as a tooltip on the timestamp
+ - [GUI]    The left navigation bar can now be minimized to icon size
+ - [GUI]    Positive confirmation dialogs show a countdown bar above the footer (auto-close)
+ - [shell]  🔥 International date formats: synOCR now recognizes dates in various country formats more reliably.
+            ➜ The OCR language set in the profile is automatically used as a hint to correctly resolve ambiguous notations (e.g. 02.07.2026 vs. 07/02/2026).
+            More robust detection of OCR errors: Typical reading errors for digits (O<>0, l<>1, A<>4, …) and separators (".<>,", "-<>–") are corrected automatically
+ - [shell]  The virtual Python environment is now migrated on update and no longer has to be recreated every time.
+ - [shell]  Python modules pinned (Py≥3.8): e.g. numpy 1.24.4, pikepdf 9.2.1, pymupdf 1.24.11, Pillow 10.4.0, dateparser 1.2.2; pypdf removed
+ - [shell]  x86_64: newest suitable python3.x (≥3.8) analogous to aarch64 (≥3.9)
+ - [shell]  §tagname_RegEx / §dirname_RegEx: if a RegEx is defined but has no match, the placeholder is replaced (tag: empty, folder: -) instead of ending up literally in the path/tag
+ - [shell]  Postscripts are no longer processed internally as aliases, which previously required additional naming conventions

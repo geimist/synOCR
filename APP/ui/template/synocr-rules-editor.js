@@ -222,20 +222,39 @@
         return (t && t !== key) ? t : '';
     }
 
-    function labeled(text, tipKey) {
+    function labeled(text, tipKey, warnKey) {
         var attrs = { class: 'synocr-rule-tip-label' };
         var t = tipKey ? tip(tipKey) : '';
         if (t) {
             attrs['data-tip'] = t;
             attrs.class += ' synocr-has-tip';
         }
-        return h('label', attrs, text);
+        var el = h('label', attrs, text);
+        var w = warnKey ? tip(warnKey) : '';
+        if (w) {
+            if (window.synocrDataTips && typeof window.synocrDataTips.applyDataTipWarn === 'function') {
+                window.synocrDataTips.applyDataTipWarn(el, w);
+            } else {
+                el.setAttribute('data-tip-warn', w);
+                el.classList.add('synocr-has-tip');
+            }
+        }
+        return el;
     }
 
-    function setTip(el, tipKey) {
+    function setTip(el, tipKey, warnKey) {
         if (!el || !tipKey) return;
         applyDataTip(el, tip(tipKey));
         if (el.getAttribute('data-tip')) el.classList.add('synocr-has-tip');
+        var w = warnKey ? tip(warnKey) : '';
+        if (w) {
+            if (window.synocrDataTips && typeof window.synocrDataTips.applyDataTipWarn === 'function') {
+                window.synocrDataTips.applyDataTipWarn(el, w);
+            } else {
+                el.setAttribute('data-tip-warn', w);
+                el.classList.add('synocr-has-tip');
+            }
+        }
     }
 
     function fromBlob(blob) {
@@ -565,6 +584,30 @@
         return fieldPrimaryCell(label, inp, tipKey, withAppriseHelp);
     }
 
+    /** Postscript: tip with warning block + live inline warn when field is non-empty. */
+    function fieldPostscript(value, onInput) {
+        var inp = h('input', {
+            type: 'text',
+            class: 'form-control form-control-sm',
+            value: value || ''
+        });
+        var hasVal = !!(value && String(value).trim());
+        var warnAttrs = { class: 'synocr-postscript-warn' };
+        if (!hasVal) warnAttrs.hidden = true;
+        var warn = h('div', warnAttrs, L('postscript_warn_short'));
+        setTip(inp, 'help_postscript', 'help_postscript_warn');
+        inp.addEventListener('input', function () {
+            onInput(inp.value);
+            if (inp.value.trim()) warn.removeAttribute('hidden');
+            else warn.setAttribute('hidden', '');
+        });
+        return h('div', { class: 'synocr-rule-field' }, [
+            labeled(L('postscript'), 'help_postscript', 'help_postscript_warn'),
+            inp,
+            warn
+        ]);
+    }
+
     function fieldPrimarySelect(label, sel, tipKey) {
         return fieldPrimaryCell(label, sel, tipKey, false);
     }
@@ -838,7 +881,7 @@
             fieldPrimaryRefList(L('excludes'), r.excludes, function (v) { r.excludes = v; }, 'help_excludes')
         ]));
         detailsInner.appendChild(detailsGridRow([
-            fieldPrimaryText(L('postscript'), r.postscript, function (v) { r.postscript = v; }, undefined, 'help_postscript'),
+            fieldPostscript(r.postscript, function (v) { r.postscript = v; }),
             fieldPrimaryText(L('apprise'), r.apprise_call, function (v) { r.apprise_call = v; }, undefined, 'help_apprise', true)
         ]));
         detailsInner.appendChild(detailsGridRow([

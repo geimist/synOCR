@@ -66,9 +66,7 @@
     python3_env="${APPDIR}/python3_env"
     LOCKFILE="${APPDIR}/etc/synOCR.lock"
     python_check=ok             # will be set to failed if the test fails
-    synOCR_python_module_list=( DateTime dateparser "pypdf==3.5.1" "pikepdf==7.1.2" Pillow yq PyYAML "apprise==1.9.3" "pymupdf==1.24.11" "numpy==1.19.5" ) 
-                                # "pymupdf==1.18.6" & "numpy==1.19.5" for blank page detection
-                                # apprise for notification
+    # synOCR_python_module_list is defined in includes/functions.sh (pinned, Py>=3.8)
 
 
 # Lockfile check & creation
@@ -1731,150 +1729,160 @@ prepare_python()
 #                                                                                       #
 #########################################################################################
 
-python_path=""
+    local min_py_version="3.8"
+    local python_env_path env_version py_version module moduleName modulePinnedVer moduleInstalledVer tmp_log1 tmp_log2
 
-# check python for aarch64:
-# ---------------------------------------------------------------------
-# Reason for the check: dateparser cannot be installed due to an incompatibility of the backports.zoneinfo dependency. This dependency no longer exists as of Python3.9
-if [ "${machinetyp}" = aarch64 ]; then
-    log_item_n "check if aarch64 has at least Python 3.9 installed: "
-    # Search for available Python versions and store them in an array
-    IFS=$'\n' read -d '' -ra python_versions <<< "$(find /bin /usr/bin /usr/local/bin -maxdepth 1 -name 'python3.*')" ; IFS="${IFSsaved}"
-
-    # Loop over the found versions to determine the latest version
-    latest_py_version="3.8"
-    for py_interpreter in "${python_versions[@]}"; do
-        # Extract the version number from the interpreter:
-        py_version=$("${py_interpreter}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" )
-
-        # Compare the version with the highest version so far
-        if [[ "${py_version}" > "${latest_py_version}" ]]; then
-            # Check if this version is 3.9 or higher by reading it from the interpreter
-            latest_py_version="${py_version}"
-            python_path="${py_interpreter}"
-        fi
-    done
-
-    # Check if a suitable version was found
-    if [ "${latest_py_version}" != "3.8" ]; then
-        echo "Python 3.9 or higher found: ${latest_py_version}"
-    else
-        synocr_fail_fatal "No suitable Python version (>=3.9) found on ${machinetyp}. Please install at least Python 3.9"
+    # Newest suitable interpreter (x86_64 >=3.8, aarch64 >=3.9); see synocr_resolve_python_path
+    # aarch64 min 3.9: dateparser / backports.zoneinfo incompatibility on older Python
+    synocr_resolve_python_path
+    if [ "${machinetyp}" = aarch64 ]; then
+        min_py_version="3.9"
     fi
-else
-    python_path="$(which python3)"
-fi
 
-# Does the virtual Python environment match the chosen interpreter? Otherwise delete the environment:
-# ---------------------------------------------------------------------
-if [ -d "${python3_env}" ]; then
-    local python_env_path=${python3_env}/bin/python3
-    local env_version
-    local py_version
-    env_version=$("${python_env_path}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))")
-    py_version=$("${python_path}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))")
-    # Compare the version with the highest version so far
-    if [[ "${env_version}" != "${py_version}" ]]; then
-        log_warn_at "virtual Python environment does not match selected interpreter (${env_version} != ${py_version}) — deleting ${python3_env}"
-        rm -r "${python3_env}"
-    fi
-fi
-
-# check python3 environment:
-# ---------------------------------------------------------------------
     log_debug "  Check Python:"
     if [ -z "${python_path}" ]; then
-##    if [ ! "$(which python3)" ]; then
-        log_error_at "Python3 not installed — fallback to regex date search"
-        log_item "  for more precise search results Python3 is required"
+        log_error_at "No suitable Python version (>=${min_py_version}) found on ${machinetyp:-unknown} — fallback to regex date search"
+        log_item "  for more precise search results Python >=${min_py_version} is required"
         python_check=failed
         return 1
-    else
-        [ ! -d "${python3_env}" ] && "${python_path}" -m venv "${python3_env}"
-        source "${python3_env}/bin/activate"
+    fi
 
-        if [ "$(head -n1 "${python3_env}/synOCR_python_env_version" 2>/dev/null)" != "${local_version}" ]; then
-            log_debug "python3 already installed (${python_path})"
+    py_version=$("${python_path}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" 2>/dev/null)
+    log_item "selected Python interpreter: ${python_path} (${py_version})"
 
-        # check / install pip:
-        # ---------------------------------------------------------------------
-            log_debug "  Check pip:"
-            if ! python3 -m pip --version > /dev/null  2>&1 ; then
-                log_item_n "Python3 pip was not found and will be now installed: "
-                # install pip:
-                tmp_log1=$(python3 -m ensurepip --default-pip)
-                # upgrade pip:
-                tmp_log2=$(python3 -m pip install --upgrade pip)
-                # check install:
-                if python3 -m pip --version > /dev/null  2>&1 ; then
-                    echo "ok"
-                else
-                    log_error_at "pip install failed for ${python_path} — please install Python3 pip manually"
-                    log_item "  install log:"
-                    echo "${tmp_log1}" | log_block "${_LOG_INDENT}  "
-                    echo "${tmp_log2}" | log_block "${_LOG_INDENT}  "
+    # Recreate venv only when interpreter changed or env is broken.
+    # Normal synOCR upgrades only sync pins (below) — no trash, no recreate.
+    # Prefer venv --clear; fallback: same-dir rename (DSM @eaDir-safe), then create.
+    # ---------------------------------------------------------------------
+    if [ -d "${python3_env}" ]; then
+        python_env_path=${python3_env}/bin/python3
+        if [ -x "${python_env_path}" ]; then
+            env_version=$("${python_env_path}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" 2>/dev/null)
+            if [[ "${env_version}" != "${py_version}" ]]; then
+                log_warn_at "virtual Python environment does not match selected interpreter (${env_version} != ${py_version}) — recreating ${python3_env}"
+                if ! synocr_remove_python_env "${python3_env}"; then
+                    log_error_at "failed to reset Python environment at ${python3_env} — aborting"
                     python_check=failed
                     return 1
                 fi
-            else
-                if python3 -m pip list 2>&1 | grep -q "version.*is available" ; then
-                    log_note "pip already installed ($(python3 -m pip --version)) / upgrade available ..."
-                    python3 -m pip install --upgrade pip | log_block "${_LOG_INDENT}  "
-                else
-                    log_debug "pip already installed ($(python3 -m pip --version))"
-                fi
             fi
-
-            log_debug "  read installed python modules:"
-
-            moduleList=$(python3 -m pip list 2>/dev/null)
-
-            if _synocr_log_ge2; then
-                log_debug "installed python modules:"
-                echo "${moduleList}" | log_block "${_LOG_INDENT}  "
+        else
+            log_warn_at "virtual Python environment incomplete — recreating ${python3_env}"
+            if ! synocr_remove_python_env "${python3_env}"; then
+                log_error_at "failed to reset incomplete Python environment at ${python3_env} — aborting"
+                python_check=failed
+                return 1
             fi
-
-            # check / install python modules:
-            # ---------------------------------------------------------------------
-            echo -e
-            for module in "${synOCR_python_module_list[@]}"; do
-                moduleName=$(echo "${module}" | awk -F'=' '{print $1}' )
-
-                unset tmp_log1
-                log_item_n "check python module \"${module}\": "
-                if !  grep -qi "${moduleName}" <<<"${moduleList}"; then
-                    log_item_n "${module} was not found and will be installed: "
-
-                    # install module:
-                    tmp_log1=$(python3 -m pip install "${module}")
-
-                    # check install:
-                    if grep -qi "${moduleName}" <<<"$(python3 -m pip list 2>/dev/null)" ; then
-                        echo "ok"
-                    else
-                        log_error_at "Python module '${module}' install failed — please install manually"
-                        log_item "  install log:" && echo "${tmp_log1}" | log_block "${_LOG_INDENT}  "
-                        python_check=failed
-                        return 1
-                    fi
-                else
-                    printf "ok\n"
-                fi
-            done
-
-            if [ "${python_check}" = ok ]; then
-                echo "${local_version}" > "${python3_env}/synOCR_python_env_version"
-            else
-                echo "0" > "${python3_env}/synOCR_python_env_version"
-            fi
-
-            if [ "${dsm_version}" = "7" ] && [ "${synOCR_user}" = root ]; then
-                chown -R synOCR:administrators "${python3_env}"
-                chmod -R 755 "${python3_env}"
-            fi
-
-            printf "\n"
         fi
+    fi
+
+    if [ ! -x "${python3_env}/bin/python3" ] || [ ! -f "${python3_env}/bin/activate" ]; then
+        if [ -e "${python3_env}" ]; then
+            if ! synocr_remove_python_env "${python3_env}"; then
+                log_error_at "failed to clear ${python3_env} before venv create — aborting"
+                python_check=failed
+                return 1
+            fi
+        fi
+        # synocr_remove_python_env may already have created a fresh venv via --clear
+        if [ ! -x "${python3_env}/bin/python3" ] || [ ! -f "${python3_env}/bin/activate" ]; then
+            log_item_n "create virtual Python environment (${python_path}): "
+            if "${python_path}" -m venv "${python3_env}"; then
+                echo "ok"
+            else
+                log_error_at "python venv creation failed with ${python_path}"
+                python_check=failed
+                return 1
+            fi
+        fi
+    fi
+
+    if [ ! -f "${python3_env}/bin/activate" ]; then
+        log_error_at "Python environment activate script missing at ${python3_env}/bin/activate"
+        python_check=failed
+        return 1
+    fi
+    # shellcheck disable=SC1091
+    source "${python3_env}/bin/activate"
+
+    if [ "$(head -n1 "${python3_env}/synOCR_python_env_version" 2>/dev/null)" != "${local_version}" ]; then
+        log_debug "python3 already installed (${python_path}) — sync pinned modules for synOCR ${local_version}"
+
+        # check / install pip:
+        # ---------------------------------------------------------------------
+        log_debug "  Check pip:"
+        if ! python3 -m pip --version > /dev/null  2>&1 ; then
+            log_item_n "Python3 pip was not found and will be now installed: "
+            tmp_log1=$(python3 -m ensurepip --default-pip)
+            tmp_log2=$(python3 -m pip install --upgrade pip)
+            if python3 -m pip --version > /dev/null  2>&1 ; then
+                echo "ok"
+            else
+                log_error_at "pip install failed for ${python_path} — please install Python3 pip manually"
+                log_item "  install log:"
+                echo "${tmp_log1}" | log_block "${_LOG_INDENT}  "
+                echo "${tmp_log2}" | log_block "${_LOG_INDENT}  "
+                python_check=failed
+                return 1
+            fi
+        else
+            if python3 -m pip list 2>&1 | grep -q "version.*is available" ; then
+                log_note "pip already installed ($(python3 -m pip --version)) / upgrade available ..."
+                python3 -m pip install --upgrade pip | log_block "${_LOG_INDENT}  "
+            else
+                log_debug "pip already installed ($(python3 -m pip --version))"
+            fi
+        fi
+
+        if _synocr_log_ge2; then
+            log_debug "installed python modules (before pin sync):"
+            python3 -m pip list 2>/dev/null | log_block "${_LOG_INDENT}  "
+        fi
+
+        # Force pinned versions on every synOCR upgrade (pip install -U):
+        # ---------------------------------------------------------------------
+        echo -e
+        for module in "${synOCR_python_module_list[@]}"; do
+            moduleName=$(echo "${module}" | awk -F'=' '{print $1}')
+            modulePinnedVer=$(echo "${module}" | awk -F'==' '{print $2}')
+
+            unset tmp_log1
+            log_item_n "sync python module \"${module}\": "
+            tmp_log1=$(python3 -m pip install -U "${module}" 2>&1)
+            moduleInstalledVer=$(python3 -m pip show "${moduleName}" 2>/dev/null | awk -F': ' '/^Version:/{print $2; exit}')
+
+            if [ -n "${moduleInstalledVer}" ] && { [ -z "${modulePinnedVer}" ] || [ "${moduleInstalledVer}" = "${modulePinnedVer}" ]; }; then
+                echo "ok (${moduleInstalledVer})"
+            else
+                log_error_at "Python module '${module}' install/upgrade failed — please install manually"
+                log_item "  install log:" && echo "${tmp_log1}" | log_block "${_LOG_INDENT}  "
+                python_check=failed
+                return 1
+            fi
+        done
+
+        # Remove obsolete dependency left from older synOCR versions:
+        if python3 -m pip show pypdf >/dev/null 2>&1; then
+            log_item_n "remove obsolete python module pypdf: "
+            if python3 -m pip uninstall -y pypdf >/dev/null 2>&1; then
+                echo "ok"
+            else
+                echo "skipped"
+            fi
+        fi
+
+        if [ "${python_check}" = ok ]; then
+            echo "${local_version}" > "${python3_env}/synOCR_python_env_version"
+        else
+            echo "0" > "${python3_env}/synOCR_python_env_version"
+        fi
+
+        if [ "${dsm_version}" = "7" ] && [ "${synOCR_user}" = root ]; then
+            chown -R synOCR:administrators "${python3_env}"
+            chmod -R 755 "${python3_env}"
+        fi
+
+        printf "\n"
     fi
 
     if _synocr_log_ge2; then
@@ -2197,20 +2205,6 @@ rename()
 
             log_item "used metadata:"
             echo "${py_meta}" | log_block
-
-            # get previous metadata - maybe for feature use:
-    #        get_previous_meta(){
-    #            {   echo "import pprint"
-    #                echo "from pypdf import PdfFileReader, PdfFileMerger"
-    #                echo "if __name__ == '__main__':"
-    #                echo "    file_in = open('${outputtmp}', 'rb')"
-    #                echo "    pdf_reader = PdfFileReader(file_in)"
-    #                echo "    metadata = pdf_reader.getDocumentInfo()"
-    #                echo "    pprint.pprint(metadata)"
-    #                echo "    file_in.close()"
-    #            } | python3
-    #        }
-    #       previous_meta=$(get_previous_meta)
 
             outputtmpMeta="${outputtmp}_meta.pdf"
 
@@ -2802,20 +2796,9 @@ py_page_count()
 # This function receives a PDF file path and give back number of pages                  #
 #########################################################################################
 
-# As of version 1.19.0 (March 2022), PEP8-compliant naming was introduced:
     python3 -c "import sys, os, fitz; \
                 path = os.path.abspath(sys.argv[1]); \
                 print(fitz.open(path).page_count)" "$1"
-
-# Version 1.18.6 used the old CamelCase notation:
-#    python3 -c "import sys, os, fitz; \
-#                path = os.path.abspath(sys.argv[1]); \
-#                doc = fitz.open(path); \
-#                print(doc.pageCount)" "$1"
-
-#    python3 -c "import sys, os, pypdf; \
-#                path = os.path.abspath(sys.argv[1]); \
-#                print(len(pypdf.PdfReader(path).pages))" "$1"
 }
 
 
@@ -3580,7 +3563,7 @@ while read -r input ; do
 
     if [ -z "${pagecount_latest}" ]; then
         pagecount_latest=0
-        log_error_at "page count failed — pdfinfo/exiftool/pypdf returned no value for ${output}"
+        log_error_at "page count failed — pdfinfo/exiftool/pymupdf returned no value for ${output}"
     fi
 
     global_pagecount_new="$((global_pagecount_new+pagecount_latest))"

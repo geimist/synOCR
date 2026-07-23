@@ -583,6 +583,24 @@ a.btn.synocr-btn-outline-blue:focus {
     transform-origin: 50% 50%;
 }
 
+/* Auto-dismiss countdown bar (positive confirmation modals) */
+.synocr-ad-timer {
+    height: 3px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background-color: #d7dfe8;
+}
+
+.synocr-ad-timer__bar {
+    height: 100%;
+    width: 100%;
+    background-color: #0086E5;
+}
+
+.synocr-ad-modal > .modal-footer {
+    border-top-width: 0;
+}
+
 .synocr-progress-details {
     display: grid;
     grid-template-columns: 9.5rem 1fr;
@@ -740,6 +758,13 @@ a.btn.synocr-btn-outline-blue:focus {
 .synocr-job-status-badge--running {
     color: #0086E5;
     background-color: #e8f3fc;
+}
+
+.synocr-job-time.synocr-has-tip[data-tip] {
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.12em;
+    text-decoration-color: rgba(0, 134, 229, 0.45);
 }
 
 .synocr-job-target {
@@ -974,13 +999,42 @@ a.btn.synocr-btn-outline-blue:focus {
 .synocr-tip-popup .synocr-tip-line:last-child {
     margin-bottom: 0;
 }
+.synocr-tip-popup.synocr-tip-popup-has-warn {
+    border-color: #c9a227;
+    max-width: 26rem;
+}
+.synocr-tip-popup .synocr-tip-warn {
+    margin-top: 0.45rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid #e0b84a;
+    background-color: #fff6da;
+    color: #5c4800;
+    font-weight: 600;
+    line-height: 1.35;
+}
+.synocr-postscript-warn {
+    margin-top: 0.3rem;
+    margin-bottom: 0;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid #e0b84a;
+    background-color: #fff6da;
+    color: #5c4800;
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+.synocr-postscript-warn[hidden] {
+    display: none !important;
+}
 .synocr-rule-tip-label[data-tip],
 label.synocr-has-tip[data-tip],
 span.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle):not(.synocr-job-target--link),
 input.synocr-has-tip[data-tip],
 select.synocr-has-tip[data-tip],
 textarea.synocr-has-tip[data-tip],
-[data-tip-key].synocr-has-tip {
+[data-tip-key].synocr-has-tip,
+[data-tip-warn].synocr-has-tip {
     cursor: help;
 }
 button.synocr-has-tip[data-tip]:not(.synocr-rule-drag-handle),
