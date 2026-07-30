@@ -24,8 +24,8 @@ if [[ "${mainpage}" == edit ]]; then
     fi
 
     echo '
-        <footer>
-            <div class="fixed-bottom bg-white p-4 border-top border-light border-5">
+        <footer class="synocr-edit-footer">
+            <div class="synocr-edit-footer-bar bg-white p-4 border-top border-light border-5">
                 <div style="text-align: right;">
                     <button name="page" value="edit-save" class="btn btn-white btn-sm" style="color: #FFFFFF; background-color: #0086E5;">'"${lang_buttonsave}"'</button>&nbsp;
                     <button name="page" value="edit-new_profile-query" class="btn btn-warning btn-sm">'"${lang_foot_buttonnewprofile}"'</button>&nbsp;

@@ -172,6 +172,8 @@
     synocr_content_scroll_class="synocr-content-scroll"
     if [ "${mainpage}" = "main" ]; then
         synocr_content_scroll_class="synocr-content-scroll synocr-main-page-active"
+    elif [ "${mainpage}" = "edit" ]; then
+        synocr_content_scroll_class="synocr-content-scroll synocr-edit-page-active"
     fi
     
     "${set_var}" "${var}" "page" ""
@@ -354,6 +356,10 @@ echo '
                 <div class="col synocr-content-col">
                     <form action="index.cgi" method="get" autocomplete="on" class="'"${synocr_content_scroll_class}"'">'
 
+                        if [ "${mainpage}" = "edit" ]; then
+                            echo '<div class="synocr-edit-scroll-body">'
+                        fi
+
                         # Dynamic page reloading
                         if [ -z "${mainpage}" ]; then
                             echo 'The page could not be found!'
@@ -364,6 +370,10 @@ echo '
                             else
                                 . ./GUI_main.sh
                             fi
+                        fi
+
+                        if [ "${mainpage}" = "edit" ]; then
+                            echo '</div><!-- synocr-edit-scroll-body -->'
                         fi
 
                         # Footer
@@ -380,18 +390,17 @@ echo '
 
     <!-- Include bootstrap JavaScript 5.3.2 -->
     <script src="'${synocr_bootstrap_js_src}'"></script>
-    <script src="'${synocr_nav_js_src}'"></script>'
+    <script src="'${synocr_nav_js_src}'"></script>
+    <script src="'"${synocr_data_tips_js_src}"'"></script>'
 # Main page: live progress script after bootstrap, outside the form
 if [ "${mainpage}" = "main" ] && [ -n "${synocr_progress_config_json:-}" ]; then
     echo '
-    <script src="'"${synocr_data_tips_js_src}"'"></script>
     <script src="'"${synocr_filestation_js_src}"'"></script>
     <script type="application/json" id="synocr-progress-config">'"${synocr_progress_config_json}"'</script>
     <script src="'"${synocr_progress_js_src}"'"></script>'
 fi
 if [[ "${synocr_request_page}" == rules-edit-* ]]; then
     echo '
-    <script src="'"${synocr_data_tips_js_src}"'"></script>
     <script src="'"${synocr_rules_editor_js_src}"'"></script>
     <script src="'"${synocr_folderpicker_js_src}"'"></script>
     <script src="'"${synocr_namesyntax_editor_js_src}"'"></script>

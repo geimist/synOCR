@@ -223,4 +223,11 @@
         applyDataTipWarn: applyDataTipWarn,
         setLang: setLang
     };
+
+    // Bind on every page that loads this script (list views, history, editor, …).
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bindOnce);
+    } else {
+        bindOnce();
+    }
 })();

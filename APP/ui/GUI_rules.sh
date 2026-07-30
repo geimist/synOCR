@@ -277,11 +277,21 @@ rules_list_view() {
         _desc_h=$(rules_html_escape "${_desc}")
         [ -z "${_desc_h}" ] && _desc_h="${lang_rules_no_description}"
 
+        _assigned_span_attrs='class="text-secondary small"'
+        if [ "${_assigned}" -eq 0 ] && [ -n "${lang_rules_assigned_none_tooltip:-}" ]; then
+            _assigned_tip=$(synocr_lang_fill_x "${lang_rules_assigned_none_tooltip}" \
+                page "${lang_page2}" \
+                section "${lang_edit_set2_title}" \
+                field "${lang_edit_ruleset_label}")
+            _assigned_tip_h=$(rules_html_escape "${_assigned_tip}")
+            _assigned_span_attrs='class="text-secondary small synocr-has-tip" data-tip="'"${_assigned_tip_h}"'"'
+        fi
+
         echo '
                 <tr>
                     <td class="synocr-rulesets-col-name">
                         <strong>'"${_name_h}"'</strong><br>
-                        <span class="text-secondary small">'"${_assigned}"' '"${lang_rules_assigned_profiles}"'</span>
+                        <span '"${_assigned_span_attrs}"'>'"${_assigned}"' '"${lang_rules_assigned_profiles}"'</span>
                     </td>
                     <td class="synocr-rulesets-col-desc">'"${_desc_h}"'</td>
                     <td class="text-center synocr-rulesets-col-count">'"${_count}"'</td>

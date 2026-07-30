@@ -501,6 +501,28 @@ a.btn.synocr-btn-outline-blue:focus {
     box-sizing: border-box;
 }
 
+/* Edit page: footer stays in the content column (not over the nav) */
+.synocr-content-scroll.synocr-edit-page-active {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.synocr-edit-scroll-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.synocr-edit-footer {
+    flex: 0 0 auto;
+}
+
+.synocr-edit-footer-bar {
+    width: 100%;
+}
+
 @media (max-width: 767.98px) {
     .synocr-layout,
     .synocr-nav-col,
@@ -508,6 +530,14 @@ a.btn.synocr-btn-outline-blue:focus {
     .synocr-content-scroll {
         height: auto;
         max-height: none;
+    }
+
+    .synocr-content-scroll.synocr-edit-page-active {
+        overflow: visible;
+    }
+
+    .synocr-edit-scroll-body {
+        overflow: visible;
     }
 
     .synocr-layout {
