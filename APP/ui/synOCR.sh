@@ -66,7 +66,7 @@
     python3_env="${APPDIR}/python3_env"
     LOCKFILE="${APPDIR}/etc/synOCR.lock"
     python_check=ok             # will be set to failed if the test fails
-    # synOCR_python_module_list is defined in includes/functions.sh (pinned, Py>=3.8)
+    # synOCR_python_module_list: tiered pins via synocr_resolve_python_module_list (functions.sh)
 
 
 # Lockfile check & creation
@@ -1748,6 +1748,7 @@ prepare_python()
     fi
 
     py_version=$("${python_path}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" 2>/dev/null)
+    synocr_resolve_python_module_list "${py_version}"
     log_item "selected Python interpreter: ${python_path} (${py_version})"
 
     # Recreate venv only when interpreter changed or env is broken.
@@ -2120,12 +2121,75 @@ replace_variables()
 }
 
 
+same_filesystem()
+{
+#########################################################################################
+# Returns 0 when both paths reside on the same filesystem (device ID).                  #
+#########################################################################################
+
+    local path_a="$1"
+    local path_b="$2"
+    local dev_a dev_b
+
+    dev_a=$(stat -c %d "$(dirname "${path_a}")" 2>/dev/null) || return 1
+    dev_b=$(stat -c %d "$(dirname "${path_b}")" 2>/dev/null) || return 1
+    [ -n "${dev_a}" ] && [ -n "${dev_b}" ] && [ "${dev_a}" = "${dev_b}" ]
+}
+
+
+place_or_link_target()
+{
+#########################################################################################
+# Place $output as copy or hard link for multi-target sorting.                           #
+# First target: copy from temp file or --keep_hash source; further targets on the same   #
+# filesystem: hard link from $link_source; cross-device: copy from $link_source.        #
+# Uses globals: link_source, output, outputtmp, keep_hash, keep_hash_input              #
+#########################################################################################
+
+    local commandlog commandlog_rc
+
+    if [ -z "${link_source}" ]; then
+        log_item "  copy (first target)"
+        if [[ "${keep_hash}" = "true" ]]; then
+            cp -a "${keep_hash_input}" "${output}"
+        else
+            cp "${outputtmp}" "${output}"
+        fi
+        link_source="${output}"
+    elif same_filesystem "${link_source}" "${output}"; then
+        log_item "  set a hard link from ${link_source}"
+        commandlog=$(cp -l "${link_source}" "${output}" 2>&1)
+        commandlog_rc=$?
+
+        if [ "${commandlog_rc}" -ne 0 ] || [ "$(stat -c %s "${output}" 2>/dev/null || echo 0)" -eq 0 ] || [ ! -f "${output}" ]; then
+            log_item "  ${commandlog}"
+            log_warn_at "hard link failed for ${output}, using file copy"
+            if _synocr_log_ge2; then
+                log_debug "list of mounted volumes:"
+                df -h --output=source,target | log_block "${_LOG_INDENT}      "
+                log_blank
+            fi
+            cp -f "${link_source}" "${output}"
+        fi
+    else
+        log_item "  copy (cross-device from ${link_source})"
+        cp "${link_source}" "${output}"
+    fi
+
+    file_processing_log 2 "${output}"
+    synocr_processing_job_add_target "${output}"
+    [[ "${keep_hash}" != "true" ]] && adjust_attributes "${keep_hash_input}" "${output}"
+}
+
+
 rename()
 {
 # rename target file:
 # ---------------------------------------------------------------------
     log_item "renaming:"
     outputtmp="${output}"
+    outputtmp_cleanup="${outputtmp}"
+    link_source=""
     
     if [ -z "${NameSyntax}" ]; then
         # if no renaming syntax was specified by the user, the source filename will be used
@@ -2342,44 +2406,7 @@ rename()
             if echo -e "${DestFolderList}" | grep -q "^${tagarray[$i]}$" ; then
                 log_item "  same file has already been copied into target folder (${tagarray[$i]}) and is skipped!"
             else
-                if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
-                    log_item "  do not set a hard link when copying across volumes"
-                    # do not set a hardlink when copying across volumes:
-                    if [[ "${keep_hash}" = "true" ]]; then
-                        cp -a "${keep_hash_input}" "${output}"
-                    else
-                        cp "${outputtmp}" "${output}"
-                    fi
-                   file_processing_log 2 "${output}"
-        synocr_processing_job_add_target "${output}"
-                else
-                    log_item "  set a hard link"
-                    if [[ "${keep_hash}" = "true" ]]; then
-                        commandlog=$(cp -al "${keep_hash_input}" "${output}" 2>&1 )
-                    else
-                        commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
-                    fi
-                    commandlog_rc=$?
-
-                    # check: - creating hard link don't fails / - target file is valid (not empty)
-                    if [ "${commandlog_rc}" -ne 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
-                        log_item "  ${commandlog}"
-                        log_warn_at "hard link failed for ${output}, using file copy"
-                        if _synocr_log_ge2; then
-                            log_debug "list of mounted volumes:"
-                            df -h --output=source,target | log_block "${_LOG_INDENT}      "
-                            log_blank
-                        fi
-                        if [[ "${keep_hash}" = "true" ]]; then
-                            cp -fa "${keep_hash_input}" "${output}"
-                        else
-                            cp -f "${outputtmp}" "${output}"
-                        fi
-                    fi
-                    file_processing_log 2 "${output}"
-        synocr_processing_job_add_target "${output}"
-                fi
-                [[ "${keep_hash}" != "true" ]] && adjust_attributes "${keep_hash_input}" "${output}"
+                place_or_link_target
             fi
 
             DestFolderList="${tagarray[$i]}\n${DestFolderList}"
@@ -2387,7 +2414,7 @@ rename()
             echo -e
         done
     
-        rm "${outputtmp}"
+        rm "${outputtmp_cleanup}"
     elif [ -n "${renameTag}" ] && [ "${moveTaggedFiles}" = useTagDir ] ; then
     # use sorting in tag folder:
     # ---------------------------------------------------------------------
@@ -2419,51 +2446,13 @@ rename()
 
             log_item "  target:   ./${tagdir}/${output##*/}"
 
-            if [[ $(echo "${outputtmp}" | awk -F/ '{print $2}') != $(echo "${output}" | awk -F/ '{print $2}') ]]; then
-                log_item "  do not set a hard link when copying across volumes"
-                # do not set a hardlink when copying across volumes:
-                if [[ "${keep_hash}" = "true" ]]; then
-                    cp -a "${keep_hash_input}" "${output}"
-                else
-                    cp "${outputtmp}" "${output}"
-                fi
-                file_processing_log 2 "${output}"
-        synocr_processing_job_add_target "${output}"
-            else
-                log_item "  set a hard link"
-                if [[ "${keep_hash}" = "true" ]]; then
-                    commandlog=$(cp -al "${keep_hash_input}" "${output}" 2>&1 )
-                else
-                    commandlog=$(cp -l "${outputtmp}" "${output}" 2>&1 )
-                fi
-                commandlog_rc=$?
-                # check: - creating hard link don't fails / - target file is valid (not empty)
-                if [ "${commandlog_rc}" -ne 0 ] || [ "$(stat -c %s "${output}")" -eq 0 ] || [ ! -f "${output}" ];then
-                    log_item "  ${commandlog}"
-                    log_warn_at "hard link failed for ${output}, using file copy"
-                    if _synocr_log_ge2; then
-                        log_debug "list of mounted volumes:"
-                        df -h --output=source,target | log_block "${_LOG_INDENT}      "
-                        log_blank
-                    fi
-
-                    if [[ "${keep_hash}" = "true" ]]; then
-                        cp -af "${keep_hash_input}" "${output}"
-                    else
-                        cp -f "${outputtmp}" "${output}"
-                    fi
-                fi
-                file_processing_log 2 "${output}"
-        synocr_processing_job_add_target "${output}"
-            fi
-
-            [[ "${keep_hash}" != "true" ]] && adjust_attributes "${keep_hash_input}" "${output}"
+            place_or_link_target
 
             i=$((i + 1))
         done
     
         log_item "delete temp. target file"
-        rm "${outputtmp}"
+        rm "${outputtmp_cleanup}"
     else
     # no rule fulfilled - use the target folder:
     # ---------------------------------------------------------------------

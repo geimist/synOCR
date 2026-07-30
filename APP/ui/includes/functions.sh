@@ -836,10 +836,16 @@ synocr_needs_dockerimage_update() {
     return 1
 }
 
-# Pinned Python modules (Py>=3.8 ceiling for DSM7 x86_64; aarch64 runtime min is 3.9).
+# Pinned Python modules — two tiers so Py 3.8 stays supported while Py 3.12+ can install.
 # pymupdf/numpy/Pillow/pikepdf: blank page detection & PDF handling; apprise: notifications.
-# Keep pins at the highest versions that still declare requires_python supporting 3.8.
-synOCR_python_module_list=(
+#
+# legacy  (Py < 3.12): highest pins that still declare requires_python supporting 3.8
+#                      (numpy 1.24.4 = last 3.8-capable; no cp312 wheels)
+# modern  (Py >= 3.12): same stack with numpy 1.26.4 (cp312 wheels; requires_python >=3.9)
+#
+# synocr_resolve_python_module_list fills synOCR_python_module_list for the active interpreter.
+# Add a third tier here when a future Python needs further pin changes (e.g. 3.13).
+synOCR_python_modules_legacy=(
     "DateTime==5.5"
     "dateparser==1.2.2"
     "pikepdf==9.2.1"
@@ -850,6 +856,36 @@ synOCR_python_module_list=(
     "pymupdf==1.24.11"
     "numpy==1.24.4"
 )
+
+synOCR_python_modules_modern=(
+    "DateTime==5.5"
+    "dateparser==1.2.2"
+    "pikepdf==9.2.1"
+    "Pillow==10.4.0"
+    "yq==4.1.2"
+    "PyYAML==6.0.3"
+    "apprise==1.9.3"
+    "pymupdf==1.24.11"
+    "numpy==1.26.4"
+)
+
+# Default until resolve runs (legacy = safe for Py 3.8–3.11).
+synOCR_python_module_list=("${synOCR_python_modules_legacy[@]}")
+
+# Sets synOCR_python_module_list for py_version (e.g. "3.8", "3.12").
+# Tier split at 3.12: numpy 1.24.x cannot install on 3.12 (no wheels / broken sdist build).
+synocr_resolve_python_module_list() {
+    local py_ver="${1:-}"
+    local lowest
+
+    synOCR_python_module_list=("${synOCR_python_modules_legacy[@]}")
+    [ -n "${py_ver}" ] || return 0
+
+    lowest=$(printf '%s\n%s\n' "3.12" "${py_ver}" | sort -V | head -n1)
+    if [ "${lowest}" = "3.12" ]; then
+        synOCR_python_module_list=("${synOCR_python_modules_modern[@]}")
+    fi
+}
 
 # Best-effort delete of leftover trash dirs (package-dir + /tmp).
 synocr_purge_python_env_trash() {
@@ -981,6 +1017,8 @@ synocr_needs_python_env_prepare() {
     if [[ "${env_version}" != "${py_version}" ]]; then
         return 0
     fi
+
+    synocr_resolve_python_module_list "${py_version}"
 
     if [ "$(head -n1 "${python3_env}/synOCR_python_env_version" 2>/dev/null)" != "${local_version:-}" ]; then
         return 0
