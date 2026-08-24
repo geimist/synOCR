@@ -84,12 +84,17 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
         '{statusUrl:$statusUrl,filesTpl:$filesTpl,iconIdle:$iconIdle,iconBusy:$iconBusy,allDoneText:$allDoneText,doneStepText:$doneStepText,profileLabel:$profileLabel,historyEmpty:$historyEmpty,historyStatusSuccess:$historyStatusSuccess,historyStatusFailed:$historyStatusFailed,historyStatusRunning:$historyStatusRunning,historyColTime:$historyColTime,historyColProfile:$historyColProfile,historyColSource:$historyColSource,historyColTargets:$historyColTargets,historyColStatus:$historyColStatus,historyTargetOpenHint:$historyTargetOpenHint,historyDurationTpl:$historyDurationTpl,historyClearUrl:$historyClearUrl,historyClearLabel:$historyClearLabel,historyClearSuccess:$historyClearSuccess,historyClearProblems:$historyClearProblems,historyClearTitle:$historyClearTitle,historyClearConfirmSuccess:$historyClearConfirmSuccess,historyClearConfirmProblems:$historyClearConfirmProblems,historyClearConfirmYes:$historyClearConfirmYes,historyClearConfirmAbort:$historyClearConfirmAbort,pollMs:$pollMs,doneHoldMs:$doneHoldMs,doneFadeMs:$doneFadeMs}' 2>/dev/null) || synocr_progress_config_json=""
 
     _synocr_history_count=0
+    _synocr_history_failed_count=0
     if synocr_sqlite "SELECT 1 FROM processing_jobs LIMIT 1;" >/dev/null 2>&1; then
         _synocr_history_count=$(synocr_sqlite "SELECT COUNT(*) FROM processing_jobs;" 2>/dev/null)
+        _synocr_history_failed_count=$(synocr_sqlite "SELECT COUNT(*) FROM processing_jobs WHERE status='failed';" 2>/dev/null)
     fi
     _synocr_history_count=${_synocr_history_count:-0}
+    _synocr_history_failed_count=${_synocr_history_failed_count:-0}
     _synocr_history_badge_hidden=""
+    _synocr_history_warn_hidden=" hidden"
     [ "${_synocr_history_count}" -lt 1 ] && _synocr_history_badge_hidden=' hidden'
+    [ "${_synocr_history_failed_count}" -gt 0 ] && _synocr_history_warn_hidden=""
 
 # manual synOCR start:
 # ---------------------------------------------------------------------
@@ -467,6 +472,7 @@ echo '
                 <a class="synocr-text-blue text-decoration-none d-inline-flex align-items-center gap-1" data-bs-toggle="collapse" href="#synocr-processing-history-body" role="button" aria-expanded="false" aria-controls="synocr-processing-history-body">
                     <strong id="synocr-processing-history-toggle">'"${lang_main_history_toggle}"'</strong>
                     <span id="synocr-processing-history-count" class="synocr-processing-history-count badge rounded-pill"'"${_synocr_history_badge_hidden}"'>'"${_synocr_history_count}"'</span>
+                    <span id="synocr-processing-history-warn" class="synocr-processing-history-warn"'"${_synocr_history_warn_hidden}"' aria-hidden="true">⚠️</span>
                 </a>
             </p>
             <div class="dropdown synocr-processing-history-clear-wrap" id="synocr-processing-history-clear-wrap" hidden>

@@ -1,3 +1,45 @@
+Copyright (C) 2018-2026 geimist
+
+Usage notice
+------------
+During a periodic update check (typically monthly), synOCR sends a small
+set of technical usage data to the developer. This is used solely to set
+development priorities — for example, which devices and DSM versions are
+used how heavily.
+
+The following is transmitted:
+- a randomly generated installation ID (no name, no account)
+- synOCR version, CPU architecture, DSM version and build
+- a coarse device class
+- the installation's processing volume
+- whether the official package repository is configured
+
+No document contents, file names, or personal account data are transmitted.
+
+By installing, you agree to this transmission.
+If you do not agree, please do not install synOCR.
+
+Nutzungshinweis
+---------------
+synOCR sendet bei einem periodischen Update-Check (in der Regel monatlich)
+wenige technische Nutzungsdaten an den Entwickler. Das hilft ausschließlich
+dabei, den Entwicklungsfokus zu setzen – zum Beispiel, welche Geräte und
+DSM-Versionen wie stark genutzt werden.
+
+Übermittelt werden:
+- eine zufällig erzeugte Installations-ID (kein Name, kein Konto)
+- synOCR-Version, CPU-Architektur, DSM-Version und Build
+- grobe Geräteklasse
+- Verarbeitungsvolumen der Installation
+- ob das offizielle Paket-Repository eingerichtet ist
+
+Es werden keine Dokumenteninhalte, Dateinamen oder persönlichen
+Kontodaten übertragen.
+
+Mit der Installation stimmen Sie dieser Übermittlung zu.
+Ohne Zustimmung installieren Sie synOCR bitte nicht.
+
+---------------------------------------------------------------------------------
 "synOCR" is distributed under the following GNU GENERAL PUBLIC LICENSE:
 
                     GNU GENERAL PUBLIC LICENSE

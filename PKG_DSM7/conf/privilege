@@ -1,7 +1,5 @@
 {
 	"defaults":{
 		"run-as": "package"
-	},
-	"username": "synOCR",
-	"join-groupname": "system"
+	}
 }

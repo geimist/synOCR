@@ -2,6 +2,25 @@ known issues / limitations:
  -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
     does not work when running the program without root privileges (due to the known rights restrictions)
 
+1.9.99.4 [2026-08-24]
+
+  IMPLEMENTATIONS:
+ - [GUI]    show separate warn icon, if are failed files in history list
+
+  IMPROVEMENT:
+ - [shell]  folder monitoring: isolate inotify stderr from events, verify
+            "Watches established" before success, extension whitelist
+            (pdf / images if img2pdf), skip events while synOCR is busy,
+            avoid aggressive stop/restart when the watch list is unchanged,
+            and do not run a second OCR pass after monitoring start
+            (initial scan covers files already in the input folders)
+ - [spk]    removed unnecessary parameters from conf/privilege (@DaveR)
+
+  BUGFIX:
+ - [shell]  cap Python interpreter selection at 3.12 (aligned with pin wheels);
+            skip newer 3rd-party Pythons (e.g. Immich 3.14 in /usr/local/bin)
+
+
 1.9.99.3 [2026-07-30]
 
   IMPLEMENTATIONS:

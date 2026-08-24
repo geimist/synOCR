@@ -836,15 +836,27 @@ synocr_needs_dockerimage_update() {
     return 1
 }
 
-# Pinned Python modules — two tiers so Py 3.8 stays supported while Py 3.12+ can install.
+# Pinned Python modules — two tiers so Py 3.8 stays supported while Py 3.12 can install.
 # pymupdf/numpy/Pillow/pikepdf: blank page detection & PDF handling; apprise: notifications.
 #
-# legacy  (Py < 3.12): highest pins that still declare requires_python supporting 3.8
-#                      (numpy 1.24.4 = last 3.8-capable; no cp312 wheels)
-# modern  (Py >= 3.12): same stack with numpy 1.26.4 (cp312 wheels; requires_python >=3.9)
+# Interpreter window (synocr_resolve_python_path):
+#   min: aarch64 >= 3.9 (dateparser/zoneinfo), otherwise >= 3.8 (DSM7 x86_64)
+#   max: synocr_python_max_version — newest CPython the *modern* pin set has wheels for.
+#        Newer binaries (e.g. Immich shipping 3.14 in /usr/local/bin) are skipped so pip
+#        does not try to build pinned sdists on the NAS.
+#
+# Pin tiers:
+#   legacy  (Py < 3.12): highest pins that still declare requires_python supporting 3.8
+#                        (numpy 1.24.4 = last 3.8-capable; no cp312 wheels)
+#   modern  (Py >= 3.12): same stack with numpy 1.26.4 (cp312 wheels; requires_python >=3.9)
+#
+# Future: test and ship an updated pin set for newer CPython (3.13+), then raise
+# synocr_python_max_version. Keep the lists below as fallback for old DSM Python (3.8/3.9)
+# until the package dependency is raised. Do not chase 3rd-party interpreters.
 #
 # synocr_resolve_python_module_list fills synOCR_python_module_list for the active interpreter.
-# Add a third tier here when a future Python needs further pin changes (e.g. 3.13).
+synocr_python_max_version="3.12"
+
 synOCR_python_modules_legacy=(
     "DateTime==5.5"
     "dateparser==1.2.2"
@@ -967,12 +979,14 @@ synocr_remove_python_env() {
     [ ! -e "${env_dir}" ]
 }
 
-# Sets global python_path: newest suitable python3.x (sort -V).
-# Minimum: aarch64 >= 3.9 (dateparser/zoneinfo), otherwise >= 3.8 (DSM7 x86_64).
+# Sets global python_path: newest suitable python3.x in [min, max] (sort -V).
+# Search: /bin, /usr/bin, /usr/local/bin (Synology Python packages often live in the latter).
+# Max stays aligned with pin wheels — raise synocr_python_max_version only after a new pin set is tested.
 synocr_resolve_python_path() {
     python_path=""
     local min_py_version="3.8"
-    local best_line candidate py_version lowest
+    local max_py_version="${synocr_python_max_version:-3.12}"
+    local best_line candidate py_version lowest highest
 
     if [ "${machinetyp:-}" = aarch64 ]; then
         min_py_version="3.9"
@@ -987,6 +1001,8 @@ synocr_resolve_python_path() {
             py_version=$("${candidate}" -c "import sys; print('.'.join(map(str, sys.version_info[:2])))" 2>/dev/null) || continue
             lowest=$(printf '%s\n%s\n' "${min_py_version}" "${py_version}" | sort -V | head -n1)
             [ "${lowest}" = "${min_py_version}" ] || continue
+            highest=$(printf '%s\n%s\n' "${max_py_version}" "${py_version}" | sort -V | tail -n1)
+            [ "${highest}" = "${max_py_version}" ] || continue
             printf '%s\t%s\n' "${py_version}" "${candidate}"
         done | sort -t "$(printf '\t')" -k1,1V | tail -n1
     )

@@ -478,7 +478,7 @@
         }).join("");
     }
 
-    function updateHistoryCount(count) {
+    function updateHistoryCount(count, hasFailed) {
         var el = document.getElementById("synocr-processing-history-count");
         if (!el) {
             return;
@@ -486,6 +486,22 @@
         var n = count || 0;
         el.textContent = String(n);
         el.hidden = n < 1;
+        var warn = document.getElementById("synocr-processing-history-warn");
+        if (warn) {
+            warn.hidden = !hasFailed;
+        }
+    }
+
+    function historyHasFailed(jobs) {
+        if (!jobs || !jobs.length) {
+            return false;
+        }
+        for (var i = 0; i < jobs.length; i++) {
+            if (jobs[i] && jobs[i].status === "failed") {
+                return true;
+            }
+        }
+        return false;
     }
 
     function updateProcessingHistory(cfg, data) {
@@ -500,7 +516,7 @@
         }
         lastJobsHash = hash;
         tbody.innerHTML = renderHistoryRows(cfg, jobs);
-        updateHistoryCount(jobs.length);
+        updateHistoryCount(jobs.length, historyHasFailed(jobs));
         updateHistoryClearVisibility(jobs.length);
     }
 

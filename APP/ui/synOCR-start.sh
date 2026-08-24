@@ -7,6 +7,7 @@
 #                   - adjust monitoring with inotifywait                        #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh    #
 #   arguments:      - start (starts inotifywait / restarts it, if needed)       #
+#                   - restart (stop+start, used by GUI)                        #
 #                   - stop (stop inotifywait)                                   #
 #                   - GUI (log formated as html)                                #
 #   © 2026 by geimist                                                           #
@@ -47,9 +48,30 @@ inotify_process_id () {
 # reading parameters:
 for i in "$@" ; do
     case $i in
+        restart)
+            # Explicit restart from GUI: stop first, then fall through to start
+            if [ "$(inotify_process_id)" ] ;then
+                echo "stop monitoring (restart) ..." | tee -a "${log_dir_list[@]}"
+                /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop >/dev/null 2>&1
+                sleep 1
+            fi
+            ;&  # bash 4+ fall-through to start
         start)
             monitor=off
             loop_count=0
+            max_start_retries=2
+            desired_watch_list=$(synocr_sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq)
+            current_pids=$(inotify_process_id)
+            current_watch_list=""
+            [ -f "${monitored_folders}" ] && current_watch_list=$(cat "${monitored_folders}" 2>/dev/null)
+
+            # Already running with the same folder list: do not stop/restart
+            if [ -n "${current_pids}" ] && [ -n "${desired_watch_list}" ] \
+                && [ "${current_watch_list}" = "${desired_watch_list}" ]; then
+                echo "Monitoring already running / watch list unchanged – skip restart" | tee -a "${log_dir_list[@]}"
+                monitor=on
+            fi
+
             while [ "${monitor}" = off ]; do
 
                 # Identify current processes
@@ -58,13 +80,14 @@ for i in "$@" ; do
 
                 # Kill parallel processes
                 if [ "${process_count}" -ge 1 ]; then
-                    /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop | tee -a "${log_dir_list[@]}"
+                    /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop >/dev/null 2>&1
                     sleep 1
 
                     # Check again whether processes are still running
                     current_pids=$(inotify_process_id)
                     if [ -n "${current_pids}" ]; then
                         echo "Processes still alive - force kill ..." | tee -a "${log_dir_list[@]}"
+                        # shellcheck disable=SC2086
                         kill -9 ${current_pids}  # force SIGKILL
                         sleep 1
                     fi
@@ -77,39 +100,57 @@ for i in "$@" ; do
                 if [ "${process_count}" -eq 0 ]; then
                     echo "Does not run - start monitoring ..." | tee -a "${log_dir_list[@]}"
                     # Update monitored folders
-                    synocr_sqlite \
-                      "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq > "${monitored_folders}"
+                    printf '%s\n' "${desired_watch_list}" > "${monitored_folders}"
 
-                    /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start
-                    sleep 2  # Wait until the process has started up
+                    monitor_start_log=$(mktemp 2>/dev/null || echo "/tmp/synocr_monitor_start.$$")
+                    /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh start >"${monitor_start_log}" 2>&1
+                    monitor_rc=$?
+                    # input_monitor already writes to inotify.log – only keep capture for status checks
+                    monitor_start_text=$(cat "${monitor_start_log}" 2>/dev/null)
+                    rm -f "${monitor_start_log}"
 
-                    # Check success
-                    if [ -n "$(inotify_process_id)" ]; then
+                    # Check success via exit status (watches established) and surviving PID
+                    if [ "${monitor_rc}" -eq 0 ] && [ -n "$(inotify_process_id)" ]; then
                         monitor=on
                         echo "Monitoring successfully started" | tee -a "${log_dir_list[@]}"
                         break
-                    else
-                        echo "Failed to start monitoring. Retrying..." | tee -a "${log_dir_list[@]}"
                     fi
+
+                    echo "Failed to start monitoring (rc=${monitor_rc})." | tee -a "${log_dir_list[@]}"
+                    if printf '%s' "${monitor_start_text}" | grep -qE "Couldn't initialize inotify|Too many open files|upper limit on inotify watches|max_user_watches|max_user_instances|Failed to watch"; then
+                        echo "Aborting retries due to inotify limit/init error (user=$(whoami))" | tee -a "${log_dir_list[@]}"
+                        break
+                    fi
+                    # surface key lines once if start failed before input_monitor could log usefully
+                    if [ -n "${monitor_start_text}" ] && ! printf '%s' "${monitor_start_text}" | grep -q "START  MONITORING"; then
+                        printf '%s\n' "${monitor_start_text}" | tee -a "${log_dir_list[@]}"
+                    fi
+                    echo "Retrying..." | tee -a "${log_dir_list[@]}"
+                    sleep 3
                 else
                     echo "Unexpected active processes. Retrying..." | tee -a "${log_dir_list[@]}"
+                    sleep 3
                 fi
 
                 loop_count=$((loop_count + 1))
-                if [ "${loop_count}" -ge 10 ]; then
+                if [ "${loop_count}" -ge "${max_start_retries}" ]; then
                     echo "! ! ! ERROR: Failed to start monitoring after ${loop_count} tries" | tee -a "${log_dir_list[@]}"
                     break
                 fi
             done
 
-            sleep 1
-            shift
+            # Initial scan in input_monitor already processes existing files – do not fall through into another OCR run
+            if [ "${monitor}" = on ]; then
+                exit 0
+            fi
+            echo "Monitoring could not be started – skipping OCR fallthrough" | tee -a "${log_dir_list[@]}"
+            exit 1
             ;;
         stop)
             # stop-monitoring:
             if [ "$(inotify_process_id)" ] ;then
                 echo "stop monitoring ..." | tee -a "${log_dir_list[@]}"
-                /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop | tee -a "${log_dir_list[@]}"
+                /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop >/dev/null 2>&1
                 sleep 1
             fi
             exit 0

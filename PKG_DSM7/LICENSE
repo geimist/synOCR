@@ -1,3 +1,19 @@
+Copyright (C) 2018-2026 geimist
+
+---------------------------------------------------------------------------------
+                        synOCR usage & license notice
+
+synOCR is free software under the GNU GPL v3 (full license below).
+
+During a periodic update check (usually monthly), a small amount of
+anonymous technical usage data is sent to the developer. This is used
+solely to set development priorities—for example, which devices and
+DSM versions are used, and how heavily. Neither document content, file names, 
+nor personal account information is used for this. By installing the software, 
+you consent to this data transmission.
+Please do not install synOCR without your consent.
+
+---------------------------------------------------------------------------------
 "synOCR" is distributed under the following GNU GENERAL PUBLIC LICENSE:
 
                     GNU GENERAL PUBLIC LICENSE

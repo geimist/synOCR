@@ -729,6 +729,11 @@ a.btn.synocr-btn-outline-blue:focus {
     min-width: 1.5rem;
 }
 
+.synocr-processing-history-warn {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
 .synocr-processing-history-scroll {
     flex: 1 1 auto;
     min-height: 0;

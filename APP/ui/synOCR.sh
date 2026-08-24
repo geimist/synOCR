@@ -1730,9 +1730,10 @@ prepare_python()
 #########################################################################################
 
     local min_py_version="3.8"
+    local max_py_version="${synocr_python_max_version:-3.12}"
     local python_env_path env_version py_version module moduleName modulePinnedVer moduleInstalledVer tmp_log1 tmp_log2
 
-    # Newest suitable interpreter (x86_64 >=3.8, aarch64 >=3.9); see synocr_resolve_python_path
+    # Newest suitable interpreter in [min, max]; see synocr_resolve_python_path
     # aarch64 min 3.9: dateparser / backports.zoneinfo incompatibility on older Python
     synocr_resolve_python_path
     if [ "${machinetyp}" = aarch64 ]; then
@@ -1741,8 +1742,8 @@ prepare_python()
 
     log_debug "  Check Python:"
     if [ -z "${python_path}" ]; then
-        log_error_at "No suitable Python version (>=${min_py_version}) found on ${machinetyp:-unknown} — fallback to regex date search"
-        log_item "  for more precise search results Python >=${min_py_version} is required"
+        log_error_at "No suitable Python version (${min_py_version}–${max_py_version}) found on ${machinetyp:-unknown} — fallback to regex date search"
+        log_item "  for more precise search results Python ${min_py_version}–${max_py_version} is required (newer 3rd-party interpreters are skipped)"
         python_check=failed
         return 1
     fi

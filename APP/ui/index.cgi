@@ -205,7 +205,7 @@
         _synocr_start_sh="/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
         [ -x "${app_home}/synOCR-start.sh" ] && _synocr_start_sh="${app_home}/synOCR-start.sh"
         if [ "${synocr_request_page}" = "main-run-synocr-monitoring-run" ]; then
-            "${_synocr_start_sh}" start >/dev/null 2>&1
+            "${_synocr_start_sh}" restart >/dev/null 2>&1
         else
             "${_synocr_start_sh}" stop >/dev/null 2>&1
         fi

@@ -1,17 +1,19 @@
-full changelog: https://raw.githubusercontent.com/geimist/synOCR/refs/heads/master/PKG_DSM7/CHANGELOG_CURRENT_BETA
-
-known issues / limitations:
- -  The check whether a selected folder (INPUT, OUTPUT, BACKUP) is encrypted and possibly not mounted 
-    does not work when running the program without root privileges (due to the known rights restrictions)
-
-1.9.99.3 [2026-07-30]
+1.9.99.4 [2026-08-24]
 
   IMPLEMENTATIONS:
- - [GUI]    tooltip for unused rules to set in profile
+ - [GUI]    show separate warn icon, if are failed files in history list
+
+  IMPROVEMENT:
+ - [shell]  folder monitoring: isolate inotify stderr from events, verify
+            "Watches established" before success, extension whitelist
+            (pdf / images if img2pdf), skip events while synOCR is busy,
+            avoid aggressive stop/restart when the watch list is unchanged,
+            and do not run a second OCR pass after monitoring start
+            (initial scan covers files already in the input folders)
+ - [spk]    removed unnecessary parameters from conf/privilege (@DaveR)
 
   BUGFIX:
- - [GUI]    The footer overlapped the minimize icon in the navbar 
- - [shell]  hard links were not created correctly
- - [shell]  prepare_python failed on Python 3.12 (numpy==1.24.4 has no cp312 wheels); fixed #90
-
+ - [shell]  cap Python interpreter selection at 3.12 (aligned with pin wheels);
+            skip newer 3rd-party Pythons (e.g. Immich 3.14 in /usr/local/bin)
  
+ full changelog: https://raw.githubusercontent.com/geimist/synOCR/refs/heads/master/PKG_DSM7/CHANGELOG_BETA
