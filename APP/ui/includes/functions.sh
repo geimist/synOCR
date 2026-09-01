@@ -468,7 +468,9 @@ readonly SYNOCR_VERSION_JSON_URL="https://raw.githubusercontent.com/geimist/synO
 readonly SYNOCR_PACKAGE_FEEDS_FILE="/usr/syno/etc/packages/feeds"
 
 # Telemetry GET parameter for server_url (backend must log/evaluate):
-#   package_repo = present | missing | unknown | unreadable
+#   package_repo = present | missing | unknown
+#   (older clients also sent unreadable when feeds was missing or unreadable;
+#    that is now missing — the synOCR feed is not verifiable)
 
 synocr_release_channel() {
     if [ "$(grep "^beta" /var/packages/synOCR/INFO 2>/dev/null | cut -d '"' -f2)" = yes ]; then
@@ -539,7 +541,7 @@ synocr_version_parse_package_repo() {
 }
 
 # synocr_package_repo_feed_status <feed_url> <host_pattern> <config_ready 0|1>
-# Prints: present | missing | unknown | unreadable
+# Prints: present | missing | unknown
 synocr_package_repo_feed_status() {
     local feed_url="$1"
     local host_pattern="$2"
@@ -549,8 +551,9 @@ synocr_package_repo_feed_status() {
         printf '%s' unknown
         return 0
     fi
-    if [ ! -r "${SYNOCR_PACKAGE_FEEDS_FILE}" ]; then
-        printf '%s' unreadable
+    # Missing or unreadable feeds file: synOCR source is not verifiable → missing
+    if [ ! -e "${SYNOCR_PACKAGE_FEEDS_FILE}" ] || [ ! -r "${SYNOCR_PACKAGE_FEEDS_FILE}" ]; then
+        printf '%s' missing
         return 0
     fi
     if jq -e --arg feed "${feed_url}" '.[] | select(.feed == $feed or .feed == ($feed + "/") or .feed == ($feed | sub("/$"; "")))' "${SYNOCR_PACKAGE_FEEDS_FILE}" >/dev/null 2>&1; then

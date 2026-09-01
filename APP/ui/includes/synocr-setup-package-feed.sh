@@ -1,8 +1,9 @@
 #!/bin/bash
 # shellcheck disable=SC2034
 # Add synOCR package repository to /usr/syno/etc/packages/feeds (DSM).
-# Prepares merged JSON under synOCR etc/, then uses Docker to overwrite the
-# existing feeds file in place (cat new > feeds) so owner/mode stay unchanged.
+# If the feeds file is missing, create it (644 root:root) via Docker.
+# If it exists, merge JSON under synOCR etc/, then overwrite the file in place
+# (cat new > feeds) so owner/mode stay unchanged.
 
 # Environment (required):
 #   SYNOCR_APP_HOME       — synOCR UI root (directory containing etc/); absolute after canonicalize
@@ -15,15 +16,16 @@
 #   0  success (feed was added)
 #   7  feed already present; nothing changed
 #   2  docker not available
-#   3  feeds file missing or not readable
+#   3  feeds path is a directory, or existing file is not readable
 #   4  feeds is not a JSON array or invalid JSON
 #   5  merge / validation failed
-#   6  docker in-place write failed
+#   6  docker write failed
 #   8  missing environment
 
 set -u
 
 FEEDS_HOST="/usr/syno/etc/packages/feeds"
+FEEDS_DIR="/usr/syno/etc/packages"
 ALPINE_IMAGE="alpine:3.19"
 
 if [ -z "${SYNOCR_APP_HOME:-}" ] || [ -z "${SYNOCR_REPO_NAME:-}" ] || [ -z "${SYNOCR_REPO_FEED:-}" ]; then
@@ -37,11 +39,54 @@ SYNOCR_APP_HOME=$(cd "${SYNOCR_APP_HOME}" && pwd) || exit 8
 SYNOCR_ETC="${SYNOCR_APP_HOME}/etc"
 NEW_FILE="${SYNOCR_ETC}/packages_feeds.new.$$"
 
+cleanup_new() {
+    rm -f "${NEW_FILE}" "${NEW_FILE}.tmp" 2>/dev/null
+}
+
 if ! command -v docker >/dev/null 2>&1; then
     exit 2
 fi
 if ! docker info >/dev/null 2>&1; then
     exit 2
+fi
+
+if [ -d "${FEEDS_HOST}" ]; then
+    exit 3
+fi
+
+write_new_json() {
+    if ! mv -f "${NEW_FILE}.tmp" "${NEW_FILE}" 2>/dev/null; then
+        cleanup_new
+        exit 5
+    fi
+    if ! jq -e 'type == "array"' "${NEW_FILE}" >/dev/null 2>&1; then
+        cleanup_new
+        exit 5
+    fi
+}
+
+# Missing file: create a one-entry JSON array (DSM Package Center format).
+if [ ! -e "${FEEDS_HOST}" ]; then
+    if [ ! -d "${FEEDS_DIR}" ]; then
+        exit 3
+    fi
+    umask 022
+    if ! jq -n --arg name "${SYNOCR_REPO_NAME}" --arg feed "${SYNOCR_REPO_FEED}" \
+        '[{name:$name,feed:$feed}]' > "${NEW_FILE}.tmp" 2>/dev/null; then
+        cleanup_new
+        exit 5
+    fi
+    write_new_json
+    if ! docker run --rm \
+        -v "${FEEDS_DIR}:/dest:rw" \
+        -v "${NEW_FILE}:/source/new:ro" \
+        "${ALPINE_IMAGE}" \
+        sh -c 'cat /source/new > /dest/feeds && chmod 644 /dest/feeds && chown root:root /dest/feeds' >/dev/null 2>&1; then
+        cleanup_new
+        exit 6
+    fi
+    cleanup_new
+    exit 0
 fi
 
 if [ ! -r "${FEEDS_HOST}" ]; then
@@ -61,21 +106,14 @@ fi
 
 umask 022
 if ! jq --arg name "${SYNOCR_REPO_NAME}" --arg feed "${SYNOCR_REPO_FEED}" '. + [{"name": $name, "feed": $feed}]' "${FEEDS_HOST}" > "${NEW_FILE}.tmp" 2>/dev/null; then
-    rm -f "${NEW_FILE}.tmp" 2>/dev/null
+    cleanup_new
     exit 5
 fi
-if ! jq -e . "${NEW_FILE}.tmp" >/dev/null 2>&1; then
-    rm -f "${NEW_FILE}.tmp" 2>/dev/null
-    exit 5
-fi
-if ! mv -f "${NEW_FILE}.tmp" "${NEW_FILE}" 2>/dev/null; then
-    rm -f "${NEW_FILE}.tmp" 2>/dev/null
-    exit 5
-fi
+write_new_json
 
 backup_path="${SYNOCR_ETC}/packages_feeds.backup.$(date +%s)"
 if ! cp -p "${FEEDS_HOST}" "${backup_path}" 2>/dev/null; then
-    rm -f "${NEW_FILE}" 2>/dev/null
+    cleanup_new
     exit 5
 fi
 
@@ -84,9 +122,9 @@ if ! docker run --rm \
     -v "${NEW_FILE}:/source/new:ro" \
     "${ALPINE_IMAGE}" \
     sh -c 'cat /source/new > /target/feeds' >/dev/null 2>&1; then
-    rm -f "${NEW_FILE}" 2>/dev/null
+    cleanup_new
     exit 6
 fi
 
-rm -f "${NEW_FILE}" 2>/dev/null
+cleanup_new
 exit 0
