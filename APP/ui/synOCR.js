@@ -18,6 +18,7 @@ Ext.define("SYNO.SDS.synOCR.MainWindow", {
             cls: "syno-app-win",
             maximizable: true,
             minimizable: true,
+            showHelp: false,
             width: 1152,
             height: 768,
             html: SYNO.SDS.synOCR.Utils.getMainHtml()
