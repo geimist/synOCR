@@ -1,7 +1,2 @@
-1.9.99.5 [2026-09-01]
-
-  BUGFIX:
- - [GUI]    No warning was displayed regarding a missing repository in the 
-            Package Center if no community package source had been created yet.
 
  full changelog: https://raw.githubusercontent.com/geimist/synOCR/refs/heads/master/PKG_DSM7/CHANGELOG_BETA
