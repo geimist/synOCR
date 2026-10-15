@@ -1188,6 +1188,8 @@ fi
 
 # adjust permissions:
 # ---------------------------------------------------------------------
+    # Direct chmod when this script runs as root (Task Scheduler / legacy start).
+    # Package-user installs are healed by synocr-heal.sh (setuid helper, selfheal).
     [ "$(whoami)" = root ] && chmod 766 "${dbPath}"
 
 echo "${log}"

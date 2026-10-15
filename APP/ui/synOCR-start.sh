@@ -5,6 +5,7 @@
 #   description:    - changes to synOCR directory and starts synOCR             #
 #                     with or without LOG (depending on configuration)          #
 #                   - adjust monitoring with inotifywait                        #
+#                   - DSM 7: docker/admin heal via setuid helper (selfheal)     #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh    #
 #   arguments:      - start (starts inotifywait / restarts it, if needed)       #
 #                   - restart (stop+start, used by GUI)                        #
@@ -180,11 +181,12 @@ done
         fi
     fi
 
-    # set docker and admin permission to user synOCR for DSM7 and above
+    # DSM 7: docker/administrators. Package user uses setuid helper (selfheal).
+    # Already root (Task Scheduler): heal directly via synogroupmod*.
     if [ "${dsm_major}" -ge 7 ]; then
         echo "synOCR run at DSM7 or above"
 
-        if [ $(whoami) = "root" ]; then
+        if [ "$(whoami)" = "root" ]; then
             echo -n "    ➜ check docker group: "
             if grep ^docker: /etc/group | grep -q synOCR ; then
                 echo "ok [$(grep ^docker: /etc/group)]"
@@ -199,20 +201,51 @@ done
                 synogroupmoduser add administrators synOCR
             fi
         else
+            need_heal=0
             echo -n "    ➜ check docker group: "
             if grep ^docker: /etc/group | grep -q synOCR ; then
                 echo "ok [$(grep ^docker: /etc/group)]"
             else
-                echo "ERROR - please run as root:"
-                echo "      /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
+                need_heal=1
+                echo "missing — will selfheal"
+            fi
+
+            echo -n "    ➜ check docker.sock: "
+            if [ -S /var/run/docker.sock ] && [ "$(stat -c '%G' /var/run/docker.sock 2>/dev/null)" = docker ]; then
+                echo "ok (group docker)"
+            else
+                need_heal=1
+                echo "needs heal"
             fi
 
             echo -n "    ➜ check permissions: "
             if grep ^administrators /etc/group | grep -q synOCR ; then
                 echo "ok"
             else
-                echo "ERROR - please run as root:"
-                echo "      /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh"
+                need_heal=1
+                echo "missing — will selfheal"
+            fi
+
+            if [ "${need_heal}" = 1 ]; then
+                if synocr_helper_ready; then
+                    echo "    ➜ selfheal via setuid helper …"
+                    synocr_selfheal_via_helper
+                    echo -n "    ➜ docker group after heal: "
+                    if grep ^docker: /etc/group | grep -q synOCR ; then
+                        echo "ok"
+                    else
+                        echo "FAILED"
+                    fi
+                    echo -n "    ➜ administrators after heal: "
+                    if grep ^administrators /etc/group | grep -q synOCR ; then
+                        echo "ok"
+                    else
+                        echo "FAILED"
+                    fi
+                else
+                    echo "ERROR - setuid helper not available ($(synocr_helper_bin))"
+                    echo "      DSM should install it via conf/privilege (mode 6550)."
+                fi
             fi
         fi
     fi

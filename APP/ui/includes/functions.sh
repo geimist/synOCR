@@ -433,6 +433,44 @@ synogroupmoddocker() {
 
 }
 
+# DSM 7 setuid helper (usability): join docker/administrators without a manual
+# root start of synOCR-start.sh. DSM sets mode 6550 via conf/privilege "tool".
+synocr_helper_bin() {
+    local mach helper_dir
+    helper_dir="/var/packages/synOCR/target/bin/helper"
+    mach="$(uname -m)"
+    case "${mach}" in
+        x86_64)
+            printf '%s' "${helper_dir}/synocr-helper-x86_64"
+            ;;
+        aarch64|arm64)
+            printf '%s' "${helper_dir}/synocr-helper-aarch64"
+            ;;
+        *)
+            printf '%s' "${helper_dir}/synocr-helper-${mach}"
+            ;;
+    esac
+}
+
+# Returns 0 if the helper exists and has the setuid bit (DSM applied privilege).
+synocr_helper_ready() {
+    local helper
+    helper="$(synocr_helper_bin)"
+    [ -x "${helper}" ] && [ -u "${helper}" ]
+}
+
+# Run selfheal via helper. Echoes helper output. Returns helper exit status.
+# Heal script also appends to ${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}/etc/selfheal.log
+synocr_selfheal_via_helper() {
+    local helper
+    helper="$(synocr_helper_bin)"
+    if ! synocr_helper_ready; then
+        echo "synOCR helper not ready (${helper})" >&2
+        return 1
+    fi
+    "${helper}" selfheal
+}
+
 # -------------------------------------------------------------------------- #
 # native URL encode & decode:
 # https://gist.github.com/cdown/1163649

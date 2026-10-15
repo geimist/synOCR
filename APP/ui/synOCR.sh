@@ -1879,6 +1879,8 @@ prepare_python()
             echo "0" > "${python3_env}/synOCR_python_env_version"
         fi
 
+        # DSM 7: python3_env chown as root. Still applied when the worker is started
+        # as root (Task Scheduler). Package-user runs use synocr-heal.sh selfheal.
         if [ "${dsm_version}" = "7" ] && [ "${synOCR_user}" = root ]; then
             chown -R synOCR:administrators "${python3_env}"
             chmod -R 755 "${python3_env}"

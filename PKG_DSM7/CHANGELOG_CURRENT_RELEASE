@@ -3,6 +3,10 @@ known issues / limitations:
     does not work when running the program without root privileges (due to the known rights restrictions)
 
 
+ DSM 7: docker/administrators permissions are set via a setuid helper after
+ install/upgrade — a one-time root start of synOCR-start.sh is no longer required.
+
+
 2.0.1 [2026-10-15]
 
   BUGFIX:

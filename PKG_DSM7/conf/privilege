@@ -3,5 +3,19 @@
 		"run-as": "package"
 	},
 	"username": "synOCR",
-	"join-groupname": "system"
+	"join-groupname": "system",
+	"tool": [
+		{
+			"relpath": "bin/helper/synocr-helper-x86_64",
+			"user": "root",
+			"group": "package",
+			"permission": "6550"
+		},
+		{
+			"relpath": "bin/helper/synocr-helper-aarch64",
+			"user": "root",
+			"group": "package",
+			"permission": "6550"
+		}
+	]
 }

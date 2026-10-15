@@ -32,4 +32,17 @@ TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 rm -rf $SYNOPKG_PKGDEST/ocr_docker
 ln -s / $SYNOPKG_PKGDEST/ocr_docker
 
+# DSM 7: postinst runs as package user (not root). If DSM already applied the
+# privilege "tool" setuid bit, heal docker/administrators immediately so the
+# user never needs a manual root start. If the bit is not set yet, first GUI
+# or package start of synOCR-start.sh will call the helper.
+HELPER=""
+case "$(uname -m)" in
+    x86_64)  HELPER="${SYNOPKG_PKGDEST}/bin/helper/synocr-helper-x86_64" ;;
+    aarch64|arm64) HELPER="${SYNOPKG_PKGDEST}/bin/helper/synocr-helper-aarch64" ;;
+esac
+if [ -n "${HELPER}" ] && [ -u "${HELPER}" ]; then
+    "${HELPER}" selfheal >/tmp/synOCR.postinst.selfheal 2>&1 || true
+fi
+
 exit 0

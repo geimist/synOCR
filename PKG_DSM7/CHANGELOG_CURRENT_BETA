@@ -1,2 +1,5 @@
 
  full changelog: https://raw.githubusercontent.com/geimist/synOCR/refs/heads/master/PKG_DSM7/CHANGELOG_BETA
+
+ DSM 7: after install/upgrade, synOCR sets docker and administrators permissions
+ via a setuid helper. A one-time root start of synOCR-start.sh is no longer required.

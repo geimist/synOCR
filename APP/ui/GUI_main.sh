@@ -359,6 +359,12 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
 
 
 # check Docker and show indicator icon:
+    # DSM 7: heal docker/administrators via setuid helper before the banner
+    # (no manual root start of synOCR-start.sh).
+    if [ "${dsm_major}" -ge 7 ] && { ! grep "^administrators" /etc/group | grep -q synOCR || ! grep "^docker:" /etc/group | grep -q synOCR || { [ -S /var/run/docker.sock ] && [ "$(stat -c '%G' /var/run/docker.sock 2>/dev/null)" != docker ]; }; }; then
+        synocr_selfheal_via_helper >/dev/null 2>&1 || true
+    fi
+
     if [ ! "$(which docker)" ]; then
         echo '
         <p class="text-center synocr-text-red mb-5">'"${lang_attention}"':<br>'"${lang_main_dockerfailed1}"'<br>'"${lang_main_dockerfailed2}"'</p>
@@ -367,8 +373,7 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
         </div>'
     elif [ "${dsm_major}" -ge 7 ] && (! grep "^administrators" /etc/group | grep -q synOCR || ! grep "^docker:" /etc/group | grep -q synOCR ); then
         echo '
-        <p class="text-center synocr-text-red">'"${lang_attention}"':<br>'"${lang_main_permissions_failed1}"'<br>'"${lang_main_permissions_failed2}"'<br>('"${lang_main_permissions_failed3}"')
-            <code class="mb-5">/usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh</code>
+        <p class="text-center synocr-text-red">'"${lang_attention}"':<br>'"${lang_main_permissions_failed1}"'<br>selfheal (setuid helper) failed
         </p>
         <div class="float-end">
             <img src="images/status_error@geimist.svg" height="120" width="120" style=";padding: 10px">
