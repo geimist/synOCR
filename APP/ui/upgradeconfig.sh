@@ -38,7 +38,7 @@ uuid=$(uuidgen)
     # Call: new_profile "profile name"
     # --------------------------------------------------------------
         # shellcheck disable=2034
-        sqliteinfo=$(synocr_sqlite "INSERT INTO config ( profile ) VALUES ( '$1' ); COMMIT;")
+        sqliteinfo=$(synocr_sqlite "INSERT INTO config ( profile ) VALUES ( '$1' );")
     }
 
     lift_db ()
@@ -48,12 +48,10 @@ uuid=$(uuidgen)
     # --------------------------------------------------------------
         synocr_sqlite "UPDATE system 
                                        SET value_1='$2' 
-                                       WHERE key='db_version'; 
-                                       COMMIT;"
+                                       WHERE key='db_version';"
         synocr_sqlite "UPDATE system 
-                                       SET value_1=(datetime('now','localtime')) 
-                                       WHERE key='timestamp'; 
-                                       COMMIT;"
+                                       SET value_1=datetime('now','localtime') 
+                                       WHERE key='timestamp';"
         log="${log}
         DB-Upgrade successfully processed ( v$1 ➜ v$2)"
     }
@@ -120,8 +118,7 @@ uuid=$(uuidgen)
                         \"adjustColorContrast\" VARCHAR DEFAULT ('1.0') ,
                         \"adjustColorSharpness\" VARCHAR DEFAULT ('1.0') ,
                         \"ruleset_id\" INTEGER
-                    );
-                    COMMIT;"
+                    );"
 
         wait $!
 
@@ -135,12 +132,11 @@ uuid=$(uuidgen)
                         \"value_2\" VARCHAR ,
                         \"value_3\" VARCHAR ,
                         \"value_4\" VARCHAR 
-                    );
-                    COMMIT;"
+                    );"
 
         # write default data:
         # ---------------------------------------------------------------------
-        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('timestamp', '(datetime('now','localtime'))');"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('timestamp', datetime('now','localtime'));"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('db_version', '14');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('checkmon', '');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('dockerimageupdate', '1');"
@@ -160,8 +156,7 @@ uuid=$(uuidgen)
                         \"rowid\" INTEGER PRIMARY KEY ,
                         \"image\" varchar,
                         \"date_checked\" varchar 
-                    );
-                    COMMIT;"
+                    );"
 
         wait $!
 
@@ -251,8 +246,7 @@ uuid=$(uuidgen)
                     ( 
                         'default', '${INPUTDIR}', '${OUTPUTDIR}', '${BACKUPDIR}', '${LOGDIR}', '${LOGmax}', '${SearchPraefix}', '${delSearchPraefix}', '${taglist}', '${searchAll}', 
                         '${moveTaggedFiles}', '${NameSyntax}', '${ocropt}', '${dockercontainer}', '${PBTOKEN}', '${dsmtextnotify}', '${MessageTo}', '${dsmbeepnotify}', '${loglevel}'
-                    );
-                    COMMIT;"
+                    );"
 
                 mv "./etc/Konfiguration.txt" "./etc/Konfiguration_imported.txt"
                 log="${log} 
