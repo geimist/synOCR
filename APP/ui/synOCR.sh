@@ -2388,8 +2388,12 @@ rename()
                     echo "created [absolute path]"
                 fi
             else
-                # if path is not absolute, then remove special characters
+                # relative to profile OUTPUTDIR — strip leading slashes so
+                # "/subfolder" does not become ".../OUTPUTDIR//subfolder"
                 # tagdir=$(echo ${tagdir} | sed 's%\/\|\\\|\:\|\?%_%g' ) # filtered: \ / : ?
+                while [[ "${tagdir}" == /* ]]; do
+                    tagdir="${tagdir#/}"
+                done
                 subOUTPUTDIR="${OUTPUTDIR%/}/${tagdir%/}/"
                 if [ -d "${subOUTPUTDIR}" ] ;then
                     echo "OK [subfolder target dir]"
