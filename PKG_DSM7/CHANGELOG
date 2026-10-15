@@ -5,9 +5,9 @@ known issues / limitations:
 2.0.1 [2026-10-15]
 
   BUGFIX:
- - [spk]    new installations may have failed
- - [GUI]    history-viewer: a bug that prevented FileStation from opening properly has been fixed.
- - [shell]  minor bugfixes
+ ● [spk]    new installations may have failed
+ ● [GUI]    history-viewer: a bug that prevented FileStation from opening properly has been fixed.
+ ● [shell]  minor bugfixes
 
 
 2.0.0 [2026-09-25]
