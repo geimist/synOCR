@@ -111,7 +111,8 @@ inotify_start()
         dir="$(echo "${value}" | awk -F'\t' '{print $1}')"
         profilename="$(echo "${value}" | awk -F'\t' '{print $2}')"
         if [ ! -d "${dir}" ]; then
-            log_monitor "ERROR @ profile ${profilename}: inotify-tools cannot be started because \"${dir}\" is not a valid folder! "
+            log_monitor "ERROR @ profile ${profilename}: inotify-tools cannot be started because \"${dir}\" is not a valid folder!"
+            log_monitor "Hint: if this path is on an encrypted share, wait until it is mounted (or use package start / synOCR-start.sh start which waits automatically)."
             return 1
         fi
     done <<< "$(synocr_sqlite -separator $'\t' "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null )"

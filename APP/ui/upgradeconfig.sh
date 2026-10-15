@@ -146,6 +146,7 @@ uuid=$(uuidgen)
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('online_version', '');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('UUID', '${uuid}');"
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('inotify_delay', 0);"
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('monitor_start_wait', '900');"
 
         wait $!
 
@@ -1173,6 +1174,13 @@ fi
     # If not available: Create entry
     if [ "${count}" -eq 0 ]; then
         synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('inotify_delay', 0);"
+    fi
+
+# insert monitor_start_wait (seconds to wait for encrypted INPUTDIRs at boot; 0=off, -1=unlimited):
+# ---------------------------------------------------------------------
+    count=$(synocr_sqlite "SELECT COUNT(*) FROM system WHERE key = 'monitor_start_wait';")
+    if [ "${count}" -eq 0 ]; then
+        synocr_sqlite "INSERT INTO system (key, value_1) VALUES ('monitor_start_wait', '900');"
     fi
 
 # check UUID:

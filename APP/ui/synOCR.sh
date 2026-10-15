@@ -401,15 +401,23 @@
     fi
 
     OUTPUTDIR="${OUTPUTDIR%/}/"
-    log_kv "Target directory" "${OUTPUTDIR}"
+    if [ -d "${OUTPUTDIR}" ] && synocr_path_is_nas_volume "${OUTPUTDIR}" ; then
+        log_kv "Target directory" "${OUTPUTDIR}"
+    elif synocr_path_encrypted_unmounted "${OUTPUTDIR}" ; then
+        log_kv "Target directory" "encrypted share not mounted: ${OUTPUTDIR}"
+        synocr_fail_fatal "Target folder not mounted (encrypted share): ${OUTPUTDIR}"
+    else
+        synocr_fail_fatal "Target directory invalid or not set: ${OUTPUTDIR}"
+    fi
 
     BACKUPDIR="${BACKUPDIR%/}/"
-    if [ -d "${BACKUPDIR}" ] && echo "${BACKUPDIR}" | grep -q "/volume" ; then
+    if [ -d "${BACKUPDIR}" ] && synocr_path_is_nas_volume "${BACKUPDIR}" ; then
         log_kv "BackUp directory" "${BACKUPDIR}"
         backup=true
-    elif echo "${BACKUPDIR}" | grep -q "/volume" ; then
-        if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${BACKUPDIR}" | awk -F/ '{print $3}')" ; then
-            synocr_fail_fatal "BackUP folder not mounted: ${BACKUPDIR}"
+    elif synocr_path_is_nas_volume "${BACKUPDIR}" ; then
+        if synocr_path_encrypted_unmounted "${BACKUPDIR}" ; then
+            log_kv "BackUp directory" "encrypted share not mounted: ${BACKUPDIR}"
+            synocr_fail_fatal "BackUP folder not mounted (encrypted share): ${BACKUPDIR}"
         fi
         mkdir -p "${BACKUPDIR}"
         log_kv "BackUp directory was created" "[${BACKUPDIR}]"
@@ -419,6 +427,9 @@
         backup=false
     fi
 
+    # LOGDIR: no encrypted-unmounted check here — if LOGDIR itself is on a locked
+    # share we cannot write the result into the profile log anyway (caller may
+    # already have fallen back to loglevel=0).
     LOGDIR="${LOGDIR%/}/"
 
 #################################################################################################

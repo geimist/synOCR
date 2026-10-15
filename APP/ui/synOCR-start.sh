@@ -6,6 +6,7 @@
 #                     with or without LOG (depending on configuration)          #
 #                   - adjust monitoring with inotifywait                        #
 #                   - DSM 7: docker/admin heal via setuid helper (selfheal)     #
+#                   - wait for encrypted INPUTDIRs before inotify (enc-enum)    #
 #   path:           /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh    #
 #   arguments:      - start (starts inotifywait / restarts it, if needed)       #
 #                   - restart (stop+start, used by GUI)                        #
@@ -51,6 +52,7 @@ for i in "$@" ; do
     case $i in
         restart)
             # Explicit restart from GUI: stop first, then fall through to start
+            synocr_monitor_waiter_stop
             if [ "$(inotify_process_id)" ] ;then
                 echo "stop monitoring (restart) ..." | tee -a "${log_dir_list[@]}"
                 /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop >/dev/null 2>&1
@@ -61,7 +63,7 @@ for i in "$@" ; do
             monitor=off
             loop_count=0
             max_start_retries=2
-            desired_watch_list=$(synocr_sqlite "SELECT INPUTDIR FROM config WHERE active='1'" 2>/dev/null | sort | uniq)
+            desired_watch_list=$(synocr_active_inputdirs)
             current_pids=$(inotify_process_id)
             current_watch_list=""
             [ -f "${monitored_folders}" ] && current_watch_list=$(cat "${monitored_folders}" 2>/dev/null)
@@ -70,7 +72,39 @@ for i in "$@" ; do
             if [ -n "${current_pids}" ] && [ -n "${desired_watch_list}" ] \
                 && [ "${current_watch_list}" = "${desired_watch_list}" ]; then
                 echo "Monitoring already running / watch list unchanged – skip restart" | tee -a "${log_dir_list[@]}"
+                synocr_monitor_waiter_stop
                 monitor=on
+            fi
+
+            # Wait for encrypted INPUTDIRs (Key Manager / boot mount race).
+            # Background waiter keeps DSM package start non-blocking.
+            # SYNOCR_SKIP_INPUTDIR_WAIT=1 is set by the waiter on re-entry.
+            if [ "${monitor}" = off ] && [ "${SYNOCR_SKIP_INPUTDIR_WAIT:-0}" != "1" ]; then
+                inputdir_status="$(synocr_inputdirs_wait_status)"
+                wait_timeout="$(synocr_monitor_wait_timeout)"
+                case "${inputdir_status}" in
+                    wait)
+                        if [ "${wait_timeout}" = "0" ]; then
+                            echo "Source folders not ready (encrypted?) – wait disabled (monitor_start_wait=0)" | tee -a "${log_dir_list[@]}"
+                            synocr_monitor_wait_log "Source folders not ready – wait disabled"
+                            synocr_inputdirs_log_missing
+                            exit 1
+                        fi
+                        echo "Source folders not ready yet – waiting in background (timeout=${wait_timeout}s)" | tee -a "${log_dir_list[@]}"
+                        synocr_monitor_waiter_start
+                        # Also mirror into profile inotify.log when parent dirs exist
+                        if [ "${#log_dir_list[@]}" -gt 0 ]; then
+                            synocr_monitor_wait_log "See also $(synocr_monitor_wait_logfile)"
+                        fi
+                        exit 0
+                        ;;
+                    fatal)
+                        echo "Source folders missing and not encrypted – abort monitoring start" | tee -a "${log_dir_list[@]}"
+                        synocr_monitor_wait_log "Fatal: missing non-encrypted source folders"
+                        synocr_inputdirs_log_missing
+                        exit 1
+                        ;;
+                esac
             fi
 
             while [ "${monitor}" = off ]; do
@@ -113,6 +147,7 @@ for i in "$@" ; do
                     # Check success via exit status (watches established) and surviving PID
                     if [ "${monitor_rc}" -eq 0 ] && [ -n "$(inotify_process_id)" ]; then
                         monitor=on
+                        synocr_monitor_waiter_stop
                         echo "Monitoring successfully started" | tee -a "${log_dir_list[@]}"
                         break
                     fi
@@ -148,7 +183,8 @@ for i in "$@" ; do
             exit 1
             ;;
         stop)
-            # stop-monitoring:
+            # stop waiter + monitoring:
+            synocr_monitor_waiter_stop
             if [ "$(inotify_process_id)" ] ;then
                 echo "stop monitoring ..." | tee -a "${log_dir_list[@]}"
                 /usr/syno/synoman/webman/3rdparty/synOCR/input_monitor.sh stop >/dev/null 2>&1
@@ -452,35 +488,23 @@ done
         LOGDIR="${LOGDIR%/}/"
         LOGFILE="${LOGDIR}synOCR_$(date +%Y-%m-%d_%H-%M-%S).log"
 
-        if echo "${LOGDIR}" | grep -q "/volume" && [ ! -d "${LOGDIR}" ] && [ "${loglevel}" != 0 ] && [ "${dsm_major}" = 6 ];then
-            if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${LOGDIR}" | awk -F/ '{print $3}')" ; then
-                if [ "${callFrom}" = GUI ] ; then
-                    echo '
-                    <p class="text-center">
-                        <span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_umount_log}"' ! ! !</b><br>EXIT SCRIPT!<br></span>
-                    </p>'
-                else
-                    echo "${lang_synOCR_start_umount_log}    ➜    EXIT SCRIPT!"
-                fi
-                continue
-            fi
-            mkdir -p "${LOGDIR}"
-        fi
+        # LOGDIR: no encrypted-unmounted check — if LOGDIR is on a locked share we
+        # cannot write the diagnosis into LOGFILE; missing LOGDIR → loglevel=0 below.
 
     # must the target directory be created and is the path allowed?
-        if [ ! -d "${OUTPUTDIR}" ] && echo "${OUTPUTDIR}" | grep -q "/volume" && [ "${dsm_major}" = 6 ]; then
-            if /usr/syno/sbin/synoshare --enum ENC | grep -q "$(echo "${OUTPUTDIR}" | awk -F/ '{print $3}')" ; then
-                # is it an encrypted folder and is it mounted? (check only @DSM6, because synoshare need root privileges)
-                if [ "${callFrom}" = GUI ] ; then
-                    echo '
-                    <p class="text-center"><
-                        span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_umount_target}"' ! ! !</b><br>EXIT SCRIPT!<br></span>
-                    </p>'
-                else
-                    echo "${lang_synOCR_start_umount_target}    ➜    EXIT SCRIPT!" >> "${LOGFILE}" 2>&1
-                fi
-                continue
+        if [ -d "${OUTPUTDIR}" ] && synocr_path_is_nas_volume "${OUTPUTDIR}" ; then
+            :
+        elif synocr_path_encrypted_unmounted "${OUTPUTDIR}" ; then
+            if [ "${callFrom}" = GUI ] ; then
+                echo '
+                <p class="text-center">
+                    <span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_umount_target}"' ! ! !</b><br>EXIT SCRIPT!<br></span>
+                </p>'
+            else
+                echo "${lang_synOCR_start_umount_target}    ➜    EXIT SCRIPT!"
             fi
+            continue
+        elif synocr_path_is_nas_volume "${OUTPUTDIR}" && [ ! -d "${OUTPUTDIR}" ] ; then
             mkdir -p "${OUTPUTDIR}"
             if [ "${callFrom}" = GUI ] ; then
                 echo '
@@ -488,17 +512,17 @@ done
                     <span style="color: #BD0010;"><b>'"${lang_synOCR_start_target_created}"'</b></span>
                 </p>'
             else
-                echo "${lang_synOCR_start_target_created}" >> "${LOGFILE}" 2>&1
+                echo "${lang_synOCR_start_target_created}"
             fi
-        elif [ ! -d "${OUTPUTDIR}" ] || ! echo "${OUTPUTDIR}" | grep -q "/volume" ; then
+        else
             if [ "${callFrom}" = GUI ] ; then
                 echo '
                 <p class="text-center">
                     <span style="color: #BD0010;"><b>! ! ! '"${lang_synOCR_start_check_target}"' ! ! !</b><br>'"${lang_synOCR_start_abort} (${profile} [ID: ${profile_ID}])"'<br></span>
                 </p>'
             else
-                echo "! ! ! ${lang_synOCR_start_check_target} ! ! !" >> "${LOGFILE}" 2>&1
-                echo "${lang_synOCR_start_abort} (${profile} [ID: ${profile_ID}])" >> "${LOGFILE}" 2>&1
+                echo "! ! ! ${lang_synOCR_start_check_target} ! ! !"
+                echo "${lang_synOCR_start_abort} (${profile} [ID: ${profile_ID}])"
             fi
             continue
         fi

@@ -20,13 +20,16 @@ export COPY_EXTENDED_ATTRIBUTES_DISABLE=1
 show_help () {
 cat << EOF
 Without arguments, the script creates the SPK from the current master-branch from the server for DSM7.
+Default filename: synOCR_<version>.spk  (DSM version only in name when --dsm= is set)
 
-Usage:      ./${0##*/} -v=<synOCR-Version> --dsm=<target DSM-Version>
-Example:    ./${0##*/} -v=1.2.0 --dsm=7
+Usage:      ./${0##*/} -v=<synOCR-Version> [--dsm=<target DSM-Version>]
+Example:    ./${0##*/} -v=1.2.0
+            ./${0##*/} -v=1.2.0 --dsm=7   → synOCR_DSM7_1.2.0.spk
 
     -v= --version=          specifies which synOCR version is to be built / the git labels are to be used (branch / tag)
                             "local" will be used the local files without git interaction
-        --DSM=              specifies for which DSM version is to be built
+        --DSM=              specifies for which DSM version is to be built (default: 7);
+                            only then included in the SPK filename
 
     -h  --help              display this help and exit
 
@@ -37,11 +40,13 @@ exit 1
 
 # read arguments:
 # ---------------------------------------------------------------------
+    TargetDSM_explicit=0
     for i in "$@" ; do
         case $i in
             -dsm=*|--dsm=*|-DSM=*|--DSM=*)
             # ToDo: Test, ob Zahl - derzeit 6 oder 7
             TargetDSM="${i#*=}"
+            TargetDSM_explicit=1
             shift
             ;;
             -v=*|--version=*)
@@ -59,7 +64,11 @@ exit 1
     done
 
     [ -z $buildversion ] && echo "wrong or empty value for synOCR version - set to \"latest\"" && buildversion="latest"
-    [ ! "$TargetDSM" = 6 ] && [ ! "$TargetDSM" = 7 ] && echo "wrong or empty value for target DSM version - set to 7" && TargetDSM=7
+    if [ ! "$TargetDSM" = 6 ] && [ ! "$TargetDSM" = 7 ]; then
+        echo "wrong or empty value for target DSM version - set to 7"
+        TargetDSM=7
+        TargetDSM_explicit=0
+    fi
 
     if [ -x "$(command -v git)" ]; then
         echo "requested synOCR version: $buildversion"
@@ -443,7 +452,11 @@ exit 1
 
 # Creating the final SPK
     printf "\n - INFO: the SPK will be created ...\n"
-    TargetName="${project}_DSM${TargetDSM}_${set_spk_version}${beta_status}.spk"
+    if [ "$TargetDSM_explicit" = 1 ]; then
+        TargetName="${project}_DSM${TargetDSM}_${set_spk_version}${beta_status}.spk"
+    else
+        TargetName="${project}_${set_spk_version}${beta_status}.spk"
+    fi
     # $build_version
     $FAKEROOT tar "${TAR_CREATE_OPTS[@]}" \
         --exclude='.DS_Store' --exclude='._*' \

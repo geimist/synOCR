@@ -9,10 +9,11 @@
  *   DSM 7 package scripts (postinst, start-stop-status, GUI) run as the
  *   package user "synOCR", which cannot join groups or chown docker.sock.
  *   Users previously had to start synOCR-start.sh once as root. This helper
- *   lets the package user run one hardcoded heal script as root instead.
+ *   lets the package user run hardcoded privileged verbs instead.
  *
- * Allowed verb (no extra arguments):
- *   selfheal
+ * Allowed verbs (no extra arguments):
+ *   selfheal   – docker/administrators heal script
+ *   enc-enum   – list encrypted shared folder names (synoshare --enum ENC)
  *
  * The heal script is opened once, ownership/mode is locked through that
  * descriptor, then executed via fexecve so it cannot be swapped between
@@ -35,10 +36,15 @@
 #define TARGET_SCRIPT "/var/packages/synOCR/target/ui/includes/synocr-heal.sh"
 #endif
 
+static int verb_allowed(const char *verb)
+{
+    return strcmp(verb, "selfheal") == 0 || strcmp(verb, "enc-enum") == 0;
+}
+
 int main(int argc, char *argv[])
 {
-    if (argc != 2 || strcmp(argv[1], "selfheal") != 0) {
-        fprintf(stderr, "synocr-helper: only 'selfheal' is allowed (no extra arguments)\n");
+    if (argc != 2 || !verb_allowed(argv[1])) {
+        fprintf(stderr, "synocr-helper: allowed verbs: selfheal, enc-enum (no extra arguments)\n");
         return 1;
     }
 
@@ -79,7 +85,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    char *args[] = { (char *)TARGET_SCRIPT, (char *)"selfheal", NULL };
+    char *args[] = { (char *)TARGET_SCRIPT, argv[1], NULL };
     extern char **environ;
     fexecve(fd, args, environ);
 

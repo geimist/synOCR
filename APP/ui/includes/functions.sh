@@ -471,6 +471,288 @@ synocr_selfheal_via_helper() {
     "${helper}" selfheal
 }
 
+# Encrypted-share wait (inotify boot race with Key Manager / auto-mount)
+# -------------------------------------------------------------------------- #
+# System key monitor_start_wait: seconds to wait (default 900). 0 = no wait.
+# -1 = wait indefinitely. Waiter PID: etc/monitor-wait.pid
+synocr_monitor_wait_default() { printf '%s' "900"; }
+synocr_monitor_wait_interval() { printf '%s' "15"; }
+
+synocr_monitor_wait_pidfile() {
+    printf '%s' "${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}/etc/monitor-wait.pid"
+}
+
+synocr_monitor_wait_logfile() {
+    printf '%s' "${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}/etc/monitor-wait.log"
+}
+
+synocr_monitor_wait_log() {
+    local line logfile
+    line="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+    logfile="$(synocr_monitor_wait_logfile)"
+    mkdir -p "$(dirname "${logfile}")" 2>/dev/null || true
+    printf '%s\n' "${line}" >> "${logfile}" 2>/dev/null || true
+    printf '%s\n' "${line}"
+}
+
+# Timeout from DB (seconds). Empty → default 900.
+synocr_monitor_wait_timeout() {
+    local t
+    t="$(synocr_sqlite "SELECT value_1 FROM system WHERE key='monitor_start_wait'" 2>/dev/null)"
+    if [ -z "${t}" ]; then
+        synocr_monitor_wait_default
+        return 0
+    fi
+    printf '%s' "${t}"
+}
+
+# Volume root from NAS path: /volume1/Share/a → /volume1
+synocr_path_volume() {
+    local p="${1-}"
+    p="${p#/}"
+    printf '/%s' "${p%%/*}"
+}
+
+# Share name (1st level under volume): /volume1/Share/a → Share
+synocr_path_share_name() {
+    local p="${1-}"
+    p="${p#/}"
+    p="${p#*/}"
+    printf '%s' "${p%%/*}"
+}
+
+# True if share name looks like a Synology shared-folder name.
+synocr_share_name_ok() {
+    local s="${1-}"
+    [[ "${s}" =~ ^[A-Za-z0-9._-]+$ ]]
+}
+
+# Print encrypted share names (raw synoshare output). 0 = got a listing.
+synocr_enc_enum() {
+    local helper
+    if synocr_helper_ready; then
+        helper="$(synocr_helper_bin)"
+        "${helper}" enc-enum 2>/dev/null
+        return $?
+    fi
+    if [ "$(id -u)" -eq 0 ] && [ -x /usr/syno/sbin/synoshare ]; then
+        /usr/syno/sbin/synoshare --enum ENC 2>/dev/null
+        return $?
+    fi
+    return 1
+}
+
+# True if $1 (share name) appears in ENC enum text $2.
+synocr_enc_list_has_share() {
+    local share="${1-}" enum="${2-}"
+    [ -n "${share}" ] || return 1
+    printf '%s\n' "${enum}" | grep -qxF "${share}" && return 0
+    # synoshare may print "[Shared Folder]" headers and spaced tokens
+    printf '%s\n' "${enum}" | grep -qE "(^|[[:space:]])${share}([[:space:]]|$)"
+}
+
+# True if share is encrypted: helper/root synoshare, else @Share@ under volume.
+# Args: share_name [volume_root]
+synocr_share_is_encrypted() {
+    local share="${1-}" volume="${2-}" enum
+    synocr_share_name_ok "${share}" || return 1
+
+    if enum="$(synocr_enc_enum)"; then
+        synocr_enc_list_has_share "${share}" "${enum}" && return 0
+    fi
+
+    if [ -n "${volume}" ] && [ -d "${volume}/@${share}@" ]; then
+        return 0
+    fi
+    return 1
+}
+
+# True if path is a NAS volume path, does not exist as a directory, and its
+# share is encrypted (helper enc-enum / @Share@). Used for OUTPUT/BACKUP at runtime.
+synocr_path_encrypted_unmounted() {
+    local p="${1-}"
+    [ -n "${p}" ] || return 1
+    [ ! -d "${p}" ] || return 1
+    synocr_path_is_nas_volume "${p}" || return 1
+    synocr_share_is_encrypted "$(synocr_path_share_name "${p}")" "$(synocr_path_volume "${p}")"
+}
+
+# Active INPUTDIRs, one per line (unique).
+synocr_active_inputdirs() {
+    synocr_sqlite "SELECT INPUTDIR FROM config WHERE active='1' AND INPUTDIR IS NOT NULL AND NOT INPUTDIR=''" 2>/dev/null | sort | uniq
+}
+
+# Echo status: ready | wait | fatal | empty
+# ready  – all INPUTDIRs exist
+# wait   – at least one missing and encrypted (or ENC unknown → boot-safe wait)
+# fatal  – at least one missing and confirmed not encrypted
+# empty  – no active INPUTDIRs
+synocr_inputdirs_wait_status() {
+    local dir share volume any=0 missing_wait=0 missing_fatal=0
+    local enc_list="" enc_ok=0 is_enc
+
+    if enc_list="$(synocr_enc_enum 2>/dev/null)"; then
+        enc_ok=1
+    fi
+
+    while IFS= read -r dir; do
+        [ -z "${dir}" ] && continue
+        any=1
+        [ -d "${dir}" ] && continue
+
+        share="$(synocr_path_share_name "${dir}")"
+        volume="$(synocr_path_volume "${dir}")"
+        is_enc=0
+
+        if [ "${enc_ok}" -eq 1 ]; then
+            if synocr_enc_list_has_share "${share}" "${enc_list}"; then
+                is_enc=1
+            elif [ -d "${volume}/@${share}@" ]; then
+                is_enc=1
+            fi
+            if [ "${is_enc}" -eq 1 ]; then
+                missing_wait=1
+            else
+                missing_fatal=1
+            fi
+        else
+            # No ENC listing: @Share@ → wait; otherwise wait anyway (encrypted boot race)
+            missing_wait=1
+        fi
+    done <<< "$(synocr_active_inputdirs)"
+
+    if [ "${any}" -eq 0 ]; then
+        printf '%s' "empty"
+        return 0
+    fi
+    if [ "${missing_fatal}" -eq 1 ]; then
+        printf '%s' "fatal"
+        return 0
+    fi
+    if [ "${missing_wait}" -eq 1 ]; then
+        printf '%s' "wait"
+        return 0
+    fi
+    printf '%s' "ready"
+}
+
+# Log which INPUTDIRs are missing (and whether waitable).
+synocr_inputdirs_log_missing() {
+    local dir share volume enc_list="" enc_ok=0 tag
+    if enc_list="$(synocr_enc_enum 2>/dev/null)"; then
+        enc_ok=1
+    fi
+    while IFS= read -r dir; do
+        [ -z "${dir}" ] && continue
+        [ -d "${dir}" ] && continue
+        share="$(synocr_path_share_name "${dir}")"
+        volume="$(synocr_path_volume "${dir}")"
+        tag="missing"
+        if [ "${enc_ok}" -eq 1 ] && synocr_enc_list_has_share "${share}" "${enc_list}"; then
+            tag="missing (encrypted share, not mounted yet)"
+        elif [ -d "${volume}/@${share}@" ]; then
+            tag="missing (encrypted share marker @${share}@)"
+        elif [ "${enc_ok}" -eq 0 ]; then
+            tag="missing (ENC status unknown – waiting)"
+        else
+            tag="missing (not an encrypted share)"
+        fi
+        synocr_monitor_wait_log "  INPUTDIR ${tag}: ${dir}"
+    done <<< "$(synocr_active_inputdirs)"
+}
+
+synocr_monitor_waiter_running() {
+    local pidfile pid
+    pidfile="$(synocr_monitor_wait_pidfile)"
+    [ -f "${pidfile}" ] || return 1
+    pid="$(tr -d '[:space:]' < "${pidfile}" 2>/dev/null)"
+    [ -n "${pid}" ] || return 1
+    kill -0 "${pid}" 2>/dev/null
+}
+
+synocr_monitor_waiter_stop() {
+    local pidfile pid
+    pidfile="$(synocr_monitor_wait_pidfile)"
+    [ -f "${pidfile}" ] || return 0
+    pid="$(tr -d '[:space:]' < "${pidfile}" 2>/dev/null)"
+    if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+        synocr_monitor_wait_log "Stopping monitor waiter (pid=${pid})"
+        kill "${pid}" 2>/dev/null
+        sleep 1
+        if kill -0 "${pid}" 2>/dev/null; then
+            kill -9 "${pid}" 2>/dev/null
+        fi
+    fi
+    rm -f "${pidfile}"
+}
+
+# Background waiter: poll until INPUTDIRs ready, then re-enter synOCR-start.sh start.
+# Caller must exit 0 after this so DSM package start is not blocked.
+synocr_monitor_waiter_start() {
+    local pidfile timeout interval start_script app_home
+    pidfile="$(synocr_monitor_wait_pidfile)"
+    timeout="$(synocr_monitor_wait_timeout)"
+    interval="$(synocr_monitor_wait_interval)"
+    app_home="${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}"
+    start_script="${app_home}/synOCR-start.sh"
+
+    if synocr_monitor_waiter_running; then
+        synocr_monitor_wait_log "Monitor waiter already running (pid=$(tr -d '[:space:]' < "${pidfile}"))"
+        return 0
+    fi
+    rm -f "${pidfile}"
+
+    synocr_monitor_wait_log "Starting monitor waiter (timeout=${timeout}s interval=${interval}s)"
+    synocr_inputdirs_log_missing
+
+    (
+        # shellcheck source=/dev/null
+        source "${app_home}/includes/functions.sh"
+        export SYNOCR_APP_HOME="${app_home}"
+        local waited=0 status
+        while true; do
+            status="$(synocr_inputdirs_wait_status)"
+            case "${status}" in
+                ready|empty)
+                    synocr_monitor_wait_log "Source folders ready (status=${status}) – starting monitoring"
+                    rm -f "$(synocr_monitor_wait_pidfile)"
+                    # Skip wait gate on re-entry; keep start output in wait log (LOGDIR may still be encrypted)
+                    if SYNOCR_SKIP_INPUTDIR_WAIT=1 "${start_script}" start >>"$(synocr_monitor_wait_logfile)" 2>&1; then
+                        synocr_monitor_wait_log "Monitoring start finished OK"
+                        exit 0
+                    fi
+                    synocr_monitor_wait_log "Monitoring start FAILED"
+                    exit 1
+                    ;;
+                fatal)
+                    synocr_monitor_wait_log "Abort waiter: missing source folder is not encrypted"
+                    synocr_inputdirs_log_missing
+                    rm -f "$(synocr_monitor_wait_pidfile)"
+                    exit 1
+                    ;;
+                wait)
+                    ;;
+            esac
+
+            if [ "${timeout}" -ge 0 ] 2>/dev/null && [ "${waited}" -ge "${timeout}" ]; then
+                synocr_monitor_wait_log "Timeout after ${waited}s waiting for source folders"
+                synocr_inputdirs_log_missing
+                rm -f "$(synocr_monitor_wait_pidfile)"
+                exit 1
+            fi
+
+            sleep "${interval}"
+            waited=$((waited + interval))
+            if [ $((waited % 60)) -eq 0 ] || [ "${waited}" -eq "${interval}" ]; then
+                synocr_monitor_wait_log "Still waiting for source folders (${waited}s elapsed)"
+            fi
+        done
+    ) >/dev/null 2>&1 &
+
+    echo $! > "${pidfile}"
+    synocr_monitor_wait_log "Monitor waiter pid=$(cat "${pidfile}")"
+}
+
 # -------------------------------------------------------------------------- #
 # native URL encode & decode:
 # https://gist.github.com/cdown/1163649
