@@ -400,13 +400,22 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
     <p>'"${lang_main_desc1}"'</p>
     <p>'"${lang_main_desc2}"'</p>'
 
-# validate input directories:
+# validate input directories (missing encrypted share ≠ invalid path):
     invalid_input_dir=""
+    waiting_input_dir=""
     active_dirs_json=$(synocr_sqlite -json "SELECT INPUTDIR, profile FROM config WHERE active='1'" 2>/dev/null)
     while IFS= read -r row; do
         dir=$(synocr_jq_row_field "${row}" INPUTDIR)
         profilename=$(synocr_jq_row_field "${row}" profile)
-        [ ! -d "${dir}" ] && invalid_input_dir="${invalid_input_dir}${profilename} ${dir}<br>"
+        [ -d "${dir}" ] && continue
+        case "$(synocr_inputdir_missing_kind "${dir}")" in
+            wait)
+                waiting_input_dir="${waiting_input_dir}${profilename} ${dir}<br>"
+                ;;
+            *)
+                invalid_input_dir="${invalid_input_dir}${profilename} ${dir}<br>"
+                ;;
+        esac
     done < <(synocr_jq_rows "${active_dirs_json}") 
 
 # show start button, if DSM is DSM6 or user synOCR is in groups administrators AND docker:
@@ -418,21 +427,26 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
                 <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr">'"${lang_main_buttonrun}"'</button>
                 <p class="text-center">'"${lang_help_QS_1b}"' (<a href="https://synocommunity.com/package/inotify-tools" onclick="window.open(this.href); return false;" style="'"${synocrred}"';"><b>'"${lang_foot_buttondownDB}"' Inotify-Tools</b></a>)</p>                
             </p><br />'
-        elif [ "${inotify_tools_ready}" -eq 1 ] && { [ "${dsm_major}" -eq 6 ] || [ "${monitoring_user}" != root ]; }; then 
+        elif [ "${inotify_tools_ready}" -eq 1 ] && { [ "${dsm_major}" -eq 6 ] || [ "${monitoring_user}" != root ]; }; then
+            if [ -n "${waiting_input_dir}" ]; then
+                echo '<hr></hr><p class="synocr-text-blue">'"${lang_main_input_encrypted_unmounted}"'<br>'
+                echo '<code class="mb-5">'"${waiting_input_dir}"'</code>'
+                if synocr_monitor_waiter_running; then
+                    echo '<br>'"${lang_main_input_encrypted_unmounted_waiting}"
+                fi
+                echo '</p>'
+            fi
             if [ -n "${invalid_input_dir}" ]; then
-                # warn if invalid source directories are present:
                 echo '<hr></hr><p class="synocr-text-red">'"${lang_main_invalid_input_dir}"'<br>'
                 echo '<code class="mb-5">'"${invalid_input_dir}"'</code></p>'
             else
                 if [ -n "${PID}" ]; then
-                    # stop / (re-)start monitoring:
                     echo '
                     <p class="text-center">
                         <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr-monitoring">'"${lang_main_button_restart_monitoring}"'</button>
                         <button name="page" class="btn btn-white" style="color: #FFFFFF; background-color: #BD0010;" value="main-stop-synocr-monitoring">'"${lang_main_button_stop_monitoring}"'</button>
                     </p><br />'
                 else
-                    # start monitoring:
                     echo '
                     <p class="text-center">
                         <button name="page" class="btn btn-primary" style="background-color: #0086E5;" value="main-run-synocr-monitoring">'"${lang_main_button_start_monitoring}"'</button>

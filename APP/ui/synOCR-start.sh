@@ -85,23 +85,18 @@ for i in "$@" ; do
                 case "${inputdir_status}" in
                     wait)
                         if [ "${wait_timeout}" = "0" ]; then
-                            echo "Source folders not ready (encrypted?) – wait disabled (monitor_start_wait=0)" | tee -a "${log_dir_list[@]}"
-                            synocr_monitor_wait_log "Source folders not ready – wait disabled"
-                            synocr_inputdirs_log_missing
+                            synocr_monitor_wait_log "Source folders not ready (encrypted?) – wait disabled (monitor_start_wait=0)"
+                            synocr_inputdirs_log_status
                             exit 1
                         fi
-                        echo "Source folders not ready yet – waiting in background (timeout=${wait_timeout}s)" | tee -a "${log_dir_list[@]}"
+                        synocr_monitor_wait_log "Source folders not ready yet – waiting in background (timeout=${wait_timeout}s)"
+                        synocr_inputdirs_log_status
                         synocr_monitor_waiter_start
-                        # Also mirror into profile inotify.log when parent dirs exist
-                        if [ "${#log_dir_list[@]}" -gt 0 ]; then
-                            synocr_monitor_wait_log "See also $(synocr_monitor_wait_logfile)"
-                        fi
                         exit 0
                         ;;
                     fatal)
-                        echo "Source folders missing and not encrypted – abort monitoring start" | tee -a "${log_dir_list[@]}"
-                        synocr_monitor_wait_log "Fatal: missing non-encrypted source folders"
-                        synocr_inputdirs_log_missing
+                        synocr_monitor_wait_log "Source folders missing and not encrypted – abort monitoring start"
+                        synocr_inputdirs_log_status
                         exit 1
                         ;;
                 esac

@@ -3,11 +3,7 @@
 
 2.0.99.1 [2026-xx-xx]
 
-  ENHANCEMENT:
- - [shell]  inotify start waits for encrypted source folders (Key Manager / boot mount race)
-            via setuid helper verb enc-enum; background waiter, default 900s
-            (system key monitor_start_wait: 0=off, -1=unlimited)
- - [shell]  OUTPUT/BACKUP: detect encrypted shares that are not mounted (enc-enum) and
-            abort with a clear log line; LOGDIR has no separate check (cannot log there)
- - [spk]    docker/administrators permissions are set via a setuid helper after
-            install/upgrade — no manual root start of synOCR-start.sh is required
+  IMPLEMENTATIONS:
+ ● [shell]  inotify start waits for encrypted source folders
+ ● [shell]  OUTPUT/BACKUP: detect encrypted shares that are not mounted (enc-enum) and abort with a clear log line
+ ● [spk]    permissions are set via a setuid helper after — no manual root start of synOCR-start.sh is required

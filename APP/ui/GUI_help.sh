@@ -63,7 +63,6 @@ echo '
                         <h6 class="synocr-text-blue">'"${lang_tab}"' &quot;'"${lang_help_QS_sub3_tit}"'&quot;:</h6>
                         <ul class="li_standard">
                             <li>'"${lang_help_QS_sub3_1}"'</li>
-                            <li>'"${lang_help_QS_sub3_2}"'</li>
                         </ul><br />
                         <h6 class="synocr-text-blue">'"${lang_tab}"' &quot;'"${lang_help_QS_sub4_tit}"'&quot;:</h6>
                         <ul class="li_standard">

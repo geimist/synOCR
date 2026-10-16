@@ -486,12 +486,26 @@ synocr_monitor_wait_logfile() {
     printf '%s' "${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}/etc/monitor-wait.log"
 }
 
+# Append one line to each existing profile inotify.log (LOGDIR/inotify.log).
+# Does not create LOGDIR or change the log path — skip if the parent is missing
+# (e.g. LOGDIR still on an unmounted encrypted share).
+synocr_inotify_log() {
+    local line="${1-}" logf
+    [ -n "${line}" ] || return 0
+    while IFS= read -r logf; do
+        [ -n "${logf}" ] || continue
+        [ -d "${logf%/*}" ] || continue
+        printf '%s\n' "${line}" >> "${logf}" 2>/dev/null || true
+    done <<< "$(synocr_sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
+}
+
 synocr_monitor_wait_log() {
     local line logfile
     line="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
     logfile="$(synocr_monitor_wait_logfile)"
     mkdir -p "$(dirname "${logfile}")" 2>/dev/null || true
     printf '%s\n' "${line}" >> "${logfile}" 2>/dev/null || true
+    synocr_inotify_log "${line}"
     printf '%s\n' "${line}"
 }
 
@@ -636,29 +650,63 @@ synocr_inputdirs_wait_status() {
     printf '%s' "ready"
 }
 
-# Log which INPUTDIRs are missing (and whether waitable).
-synocr_inputdirs_log_missing() {
-    local dir share volume enc_list="" enc_ok=0 tag
+# Classify a missing INPUTDIR: wait (encrypted / ENC unknown) or fatal.
+synocr_inputdir_missing_kind() {
+    local dir="${1-}" share volume enc_list="" enc_ok=0
+    [ -n "${dir}" ] || { printf '%s' "fatal"; return 0; }
+    [ -d "${dir}" ] && { printf '%s' "ready"; return 0; }
+
+    share="$(synocr_path_share_name "${dir}")"
+    volume="$(synocr_path_volume "${dir}")"
     if enc_list="$(synocr_enc_enum 2>/dev/null)"; then
         enc_ok=1
     fi
+    if [ "${enc_ok}" -eq 1 ]; then
+        if synocr_enc_list_has_share "${share}" "${enc_list}" || [ -d "${volume}/@${share}@" ]; then
+            printf '%s' "wait"
+        else
+            printf '%s' "fatal"
+        fi
+    else
+        printf '%s' "wait"
+    fi
+}
+
+# Log all active INPUTDIRs (present and missing) for wait/start diagnostics.
+synocr_inputdirs_log_status() {
+    local dir share volume enc_list="" enc_ok=0 tag n=0
+    if enc_list="$(synocr_enc_enum 2>/dev/null)"; then
+        enc_ok=1
+    fi
+    synocr_monitor_wait_log "Active INPUTDIR list:"
     while IFS= read -r dir; do
         [ -z "${dir}" ] && continue
-        [ -d "${dir}" ] && continue
-        share="$(synocr_path_share_name "${dir}")"
-        volume="$(synocr_path_volume "${dir}")"
-        tag="missing"
-        if [ "${enc_ok}" -eq 1 ] && synocr_enc_list_has_share "${share}" "${enc_list}"; then
-            tag="missing (encrypted share, not mounted yet)"
-        elif [ -d "${volume}/@${share}@" ]; then
-            tag="missing (encrypted share marker @${share}@)"
-        elif [ "${enc_ok}" -eq 0 ]; then
-            tag="missing (ENC status unknown – waiting)"
+        n=$((n + 1))
+        if [ -d "${dir}" ]; then
+            tag="ok (mounted)"
         else
-            tag="missing (not an encrypted share)"
+            share="$(synocr_path_share_name "${dir}")"
+            volume="$(synocr_path_volume "${dir}")"
+            if [ "${enc_ok}" -eq 1 ] && synocr_enc_list_has_share "${share}" "${enc_list}"; then
+                tag="missing (encrypted share, not mounted yet)"
+            elif [ -d "${volume}/@${share}@" ]; then
+                tag="missing (encrypted share marker @${share}@)"
+            elif [ "${enc_ok}" -eq 0 ]; then
+                tag="missing (ENC status unknown – waiting)"
+            else
+                tag="missing (not an encrypted share)"
+            fi
         fi
-        synocr_monitor_wait_log "  INPUTDIR ${tag}: ${dir}"
+        synocr_monitor_wait_log "  [${n}] ${tag}: ${dir}"
     done <<< "$(synocr_active_inputdirs)"
+    if [ "${n}" -eq 0 ]; then
+        synocr_monitor_wait_log "  (no active INPUTDIR)"
+    fi
+}
+
+# Log which INPUTDIRs are missing (and whether waitable).
+synocr_inputdirs_log_missing() {
+    synocr_inputdirs_log_status
 }
 
 synocr_monitor_waiter_running() {
@@ -703,7 +751,6 @@ synocr_monitor_waiter_start() {
     rm -f "${pidfile}"
 
     synocr_monitor_wait_log "Starting monitor waiter (timeout=${timeout}s interval=${interval}s)"
-    synocr_inputdirs_log_missing
 
     (
         # shellcheck source=/dev/null
