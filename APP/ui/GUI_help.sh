@@ -12,12 +12,18 @@ donation_version_info=$(curl -s --connect-timeout 10 --max-time 20 "https://raw.
 # Prefer distribution.donation (plan); fall back to root-level .donation (current upstream VERSION shape)
 donation_url=$(echo "${donation_version_info}" | jq -r '(.distribution.donation.url // .donation.url // empty)' 2>/dev/null)
 donation_image_url=$(echo "${donation_version_info}" | jq -r '(.distribution.donation.imageUrl // .donation.imageUrl // empty)' 2>/dev/null)
+support_upload_url=$(echo "${donation_version_info}" | jq -r '(.supportUploadURL // .helpURL // empty)' 2>/dev/null)
 
 if [ -n "${donation_image_url}" ]; then
     donation_visual='<img src="'"${donation_image_url}"'" alt="donation" style="float:left;padding:10px" height="60" width="200"/>'
 else
     donation_visual='<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60" role="img" aria-label="donation" style="float:left;padding:10px"><title>donation</title><rect x="0.5" y="0.5" width="199" height="59" rx="12" ry="12" fill="#f5a623" stroke="#d97706" stroke-width="1"/><text x="100" y="37" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="600" fill="#1f2937">Donation</text></svg>'
 fi
+support_upload_block=""
+if [ -n "${support_upload_url}" ] && [ "${support_upload_url}" != "null" ]; then
+    support_upload_block='<p>'"${lang_help_support_upload_beforelink}"'<a href="'"${support_upload_url}"'" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">'"${lang_help_support_upload_linktitle}"'</a>'"${lang_help_support_upload_afterlink}"'</p>'
+fi
+
 donation_block=""
 if [ -n "${donation_url}" ]; then
     donation_block='
@@ -113,6 +119,10 @@ echo '
 # -> Section other:
     echo '
     <p>&nbsp;</p>
+    <p>
+        <a href="index.cgi?page=help-support-download" title="'"${lang_help_support_download_tit}"'" class="btn btn-secondary btn-sm" style="color: #FFFFFF;">'"${lang_help_support_download}"'</a>
+    </p>
+    '"${support_upload_block}"'
     <h5 class="synocr-text-blue mt-3">'"${lang_help_about_title}"'</h5>
     <p>&nbsp;</p>
     <p>

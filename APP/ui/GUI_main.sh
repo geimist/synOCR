@@ -408,6 +408,8 @@ if [[ "${synocr_request_page}" == "main" ]] || [[ "${synocr_request_page}" == ""
         dir=$(synocr_jq_row_field "${row}" INPUTDIR)
         profilename=$(synocr_jq_row_field "${row}" profile)
         [ -d "${dir}" ] && continue
+        # One enc-enum for the whole page; the command substitution inherits it.
+        synocr_enc_enum_load || true
         case "$(synocr_inputdir_missing_kind "${dir}")" in
             wait)
                 waiting_input_dir="${waiting_input_dir}${profilename} ${dir}<br>"

@@ -10,24 +10,16 @@
 
 monitored_folders="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.list"
 ready_flag="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.ready"
-stderr_log="/usr/syno/synoman/webman/3rdparty/synOCR/etc/inotify.stderr"
 START_WAIT_SECS=10
 
 APPDIR=$(cd "$(dirname "$0")" || exit 1;pwd)
 export SYNOCR_APP_HOME="${APPDIR}"
 cd "${APPDIR}" || exit 1
 source "./includes/functions.sh"
-
-# create list (array need for tee) with all active log folders:
-# --------------------------------------------------------------
-LOG_DIR_LIST=()
-while read -r value ; do
-    [ -d "${value%/*}" ] && LOG_DIR_LIST+=( "$value" )
-done <<< "$(synocr_sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
+stderr_log="$(synocr_inotify_stderr_logfile)"
 
 log_monitor() {
-    # shellcheck disable=SC2068
-    printf '%s\n' "$@" | tee -a ${LOG_DIR_LIST[@]+"${LOG_DIR_LIST[@]}"} >/dev/null
+    printf '%s\n' "$@" | tee -a "$(synocr_inotify_logfile)" >/dev/null
     # also echo to caller stdout (synOCR-start captures this)
     printf '%s\n' "$@"
 }
@@ -88,7 +80,7 @@ handle_inotify_stderr_line() {
         return 0
     fi
     printf "[%s] INOTIFY-ERROR: %s\n" "$(date +%Y-%m-%d_%H-%M-%S)" "${errline}" \
-        | tee -a ${LOG_DIR_LIST[@]+"${LOG_DIR_LIST[@]}"} >/dev/null
+        >> "$(synocr_inotify_logfile)"
     printf "%s\n" "${errline}" >> "${stderr_log}"
 }
 
@@ -173,7 +165,7 @@ inotify_start()
                 printf "\n%s\n" "synOCR-start.sh Log:"
                 /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh
             done
-    ) | tee -a ${LOG_DIR_LIST[@]+"${LOG_DIR_LIST[@]}"} >/dev/null &
+    ) | tee -a "$(synocr_inotify_logfile)" >/dev/null &
 
     local waited=0
     local stderr_snapshot=""
@@ -188,7 +180,7 @@ inotify_start()
             else
                 log_monitor ""
                 log_monitor "synOCR-start.sh Log:"
-                /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh | tee -a ${LOG_DIR_LIST[@]+"${LOG_DIR_LIST[@]}"} >/dev/null
+                /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh | tee -a "$(synocr_inotify_logfile)" >/dev/null
             fi
             return 0
         fi

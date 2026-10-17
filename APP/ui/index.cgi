@@ -235,6 +235,25 @@
         exit 0
     fi
 
+    if [ "${synocr_request_page}" = "help-support-download" ]; then
+        cd "${app_home}" || exit 1
+        _synocr_zip="$(mktemp /tmp/synocr-support.XXXXXX.zip 2>/dev/null)" || _synocr_zip="/tmp/synocr-support.$$.zip"
+        rm -f "${_synocr_zip}"
+        if synocr_support_bundle "${_synocr_zip}"; then
+            echo "Content-Type: application/zip"
+            echo "Content-Disposition: attachment; filename=\"synOCR-support-$(date +%Y%m%d-%H%M%S).zip\""
+            echo "Cache-Control: no-store"
+            echo
+            cat "${_synocr_zip}"
+        else
+            echo "Content-Type: text/plain; charset=utf-8"
+            echo
+            echo "support bundle failed"
+        fi
+        rm -f "${_synocr_zip}"
+        exit 0
+    fi
+
 
 # Layout - Open basic framework incl. navigation -
 # ----------------------------------------------------------

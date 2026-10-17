@@ -2,6 +2,7 @@
   "app": "synOCR",
   "description": "current synOCR versions",
   "serverURL": "https://geimist.eu/synOCR/updateserver.php",
+  "supportUploadURL": "https://geimist.eu/link/synocrupload",
   "distribution": {
     "_comment": "for Pakage Center configuration in GUI_main.sh",
     "packageRepo": {

@@ -55,13 +55,14 @@ Wer ruft wann auf:
 
 | Aufrufer | Verb | Wann |
 |----------|------|------|
-| `PKG_DSM7/scripts/postinst` | `selfheal` | direkt nach Install, falls setuid schon gesetzt |
-| `APP/ui/synOCR-start.sh` | `selfheal` | DSM 7, nicht root, Gruppen/Sock fehlen |
+| `PKG_DSM7/scripts/postinst` | `selfheal` | direkt nach Neuinstallation, falls setuid schon gesetzt |
+| `PKG_DSM7/scripts/postupgrade` | `selfheal` | direkt nach Upgrade, bevor DSM den Dienst startet |
+| `APP/ui/synOCR-start.sh` | `selfheal` | OCR-Lauf (ohne `start`/`stop`), DSM 7, nicht root, Gruppen/Sock fehlen |
 | `APP/ui/GUI_main.sh` | `selfheal` | gleiche Prüfung vor der Statusanzeige |
 | `APP/ui/synOCR-start.sh` (Monitoring) | `enc-enum` | verschlüsselte INPUTDIR-Freigaben erkennen |
 | Aufgabenplaner als **root** | — | kein Helper; `synOCR-start.sh` heilt direkt (`synogroupmod*`) |
 
-Ist der Helper beim `postinst` noch ohne setuid, heilt der **erste** GUI- oder Paket-Start nach.
+`synOCR-start.sh start` (Paketstart, Monitoring-Button) heilt nicht. Die Gruppenmitgliedschaft gilt nur für Prozesse, die **danach** neu starten. Deshalb sitzt der Heal in `postinst` und `postupgrade`, bevor DSM den Dienst startet. Fehlt das setuid-Bit dort noch, heilt der nächste GUI-Aufruf oder ein OCR-Lauf; der Paketdienst muss danach neu gestartet werden.
 
 ## Die zwei Verben
 
@@ -69,7 +70,7 @@ Der C-Helper akzeptiert **genau ein Argument**, ohne weitere Parameter:
 
 | Verb | Zweck |
 |------|--------|
-| `selfheal` | docker-Gruppe anlegen falls nötig, `chown root:docker` auf den Socket, User `synOCR` in `docker` und `administrators`, optional `python3_env`/`synOCR.sqlite`-Rechte. Idempotent. Log: `ui/etc/selfheal.log` |
+| `selfheal` | docker-Gruppe anlegen falls nötig, `chown root:docker` auf den Socket, User `synOCR` in `docker` und `administrators`, optional `python3_env`/`synOCR.sqlite`-Rechte. Idempotent. Log: `log/selfheal.log` |
 | `enc-enum` | `synoshare --enum ENC` — Liste verschlüsselter Share-Namen. Für den Inotify-Start, wenn INPUTDIR noch nicht gemountet ist |
 
 Alles andere wird abgelehnt. Es gibt **keinen** Weg, über den Helper ein beliebiges Skript oder `docker run` zu starten.
@@ -78,9 +79,11 @@ Alles andere wird abgelehnt. Es gibt **keinen** Weg, über den Helper ein belieb
 
 **fexecve:** Das Binary öffnet `synocr-heal.sh` einmal (`O_NOFOLLOW`), prüft die Datei über diesen Descriptor, setzt sie bei Bedarf auf root/`0555` und startet **denselben** Descriptor. So kann niemand die Datei zwischen Prüfung und Ausführung austauschen.
 
+**Kein `source`:** `synocr-heal.sh` enthält die Gruppen- und Socket-Logik selbst. Es lädt `functions.sh` nicht. Die Datei bleibt für den Paketbenutzer schreibbar; als root ausgeführt würde sie die enge Grenze des Helpers aufheben. Bis zum ersten Lauf kann `synOCR` `synocr-heal.sh` noch selbst ändern — erst danach gehört die Datei root und ist `0555`.
+
 **`$0` ist `/dev/fd/N`:** Genau deshalb darf `synocr-heal.sh` sein Verzeichnis **nicht** aus `$0` ableiten. `APPDIR` ist fest `/var/packages/synOCR/target/ui`.
 
-**Umgebung:** `clearenv()`, dann nur `PATH` (inkl. `/usr/syno/sbin`) und `HOME=/root`. Keine geerbten Variablen vom Aufrufer.
+**Umgebung:** `clearenv()`, dann nur `PATH` (inkl. `/usr/syno/sbin`) und `HOME=/root`. Keine geerbten Variablen vom Aufrufer. `synocr-heal.sh` setzt danach `LANG` und `LC_ALL` auf `en_US.UTF-8`, damit `synoshare` Freigabenamen mit Umlauten unverändert ausgibt.
 
 **Direkt als root** (Aufgabenplaner) bleibt erlaubt: `synocr-heal.sh` prüft `id -u`, nicht den Helper.
 
@@ -94,7 +97,7 @@ Ein normaler DSM-User ohne Gruppe `synOCR` bekommt `Permission denied` — das i
 
 ## Encrypted INPUTDIR wait
 
-Beim Start von Monitoring prüft `synOCR-start.sh` aktive `INPUTDIR`s. Gehört ein fehlender Pfad zu einem verschlüsselten Share (`enc-enum` oder Fallback `@Share@`), wartet ein Hintergrundprozess, bis der Ordner da ist (Standard 900 s; System-Key `monitor_start_wait`: `0` = aus, `-1` = unbegrenzt). Log: `ui/etc/monitor-wait.log`.
+Beim Start von Monitoring prüft `synOCR-start.sh` aktive `INPUTDIR`s. Gewartet wird nur, wenn der Share-Root selbst fehlt (`/volumeN/Name` ist kein Verzeichnis) und die Freigabe verschlüsselt ist. `synoshare --enum ENC` zählt nur bei exakter Zeile — der Kopf `Share Enum Arguments: … ALL ENC DEC` ist keine Freigabe. Leerzeichen und UTF-8 im Namen sind gültig. `@Name@` bleibt auch im gemounteten Zustand liegen und heißt deshalb nicht „gesperrt“. Fehlt nur ein Unterordner auf einer bereits gemounteten Freigabe, ist das ein normaler Pfadfehler. Liefert `enc-enum` keine Liste, wartet ein fehlender Share-Root trotzdem (Boot, Key Manager). Standard 900 s; System-Key `monitor_start_wait`: `0` = aus, `-1` = unbegrenzt. Log: `log/monitor-wait.log` (Inotify-Debug: `log/inotify.log`).
 
 ## Binaries neu bauen
 
@@ -113,7 +116,7 @@ Ergebnis: `APP/bin/helper/synocr-helper-{x86_64,aarch64}` — die gehören ins G
 1. SPK: `./build_spk.sh -v=local --dsm=7`
 2. Auf DSM 7 installieren oder upgraden.
 3. setuid: `ls -l /var/packages/synOCR/target/bin/helper/synocr-helper-*`
-4. Heal-Log: `/var/packages/synOCR/target/ui/etc/selfheal.log`
+4. Heal-Log: `/var/packages/synOCR/target/log/selfheal.log` (Upgrade zusätzlich `/tmp/synOCR.postupgrade.selfheal`)
 5. **Nicht** das Startskript als root ausführen. GUI öffnen / Monitoring starten.
 6. `synOCR` in `docker` und `administrators`; Socket `root:docker`.
 7. Drift: User aus `docker` nehmen oder `chown root:root /var/run/docker.sock` — erneuter Start soll heilen.

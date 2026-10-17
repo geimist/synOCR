@@ -160,4 +160,19 @@ fi
 echo "${TIMESTAMP} - Package update completed." >>/tmp/${SYNOPKG_PKGNAME}.history
 echo "------------------------------------------------------------------------------------------------------------------------------------------\n" >>/tmp/${SYNOPKG_PKGNAME}.history
 
+# DSM 7: postupgrade runs as the package user, and postinst does not run on
+# upgrade. Heal before DSM starts the service so that start sees the groups.
+# If the setuid bit is not applied yet, the next GUI open or OCR run heals.
+HELPER=""
+case "$(uname -m)" in
+    x86_64)  HELPER="${SYNOPKG_PKGDEST}/bin/helper/synocr-helper-x86_64" ;;
+    aarch64|arm64) HELPER="${SYNOPKG_PKGDEST}/bin/helper/synocr-helper-aarch64" ;;
+esac
+if [ -n "${HELPER}" ] && [ -u "${HELPER}" ]; then
+    echo "${TIMESTAMP} - selfheal via setuid helper" >>/tmp/${SYNOPKG_PKGNAME}.history
+    "${HELPER}" selfheal >/tmp/synOCR.postupgrade.selfheal 2>&1 || true
+else
+    echo "${TIMESTAMP} - selfheal skipped (setuid helper not ready)" >>/tmp/${SYNOPKG_PKGNAME}.history
+fi
+
 exit 0

@@ -1,5 +1,4 @@
 #!/bin/bash
-# shellcheck disable=SC1091
 
 #################################################################################
 #   description:    Privileged actions for DSM 7 (via setuid synocr-helper).    #
@@ -9,6 +8,9 @@
 #   Do not derive APPDIR from $0: the helper runs this script via fexecve, so   #
 #   $0 is /dev/fd/N and dirname($0) is useless.                                 #
 #                                                                               #
+#   Stay self-contained. This file runs as root and must not source other       #
+#   package files (functions.sh stays writable by the package user).            #
+#                                                                               #
 #   Idempotent where applicable. Intended to run as root via the helper.        #
 #   Direct execution as root (Task Scheduler) is also allowed.                  #
 #   © 2026 by geimist                                                           #
@@ -16,14 +18,22 @@
 
 APPDIR="/var/packages/synOCR/target/ui"
 export SYNOCR_APP_HOME="${APPDIR}"
-LOGFILE="${APPDIR}/etc/selfheal.log"
+LOGDIR="/var/packages/synOCR/target/log"
+LOGFILE="${LOGDIR}/selfheal.log"
 
 log() {
     local line
     line="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
     echo "${line}"
-    mkdir -p "${APPDIR}/etc" 2>/dev/null || true
+    mkdir -p "${LOGDIR}" 2>/dev/null || true
+    # Directory must stay writable by the package user (inotify.log).
+    chown synOCR:synOCR "${LOGDIR}" 2>/dev/null || true
+    chmod 755 "${LOGDIR}" 2>/dev/null || true
+    if [ -f "${APPDIR}/etc/selfheal.log" ] && [ ! -e "${LOGFILE}" ]; then
+        mv "${APPDIR}/etc/selfheal.log" "${LOGFILE}" 2>/dev/null || true
+    fi
     echo "${line}" >> "${LOGFILE}" 2>/dev/null || true
+    chmod 644 "${LOGFILE}" 2>/dev/null || true
 }
 
 require_root() {
@@ -33,10 +43,88 @@ require_root() {
     fi
 }
 
+# The helper clears the environment. A UTF-8 locale keeps non-ASCII share
+# names from synoshare aligned with the paths stored in the database.
+export_locale() {
+    export LANG=en_US.UTF-8
+    export LC_ALL=en_US.UTF-8
+}
+
+# Add one user without dropping existing members.
+# synogroup --member replaces the whole list, so a failed parse must not run it.
+heal_group_add_user() {
+    local group="$1" user="$2" raw name
+    local -a members=()
+
+    if ! raw="$(synogroup --get "${group}" 2>&1)"; then
+        log "${group}: synogroup --get failed"
+        return 1
+    fi
+
+    if ! printf '%s\n' "${raw}" | grep -q "Group Members"; then
+        log "${group}: unexpected synogroup output; members left unchanged"
+        return 1
+    fi
+
+    if printf '%s\n' "${raw}" | awk -F'[][]' -v u="${user}" '$0 ~ /^[0-9]+:/ && $2 == u { found=1 } END { exit found ? 0 : 1 }'; then
+        log "${group}: ${user} already a member"
+        return 0
+    fi
+
+    while IFS= read -r name; do
+        [ -n "${name}" ] || continue
+        members+=("${name}")
+    done < <(printf '%s\n' "${raw}" | awk -F'[][]' '/^[0-9]+:/ {print $2}')
+
+    if [ "${#members[@]}" -eq 0 ] && printf '%s\n' "${raw}" | grep -qE '^[0-9]+:'; then
+        log "${group}: member list unparsable; members left unchanged"
+        return 1
+    fi
+
+    members+=("${user}")
+    if ! synogroup --member "${group}" "${members[@]}"; then
+        log "${group}: synogroup --member failed"
+        return 1
+    fi
+    log "${group}: added ${user}"
+    return 0
+}
+
+heal_docker() {
+    local rc=0
+
+    if ! synogroup --get docker >/dev/null 2>&1; then
+        log "docker group missing; creating"
+        if ! synogroup --add docker; then
+            log "docker group create failed"
+            return 1
+        fi
+    fi
+
+    if [ -S /var/run/docker.sock ]; then
+        if [ "$(stat -c '%G' /var/run/docker.sock 2>/dev/null)" != "docker" ]; then
+            if chown root:docker /var/run/docker.sock; then
+                log "docker.sock owner set to root:docker"
+            else
+                log "docker.sock chown failed"
+                rc=1
+            fi
+        else
+            log "docker.sock already group docker"
+        fi
+    else
+        log "docker.sock absent; chown skipped"
+    fi
+
+    heal_group_add_user docker synOCR || rc=1
+    return "${rc}"
+}
+
 # List encrypted shared folder names (stdout). Used before inotify start so the
 # package user can wait for Key Manager / auto-mount without root itself.
 do_enc_enum() {
     require_root
+    export_locale
     if [ ! -x /usr/syno/sbin/synoshare ]; then
         echo "synocr-heal.sh: synoshare not found" >&2
         exit 1
@@ -46,34 +134,24 @@ do_enc_enum() {
 }
 
 do_selfheal() {
+    local rc=0
+    local python3_env dbPath
+
     require_root
+    export_locale
 
-    cd "${APPDIR}" || {
-        log "synocr-heal.sh: cannot cd to ${APPDIR}"
-        exit 1
-    }
+    log "synOCR selfheal (user=$(id -un) uid=$(id -u) \$0=${0})"
 
-    if [ ! -f "${APPDIR}/includes/functions.sh" ]; then
-        log "synocr-heal.sh: missing ${APPDIR}/includes/functions.sh"
-        exit 1
-    fi
-    # shellcheck source=/dev/null
-    source "${APPDIR}/includes/functions.sh"
-
-    log "synOCR selfheal (user=$(id -un) uid=$(id -u) euid=$(id -u) \$0=${0})"
-
-    echo -n "    ➜ docker group / socket: "
-    synogroupmoddocker
-    echo
-    log "docker group / socket done"
-
-    echo -n "    ➜ administrators membership: "
-    if grep ^administrators /etc/group | grep -q synOCR ; then
-        echo "ok"
-        log "administrators: already member"
+    if heal_docker; then
+        log "docker group / socket done"
     else
-        synogroupmoduser add administrators synOCR
-        log "administrators: add synOCR"
+        log "docker group / socket incomplete"
+        rc=1
+    fi
+
+    if ! heal_group_add_user administrators synOCR; then
+        log "administrators membership incomplete"
+        rc=1
     fi
 
     python3_env="${APPDIR}/python3_env"
@@ -89,7 +167,7 @@ do_selfheal() {
         log "database permissions adjusted"
     fi
 
-    exit 0
+    exit "${rc}"
 }
 
 case "${1:-}" in

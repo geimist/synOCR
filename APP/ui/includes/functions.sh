@@ -309,6 +309,7 @@ synogroupmoduser() {
     local GROUP="$2"
     local USER="$3"
     local CURRENTUSERS
+    local RAW
     local -a USERLIST
     local BACKUP_FILE="/tmp/${GROUP}_members.bak"
 
@@ -318,18 +319,28 @@ synogroupmoduser() {
         return 1
     fi
 
-    # Group existence test
-    if ! synogroup --get "$GROUP" >/dev/null 2>&1; then
+    # synogroup --member replaces the whole member list. Keep the raw output and
+    # refuse to rewrite the group when that output cannot be parsed.
+    if ! RAW="$(synogroup --get "$GROUP" 2>&1)"; then
         echo "Error: Group $GROUP does not exist." >&2
         return 1
     fi
+    if ! printf '%s\n' "${RAW}" | grep -q "Group Members"; then
+        echo "Error: unexpected synogroup output for ${GROUP}; group was left unchanged." >&2
+        return 1
+    fi
 
-    # list user at group
-    CURRENTUSERS=$(synogroup --get "$GROUP" | 
-        awk -F'[][]' '/^[0-9]+:/ {print $2}' | 
-        tr '\n' ',' | 
+    # list user at group (lines look like: 0:[admin])
+    CURRENTUSERS=$(printf '%s\n' "${RAW}" |
+        awk -F'[][]' '/^[0-9]+:/ {print $2}' |
+        tr '\n' ',' |
         sed 's/,$//'
     )
+
+    if [ -z "${CURRENTUSERS}" ] && printf '%s\n' "${RAW}" | grep -qE '^[0-9]+:'; then
+        echo "Error: member list of ${GROUP} could not be parsed; group was left unchanged." >&2
+        return 1
+    fi
 
     # Backup erstellen
     echo "$CURRENTUSERS" > "$BACKUP_FILE"
@@ -338,8 +349,18 @@ synogroupmoduser() {
         return 1
     fi
 
-    # Parse members
-    IFS=',' read -ra USERLIST <<< "$CURRENTUSERS"
+    # An empty group must stay an empty array. `read` on an empty string inserts
+    # one blank field, which --member would then write back as a member.
+    USERLIST=()
+    if [ -n "${CURRENTUSERS}" ]; then
+        local _member
+        local -a _clean=()
+        IFS=',' read -ra USERLIST <<< "$CURRENTUSERS"
+        for _member in "${USERLIST[@]}"; do
+            [ -n "${_member}" ] && _clean+=("${_member}")
+        done
+        USERLIST=("${_clean[@]+"${_clean[@]}"}")
+    fi
     local user_found=0
 
     # Depending on the action, process
@@ -381,7 +402,12 @@ synogroupmoduser() {
     if ! synogroup --member "$GROUP" "${USERLIST[@]}"; then
         echo "CRITICAL ERROR: Group update failed! Restore from backup …" >&2
 
-        # Restore
+        # Restore. An empty backup must not be written back as a blank member.
+        if [ -z "$(tr -d '[:space:]' < "$BACKUP_FILE")" ]; then
+            echo "CRITICAL ERROR: Group update failed. Empty backup; group was not rewritten again." >&2
+            rm "$BACKUP_FILE"
+            return 1
+        fi
         IFS=',' read -ra RESTORE_LIST <<< "$(cat "$BACKUP_FILE")"
         if ! synogroup --member "$GROUP" "${RESTORE_LIST[@]}"; then
             echo "FATAL ERROR: Restore failed! Backup: $BACKUP_FILE" >&2
@@ -460,7 +486,7 @@ synocr_helper_ready() {
 }
 
 # Run selfheal via helper. Echoes helper output. Returns helper exit status.
-# Heal script also appends to ${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}/etc/selfheal.log
+# Heal script also appends to <package>/log/selfheal.log
 synocr_selfheal_via_helper() {
     local helper
     helper="$(synocr_helper_bin)"
@@ -482,21 +508,131 @@ synocr_monitor_wait_pidfile() {
     printf '%s' "${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}/etc/monitor-wait.pid"
 }
 
-synocr_monitor_wait_logfile() {
-    printf '%s' "${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}/etc/monitor-wait.log"
+# Package log directory: sibling of ui/ (…/target/log). Profile LOGDIR is untouched.
+synocr_pkg_home() {
+    printf '%s' "${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}"
 }
 
-# Append one line to each existing profile inotify.log (LOGDIR/inotify.log).
-# Does not create LOGDIR or change the log path — skip if the parent is missing
-# (e.g. LOGDIR still on an unmounted encrypted share).
+synocr_pkg_logdir() {
+    local home
+    home="$(synocr_pkg_home)"
+    printf '%s/log' "$(dirname "${home}")"
+}
+
+# Move former ui/etc system logs once. Does not touch profile LOGDIR/inotify.log.
+synocr_pkg_log_migrate() {
+    local old new name
+    old="$(synocr_pkg_home)/etc"
+    new="$(synocr_pkg_logdir)"
+    mkdir -p "${new}" 2>/dev/null || true
+    for name in selfheal.log monitor-wait.log inotify.stderr; do
+        if [ -f "${old}/${name}" ] && [ ! -e "${new}/${name}" ]; then
+            mv "${old}/${name}" "${new}/${name}" 2>/dev/null || true
+        fi
+    done
+}
+
+synocr_pkg_logfile() {
+    local name="${1-}" dir
+    dir="$(synocr_pkg_logdir)"
+    mkdir -p "${dir}" 2>/dev/null || true
+    synocr_pkg_log_migrate
+    printf '%s/%s' "${dir}" "${name}"
+}
+
+synocr_monitor_wait_logfile() {
+    synocr_pkg_logfile "monitor-wait.log"
+}
+
+synocr_inotify_logfile() {
+    synocr_pkg_logfile "inotify.log"
+}
+
+synocr_inotify_stderr_logfile() {
+    synocr_pkg_logfile "inotify.stderr"
+}
+
+# Append one line to the package inotify log (target/log/inotify.log).
 synocr_inotify_log() {
     local line="${1-}" logf
     [ -n "${line}" ] || return 0
-    while IFS= read -r logf; do
-        [ -n "${logf}" ] || continue
-        [ -d "${logf%/*}" ] || continue
-        printf '%s\n' "${line}" >> "${logf}" 2>/dev/null || true
-    done <<< "$(synocr_sqlite "SELECT LOGDIR FROM config WHERE active='1' AND LOGDIR IS NOT NULL AND NOT LOGDIR=''" 2>/dev/null | sort | uniq | sed -e "s~$~/inotify.log~g")"
+    logf="$(synocr_inotify_logfile)"
+    printf '%s\n' "${line}" >> "${logf}" 2>/dev/null || true
+}
+
+# Copy regular files only. Symlinks are not followed and not stored.
+synocr_support_copy_tree() {
+    local src="$1" dest="$2" path rel parent
+    [ -d "${src}" ] || return 0
+    mkdir -p "${dest}"
+    while IFS= read -r -d '' path; do
+        rel="${path#"${src}"}"
+        rel="${rel#/}"
+        [ -n "${rel}" ] || continue
+        if [ -d "${path}" ]; then
+            mkdir -p "${dest}/${rel}"
+        elif [ -f "${path}" ]; then
+            parent="$(dirname "${rel}")"
+            if [ "${parent}" != "." ]; then
+                mkdir -p "${dest}/${parent}"
+            fi
+            cp -p "${path}" "${dest}/${rel}" 2>/dev/null || true
+        fi
+    done < <(find "${src}" -mindepth 1 \( -type d -o -type f \) -print0 2>/dev/null)
+}
+
+# Write a support ZIP to $1.
+# Sources: target/log, ui/etc, DSM package log, and /tmp/synOCR.history when present.
+synocr_support_bundle() {
+    local outfile="$1"
+    local home stage pkglog etcdir pkghist pkg_history rc
+    [ -n "${outfile}" ] || return 1
+    home="$(synocr_pkg_home)"
+    pkglog="$(synocr_pkg_logdir)"
+    etcdir="${home}/etc"
+    pkghist="/var/log/packages/synOCR.log"
+    pkg_history="/tmp/synOCR.history"
+    stage="$(mktemp -d /tmp/synocr-support.XXXXXX)" || return 1
+    mkdir -p "${stage}/log" "${stage}/etc"
+    synocr_support_copy_tree "${pkglog}" "${stage}/log"
+    synocr_support_copy_tree "${etcdir}" "${stage}/etc"
+    if [ -f "${pkghist}" ] && [ -r "${pkghist}" ]; then
+        cp -p "${pkghist}" "${stage}/synOCR.log" 2>/dev/null \
+            || printf '%s\n' "synOCR.log was not readable (${pkghist})." > "${stage}/synOCR.log.unavailable.txt"
+    else
+        printf '%s\n' "synOCR.log was not readable (${pkghist})." > "${stage}/synOCR.log.unavailable.txt"
+    fi
+    if [ -f "${pkg_history}" ] && [ ! -L "${pkg_history}" ]; then
+        if [ -r "${pkg_history}" ]; then
+            cp -p "${pkg_history}" "${stage}/synOCR.history" 2>/dev/null \
+                || printf '%s\n' "synOCR.history was not readable (${pkg_history})." > "${stage}/synOCR.history.unavailable.txt"
+        else
+            printf '%s\n' "synOCR.history was not readable (${pkg_history})." > "${stage}/synOCR.history.unavailable.txt"
+        fi
+    fi
+    rm -f "${outfile}"
+    rc=0
+    if command -v zip >/dev/null 2>&1; then
+        ( cd "${stage}" && zip -qr "${outfile}" . ) || rc=1
+    elif command -v python3 >/dev/null 2>&1; then
+        SYNOCR_SUPPORT_STAGE="${stage}" SYNOCR_SUPPORT_OUT="${outfile}" python3 -c '
+import os, zipfile
+stage = os.environ["SYNOCR_SUPPORT_STAGE"]
+outfile = os.environ["SYNOCR_SUPPORT_OUT"]
+with zipfile.ZipFile(outfile, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+    for dirpath, dirnames, filenames in os.walk(stage, followlinks=False):
+        dirnames[:] = [d for d in dirnames if not os.path.islink(os.path.join(dirpath, d))]
+        for name in filenames:
+            full = os.path.join(dirpath, name)
+            if os.path.islink(full) or not os.path.isfile(full):
+                continue
+            zf.write(full, os.path.relpath(full, stage))
+' || rc=1
+    else
+        rc=1
+    fi
+    rm -rf "${stage}"
+    [ "${rc}" -eq 0 ] && [ -s "${outfile}" ]
 }
 
 synocr_monitor_wait_log() {
@@ -535,60 +671,126 @@ synocr_path_share_name() {
     printf '%s' "${p%%/*}"
 }
 
-# True if share name looks like a Synology shared-folder name.
+# True if share name can be one Synology shared-folder path component.
+# Names may contain spaces and UTF-8 (DSM allows both). "." / ".." and any
+# slash or newline cannot be a share name.
 synocr_share_name_ok() {
     local s="${1-}"
-    [[ "${s}" =~ ^[A-Za-z0-9._-]+$ ]]
+    [ -n "${s}" ] || return 1
+    [ "${s}" != "." ] && [ "${s}" != ".." ] || return 1
+    case "${s}" in
+        *$'\n'*|*'/'*) return 1 ;;
+    esac
+    return 0
+}
+
+# Load `synoshare --enum ENC` once per shell.
+# Sets _SYNOCR_ENC_ENUM_DONE, _SYNOCR_ENC_ENUM_RC and _SYNOCR_ENC_ENUM_CACHE.
+# A command substitution inherits this cache but cannot update the parent shell.
+synocr_enc_enum_load() {
+    if [ "${_SYNOCR_ENC_ENUM_DONE:-0}" = "1" ]; then
+        return "${_SYNOCR_ENC_ENUM_RC}"
+    fi
+    local out="" rc=1 helper
+    if synocr_helper_ready; then
+        helper="$(synocr_helper_bin)"
+        out="$("${helper}" enc-enum 2>/dev/null)"
+        rc=$?
+    elif [ "$(id -u)" -eq 0 ] && [ -x /usr/syno/sbin/synoshare ]; then
+        out="$(/usr/syno/sbin/synoshare --enum ENC 2>/dev/null)"
+        rc=$?
+    fi
+    _SYNOCR_ENC_ENUM_CACHE="${out}"
+    _SYNOCR_ENC_ENUM_RC="${rc}"
+    _SYNOCR_ENC_ENUM_DONE=1
+    return "${rc}"
 }
 
 # Print encrypted share names (raw synoshare output). 0 = got a listing.
 synocr_enc_enum() {
-    local helper
-    if synocr_helper_ready; then
-        helper="$(synocr_helper_bin)"
-        "${helper}" enc-enum 2>/dev/null
-        return $?
-    fi
-    if [ "$(id -u)" -eq 0 ] && [ -x /usr/syno/sbin/synoshare ]; then
-        /usr/syno/sbin/synoshare --enum ENC 2>/dev/null
-        return $?
-    fi
-    return 1
+    synocr_enc_enum_load
+    local rc=$?
+    printf '%s' "${_SYNOCR_ENC_ENUM_CACHE-}"
+    return "${rc}"
 }
 
-# True if $1 (share name) appears in ENC enum text $2.
+# True if $1 is one full line of the ENC listing in $2.
+# synoshare --enum prints a header ("Share Enum Arguments: ... ALL ENC DEC")
+# and then one share name per line. A word match would treat Share/ALL/ENC/DEC
+# as encrypted and would treat "." in a name as "any character".
 synocr_enc_list_has_share() {
     local share="${1-}" enum="${2-}"
     [ -n "${share}" ] || return 1
-    printf '%s\n' "${enum}" | grep -qxF "${share}" && return 0
-    # synoshare may print "[Shared Folder]" headers and spaced tokens
-    printf '%s\n' "${enum}" | grep -qE "(^|[[:space:]])${share}([[:space:]]|$)"
+    printf '%s\n' "${enum}" | grep -qxF -e "${share}"
 }
 
-# True if share is encrypted: helper/root synoshare, else @Share@ under volume.
+# True if the share is encrypted, whether or not it is currently mounted.
 # Args: share_name [volume_root]
 synocr_share_is_encrypted() {
-    local share="${1-}" volume="${2-}" enum
+    local share="${1-}" volume="${2-}"
     synocr_share_name_ok "${share}" || return 1
-
-    if enum="$(synocr_enc_enum)"; then
-        synocr_enc_list_has_share "${share}" "${enum}" && return 0
+    synocr_enc_enum_load || true
+    if [ "${_SYNOCR_ENC_ENUM_RC}" -eq 0 ] && synocr_enc_list_has_share "${share}" "${_SYNOCR_ENC_ENUM_CACHE-}"; then
+        return 0
     fi
-
     if [ -n "${volume}" ] && [ -d "${volume}/@${share}@" ]; then
         return 0
     fi
     return 1
 }
 
-# True if path is a NAS volume path, does not exist as a directory, and its
-# share is encrypted (helper enc-enum / @Share@). Used for OUTPUT/BACKUP at runtime.
+# Print ready | wait | fatal for one path.
+# ready – the path exists
+# wait  – the share root itself is missing, and the share is encrypted
+#         (or enc-enum was unavailable: boot race with Key Manager)
+# fatal – missing for any other reason, including a missing subfolder
+#         on a share that is already mounted
+synocr_classify_missing_path() {
+    local p="${1-}" share volume root
+    p="${p%/}"
+    if [ -z "${p}" ]; then
+        printf '%s' "fatal"
+        return 0
+    fi
+    if [ -d "${p}" ]; then
+        printf '%s' "ready"
+        return 0
+    fi
+
+    share="$(synocr_path_share_name "${p}")"
+    volume="$(synocr_path_volume "${p}")"
+    if ! synocr_share_name_ok "${share}" || [ -z "${volume}" ] || [ "${volume}" = "/" ]; then
+        printf '%s' "fatal"
+        return 0
+    fi
+
+    root="${volume}/${share}"
+    # @share@ remains on disk while the decrypted share is mounted.
+    # Only a missing share root means the encrypted folder is still locked.
+    if [ -d "${root}" ]; then
+        printf '%s' "fatal"
+        return 0
+    fi
+
+    synocr_enc_enum_load || true
+    if synocr_share_is_encrypted "${share}" "${volume}"; then
+        printf '%s' "wait"
+        return 0
+    fi
+    if [ "${_SYNOCR_ENC_ENUM_RC}" -ne 0 ]; then
+        printf '%s' "wait"
+        return 0
+    fi
+    printf '%s' "fatal"
+}
+
+# True if path is under /volumeN, does not exist, and its share root is an
+# encrypted folder that is not mounted. Used for OUTPUT/BACKUP at runtime.
 synocr_path_encrypted_unmounted() {
     local p="${1-}"
     [ -n "${p}" ] || return 1
-    [ ! -d "${p}" ] || return 1
     synocr_path_is_nas_volume "${p}" || return 1
-    synocr_share_is_encrypted "$(synocr_path_share_name "${p}")" "$(synocr_path_volume "${p}")"
+    [ "$(synocr_classify_missing_path "${p}")" = "wait" ]
 }
 
 # Active INPUTDIRs, one per line (unique).
@@ -598,41 +800,23 @@ synocr_active_inputdirs() {
 
 # Echo status: ready | wait | fatal | empty
 # ready  – all INPUTDIRs exist
-# wait   – at least one missing and encrypted (or ENC unknown → boot-safe wait)
-# fatal  – at least one missing and confirmed not encrypted
+# wait   – at least one share root is missing and encrypted (or ENC unknown)
+# fatal  – at least one path is missing and is not a locked encrypted share
 # empty  – no active INPUTDIRs
 synocr_inputdirs_wait_status() {
-    local dir share volume any=0 missing_wait=0 missing_fatal=0
-    local enc_list="" enc_ok=0 is_enc
-
-    if enc_list="$(synocr_enc_enum 2>/dev/null)"; then
-        enc_ok=1
-    fi
+    local dir any=0 missing_wait=0 missing_fatal=0 kind
 
     while IFS= read -r dir; do
         [ -z "${dir}" ] && continue
         any=1
         [ -d "${dir}" ] && continue
 
-        share="$(synocr_path_share_name "${dir}")"
-        volume="$(synocr_path_volume "${dir}")"
-        is_enc=0
-
-        if [ "${enc_ok}" -eq 1 ]; then
-            if synocr_enc_list_has_share "${share}" "${enc_list}"; then
-                is_enc=1
-            elif [ -d "${volume}/@${share}@" ]; then
-                is_enc=1
-            fi
-            if [ "${is_enc}" -eq 1 ]; then
-                missing_wait=1
-            else
-                missing_fatal=1
-            fi
-        else
-            # No ENC listing: @Share@ → wait; otherwise wait anyway (encrypted boot race)
-            missing_wait=1
-        fi
+        synocr_enc_enum_load || true
+        kind="$(synocr_classify_missing_path "${dir}")"
+        case "${kind}" in
+            wait) missing_wait=1 ;;
+            fatal) missing_fatal=1 ;;
+        esac
     done <<< "$(synocr_active_inputdirs)"
 
     if [ "${any}" -eq 0 ]; then
@@ -652,32 +836,12 @@ synocr_inputdirs_wait_status() {
 
 # Classify a missing INPUTDIR: wait (encrypted / ENC unknown) or fatal.
 synocr_inputdir_missing_kind() {
-    local dir="${1-}" share volume enc_list="" enc_ok=0
-    [ -n "${dir}" ] || { printf '%s' "fatal"; return 0; }
-    [ -d "${dir}" ] && { printf '%s' "ready"; return 0; }
-
-    share="$(synocr_path_share_name "${dir}")"
-    volume="$(synocr_path_volume "${dir}")"
-    if enc_list="$(synocr_enc_enum 2>/dev/null)"; then
-        enc_ok=1
-    fi
-    if [ "${enc_ok}" -eq 1 ]; then
-        if synocr_enc_list_has_share "${share}" "${enc_list}" || [ -d "${volume}/@${share}@" ]; then
-            printf '%s' "wait"
-        else
-            printf '%s' "fatal"
-        fi
-    else
-        printf '%s' "wait"
-    fi
+    synocr_classify_missing_path "${1-}"
 }
 
 # Log all active INPUTDIRs (present and missing) for wait/start diagnostics.
 synocr_inputdirs_log_status() {
-    local dir share volume enc_list="" enc_ok=0 tag n=0
-    if enc_list="$(synocr_enc_enum 2>/dev/null)"; then
-        enc_ok=1
-    fi
+    local dir share volume root tag n=0
     synocr_monitor_wait_log "Active INPUTDIR list:"
     while IFS= read -r dir; do
         [ -z "${dir}" ] && continue
@@ -687,14 +851,22 @@ synocr_inputdirs_log_status() {
         else
             share="$(synocr_path_share_name "${dir}")"
             volume="$(synocr_path_volume "${dir}")"
-            if [ "${enc_ok}" -eq 1 ] && synocr_enc_list_has_share "${share}" "${enc_list}"; then
-                tag="missing (encrypted share, not mounted yet)"
-            elif [ -d "${volume}/@${share}@" ]; then
-                tag="missing (encrypted share marker @${share}@)"
-            elif [ "${enc_ok}" -eq 0 ]; then
-                tag="missing (ENC status unknown – waiting)"
+            root="${volume}/${share}"
+            if synocr_share_name_ok "${share}" && [ -d "${root}" ]; then
+                tag="missing (share mounted, subfolder absent)"
             else
-                tag="missing (not an encrypted share)"
+                synocr_enc_enum_load || true
+                if [ "$(synocr_classify_missing_path "${dir}")" = "wait" ]; then
+                    if [ "${_SYNOCR_ENC_ENUM_RC}" -eq 0 ] && synocr_enc_list_has_share "${share}" "${_SYNOCR_ENC_ENUM_CACHE-}"; then
+                        tag="missing (encrypted share, not mounted yet)"
+                    elif [ -d "${volume}/@${share}@" ]; then
+                        tag="missing (encrypted share marker @${share}@)"
+                    else
+                        tag="missing (ENC status unknown – waiting)"
+                    fi
+                else
+                    tag="missing (not an encrypted share)"
+                fi
             fi
         fi
         synocr_monitor_wait_log "  [${n}] ${tag}: ${dir}"

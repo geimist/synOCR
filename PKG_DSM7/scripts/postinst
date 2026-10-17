@@ -33,9 +33,10 @@ rm -rf $SYNOPKG_PKGDEST/ocr_docker
 ln -s / $SYNOPKG_PKGDEST/ocr_docker
 
 # DSM 7: postinst runs as package user (not root). If DSM already applied the
-# privilege "tool" setuid bit, heal docker/administrators immediately so the
-# user never needs a manual root start. If the bit is not set yet, first GUI
-# or package start of synOCR-start.sh will call the helper.
+# privilege "tool" setuid bit, heal docker/administrators before the service
+# starts. Upgrades take the same path in postupgrade. If the bit is not set
+# yet, the next GUI open or OCR run calls the helper; restart the package
+# afterwards so new processes pick up the groups.
 HELPER=""
 case "$(uname -m)" in
     x86_64)  HELPER="${SYNOPKG_PKGDEST}/bin/helper/synocr-helper-x86_64" ;;
