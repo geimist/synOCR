@@ -21,7 +21,8 @@ else
 fi
 support_upload_block=""
 if [ -n "${support_upload_url}" ] && [ "${support_upload_url}" != "null" ]; then
-    support_upload_block='<p>'"${lang_help_support_upload_beforelink}"'<a href="'"${support_upload_url}"'" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">'"${lang_help_support_upload_linktitle}"'</a>'"${lang_help_support_upload_afterlink}"'</p>'
+    support_upload_html=$(printf '%s' "${support_upload_url}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/"/\&quot;/g')
+    support_upload_block='<p class="mb-0">'"${lang_help_support_upload}"'<br /><a href="'"${support_upload_html}"'" onclick="window.open(this.href); return false;" style="'"${synocrred}"';">'"${support_upload_html}"'</a></p>'
 fi
 
 donation_block=""
@@ -120,10 +121,10 @@ echo '
     echo '
     <p>&nbsp;</p>
     <p>
-        <a href="index.cgi?page=help-support-download" title="'"${lang_help_support_download_tit}"'" class="btn btn-secondary btn-sm" style="color: #FFFFFF;">'"${lang_help_support_download}"'</a>
+        <a href="index.cgi?page=help-support-download" title="'"${lang_help_support_download_tit}"'" class="btn btn-white btn-sm" style="color: #FFFFFF; background-color: #0086E5;">'"${lang_help_support_download}"'</a>
     </p>
     '"${support_upload_block}"'
-    <h5 class="synocr-text-blue mt-3">'"${lang_help_about_title}"'</h5>
+    <h5 class="synocr-text-blue mt-5">'"${lang_help_about_title}"'</h5>
     <p>&nbsp;</p>
     <p>
         '"${lang_help_about_1}"'<br />
