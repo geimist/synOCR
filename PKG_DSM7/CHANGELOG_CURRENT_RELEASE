@@ -4,7 +4,7 @@
  ● [spk]    beep notification is now allways available
  ● [shell]  inotify start waits for encrypted source folders
  ● [shell]  OUTPUT/BACKUP: detect encrypted shares that are not mounted (enc-enum) and abort with a clear log line
- ● [spk]    permissions are set via a setuid helper after — no manual root start of synOCR-start.sh is required
+ ● [spk]    permissions are set using a setuid helper—there is no need to manually run “synOCR-start.sh” as root
  ● [shell]  inotify debug log and package system logs are written to target/log (profile LOGDIR unchanged)
  ● [gui]    help page: download support data (package logs, configuration, DSM package log, /tmp/synOCR.history when present)
 
