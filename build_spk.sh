@@ -1,4 +1,6 @@
 #!/bin/bash
+# Test copy of build_spk.sh: if fakeroot cannot start, pack with plain tar.
+# DSM sets helper owners from conf/privilege on install.
 #
 #######
 project="synOCR"
@@ -165,9 +167,9 @@ exit 1
     }
     trap finish EXIT
 
-    # Root already owns archive members as uid 0. fakeroot is only for
-    # unprivileged builds; on recent macOS its SYSV message queues often fail
-    # with "No space left on device" (ENOSPC), which is not a full disk.
+    # Root already owns archive members as uid 0. Otherwise try fakeroot.
+    # If SYSV message queues are unavailable, pack with plain tar. DSM applies
+    # helper owners from conf/privilege during install.
     die_fakeroot() {
         local errfile=$1
         if grep -Eq 'No space left on device|lack of SYSV IPC|error while starting' "$errfile"; then
@@ -205,18 +207,12 @@ exit 1
     if [ "$(id -u)" -eq 0 ]; then
         FAKEROOT=""
         echo " - INFO: running as root, packing without fakeroot"
-    elif [ -x "$(command -v fakeroot)" ]; then
+    elif [ -x "$(command -v fakeroot)" ] && fakeroot true >/dev/null 2>&1; then
         FAKEROOT=$(command -v fakeroot)
-        fakeroot_err=$(mktemp)
-        if ! "${FAKEROOT}" true >"$fakeroot_err" 2>&1; then
-            die_fakeroot "$fakeroot_err"
-        fi
-        rm -f "$fakeroot_err"
-        echo " - INFO: not root, packing with fakeroot"
+        echo " - INFO: packing with fakeroot"
     else
-        echo "ERROR: fakeroot is not installed and you are not root." >&2
-        echo "Install fakeroot, or run this script as root." >&2
-        exit 1
+        FAKEROOT=""
+        echo " - INFO: fakeroot unavailable, packing with tar (DSM sets owners via privilege)"
     fi
 
     TAR_CREATE_OPTS=(--format=ustar)

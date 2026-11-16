@@ -517,14 +517,32 @@ synocr_monitor_wait_pidfile() {
     printf '%s' "${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}/etc/monitor-wait.pid"
 }
 
-# Package log directory: sibling of ui/ (…/target/log). Profile LOGDIR is untouched.
+# Package log directory: sibling of the real ui/ (…/target/log or …/@appstore/synOCR/log).
+# Profile LOGDIR is untouched.
+# DSM starts synOCR-start.sh through the webman symlink
+# (/usr/syno/synoman/webman/3rdparty/synOCR -> …/target/ui). dirname of that
+# symlink is not writable and is not the directory the support ZIP reads.
 synocr_pkg_home() {
     printf '%s' "${SYNOCR_APP_HOME:-/var/packages/synOCR/target/ui}"
 }
 
+# Physical UI directory. pwd -P follows the webman and target symlinks.
+synocr_pkg_home_physical() {
+    local home resolved
+    home="$(synocr_pkg_home)"
+    if [ -d "${home}" ]; then
+        resolved="$(cd "${home}" && pwd -P)" || resolved=""
+        if [ -n "${resolved}" ]; then
+            printf '%s' "${resolved}"
+            return 0
+        fi
+    fi
+    printf '%s' "${home}"
+}
+
 synocr_pkg_logdir() {
     local home
-    home="$(synocr_pkg_home)"
+    home="$(synocr_pkg_home_physical)"
     printf '%s/log' "$(dirname "${home}")"
 }
 
@@ -651,7 +669,45 @@ synocr_monitor_wait_log() {
     mkdir -p "$(dirname "${logfile}")" 2>/dev/null || true
     printf '%s\n' "${line}" >> "${logfile}" 2>/dev/null || true
     synocr_inotify_log "${line}"
-    printf '%s\n' "${line}"
+    # Re-entry redirects start stdout into this same file. Skip the echo then
+    # so each line is stored once (SYNOCR_WAIT_LOG_ECHO=0).
+    if [ "${SYNOCR_WAIT_LOG_ECHO:-1}" = "1" ]; then
+        printf '%s\n' "${line}"
+    fi
+}
+
+# One-line ls -ld (or the ls error) for wait diagnostics.
+synocr_monitor_wait_log_ls() {
+    local label="${1-}" path="${2-}" line
+    if [ -z "${path}" ]; then
+        synocr_monitor_wait_log "      ${label}: (empty path)"
+        return 0
+    fi
+    # Support log wants the literal ls line, including "No such file" / "Permission denied".
+    # shellcheck disable=SC2012
+    line="$(ls -ld -- "${path}" 2>&1 | head -n 1 | tr -d '\r')"
+    synocr_monitor_wait_log "      ${label}: ${line}"
+}
+
+# /proc/mounts line whose mountpoint is $1. Spaces are stored as \040.
+# Prints nothing and returns 1 when the path is not mounted.
+synocr_proc_mount_line() {
+    local path="${1-}" line mpt
+    path="${path%/}"
+    [ -n "${path}" ] || return 1
+    [ -r /proc/mounts ] || return 1
+    while IFS= read -r line || [ -n "${line}" ]; do
+        mpt="${line#* }"
+        mpt="${mpt%% *}"
+        mpt="${mpt//\\040/ }"
+        mpt="${mpt//\\011/	}"
+        mpt="${mpt//\\134/\\}"
+        if [ "${mpt}" = "${path}" ]; then
+            printf '%s' "${line}"
+            return 0
+        fi
+    done < /proc/mounts
+    return 1
 }
 
 # Timeout from DB (seconds). Empty → default 900.
@@ -693,23 +749,54 @@ synocr_share_name_ok() {
     return 0
 }
 
+# Drop the per-shell enc-enum cache so the next load hits synoshare again.
+# The waiter is long-lived; a snapshot must not reuse a boot-time failure.
+synocr_enc_enum_reset() {
+    _SYNOCR_ENC_ENUM_DONE=0
+}
+
 # Load `synoshare --enum ENC` once per shell.
-# Sets _SYNOCR_ENC_ENUM_DONE, _SYNOCR_ENC_ENUM_RC and _SYNOCR_ENC_ENUM_CACHE.
+# Sets _SYNOCR_ENC_ENUM_DONE, _SYNOCR_ENC_ENUM_RC, _SYNOCR_ENC_ENUM_CACHE,
+# _SYNOCR_ENC_ENUM_SRC (helper:path | synoshare:path | unavailable) and
+# _SYNOCR_ENC_ENUM_ERR (stderr, may be empty).
 # A command substitution inherits this cache but cannot update the parent shell.
 synocr_enc_enum_load() {
     if [ "${_SYNOCR_ENC_ENUM_DONE:-0}" = "1" ]; then
         return "${_SYNOCR_ENC_ENUM_RC}"
     fi
-    local out="" rc=1 helper
+    local out="" err="" rc=1 helper errfile
+    _SYNOCR_ENC_ENUM_SRC="unavailable"
+    _SYNOCR_ENC_ENUM_ERR=""
+    errfile="$(mktemp "${TMPDIR:-/tmp}/synocr-enc-enum.XXXXXX" 2>/dev/null)" || errfile=""
     if synocr_helper_ready; then
         helper="$(synocr_helper_bin)"
-        out="$("${helper}" enc-enum 2>/dev/null)"
-        rc=$?
+        _SYNOCR_ENC_ENUM_SRC="helper:${helper}"
+        if [ -n "${errfile}" ]; then
+            out="$("${helper}" enc-enum 2>"${errfile}")"
+            rc=$?
+            err="$(cat "${errfile}" 2>/dev/null)"
+        else
+            out="$("${helper}" enc-enum 2>/dev/null)"
+            rc=$?
+        fi
     elif [ "$(id -u)" -eq 0 ] && [ -x /usr/syno/sbin/synoshare ]; then
-        out="$(/usr/syno/sbin/synoshare --enum ENC 2>/dev/null)"
-        rc=$?
+        helper="/usr/syno/sbin/synoshare"
+        _SYNOCR_ENC_ENUM_SRC="synoshare:${helper}"
+        if [ -n "${errfile}" ]; then
+            out="$("${helper}" --enum ENC 2>"${errfile}")"
+            rc=$?
+            err="$(cat "${errfile}" 2>/dev/null)"
+        else
+            out="$("${helper}" --enum ENC 2>/dev/null)"
+            rc=$?
+        fi
+    else
+        helper="$(synocr_helper_bin)"
+        err="helper not ready (${helper}); uid=$(id -u 2>/dev/null || echo '?')"
     fi
+    [ -n "${errfile}" ] && rm -f "${errfile}"
     _SYNOCR_ENC_ENUM_CACHE="${out}"
+    _SYNOCR_ENC_ENUM_ERR="${err}"
     _SYNOCR_ENC_ENUM_RC="${rc}"
     _SYNOCR_ENC_ENUM_DONE=1
     return "${rc}"
@@ -815,6 +902,9 @@ synocr_active_inputdirs() {
 synocr_inputdirs_wait_status() {
     local dir any=0 missing_wait=0 missing_fatal=0 kind
 
+    # Ignore a cache inherited from the long-lived waiter shell.
+    synocr_enc_enum_reset
+
     while IFS= read -r dir; do
         [ -z "${dir}" ] && continue
         any=1
@@ -848,37 +938,94 @@ synocr_inputdir_missing_kind() {
     synocr_classify_missing_path "${1-}"
 }
 
+# Fresh enc-enum plus the facts needed to see why a path was classified.
+# Written to monitor-wait.log (mirrored to inotify.log); both are in the support ZIP.
+synocr_inputdirs_log_enc_context() {
+    local src rc helper ready uid user timeout shares line mount_note
+    synocr_enc_enum_reset
+    synocr_enc_enum_load || true
+    src="${_SYNOCR_ENC_ENUM_SRC:-unavailable}"
+    rc="${_SYNOCR_ENC_ENUM_RC:-1}"
+    helper="$(synocr_helper_bin)"
+    if synocr_helper_ready; then
+        ready="yes"
+    else
+        ready="no"
+    fi
+    uid="$(id -u 2>/dev/null || echo '?')"
+    user="$(id -un 2>/dev/null || echo '?')"
+    timeout="$(synocr_monitor_wait_timeout)"
+    shares=0
+    if [ -n "${_SYNOCR_ENC_ENUM_CACHE-}" ]; then
+        shares="$(printf '%s\n' "${_SYNOCR_ENC_ENUM_CACHE}" | sed '/^$/d' | wc -l | tr -d '[:space:]')"
+    fi
+    synocr_monitor_wait_log "ENC check: source=${src} rc=${rc} helper_ready=${ready} uid=${uid} user=${user} monitor_start_wait=${timeout} enum_raw_lines=${shares}"
+    synocr_monitor_wait_log_ls "helper" "${helper}"
+    if [ -n "${_SYNOCR_ENC_ENUM_ERR-}" ]; then
+        while IFS= read -r line; do
+            line="$(printf '%s' "${line}" | tr -d '\r')"
+            [ -n "${line}" ] || continue
+            synocr_monitor_wait_log "  enc-enum stderr: ${line}"
+        done <<< "${_SYNOCR_ENC_ENUM_ERR}"
+    fi
+    synocr_monitor_wait_log "ENC share names (raw synoshare lines, header included):"
+    if [ -z "${_SYNOCR_ENC_ENUM_CACHE-}" ]; then
+        synocr_monitor_wait_log "  (none)"
+    else
+        while IFS= read -r line; do
+            line="$(printf '%s' "${line}" | tr -d '\r')"
+            [ -n "${line}" ] || continue
+            synocr_monitor_wait_log "  | ${line}"
+        done <<< "${_SYNOCR_ENC_ENUM_CACHE}"
+    fi
+    mount_note="$(awk '$2 ~ "^/volume[0-9]+/" { print }' /proc/mounts 2>/dev/null | wc -l | tr -d '[:space:]')"
+    synocr_monitor_wait_log "proc_mounts volume entries: ${mount_note:-0}"
+}
+
 # Log all active INPUTDIRs (present and missing) for wait/start diagnostics.
 synocr_inputdirs_log_status() {
-    local dir share volume root tag n=0
+    local dir share volume root marker tag kind listed n=0 root_yn marker_yn mount_line
+    synocr_inputdirs_log_enc_context
     synocr_monitor_wait_log "Active INPUTDIR list:"
     while IFS= read -r dir; do
         [ -z "${dir}" ] && continue
         n=$((n + 1))
+        share="$(synocr_path_share_name "${dir}")"
+        volume="$(synocr_path_volume "${dir}")"
+        root="${volume}/${share}"
+        marker="${volume}/@${share}@"
+        kind="$(synocr_classify_missing_path "${dir}")"
         if [ -d "${dir}" ]; then
             tag="ok (mounted)"
-        else
-            share="$(synocr_path_share_name "${dir}")"
-            volume="$(synocr_path_volume "${dir}")"
-            root="${volume}/${share}"
-            if synocr_share_name_ok "${share}" && [ -d "${root}" ]; then
-                tag="missing (share mounted, subfolder absent)"
+        elif synocr_share_name_ok "${share}" && [ -d "${root}" ]; then
+            tag="missing (share mounted, subfolder absent)"
+        elif [ "${kind}" = "wait" ]; then
+            if [ "${_SYNOCR_ENC_ENUM_RC}" -eq 0 ] && synocr_enc_list_has_share "${share}" "${_SYNOCR_ENC_ENUM_CACHE-}"; then
+                tag="missing (encrypted share, not mounted yet)"
+            elif [ -d "${marker}" ]; then
+                tag="missing (encrypted share marker @${share}@)"
             else
-                synocr_enc_enum_load || true
-                if [ "$(synocr_classify_missing_path "${dir}")" = "wait" ]; then
-                    if [ "${_SYNOCR_ENC_ENUM_RC}" -eq 0 ] && synocr_enc_list_has_share "${share}" "${_SYNOCR_ENC_ENUM_CACHE-}"; then
-                        tag="missing (encrypted share, not mounted yet)"
-                    elif [ -d "${volume}/@${share}@" ]; then
-                        tag="missing (encrypted share marker @${share}@)"
-                    else
-                        tag="missing (ENC status unknown – waiting)"
-                    fi
-                else
-                    tag="missing (not an encrypted share)"
-                fi
+                tag="missing (ENC status unknown – waiting)"
             fi
+        else
+            tag="missing (not an encrypted share)"
         fi
+        if [ "${_SYNOCR_ENC_ENUM_RC}" -eq 0 ] && synocr_enc_list_has_share "${share}" "${_SYNOCR_ENC_ENUM_CACHE-}"; then
+            listed="yes"
+        else
+            listed="no"
+        fi
+        root_yn="no"
+        marker_yn="no"
+        [ -d "${root}" ] && root_yn="yes"
+        [ -d "${marker}" ] && marker_yn="yes"
+        mount_line="$(synocr_proc_mount_line "${root}")" || mount_line="not in /proc/mounts"
         synocr_monitor_wait_log "  [${n}] ${tag}: ${dir}"
+        synocr_monitor_wait_log "      share=\"${share}\" volume=\"${volume}\" root=\"${root}\" root_dir=${root_yn} marker=\"${marker}\" marker_dir=${marker_yn} enc_listed=${listed} classify=${kind}"
+        synocr_monitor_wait_log "      mount: ${mount_line}"
+        synocr_monitor_wait_log_ls "path" "${dir}"
+        synocr_monitor_wait_log_ls "root" "${root}"
+        synocr_monitor_wait_log_ls "marker" "${marker}"
     done <<< "$(synocr_active_inputdirs)"
     if [ "${n}" -eq 0 ]; then
         synocr_monitor_wait_log "  (no active INPUTDIR)"
@@ -943,9 +1090,11 @@ synocr_monitor_waiter_start() {
             case "${status}" in
                 ready|empty)
                     synocr_monitor_wait_log "Source folders ready (status=${status}) – starting monitoring"
+                    synocr_inputdirs_log_status
                     rm -f "$(synocr_monitor_wait_pidfile)"
-                    # Skip wait gate on re-entry; keep start output in wait log (LOGDIR may still be encrypted)
-                    if SYNOCR_SKIP_INPUTDIR_WAIT=1 "${start_script}" start >>"$(synocr_monitor_wait_logfile)" 2>&1; then
+                    # Skip wait gate on re-entry; keep start output in wait log (LOGDIR may still be encrypted).
+                    # SYNOCR_WAIT_LOG_ECHO=0: start's wait-log lines must not be appended a second time.
+                    if SYNOCR_SKIP_INPUTDIR_WAIT=1 SYNOCR_WAIT_LOG_ECHO=0 "${start_script}" start >>"$(synocr_monitor_wait_logfile)" 2>&1; then
                         synocr_monitor_wait_log "Monitoring start finished OK"
                         exit 0
                     fi
@@ -972,7 +1121,8 @@ synocr_monitor_waiter_start() {
             sleep "${interval}"
             waited=$((waited + interval))
             if [ $((waited % 60)) -eq 0 ] || [ "${waited}" -eq "${interval}" ]; then
-                synocr_monitor_wait_log "Still waiting for source folders (${waited}s elapsed)"
+                synocr_monitor_wait_log "Still waiting for source folders (${waited}s elapsed, timeout=${timeout}s)"
+                synocr_inputdirs_log_status
             fi
         done
     ) >/dev/null 2>&1 &

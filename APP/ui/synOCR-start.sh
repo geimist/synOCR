@@ -94,6 +94,8 @@ for i in "$@" ; do
                         exit 1
                         ;;
                 esac
+            elif [ "${monitor}" = off ] && [ "${SYNOCR_SKIP_INPUTDIR_WAIT:-0}" = "1" ]; then
+                synocr_monitor_wait_log "Input-dir wait skipped on re-entry (SYNOCR_SKIP_INPUTDIR_WAIT=1)"
             fi
 
             while [ "${monitor}" = off ]; do

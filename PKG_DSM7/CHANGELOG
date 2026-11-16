@@ -1,6 +1,16 @@
-known issues / limitations:
- -  The check whether a selected folder (OUTPUT, BACKUP) is encrypted and possibly not mounted 
-    does not work when running the program without root privileges (due to the known rights restrictions)
+2.1.0 [2026-11-16]
+
+  IMPLEMENTATIONS:
+ ● [spk]    beep notification is now allways available
+ ● [shell]  inotify start waits for encrypted source folders
+ ● [shell]  OUTPUT/BACKUP: detect encrypted shares that are not mounted (enc-enum) and abort with a clear log line
+ ● [spk]    permissions are set via a setuid helper after — no manual root start of synOCR-start.sh is required
+ ● [shell]  inotify debug log and package system logs are written to target/log (profile LOGDIR unchanged)
+ ● [gui]    help page: download support data (package logs, configuration, DSM package log, /tmp/synOCR.history when present)
+
+  BUGFIX
+ ● [GUI]    The chip for the 4-digit year variable was not displayed correctly in older installations
+ ● [shell]  the order of the Python modules has been changed to correctly resolve dependencies
 
 
 2.0.1 [2026-10-15]

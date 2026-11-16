@@ -1,18 +1,1 @@
-2.0.99.2 [2026-10-31]
-
-  IMPLEMENTATIONS:
- ● [spk]    beep notification is now allways available
-
-  BUGFIX
- ● [GUI]    The chip for the 4-digit year variable was not displayed correctly in older installations
- ● [shell]  the order of the Python modules has been changed to correctly resolve dependencies
-
-
-2.0.99.1 [2026-10-17]
-
-  IMPLEMENTATIONS:
- ● [shell]  inotify start waits for encrypted source folders
- ● [shell]  OUTPUT/BACKUP: detect encrypted shares that are not mounted (enc-enum) and abort with a clear log line
- ● [spk]    permissions are set via a setuid helper after — no manual root start of synOCR-start.sh is required
- ● [shell]  inotify debug log and package system logs are written to target/log (profile LOGDIR unchanged)
- ● [gui]    help page: download support data (package logs, configuration, DSM package log, /tmp/synOCR.history when present)
+currently no beta available

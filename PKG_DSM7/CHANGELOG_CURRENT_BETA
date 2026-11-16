@@ -1,12 +1,2 @@
 
  full changelog: https://raw.githubusercontent.com/geimist/synOCR/refs/heads/master/PKG_DSM7/CHANGELOG_BETA
-
-2.0.99.2 [2026-10-31]
-
-  IMPLEMENTATIONS:
- ● [spk]    beep notification is now allways available
-
-  BUGFIX
- ● [GUI]    The chip for the 4-digit year variable was not displayed correctly in older installations
- ● [shell]  the order of the Python modules has been changed to correctly resolve dependencies
- 

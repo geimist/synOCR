@@ -1,6 +1,13 @@
-2.0.1 [2026-10-15]
+2.1.0 [2026-11-16]
 
-  BUGFIX:
- ● [spk]    new installations may have failed
- ● [GUI]    history-viewer: a bug that prevented FileStation from opening properly has been fixed.
- ● [shell]  minor bugfixes
+  IMPLEMENTATIONS:
+ ● [spk]    beep notification is now allways available
+ ● [shell]  inotify start waits for encrypted source folders
+ ● [shell]  OUTPUT/BACKUP: detect encrypted shares that are not mounted (enc-enum) and abort with a clear log line
+ ● [spk]    permissions are set via a setuid helper after — no manual root start of synOCR-start.sh is required
+ ● [shell]  inotify debug log and package system logs are written to target/log (profile LOGDIR unchanged)
+ ● [gui]    help page: download support data (package logs, configuration, DSM package log, /tmp/synOCR.history when present)
+
+  BUGFIX
+ ● [GUI]    The chip for the 4-digit year variable was not displayed correctly in older installations
+ ● [shell]  the order of the Python modules has been changed to correctly resolve dependencies
