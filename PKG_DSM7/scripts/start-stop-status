@@ -27,6 +27,19 @@ TIMESTAMP=$(date +%Y-%m-%d%t%H:%M:%S)
 MYSCRIPT=$(basename "$0")
 MYLOGIN=$(whoami)
 MYID=$(id)
+
+# Bundled inotifywait is not on PATH. SynoCommunity remains the fallback.
+pkg_has_inotifywait() {
+    _mach=$(uname -m)
+    case "${_mach}" in
+        aarch64|arm64) _mach=aarch64 ;;
+    esac
+    _bundled="/var/packages/${SYNOPKG_PKGNAME}/target/bin/inotify/inotifywait-${_mach}"
+    if [ -x "${_bundled}" ]; then
+        return 0
+    fi
+    command -v inotifywait >/dev/null 2>&1
+}
 # -------------------------------------------------------------------------------------
 
 
@@ -36,7 +49,7 @@ case $1 in
     start)
         echo "Starting..."
         echo ''${TIMESTAMP}' - Start as '${MYID}'' >/tmp/${SYNOPKG_PKGNAME}.start
-        [ $(which inotifywait) ] && /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
+        pkg_has_inotifywait && /usr/syno/synoman/webman/3rdparty/synOCR/synOCR-start.sh start
         exit 0
       ;;
     stop)

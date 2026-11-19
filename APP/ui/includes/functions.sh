@@ -485,6 +485,30 @@ synocr_helper_ready() {
     [ -x "${helper}" ] && [ -u "${helper}" ]
 }
 
+# Bundled static inotifywait (APP/bin/inotify). Prefer it over a SynoCommunity
+# install so monitoring does not depend on an older binary on PATH.
+synocr_inotifywait_bin() {
+    local dir mach bundled
+    dir="/var/packages/synOCR/target/bin/inotify"
+    mach="$(uname -m)"
+    case "${mach}" in
+        aarch64|arm64)
+            mach=aarch64
+            ;;
+    esac
+    bundled="${dir}/inotifywait-${mach}"
+    if [ -x "${bundled}" ]; then
+        printf '%s' "${bundled}"
+        return 0
+    fi
+    command -v inotifywait 2>/dev/null || true
+}
+
+# Returns 0 when a bundled or PATH inotifywait is available.
+synocr_inotifywait_ready() {
+    [ -n "$(synocr_inotifywait_bin)" ]
+}
+
 # Run selfheal via helper. Echoes helper output. Returns helper exit status.
 # Heal script also appends to <package>/log/selfheal.log
 synocr_selfheal_via_helper() {

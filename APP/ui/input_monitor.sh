@@ -84,8 +84,10 @@ handle_inotify_stderr_line() {
     printf "%s\n" "${errline}" >> "${stderr_log}"
 }
 
-if [ ! "$(which inotifywait)" ]; then
-    log_monitor "ERROR: inotify-tools are not installed"
+inotifywait_bin="$(synocr_inotifywait_bin)"
+if [ -z "${inotifywait_bin}" ]; then
+    log_monitor "ERROR: inotifywait is not available"
+    log_monitor "The bundled binary is missing and inotify-tools are not installed."
     log_monitor "You can install the SPK from https://synocommunity.com/package/inotify-tools"
     exit 1
 fi
@@ -98,6 +100,12 @@ inotify_start()
     log_monitor ""
     log_monitor "[$(date +%Y-%m-%d_%H-%M-%S)] ---------------- START  MONITORING ----------"
     log_monitor "Monitoring start requested by user: $(whoami)"
+    inotify_version=$("${inotifywait_bin}" --version 2>&1 | head -n 1)
+    if [ -n "${inotify_version}" ]; then
+        log_monitor "Using ${inotify_version} (${inotifywait_bin})"
+    else
+        log_monitor "Using ${inotifywait_bin}"
+    fi
 
     while read -r value ; do
         dir="$(echo "${value}" | awk -F'\t' '{print $1}')"
@@ -127,7 +135,7 @@ inotify_start()
     # depending on inotify-tools version. Handle both. Keep stderr handler output OUT of the
     # event pipe (process substitution inherits stdout of the pipeline otherwise).
     (
-        inotifywait --fromfile "${monitored_folders}" -e moved_to -e close_write --monitor \
+        "${inotifywait_bin}" --fromfile "${monitored_folders}" -e moved_to -e close_write --monitor \
             2> >(while IFS= read -r errline; do
                     handle_inotify_stderr_line "${errline}"
                 done) \

@@ -211,7 +211,7 @@ dsm_major=$(grep "^majorversion" /etc.defaults/VERSION | cut -d '"' -f2 )
 
 # check inotifywait:
 # ---------------------------------------------------------------------
-    [ "$(which inotifywait)" ] && inotify_tools_ready=1 || inotify_tools_ready=0
+    synocr_inotifywait_ready && inotify_tools_ready=1 || inotify_tools_ready=0
 
 # Body:
 # ---------------------------------------------------------------------

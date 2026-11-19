@@ -1,2 +1,8 @@
 
- full changelog: https://raw.githubusercontent.com/geimist/synOCR/refs/heads/master/PKG_DSM7/CHANGELOG_BETA
+full changelog: https://raw.githubusercontent.com/geimist/synOCR/refs/heads/master/PKG_DSM7/CHANGELOG_BETA
+
+2.1.99.1 [2026-11-18]
+
+  IMPLEMENTATIONS:
+ ● [spk]    include inotify directly in synOCR
+ 

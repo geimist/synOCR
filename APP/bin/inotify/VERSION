@@ -1,0 +1,4 @@
+4.25.9.0
+https://github.com/inotify-tools/inotify-tools/releases/tag/4.25.9.0
+Built statically with zig c++ -target {x86_64,aarch64}-linux-musl.
+License: GPL-2.0. See COPYING in this directory.
